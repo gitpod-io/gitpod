@@ -1,0 +1,349 @@
+name: Monitor Branch Protection Changes
+on:
+  branch_protection_rule:
+    types: [created, edited, deleted]
+  schedule:
+    - cron: '0 0 * * *'    # Runs at 00:00 UTC every day
+  workflow_dispatch:
+  issues:
+    types: [edited]        # Trigger on issue edits
+
+jobs:
+  check-tampering:
+    if: contains(github.event.issue.labels.*.name, 'branch-protection-state')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Tampering Alert
+        uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.BRANCH_PROTECTION_SLACK_BOT_TOKEN }}
+        with:
+          channel-id: 'C081N38PHC5'
+          payload: |
+            {
+              "text": "⚠️ SECURITY ALERT: Branch Protection State Issue Modified",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "🚨 *SECURITY ALERT: Branch Protection State Issue was manually modified!*\n\n*Repository:* ${{ github.repository }}\n*Modified by:* ${{ github.actor }}\n*Issue:* #${{ github.event.issue.number }}\n*Time:* ${{ github.event.issue.updated_at }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "⚠️ Manual modification of state issues may indicate an attempt to bypass branch protection monitoring. Please investigate immediately."
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Modified Issue",
+                        "emoji": true
+                      },
+                      "url": "${{ github.event.issue.html_url }}",
+                      "style": "danger"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Branch Settings",
+                        "emoji": true
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/settings/branches"
+                    }
+                  ]
+                }
+              ]
+            }
+
+  check-branch-protection:
+    # Don't run the normal check if this is an issue edit event
+    if: github.event_name != 'issues'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Branch Protection Rules
+        id: check-rules
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.BRANCH_PROTECTION_PAT }}
+          script: |
+            const repo = context.repo;
+
+            try {
+              // Get repository info
+              console.log('Getting repository info...');
+              const repoInfo = await github.rest.repos.get({
+                owner: repo.owner,
+                repo: repo.repo
+              });
+
+              const defaultBranch = repoInfo.data.default_branch;
+              console.log(`Default branch is: ${defaultBranch}`);
+
+              // Get current protection rules
+              console.log(`Checking protection rules for ${defaultBranch}...`);
+              let currentRules;
+              try {
+                const protection = await github.rest.repos.getBranchProtection({
+                  owner: repo.owner,
+                  repo: repo.repo,
+                  branch: defaultBranch
+                });
+                currentRules = protection.data;
+                console.log('Current protection rules:', JSON.stringify(currentRules, null, 2));
+              } catch (error) {
+                if (error.status === 404) {
+                  console.log('No branch protection rules found');
+                  currentRules = null;
+                } else {
+                  console.log('Error getting branch protection:', error);
+                  throw error;
+                }
+              }
+
+              // Find previous state issues
+              console.log('Finding previous state issues...');
+              const previousIssues = await github.rest.issues.listForRepo({
+                owner: repo.owner,
+                repo: repo.repo,
+                state: 'open',
+                labels: 'branch-protection-state',
+                per_page: 100
+              });
+
+              console.log(`Found ${previousIssues.data.length} previous state issues`);
+
+              let previousRules = null;
+              let changesDetected = false;
+              let changeDescription = '';
+
+              // Always create a new state issue if none exists
+              if (previousIssues.data.length === 0) {
+                console.log('No previous state issues found, creating initial state');
+                changesDetected = true;
+                changeDescription = 'Initial branch protection state';
+              } else {
+                // Get the most recent state
+                const mostRecentIssue = previousIssues.data[0];
+                try {
+                  previousRules = JSON.parse(mostRecentIssue.body);
+                  console.log('Successfully parsed previous rules');
+
+                  // Compare states
+                  const currentJSON = JSON.stringify(currentRules);
+                  const previousJSON = JSON.stringify(previousRules);
+
+                  if (currentJSON !== previousJSON) {
+                    changesDetected = true;
+                    console.log('Changes detected!');
+
+                    if (!previousRules && currentRules) {
+                      changeDescription = 'Branch protection rules were added';
+                    } else if (previousRules && !currentRules) {
+                      changeDescription = 'Branch protection rules were removed';
+                    } else {
+                      changeDescription = 'Branch protection rules were modified';
+                    }
+                  }
+
+                  // Close all previous state issues
+                  console.log('Closing previous state issues...');
+                  for (const issue of previousIssues.data) {
+                    await github.rest.issues.update({
+                      owner: repo.owner,
+                      repo: repo.repo,
+                      issue_number: issue.number,
+                      state: 'closed'
+                    });
+                    console.log(`Closed issue #${issue.number}`);
+                  }
+                } catch (e) {
+                  console.log('Error handling previous state:', e);
+                  // If we can't parse previous state, treat as initial
+                  changesDetected = true;
+                  changeDescription = 'Initial branch protection state (previous state invalid)';
+                }
+              }
+
+               // Always create a new state issue
+              console.log('Creating new state issue...');
+              const newIssue = await github.rest.issues.create({
+                owner: repo.owner,
+                repo: repo.repo,
+                title: `Branch Protection State - ${new Date().toISOString()}`,
+                body: JSON.stringify(currentRules, null, 2),
+                labels: ['branch-protection-state']
+              });
+              console.log(`Created new state issue #${newIssue.data.number}`);
+
+              // Lock the issue immediately
+              await github.rest.issues.lock({
+                owner: repo.owner,
+                repo: repo.repo,
+                issue_number: newIssue.data.number,
+                lock_reason: 'resolved'
+              });
+              console.log(`Locked issue #${newIssue.data.number}`);
+
+              // Set outputs for notifications
+              core.setOutput('changes_detected', changesDetected.toString());
+              core.setOutput('change_description', changeDescription);
+
+            } catch (error) {
+              console.log('Error details:', error);
+              core.setFailed(`Error: ${error.message}`);
+            }
+
+      - name: Send Slack Notification - Branch Protection Event
+        if: github.event_name == 'branch_protection_rule'
+        uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.BRANCH_PROTECTION_SLACK_BOT_TOKEN }}
+        with:
+          channel-id: 'C081N38PHC5'
+          payload: |
+            {
+              "text": "⚠️ Branch Protection Change Event Detected in ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "⚠️ Branch Protection Change Event Detected",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Repository:* ${{ github.repository }}\n*Triggered by:* ${{ github.actor }}\n*Event Type:* ${{ github.event.action }}\n*Workflow Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "⚠️ *Monitoring Notice:* A branch protection change event was triggered. If no change notification follows, this could indicate a non-working script or potential malicious activity."
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Branch Settings",
+                        "emoji": true
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/settings/branches"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow Run",
+                        "emoji": true
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+
+      - name: Send Slack Notification - Changes Detected
+        if: steps.check-rules.outputs.changes_detected == 'true'
+        uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.BRANCH_PROTECTION_SLACK_BOT_TOKEN }}
+        with:
+          channel-id: 'C081N38PHC5'
+          payload: |
+            {
+              "text": "🚨 Branch protection rules changed in ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "🚨 *Branch protection rules changed!*\n\n*Repository:* ${{ github.repository }}\n*Changed by:* ${{ github.actor }}\n*Event:* ${{ github.event_name }}\n*Change:* ${{ steps.check-rules.outputs.change_description }}\n*Workflow Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Branch protection rules have changed. Check repository settings for details."
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Branch Settings",
+                        "emoji": true
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/settings/branches"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow Run",
+                        "emoji": true
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+
+      - name: Send Slack Notification - Error
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.BRANCH_PROTECTION_SLACK_BOT_TOKEN }}
+        with:
+          channel-id: 'C081N38PHC5'
+          payload: |
+            {
+              "text": "⚠️ Error monitoring branch protection in ${{ github.repository }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "⚠️ *Error monitoring branch protection!*\n\n*Repository:* ${{ github.repository }}\n*Workflow Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Error Details"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                      "style": "danger"
+                    }
+                  ]
+                }
+              ]
+            }
