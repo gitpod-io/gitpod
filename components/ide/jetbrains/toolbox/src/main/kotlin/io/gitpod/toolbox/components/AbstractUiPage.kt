@@ -10,13 +10,18 @@ import java.util.function.BiConsumer
 import java.util.function.Function
 
 abstract class AbstractUiPage : UiPage {
-    private var stateGetter: Function<UiField, *>? = null
+    private var stateAccessor: UiPage.UiFieldStateAccessor? = null
 
     @Suppress("UNCHECKED_CAST")
-    fun <T> getFieldValue(field: UiField) = stateGetter?.apply(field) as T?
+    fun <T> getFieldValue(field: UiField) = stateAccessor?.get(field) as T?
 
-    override fun setStateAccessor(setter: BiConsumer<UiField, Any>?, getter: Function<UiField, *>?) {
-        super.setStateAccessor(setter, getter)
-        stateGetter = getter
+    override fun setStateAccessor(stateAccessor: UiPage.UiFieldStateAccessor?) {
+        super.setStateAccessor(stateAccessor)
+        this.stateAccessor = stateAccessor
     }
+}
+
+class EmptyUiPageWithTitle(private val title: String) : UiPage {
+    override fun getFields(): MutableList<UiField> = mutableListOf()
+    override fun getTitle() = title
 }
