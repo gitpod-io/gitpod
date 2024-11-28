@@ -7,12 +7,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { useDebounce } from "../../hooks/use-debounce";
-import { useFeatureFlag } from "../featureflag-query";
 import { scmClient } from "../../service/public-api";
 
 export const useSearchRepositories = ({ searchString, limit }: { searchString: string; limit: number }) => {
     // This disables the search behavior when flag is disabled
-    const repositoryFinderSearchEnabled = useFeatureFlag("repositoryFinderSearch");
     const { data: org } = useCurrentOrg();
     const debouncedSearchString = useDebounce(searchString);
 
@@ -26,7 +24,7 @@ export const useSearchRepositories = ({ searchString, limit }: { searchString: s
             return repositories;
         },
         {
-            enabled: repositoryFinderSearchEnabled && !!org && debouncedSearchString.length >= 3,
+            enabled: !!org && debouncedSearchString.length >= 3,
             // Need this to keep previous results while we wait for a new search to complete since debouncedSearchString changes and updates the key
             keepPreviousData: true,
             // We intentionally don't want to trigger refetches here to avoid a loading state side effect of focusing
