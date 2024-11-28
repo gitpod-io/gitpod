@@ -86,8 +86,8 @@ var credentialHelper = &cobra.Command{
 			Kind: "git",
 		})
 		if err != nil {
-			log.WithError(err).Print("error getting token from supervisior")
-			return GpError{Err: xerrors.Errorf("error getting token from supervisior: %w", err), Silence: true, ExitCode: &exitCode}
+			log.WithError(err).Print("error getting token from supervisor")
+			return GpError{Err: xerrors.Errorf("error getting token from supervisor: %w", err), Silence: true, ExitCode: &exitCode}
 		}
 
 		user = resp.User
