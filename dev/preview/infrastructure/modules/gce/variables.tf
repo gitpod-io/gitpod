@@ -23,7 +23,7 @@ variable "dev_kube_context" {
 variable "vm_image" {
   type        = string
   description = "The VM image"
-  default     = "gitpod-k3s-202409020431"
+  default     = "gitpod-k3s-202411272101"
 }
 
 variable "cert_issuer" {

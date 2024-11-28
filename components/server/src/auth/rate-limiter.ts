@@ -208,7 +208,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
             durationsSec: 60,
         },
         getToken: {
-            points: 200, // 200 calls per user, per connection, per minute
+            points: 500, // 500 calls per user, per connection, per minute
             durationsSec: 60,
         },
         startWorkspace: {
