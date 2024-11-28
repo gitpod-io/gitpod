@@ -5,8 +5,6 @@
 import com.github.jk1.license.filter.ExcludeTransitiveDependenciesFilter
 import com.github.jk1.license.render.JsonReportRenderer
 import org.jetbrains.intellij.pluginRepository.PluginRepositoryFactory
-import org.jetbrains.intellij.pluginRepository.model.LicenseUrl
-import org.jetbrains.intellij.pluginRepository.model.ProductFamily
 import org.jetbrains.kotlin.com.intellij.openapi.util.SystemInfoRt
 import java.nio.file.Path
 import kotlin.io.path.div

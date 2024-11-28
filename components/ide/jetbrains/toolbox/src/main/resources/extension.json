@@ -2,14 +2,35 @@
   "id": "io.gitpod.toolbox.gateway",
   "version": "0.0.1",
   "meta": {
-    "readableName": "Gitpod plugin",
-    "description": "Gitpod CDE(Cloud Development Environment) integration into JetBrains Toolbox App",
-    "vendor": "Toolbox + Gateway",
+    "readableName": "Gitpod Classic",
+    "description": "Provides a way to connect to Gitpod Classic workspaces",
+    "vendor": "Gitpod",
     "url": "https://github.com/gitpod-io/gitpod",
     "backgroundColors": {
-      "start": { "hex": "#FFB45B", "opacity": 0.7 },
-      "top": { "hex": "#FFB45B", "opacity": 0.6 },
-      "end": { "hex": "#FFB45B", "opacity": 0.8 }
+      "left": {
+        "light": { "hex": "#FFB45B", "opacity": 0.7 },
+        "dark": { "hex": "#2C0735", "opacity": 0.8 }
+      },
+      "topLarge": {
+        "light": { "hex": "#FFB45B", "opacity": 0.6 },
+        "dark": { "hex": "#FF8C42", "opacity": 0.5 }
+      },
+      "bottom": {
+        "light": { "hex": "#FFB45B", "opacity": 0.3 },
+        "dark": { "hex": "#2C0735", "opacity": 0.8 }
+      },
+      "topSmall": {
+        "light": { "hex": "#FFB6C1", "opacity": 0.6 },
+        "dark": { "hex": "#FF1493", "opacity": 0.3 }
+      },
+      "rightLarge": {
+        "light": { "hex": "#FFB6C1", "opacity": 0.3 },
+        "dark": { "hex": "#371340", "opacity": 0.6 }
+      },
+      "rightSmall": {
+        "light": { "hex": "#FFB45B", "opacity": 0.9 },
+        "dark": { "hex": "#FF69B4", "opacity": 0.2 }
+      }
     }
   },
   "apiVersion": "0.1.0",

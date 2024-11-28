@@ -158,7 +158,7 @@ class GitpodAuthManager {
             val bearerToken = getBearerToken(oAuthToken)
             val client = GitpodPublicApiManager.createClient(URI(gitpodHost).host, bearerToken)
             val user = GitpodPublicApiManager.tryGetAuthenticatedUser(UserServiceClient(client))
-            GitpodAccount(bearerToken, user.id, user.name, gitpodHost)
+            GitpodAccount(bearerToken, user.id, user.name, gitpodHost, authScopesJetBrainsToolbox)
         }
     }
 
@@ -186,18 +186,21 @@ class GitpodAccount : Account {
     private val id: String
     private val name: String
     private val host: String
+    private val scopes: List<String>
 
-    constructor(credentials: String, id: String, name: String, host: String) {
+    constructor(credentials: String, id: String, name: String, host: String, scopes: List<String>) {
         this.credentials = credentials
         this.id = id
         this.name = name
         this.host = URI(host).host
+        this.scopes = scopes
     }
 
     override fun getId() = id
     override fun getFullName() = name
     fun getCredentials() = credentials
     fun getHost() = host
+    fun getScopes() = scopes
 
     fun encode(): String {
         return Json.encodeToString(this)
@@ -214,6 +217,7 @@ class GitpodAccount : Account {
         GitpodLogger.debug("validating account $host")
         try {
             GitpodPublicApiManager.tryGetAuthenticatedUser(UserServiceClient(client))
+            // TODO: Verify scopes
             return true
         } catch (e: ConnectException) {
             // TODO(hw): Server close jsonrpc so papi server respond internal error
