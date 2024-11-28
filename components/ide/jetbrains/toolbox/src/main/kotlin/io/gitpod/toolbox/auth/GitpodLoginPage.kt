@@ -6,7 +6,7 @@ package io.gitpod.toolbox.auth
 
 import com.jetbrains.toolbox.gateway.ui.*
 import io.gitpod.toolbox.components.AbstractUiPage
-import io.gitpod.toolbox.components.GitpodIcon
+import io.gitpod.toolbox.components.GitpodIconColored
 import io.gitpod.toolbox.components.SimpleButton
 import io.gitpod.toolbox.service.Utils
 
@@ -33,11 +33,11 @@ class GitpodLoginPage(private val authManager: GitpodAuthManager) : AbstractUiPa
         })
     }
 
-    override fun getTitle() = "Login to Gitpod"
+    override fun getTitle() = "Log in to Gitpod Classic"
 
     override fun getDescription() = "Always ready to code."
 
     override fun getSvgIcon(): ByteArray {
-        return GitpodIcon()
+        return GitpodIconColored()
     }
 }
