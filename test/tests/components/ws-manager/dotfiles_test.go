@@ -174,6 +174,15 @@ func assertDotfiles(t *testing.T, rsa *integration.RpcClient) error {
 	}
 
 	if len(dotfiles) > 0 {
+		var cat agent.ExecResponse
+		err := rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+			Dir:     "/",
+			Command: "cat",
+			Args:    []string{"/home/gitpod/.dotfiles.log"},
+		}, &cat)
+		if err == nil {
+			t.Fatalf("dotfiles were not installed successfully: %+v, .dotfiles.log: %s", dotfiles, cat.Stdout)
+		}
 		t.Fatalf("dotfiles were not installed successfully: %+v", dotfiles)
 	}
 
