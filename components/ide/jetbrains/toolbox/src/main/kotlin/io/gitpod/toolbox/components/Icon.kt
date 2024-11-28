@@ -10,3 +10,8 @@ import io.gitpod.toolbox.gateway.GitpodGatewayExtension
 fun GitpodIcon(): ByteArray {
     return GitpodGatewayExtension::class.java.getResourceAsStream("/icon.svg")?.readAllBytes() ?: byteArrayOf()
 }
+
+@Suppress("FunctionName")
+fun GitpodIconColored(): ByteArray {
+    return GitpodGatewayExtension::class.java.getResourceAsStream("/icon-colored.svg")?.readAllBytes() ?: byteArrayOf()
+}

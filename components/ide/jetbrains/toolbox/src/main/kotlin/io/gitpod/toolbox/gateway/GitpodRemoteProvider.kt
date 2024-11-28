@@ -13,6 +13,7 @@ import com.jetbrains.toolbox.gateway.ui.UiPage
 import io.gitpod.publicapi.experimental.v1.Workspaces
 import io.gitpod.toolbox.auth.GitpodAuthManager
 import io.gitpod.toolbox.auth.GitpodLoginPage
+import io.gitpod.toolbox.components.EmptyUiPageWithTitle
 import io.gitpod.toolbox.components.GitpodIcon
 import io.gitpod.toolbox.components.SimpleButton
 import io.gitpod.toolbox.service.*
@@ -63,6 +64,7 @@ class GitpodRemoteProvider(
             consumer.consumeEnvironments(environmentMap.values.map { it.second })
         }
         val joinLinkInfo = workspace!!.fetchJoinLink2Info(publicApi.getWorkspaceOwnerToken(workspaceId))
+        Utils.clientHelper.prepareClient(joinLinkInfo.ideVersion)
         Utils.clientHelper.setAutoConnectOnEnvironmentReady(workspaceId, joinLinkInfo.ideVersion, joinLinkInfo.projectPath)
     }
 
@@ -70,6 +72,7 @@ class GitpodRemoteProvider(
         Utils.coroutineScope.launch {
             val workspaces = publicApi.listWorkspaces()
             if (workspaces.isEmpty()) {
+                consumer.consumeEnvironments(emptyList())
                 return@launch
             }
             consumer.consumeEnvironments(workspaces.map {
@@ -120,10 +123,10 @@ class GitpodRemoteProvider(
 
     override fun close() {}
 
-    override fun getName(): String = "Gitpod"
+    override fun getName(): String = "Gitpod Classic"
     override fun getSvgIcon() = GitpodIcon()
 
-    override fun getNewEnvironmentUiPage() = UiPage.empty
+    override fun getNewEnvironmentUiPage() = EmptyUiPageWithTitle("")
 
     override fun getAccountDropDown(): AccountDropdownField? {
         val account = authManger.getCurrentAccount() ?: return null
@@ -138,11 +141,11 @@ class GitpodRemoteProvider(
                 Utils.openUrl("https://gitpod.io/docs")
             },
         )
-
     }
 
     override fun canCreateNewEnvironments(): Boolean = false
     override fun isSingleEnvironment(): Boolean = false
+    override fun getNoEnvironmentsDescription() = "No workspaces"
 
     override fun setVisible(visibilityState: ProviderVisibilityState) {}
 

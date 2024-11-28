@@ -6,7 +6,12 @@ package io.gitpod.toolbox.gateway
 
 import com.jetbrains.toolbox.gateway.AbstractRemoteProviderEnvironment
 import com.jetbrains.toolbox.gateway.EnvironmentVisibilityState
+import com.jetbrains.toolbox.gateway.deploy.CommandExecution
+import com.jetbrains.toolbox.gateway.deploy.HostAccessInterfaces
+import com.jetbrains.toolbox.gateway.deploy.HostCommandExecutor
+import com.jetbrains.toolbox.gateway.deploy.HostFileAccessor
 import com.jetbrains.toolbox.gateway.environments.EnvironmentContentsView
+import com.jetbrains.toolbox.gateway.environments.HostAccessCapableEnvironmentContentsView
 import com.jetbrains.toolbox.gateway.states.EnvironmentStateConsumer
 import com.jetbrains.toolbox.gateway.states.StandardRemoteEnvironmentState
 import com.jetbrains.toolbox.gateway.ui.ActionDescription
@@ -81,6 +86,10 @@ class GitpodRemoteProviderEnvironment(
     }
 
     override fun getActionList(): ObservableList<ActionDescription> = actionList
+
+    override fun onDelete() {
+        watchWorkspaceJob?.cancel()
+    }
 
     override fun dispose() {
         watchWorkspaceJob?.cancel()

@@ -4,6 +4,8 @@
 
 package io.gitpod.toolbox.gateway
 
+import com.jetbrains.toolbox.gateway.environments.CachedIdeStub
+import com.jetbrains.toolbox.gateway.environments.CachedProjectStub
 import com.jetbrains.toolbox.gateway.environments.ManualEnvironmentContentsView
 import com.jetbrains.toolbox.gateway.environments.SshEnvironmentContentsView
 import com.jetbrains.toolbox.gateway.ssh.SshConnectionInfo
@@ -34,6 +36,30 @@ class GitpodSSHEnvironmentContentsView(
 
     override fun addEnvironmentContentsListener(p0: ManualEnvironmentContentsView.Listener) {
         stateListeners += p0
+        stateListeners.forEach{
+            it.onProjectListUpdated(listOf(object : CachedProjectStub {
+                override fun getPath(): String {
+                    return "/workspace/template-golang-cli"
+                }
+
+                override fun getName(): String? {
+                    return "template-golang-cli"
+                }
+
+                override fun getIdeHint(): String? {
+                    return "GO-243.21565.208"
+                }
+            }))
+            it.onIdeListUpdated(listOf(object: CachedIdeStub {
+                override fun getProductCode(): String {
+                    return "GO-243.21565.208"
+                }
+
+                override fun isRunning(): Boolean? {
+                    return true
+                }
+            }))
+        }
     }
 
     override fun removeEnvironmentContentsListener(p0: ManualEnvironmentContentsView.Listener) {
