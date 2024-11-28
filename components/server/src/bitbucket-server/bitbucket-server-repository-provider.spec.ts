@@ -147,9 +147,10 @@ class TestBitbucketServerRepositoryProvider {
 
     @test async test_getUserRepos_ok() {
         const result = await this.service.getUserRepos(this.user);
+        // todo(ft): possibly change to not directly rely on a single returned repository, since the recent repo list for BBS is prone to change
         expect(result).to.deep.include({
-            url: "https://bitbucket.gitpod-dev.com/scm/tes/2k-repos-1076.git",
-            name: "2k-repos-1076",
+            url: "https://bitbucket.gitpod-dev.com/scm/~svenefftinge/browser-extension-test.git",
+            name: "browser-extension-test",
         });
     }
 }
