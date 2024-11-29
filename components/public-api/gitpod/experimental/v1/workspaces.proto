@@ -290,6 +290,15 @@ message WorkspaceInstanceStatus {
     optional bool stopped_by_request = 11;
   }
 
+  message EditorReference {
+    string name = 1;
+    string version = 2;
+
+    // prefer_toolbox indicates whether the editor should be launched with the
+    // JetBrains Toolbox instead of JetBrains Gateway
+    bool prefer_toolbox = 3;
+  }
+
   // version of the status update. Workspace instances themselves are unversioned,
   // but their statuus has different versions.
   // The value of this field has no semantic meaning (e.g. don't interpret it as
@@ -322,6 +331,9 @@ message WorkspaceInstanceStatus {
   // Note: this is a best-effort field and more often than not will not be present. Its absence does not
   // indicate the absence of a working copy.
   GitStatus git_status = 9;
+
+  // editor is the editor to be used in this workspace
+  EditorReference editor = 10;
 }
 
 // PortPolicy defines the accssbility policy of a workspace port is guarded by an authentication in the proxy

@@ -20410,6 +20410,33 @@ public final class Workspaces {
      * <code>.gitpod.experimental.v1.GitStatus git_status = 9 [json_name = "gitStatus"];</code>
      */
     io.gitpod.publicapi.experimental.v1.Workspaces.GitStatusOrBuilder getGitStatusOrBuilder();
+
+    /**
+     * <pre>
+     * editor is the editor to be used in this workspace
+     * </pre>
+     *
+     * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+     * @return Whether the editor field is set.
+     */
+    boolean hasEditor();
+    /**
+     * <pre>
+     * editor is the editor to be used in this workspace
+     * </pre>
+     *
+     * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+     * @return The editor.
+     */
+    io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference getEditor();
+    /**
+     * <pre>
+     * editor is the editor to be used in this workspace
+     * </pre>
+     *
+     * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+     */
+    io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReferenceOrBuilder getEditorOrBuilder();
   }
   /**
    * <pre>
@@ -21902,6 +21929,762 @@ public final class Workspaces {
 
     }
 
+    public interface EditorReferenceOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <code>string name = 1 [json_name = "name"];</code>
+       * @return The name.
+       */
+      java.lang.String getName();
+      /**
+       * <code>string name = 1 [json_name = "name"];</code>
+       * @return The bytes for name.
+       */
+      com.google.protobuf.ByteString
+          getNameBytes();
+
+      /**
+       * <code>string version = 2 [json_name = "version"];</code>
+       * @return The version.
+       */
+      java.lang.String getVersion();
+      /**
+       * <code>string version = 2 [json_name = "version"];</code>
+       * @return The bytes for version.
+       */
+      com.google.protobuf.ByteString
+          getVersionBytes();
+
+      /**
+       * <pre>
+       * prefer_toolbox indicates whether the editor should be launched with the
+       * JetBrains Toolbox instead of JetBrains Gateway
+       * </pre>
+       *
+       * <code>bool prefer_toolbox = 3 [json_name = "preferToolbox"];</code>
+       * @return The preferToolbox.
+       */
+      boolean getPreferToolbox();
+    }
+    /**
+     * Protobuf type {@code gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference}
+     */
+    public static final class EditorReference extends
+        com.google.protobuf.GeneratedMessage implements
+        // @@protoc_insertion_point(message_implements:gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference)
+        EditorReferenceOrBuilder {
+    private static final long serialVersionUID = 0L;
+      static {
+        com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+          com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+          /* major= */ 4,
+          /* minor= */ 27,
+          /* patch= */ 2,
+          /* suffix= */ "",
+          EditorReference.class.getName());
+      }
+      // Use EditorReference.newBuilder() to construct.
+      private EditorReference(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+        super(builder);
+      }
+      private EditorReference() {
+        name_ = "";
+        version_ = "";
+      }
+
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.experimental.v1.Workspaces.internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_EditorReference_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.experimental.v1.Workspaces.internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_EditorReference_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.class, io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.Builder.class);
+      }
+
+      public static final int NAME_FIELD_NUMBER = 1;
+      @SuppressWarnings("serial")
+      private volatile java.lang.Object name_ = "";
+      /**
+       * <code>string name = 1 [json_name = "name"];</code>
+       * @return The name.
+       */
+      @java.lang.Override
+      public java.lang.String getName() {
+        java.lang.Object ref = name_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          name_ = s;
+          return s;
+        }
+      }
+      /**
+       * <code>string name = 1 [json_name = "name"];</code>
+       * @return The bytes for name.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getNameBytes() {
+        java.lang.Object ref = name_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          name_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int VERSION_FIELD_NUMBER = 2;
+      @SuppressWarnings("serial")
+      private volatile java.lang.Object version_ = "";
+      /**
+       * <code>string version = 2 [json_name = "version"];</code>
+       * @return The version.
+       */
+      @java.lang.Override
+      public java.lang.String getVersion() {
+        java.lang.Object ref = version_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          version_ = s;
+          return s;
+        }
+      }
+      /**
+       * <code>string version = 2 [json_name = "version"];</code>
+       * @return The bytes for version.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getVersionBytes() {
+        java.lang.Object ref = version_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          version_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int PREFER_TOOLBOX_FIELD_NUMBER = 3;
+      private boolean preferToolbox_ = false;
+      /**
+       * <pre>
+       * prefer_toolbox indicates whether the editor should be launched with the
+       * JetBrains Toolbox instead of JetBrains Gateway
+       * </pre>
+       *
+       * <code>bool prefer_toolbox = 3 [json_name = "preferToolbox"];</code>
+       * @return The preferToolbox.
+       */
+      @java.lang.Override
+      public boolean getPreferToolbox() {
+        return preferToolbox_;
+      }
+
+      private byte memoizedIsInitialized = -1;
+      @java.lang.Override
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      @java.lang.Override
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(name_)) {
+          com.google.protobuf.GeneratedMessage.writeString(output, 1, name_);
+        }
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(version_)) {
+          com.google.protobuf.GeneratedMessage.writeString(output, 2, version_);
+        }
+        if (preferToolbox_ != false) {
+          output.writeBool(3, preferToolbox_);
+        }
+        getUnknownFields().writeTo(output);
+      }
+
+      @java.lang.Override
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(name_)) {
+          size += com.google.protobuf.GeneratedMessage.computeStringSize(1, name_);
+        }
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(version_)) {
+          size += com.google.protobuf.GeneratedMessage.computeStringSize(2, version_);
+        }
+        if (preferToolbox_ != false) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeBoolSize(3, preferToolbox_);
+        }
+        size += getUnknownFields().getSerializedSize();
+        memoizedSize = size;
+        return size;
+      }
+
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference)) {
+          return super.equals(obj);
+        }
+        io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference other = (io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference) obj;
+
+        if (!getName()
+            .equals(other.getName())) return false;
+        if (!getVersion()
+            .equals(other.getVersion())) return false;
+        if (getPreferToolbox()
+            != other.getPreferToolbox()) return false;
+        if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+        return true;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        hash = (37 * hash) + NAME_FIELD_NUMBER;
+        hash = (53 * hash) + getName().hashCode();
+        hash = (37 * hash) + VERSION_FIELD_NUMBER;
+        hash = (53 * hash) + getVersion().hashCode();
+        hash = (37 * hash) + PREFER_TOOLBOX_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getPreferToolbox());
+        hash = (29 * hash) + getUnknownFields().hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      @java.lang.Override
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      @java.lang.Override
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference)
+          io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReferenceOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return io.gitpod.publicapi.experimental.v1.Workspaces.internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_EditorReference_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return io.gitpod.publicapi.experimental.v1.Workspaces.internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_EditorReference_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.class, io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.Builder.class);
+        }
+
+        // Construct using io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.newBuilder()
+        private Builder() {
+
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          super(parent);
+
+        }
+        @java.lang.Override
+        public Builder clear() {
+          super.clear();
+          bitField0_ = 0;
+          name_ = "";
+          version_ = "";
+          preferToolbox_ = false;
+          return this;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return io.gitpod.publicapi.experimental.v1.Workspaces.internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_EditorReference_descriptor;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference getDefaultInstanceForType() {
+          return io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.getDefaultInstance();
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference build() {
+          io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference buildPartial() {
+          io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference result = new io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference(this);
+          if (bitField0_ != 0) { buildPartial0(result); }
+          onBuilt();
+          return result;
+        }
+
+        private void buildPartial0(io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference result) {
+          int from_bitField0_ = bitField0_;
+          if (((from_bitField0_ & 0x00000001) != 0)) {
+            result.name_ = name_;
+          }
+          if (((from_bitField0_ & 0x00000002) != 0)) {
+            result.version_ = version_;
+          }
+          if (((from_bitField0_ & 0x00000004) != 0)) {
+            result.preferToolbox_ = preferToolbox_;
+          }
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference) {
+            return mergeFrom((io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference other) {
+          if (other == io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.getDefaultInstance()) return this;
+          if (!other.getName().isEmpty()) {
+            name_ = other.name_;
+            bitField0_ |= 0x00000001;
+            onChanged();
+          }
+          if (!other.getVersion().isEmpty()) {
+            version_ = other.version_;
+            bitField0_ |= 0x00000002;
+            onChanged();
+          }
+          if (other.getPreferToolbox() != false) {
+            setPreferToolbox(other.getPreferToolbox());
+          }
+          this.mergeUnknownFields(other.getUnknownFields());
+          onChanged();
+          return this;
+        }
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          if (extensionRegistry == null) {
+            throw new java.lang.NullPointerException();
+          }
+          try {
+            boolean done = false;
+            while (!done) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  done = true;
+                  break;
+                case 10: {
+                  name_ = input.readStringRequireUtf8();
+                  bitField0_ |= 0x00000001;
+                  break;
+                } // case 10
+                case 18: {
+                  version_ = input.readStringRequireUtf8();
+                  bitField0_ |= 0x00000002;
+                  break;
+                } // case 18
+                case 24: {
+                  preferToolbox_ = input.readBool();
+                  bitField0_ |= 0x00000004;
+                  break;
+                } // case 24
+                default: {
+                  if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                    done = true; // was an endgroup tag
+                  }
+                  break;
+                } // default:
+              } // switch (tag)
+            } // while (!done)
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.unwrapIOException();
+          } finally {
+            onChanged();
+          } // finally
+          return this;
+        }
+        private int bitField0_;
+
+        private java.lang.Object name_ = "";
+        /**
+         * <code>string name = 1 [json_name = "name"];</code>
+         * @return The name.
+         */
+        public java.lang.String getName() {
+          java.lang.Object ref = name_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            name_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <code>string name = 1 [json_name = "name"];</code>
+         * @return The bytes for name.
+         */
+        public com.google.protobuf.ByteString
+            getNameBytes() {
+          java.lang.Object ref = name_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            name_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <code>string name = 1 [json_name = "name"];</code>
+         * @param value The name to set.
+         * @return This builder for chaining.
+         */
+        public Builder setName(
+            java.lang.String value) {
+          if (value == null) { throw new NullPointerException(); }
+          name_ = value;
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string name = 1 [json_name = "name"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearName() {
+          name_ = getDefaultInstance().getName();
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string name = 1 [json_name = "name"];</code>
+         * @param value The bytes for name to set.
+         * @return This builder for chaining.
+         */
+        public Builder setNameBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) { throw new NullPointerException(); }
+          checkByteStringIsUtf8(value);
+          name_ = value;
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+
+        private java.lang.Object version_ = "";
+        /**
+         * <code>string version = 2 [json_name = "version"];</code>
+         * @return The version.
+         */
+        public java.lang.String getVersion() {
+          java.lang.Object ref = version_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            version_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <code>string version = 2 [json_name = "version"];</code>
+         * @return The bytes for version.
+         */
+        public com.google.protobuf.ByteString
+            getVersionBytes() {
+          java.lang.Object ref = version_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            version_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <code>string version = 2 [json_name = "version"];</code>
+         * @param value The version to set.
+         * @return This builder for chaining.
+         */
+        public Builder setVersion(
+            java.lang.String value) {
+          if (value == null) { throw new NullPointerException(); }
+          version_ = value;
+          bitField0_ |= 0x00000002;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string version = 2 [json_name = "version"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearVersion() {
+          version_ = getDefaultInstance().getVersion();
+          bitField0_ = (bitField0_ & ~0x00000002);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>string version = 2 [json_name = "version"];</code>
+         * @param value The bytes for version to set.
+         * @return This builder for chaining.
+         */
+        public Builder setVersionBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) { throw new NullPointerException(); }
+          checkByteStringIsUtf8(value);
+          version_ = value;
+          bitField0_ |= 0x00000002;
+          onChanged();
+          return this;
+        }
+
+        private boolean preferToolbox_ ;
+        /**
+         * <pre>
+         * prefer_toolbox indicates whether the editor should be launched with the
+         * JetBrains Toolbox instead of JetBrains Gateway
+         * </pre>
+         *
+         * <code>bool prefer_toolbox = 3 [json_name = "preferToolbox"];</code>
+         * @return The preferToolbox.
+         */
+        @java.lang.Override
+        public boolean getPreferToolbox() {
+          return preferToolbox_;
+        }
+        /**
+         * <pre>
+         * prefer_toolbox indicates whether the editor should be launched with the
+         * JetBrains Toolbox instead of JetBrains Gateway
+         * </pre>
+         *
+         * <code>bool prefer_toolbox = 3 [json_name = "preferToolbox"];</code>
+         * @param value The preferToolbox to set.
+         * @return This builder for chaining.
+         */
+        public Builder setPreferToolbox(boolean value) {
+
+          preferToolbox_ = value;
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * prefer_toolbox indicates whether the editor should be launched with the
+         * JetBrains Toolbox instead of JetBrains Gateway
+         * </pre>
+         *
+         * <code>bool prefer_toolbox = 3 [json_name = "preferToolbox"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearPreferToolbox() {
+          bitField0_ = (bitField0_ & ~0x00000004);
+          preferToolbox_ = false;
+          onChanged();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference)
+      }
+
+      // @@protoc_insertion_point(class_scope:gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference)
+      private static final io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference();
+      }
+
+      public static io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<EditorReference>
+          PARSER = new com.google.protobuf.AbstractParser<EditorReference>() {
+        @java.lang.Override
+        public EditorReference parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          Builder builder = newBuilder();
+          try {
+            builder.mergeFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(builder.buildPartial());
+          } catch (com.google.protobuf.UninitializedMessageException e) {
+            throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+          } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(e)
+                .setUnfinishedMessage(builder.buildPartial());
+          }
+          return builder.buildPartial();
+        }
+      };
+
+      public static com.google.protobuf.Parser<EditorReference> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<EditorReference> getParserForType() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
     private int bitField0_;
     public static final int STATUS_VERSION_FIELD_NUMBER = 1;
     private long statusVersion_ = 0L;
@@ -22264,6 +23047,44 @@ public final class Workspaces {
       return gitStatus_ == null ? io.gitpod.publicapi.experimental.v1.Workspaces.GitStatus.getDefaultInstance() : gitStatus_;
     }
 
+    public static final int EDITOR_FIELD_NUMBER = 10;
+    private io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference editor_;
+    /**
+     * <pre>
+     * editor is the editor to be used in this workspace
+     * </pre>
+     *
+     * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+     * @return Whether the editor field is set.
+     */
+    @java.lang.Override
+    public boolean hasEditor() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <pre>
+     * editor is the editor to be used in this workspace
+     * </pre>
+     *
+     * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+     * @return The editor.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference getEditor() {
+      return editor_ == null ? io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.getDefaultInstance() : editor_;
+    }
+    /**
+     * <pre>
+     * editor is the editor to be used in this workspace
+     * </pre>
+     *
+     * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReferenceOrBuilder getEditorOrBuilder() {
+      return editor_ == null ? io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.getDefaultInstance() : editor_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -22304,6 +23125,9 @@ public final class Workspaces {
       }
       if (((bitField0_ & 0x00000002) != 0)) {
         output.writeMessage(9, getGitStatus());
+      }
+      if (((bitField0_ & 0x00000004) != 0)) {
+        output.writeMessage(10, getEditor());
       }
       getUnknownFields().writeTo(output);
     }
@@ -22352,6 +23176,10 @@ public final class Workspaces {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(9, getGitStatus());
       }
+      if (((bitField0_ & 0x00000004) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(10, getEditor());
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -22388,6 +23216,11 @@ public final class Workspaces {
       if (hasGitStatus()) {
         if (!getGitStatus()
             .equals(other.getGitStatus())) return false;
+      }
+      if (hasEditor() != other.hasEditor()) return false;
+      if (hasEditor()) {
+        if (!getEditor()
+            .equals(other.getEditor())) return false;
       }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
@@ -22426,6 +23259,10 @@ public final class Workspaces {
       if (hasGitStatus()) {
         hash = (37 * hash) + GIT_STATUS_FIELD_NUMBER;
         hash = (53 * hash) + getGitStatus().hashCode();
+      }
+      if (hasEditor()) {
+        hash = (37 * hash) + EDITOR_FIELD_NUMBER;
+        hash = (53 * hash) + getEditor().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -22564,6 +23401,7 @@ public final class Workspaces {
           getConditionsFieldBuilder();
           getPortsFieldBuilder();
           getGitStatusFieldBuilder();
+          getEditorFieldBuilder();
         }
       }
       @java.lang.Override
@@ -22593,6 +23431,11 @@ public final class Workspaces {
         if (gitStatusBuilder_ != null) {
           gitStatusBuilder_.dispose();
           gitStatusBuilder_ = null;
+        }
+        editor_ = null;
+        if (editorBuilder_ != null) {
+          editorBuilder_.dispose();
+          editorBuilder_ = null;
         }
         return this;
       }
@@ -22672,6 +23515,12 @@ public final class Workspaces {
               : gitStatusBuilder_.build();
           to_bitField0_ |= 0x00000002;
         }
+        if (((from_bitField0_ & 0x00000200) != 0)) {
+          result.editor_ = editorBuilder_ == null
+              ? editor_
+              : editorBuilder_.build();
+          to_bitField0_ |= 0x00000004;
+        }
         result.bitField0_ |= to_bitField0_;
       }
 
@@ -22747,6 +23596,9 @@ public final class Workspaces {
         }
         if (other.hasGitStatus()) {
           mergeGitStatus(other.getGitStatus());
+        }
+        if (other.hasEditor()) {
+          mergeEditor(other.getEditor());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -22832,6 +23684,13 @@ public final class Workspaces {
                 bitField0_ |= 0x00000100;
                 break;
               } // case 74
+              case 82: {
+                input.readMessage(
+                    getEditorFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000200;
+                break;
+              } // case 82
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -24024,6 +24883,163 @@ public final class Workspaces {
           gitStatus_ = null;
         }
         return gitStatusBuilder_;
+      }
+
+      private io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference editor_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference, io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.Builder, io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReferenceOrBuilder> editorBuilder_;
+      /**
+       * <pre>
+       * editor is the editor to be used in this workspace
+       * </pre>
+       *
+       * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+       * @return Whether the editor field is set.
+       */
+      public boolean hasEditor() {
+        return ((bitField0_ & 0x00000200) != 0);
+      }
+      /**
+       * <pre>
+       * editor is the editor to be used in this workspace
+       * </pre>
+       *
+       * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+       * @return The editor.
+       */
+      public io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference getEditor() {
+        if (editorBuilder_ == null) {
+          return editor_ == null ? io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.getDefaultInstance() : editor_;
+        } else {
+          return editorBuilder_.getMessage();
+        }
+      }
+      /**
+       * <pre>
+       * editor is the editor to be used in this workspace
+       * </pre>
+       *
+       * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+       */
+      public Builder setEditor(io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference value) {
+        if (editorBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          editor_ = value;
+        } else {
+          editorBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000200;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * editor is the editor to be used in this workspace
+       * </pre>
+       *
+       * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+       */
+      public Builder setEditor(
+          io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.Builder builderForValue) {
+        if (editorBuilder_ == null) {
+          editor_ = builderForValue.build();
+        } else {
+          editorBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000200;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * editor is the editor to be used in this workspace
+       * </pre>
+       *
+       * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+       */
+      public Builder mergeEditor(io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference value) {
+        if (editorBuilder_ == null) {
+          if (((bitField0_ & 0x00000200) != 0) &&
+            editor_ != null &&
+            editor_ != io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.getDefaultInstance()) {
+            getEditorBuilder().mergeFrom(value);
+          } else {
+            editor_ = value;
+          }
+        } else {
+          editorBuilder_.mergeFrom(value);
+        }
+        if (editor_ != null) {
+          bitField0_ |= 0x00000200;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * editor is the editor to be used in this workspace
+       * </pre>
+       *
+       * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+       */
+      public Builder clearEditor() {
+        bitField0_ = (bitField0_ & ~0x00000200);
+        editor_ = null;
+        if (editorBuilder_ != null) {
+          editorBuilder_.dispose();
+          editorBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * editor is the editor to be used in this workspace
+       * </pre>
+       *
+       * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+       */
+      public io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.Builder getEditorBuilder() {
+        bitField0_ |= 0x00000200;
+        onChanged();
+        return getEditorFieldBuilder().getBuilder();
+      }
+      /**
+       * <pre>
+       * editor is the editor to be used in this workspace
+       * </pre>
+       *
+       * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+       */
+      public io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReferenceOrBuilder getEditorOrBuilder() {
+        if (editorBuilder_ != null) {
+          return editorBuilder_.getMessageOrBuilder();
+        } else {
+          return editor_ == null ?
+              io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.getDefaultInstance() : editor_;
+        }
+      }
+      /**
+       * <pre>
+       * editor is the editor to be used in this workspace
+       * </pre>
+       *
+       * <code>.gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10 [json_name = "editor"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference, io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.Builder, io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReferenceOrBuilder>
+          getEditorFieldBuilder() {
+        if (editorBuilder_ == null) {
+          editorBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference, io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReference.Builder, io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus.EditorReferenceOrBuilder>(
+                  getEditor(),
+                  getParentForChildren(),
+                  isClean());
+          editor_ = null;
+        }
+        return editorBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:gitpod.experimental.v1.WorkspaceInstanceStatus)
@@ -32646,6 +33662,11 @@ public final class Workspaces {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_Conditions_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_EditorReference_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_EditorReference_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_experimental_v1_Port_descriptor;
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -32789,7 +33810,7 @@ public final class Workspaces {
       "kspaceId\0229\n\ncreated_at\030\003 \001(\0132\032.google.pr" +
       "otobuf.TimestampR\tcreatedAt\022G\n\006status\030\004 " +
       "\001(\0132/.gitpod.experimental.v1.WorkspaceIn" +
-      "stanceStatusR\006status\"\253\007\n\027WorkspaceInstan" +
+      "stanceStatusR\006status\"\354\010\n\027WorkspaceInstan" +
       "ceStatus\022%\n\016status_version\030\001 \001(\004R\rstatus" +
       "Version\022K\n\005phase\030\002 \001(\01625.gitpod.experime" +
       "ntal.v1.WorkspaceInstanceStatus.PhaseR\005p" +
@@ -32802,101 +33823,106 @@ public final class Workspaces {
       "imental.v1.PortR\005ports\022%\n\016recent_folders" +
       "\030\010 \003(\tR\rrecentFolders\022@\n\ngit_status\030\t \001(" +
       "\0132!.gitpod.experimental.v1.GitStatusR\tgi" +
-      "tStatus\032\324\001\n\nConditions\022\026\n\006failed\030\001 \001(\tR\006" +
-      "failed\022\030\n\007timeout\030\002 \001(\tR\007timeout\022J\n\023firs" +
-      "t_user_activity\030\t \001(\0132\032.google.protobuf." +
-      "TimestampR\021firstUserActivity\0221\n\022stopped_" +
-      "by_request\030\013 \001(\010H\000R\020stoppedByRequest\210\001\001B" +
-      "\025\n\023_stopped_by_request\"\331\001\n\005Phase\022\025\n\021PHAS" +
-      "E_UNSPECIFIED\020\000\022\023\n\017PHASE_PREPARING\020\001\022\024\n\020" +
-      "PHASE_IMAGEBUILD\020\002\022\021\n\rPHASE_PENDING\020\003\022\022\n" +
-      "\016PHASE_CREATING\020\004\022\026\n\022PHASE_INITIALIZING\020" +
-      "\005\022\021\n\rPHASE_RUNNING\020\006\022\025\n\021PHASE_INTERRUPTE" +
-      "D\020\007\022\022\n\016PHASE_STOPPING\020\010\022\021\n\rPHASE_STOPPED" +
-      "\020\t\"\252\001\n\004Port\022\022\n\004port\030\001 \001(\004R\004port\022:\n\006polic" +
-      "y\030\002 \001(\0162\".gitpod.experimental.v1.PortPol" +
-      "icyR\006policy\022\020\n\003url\030\003 \001(\tR\003url\022@\n\010protoco" +
-      "l\030\004 \001(\0162$.gitpod.experimental.v1.PortPro" +
-      "tocolR\010protocol\"\235\001\n\022StartWorkspaceSpec\022\'" +
-      "\n\017workspace_class\030\001 \001(\tR\016workspaceClass\022" +
-      "F\n\014ide_settings\030\002 \001(\0132#.gitpod.experimen" +
-      "tal.v1.IDESettingsR\013ideSettings\022\026\n\006regio" +
-      "n\030\003 \001(\tR\006region\"\\\n\013IDESettings\022\037\n\013defaul" +
-      "t_ide\030\001 \001(\tR\ndefaultIde\022,\n\022use_latest_ve" +
-      "rsion\030\002 \001(\010R\020useLatestVersion\"\234\001\n\010PortSp" +
-      "ec\022\022\n\004port\030\001 \001(\004R\004port\022:\n\006policy\030\002 \001(\0162\"" +
-      ".gitpod.experimental.v1.PortPolicyR\006poli" +
-      "cy\022@\n\010protocol\030\003 \001(\0162$.gitpod.experiment" +
-      "al.v1.PortProtocolR\010protocol\"l\n\021UpdatePo" +
-      "rtRequest\022!\n\014workspace_id\030\001 \001(\tR\013workspa" +
-      "ceId\0224\n\004port\030\002 \001(\0132 .gitpod.experimental" +
-      ".v1.PortSpecR\004port\"\024\n\022UpdatePortResponse" +
-      "\"\347\002\n\tGitStatus\022\026\n\006branch\030\001 \001(\tR\006branch\022#" +
-      "\n\rlatest_commit\030\002 \001(\tR\014latestCommit\022)\n\020u" +
-      "ncommited_files\030\003 \003(\tR\017uncommitedFiles\0224" +
-      "\n\026total_uncommited_files\030\006 \001(\005R\024totalUnc" +
-      "ommitedFiles\022\'\n\017untracked_files\030\004 \003(\tR\016u" +
-      "ntrackedFiles\0222\n\025total_untracked_files\030\007" +
-      " \001(\005R\023totalUntrackedFiles\022)\n\020unpushed_co" +
-      "mmits\030\005 \003(\tR\017unpushedCommits\0224\n\026total_un" +
-      "pushed_commits\030\010 \001(\005R\024totalUnpushedCommi" +
-      "ts\"\204\001\n\016WorkspaceClass\022\016\n\002id\030\001 \001(\tR\002id\022!\n" +
-      "\014display_name\030\002 \001(\tR\013displayName\022 \n\013desc" +
-      "ription\030\003 \001(\tR\013description\022\035\n\nis_default" +
-      "\030\004 \001(\010R\tisDefault\"Z\n\037GetDefaultWorkspace" +
-      "ImageRequest\022&\n\014workspace_id\030\001 \001(\tH\000R\013wo" +
-      "rkspaceId\210\001\001B\017\n\r_workspace_id\"\201\002\n GetDef" +
-      "aultWorkspaceImageResponse\022\024\n\005image\030\001 \001(" +
-      "\tR\005image\022\\\n\006source\030\002 \001(\0162D.gitpod.experi" +
-      "mental.v1.GetDefaultWorkspaceImageRespon" +
-      "se.ImageSourceR\006source\"i\n\013ImageSource\022\034\n" +
-      "\030IMAGE_SOURCE_UNSPECIFIED\020\000\022\035\n\031IMAGE_SOU" +
-      "RCE_INSTALLATION\020\001\022\035\n\031IMAGE_SOURCE_ORGAN" +
-      "IZATION\020\002*Z\n\nPortPolicy\022\033\n\027PORT_POLICY_U" +
-      "NSPECIFIED\020\000\022\027\n\023PORT_POLICY_PRIVATE\020\001\022\026\n" +
-      "\022PORT_POLICY_PUBLIC\020\002*^\n\014PortProtocol\022\035\n" +
-      "\031PORT_PROTOCOL_UNSPECIFIED\020\000\022\026\n\022PORT_PRO" +
-      "TOCOL_HTTP\020\001\022\027\n\023PORT_PROTOCOL_HTTPS\020\002*o\n" +
-      "\016AdmissionLevel\022\037\n\033ADMISSION_LEVEL_UNSPE" +
-      "CIFIED\020\000\022\036\n\032ADMISSION_LEVEL_OWNER_ONLY\020\001" +
-      "\022\034\n\030ADMISSION_LEVEL_EVERYONE\020\0022\325\n\n\021Works" +
-      "pacesService\022q\n\016ListWorkspaces\022-.gitpod." +
-      "experimental.v1.ListWorkspacesRequest\032.." +
-      "gitpod.experimental.v1.ListWorkspacesRes" +
-      "ponse\"\000\022k\n\014GetWorkspace\022+.gitpod.experim" +
-      "ental.v1.GetWorkspaceRequest\032,.gitpod.ex" +
-      "perimental.v1.GetWorkspaceResponse\"\000\022\210\001\n" +
-      "\025StreamWorkspaceStatus\0224.gitpod.experime" +
-      "ntal.v1.StreamWorkspaceStatusRequest\0325.g" +
-      "itpod.experimental.v1.StreamWorkspaceSta" +
-      "tusResponse\"\0000\001\022n\n\rGetOwnerToken\022,.gitpo" +
-      "d.experimental.v1.GetOwnerTokenRequest\032-" +
-      ".gitpod.experimental.v1.GetOwnerTokenRes" +
-      "ponse\"\000\022\214\001\n\027CreateAndStartWorkspace\0226.gi" +
-      "tpod.experimental.v1.CreateAndStartWorks" +
-      "paceRequest\0327.gitpod.experimental.v1.Cre" +
-      "ateAndStartWorkspaceResponse\"\000\022q\n\016StartW" +
-      "orkspace\022-.gitpod.experimental.v1.StartW" +
-      "orkspaceRequest\032..gitpod.experimental.v1" +
-      ".StartWorkspaceResponse\"\000\022n\n\rStopWorkspa" +
-      "ce\022,.gitpod.experimental.v1.StopWorkspac" +
-      "eRequest\032-.gitpod.experimental.v1.StopWo" +
-      "rkspaceResponse\"\000\022t\n\017DeleteWorkspace\022..g" +
-      "itpod.experimental.v1.DeleteWorkspaceReq" +
-      "uest\032/.gitpod.experimental.v1.DeleteWork" +
-      "spaceResponse\"\000\022e\n\nUpdatePort\022).gitpod.e" +
-      "xperimental.v1.UpdatePortRequest\032*.gitpo" +
-      "d.experimental.v1.UpdatePortResponse\"\000\022\203" +
-      "\001\n\024ListWorkspaceClasses\0223.gitpod.experim" +
-      "ental.v1.ListWorkspaceClassesRequest\0324.g" +
-      "itpod.experimental.v1.ListWorkspaceClass" +
-      "esResponse\"\000\022\217\001\n\030GetDefaultWorkspaceImag" +
-      "e\0227.gitpod.experimental.v1.GetDefaultWor" +
-      "kspaceImageRequest\0328.gitpod.experimental" +
-      ".v1.GetDefaultWorkspaceImageResponse\"\000Bk" +
-      "\n#io.gitpod.publicapi.experimental.v1ZDg" +
-      "ithub.com/gitpod-io/gitpod/components/pu" +
-      "blic-api/go/experimental/v1b\006proto3"
+      "tStatus\022W\n\006editor\030\n \001(\0132?.gitpod.experim" +
+      "ental.v1.WorkspaceInstanceStatus.EditorR" +
+      "eferenceR\006editor\032\324\001\n\nConditions\022\026\n\006faile" +
+      "d\030\001 \001(\tR\006failed\022\030\n\007timeout\030\002 \001(\tR\007timeou" +
+      "t\022J\n\023first_user_activity\030\t \001(\0132\032.google." +
+      "protobuf.TimestampR\021firstUserActivity\0221\n" +
+      "\022stopped_by_request\030\013 \001(\010H\000R\020stoppedByRe" +
+      "quest\210\001\001B\025\n\023_stopped_by_request\032f\n\017Edito" +
+      "rReference\022\022\n\004name\030\001 \001(\tR\004name\022\030\n\007versio" +
+      "n\030\002 \001(\tR\007version\022%\n\016prefer_toolbox\030\003 \001(\010" +
+      "R\rpreferToolbox\"\331\001\n\005Phase\022\025\n\021PHASE_UNSPE" +
+      "CIFIED\020\000\022\023\n\017PHASE_PREPARING\020\001\022\024\n\020PHASE_I" +
+      "MAGEBUILD\020\002\022\021\n\rPHASE_PENDING\020\003\022\022\n\016PHASE_" +
+      "CREATING\020\004\022\026\n\022PHASE_INITIALIZING\020\005\022\021\n\rPH" +
+      "ASE_RUNNING\020\006\022\025\n\021PHASE_INTERRUPTED\020\007\022\022\n\016" +
+      "PHASE_STOPPING\020\010\022\021\n\rPHASE_STOPPED\020\t\"\252\001\n\004" +
+      "Port\022\022\n\004port\030\001 \001(\004R\004port\022:\n\006policy\030\002 \001(\016" +
+      "2\".gitpod.experimental.v1.PortPolicyR\006po" +
+      "licy\022\020\n\003url\030\003 \001(\tR\003url\022@\n\010protocol\030\004 \001(\016" +
+      "2$.gitpod.experimental.v1.PortProtocolR\010" +
+      "protocol\"\235\001\n\022StartWorkspaceSpec\022\'\n\017works" +
+      "pace_class\030\001 \001(\tR\016workspaceClass\022F\n\014ide_" +
+      "settings\030\002 \001(\0132#.gitpod.experimental.v1." +
+      "IDESettingsR\013ideSettings\022\026\n\006region\030\003 \001(\t" +
+      "R\006region\"\\\n\013IDESettings\022\037\n\013default_ide\030\001" +
+      " \001(\tR\ndefaultIde\022,\n\022use_latest_version\030\002" +
+      " \001(\010R\020useLatestVersion\"\234\001\n\010PortSpec\022\022\n\004p" +
+      "ort\030\001 \001(\004R\004port\022:\n\006policy\030\002 \001(\0162\".gitpod" +
+      ".experimental.v1.PortPolicyR\006policy\022@\n\010p" +
+      "rotocol\030\003 \001(\0162$.gitpod.experimental.v1.P" +
+      "ortProtocolR\010protocol\"l\n\021UpdatePortReque" +
+      "st\022!\n\014workspace_id\030\001 \001(\tR\013workspaceId\0224\n" +
+      "\004port\030\002 \001(\0132 .gitpod.experimental.v1.Por" +
+      "tSpecR\004port\"\024\n\022UpdatePortResponse\"\347\002\n\tGi" +
+      "tStatus\022\026\n\006branch\030\001 \001(\tR\006branch\022#\n\rlates" +
+      "t_commit\030\002 \001(\tR\014latestCommit\022)\n\020uncommit" +
+      "ed_files\030\003 \003(\tR\017uncommitedFiles\0224\n\026total" +
+      "_uncommited_files\030\006 \001(\005R\024totalUncommited" +
+      "Files\022\'\n\017untracked_files\030\004 \003(\tR\016untracke" +
+      "dFiles\0222\n\025total_untracked_files\030\007 \001(\005R\023t" +
+      "otalUntrackedFiles\022)\n\020unpushed_commits\030\005" +
+      " \003(\tR\017unpushedCommits\0224\n\026total_unpushed_" +
+      "commits\030\010 \001(\005R\024totalUnpushedCommits\"\204\001\n\016" +
+      "WorkspaceClass\022\016\n\002id\030\001 \001(\tR\002id\022!\n\014displa" +
+      "y_name\030\002 \001(\tR\013displayName\022 \n\013description" +
+      "\030\003 \001(\tR\013description\022\035\n\nis_default\030\004 \001(\010R" +
+      "\tisDefault\"Z\n\037GetDefaultWorkspaceImageRe" +
+      "quest\022&\n\014workspace_id\030\001 \001(\tH\000R\013workspace" +
+      "Id\210\001\001B\017\n\r_workspace_id\"\201\002\n GetDefaultWor" +
+      "kspaceImageResponse\022\024\n\005image\030\001 \001(\tR\005imag" +
+      "e\022\\\n\006source\030\002 \001(\0162D.gitpod.experimental." +
+      "v1.GetDefaultWorkspaceImageResponse.Imag" +
+      "eSourceR\006source\"i\n\013ImageSource\022\034\n\030IMAGE_" +
+      "SOURCE_UNSPECIFIED\020\000\022\035\n\031IMAGE_SOURCE_INS" +
+      "TALLATION\020\001\022\035\n\031IMAGE_SOURCE_ORGANIZATION" +
+      "\020\002*Z\n\nPortPolicy\022\033\n\027PORT_POLICY_UNSPECIF" +
+      "IED\020\000\022\027\n\023PORT_POLICY_PRIVATE\020\001\022\026\n\022PORT_P" +
+      "OLICY_PUBLIC\020\002*^\n\014PortProtocol\022\035\n\031PORT_P" +
+      "ROTOCOL_UNSPECIFIED\020\000\022\026\n\022PORT_PROTOCOL_H" +
+      "TTP\020\001\022\027\n\023PORT_PROTOCOL_HTTPS\020\002*o\n\016Admiss" +
+      "ionLevel\022\037\n\033ADMISSION_LEVEL_UNSPECIFIED\020" +
+      "\000\022\036\n\032ADMISSION_LEVEL_OWNER_ONLY\020\001\022\034\n\030ADM" +
+      "ISSION_LEVEL_EVERYONE\020\0022\325\n\n\021WorkspacesSe" +
+      "rvice\022q\n\016ListWorkspaces\022-.gitpod.experim" +
+      "ental.v1.ListWorkspacesRequest\032..gitpod." +
+      "experimental.v1.ListWorkspacesResponse\"\000" +
+      "\022k\n\014GetWorkspace\022+.gitpod.experimental.v" +
+      "1.GetWorkspaceRequest\032,.gitpod.experimen" +
+      "tal.v1.GetWorkspaceResponse\"\000\022\210\001\n\025Stream" +
+      "WorkspaceStatus\0224.gitpod.experimental.v1" +
+      ".StreamWorkspaceStatusRequest\0325.gitpod.e" +
+      "xperimental.v1.StreamWorkspaceStatusResp" +
+      "onse\"\0000\001\022n\n\rGetOwnerToken\022,.gitpod.exper" +
+      "imental.v1.GetOwnerTokenRequest\032-.gitpod" +
+      ".experimental.v1.GetOwnerTokenResponse\"\000" +
+      "\022\214\001\n\027CreateAndStartWorkspace\0226.gitpod.ex" +
+      "perimental.v1.CreateAndStartWorkspaceReq" +
+      "uest\0327.gitpod.experimental.v1.CreateAndS" +
+      "tartWorkspaceResponse\"\000\022q\n\016StartWorkspac" +
+      "e\022-.gitpod.experimental.v1.StartWorkspac" +
+      "eRequest\032..gitpod.experimental.v1.StartW" +
+      "orkspaceResponse\"\000\022n\n\rStopWorkspace\022,.gi" +
+      "tpod.experimental.v1.StopWorkspaceReques" +
+      "t\032-.gitpod.experimental.v1.StopWorkspace" +
+      "Response\"\000\022t\n\017DeleteWorkspace\022..gitpod.e" +
+      "xperimental.v1.DeleteWorkspaceRequest\032/." +
+      "gitpod.experimental.v1.DeleteWorkspaceRe" +
+      "sponse\"\000\022e\n\nUpdatePort\022).gitpod.experime" +
+      "ntal.v1.UpdatePortRequest\032*.gitpod.exper" +
+      "imental.v1.UpdatePortResponse\"\000\022\203\001\n\024List" +
+      "WorkspaceClasses\0223.gitpod.experimental.v" +
+      "1.ListWorkspaceClassesRequest\0324.gitpod.e" +
+      "xperimental.v1.ListWorkspaceClassesRespo" +
+      "nse\"\000\022\217\001\n\030GetDefaultWorkspaceImage\0227.git" +
+      "pod.experimental.v1.GetDefaultWorkspaceI" +
+      "mageRequest\0328.gitpod.experimental.v1.Get" +
+      "DefaultWorkspaceImageResponse\"\000Bk\n#io.gi" +
+      "tpod.publicapi.experimental.v1ZDgithub.c" +
+      "om/gitpod-io/gitpod/components/public-ap" +
+      "i/go/experimental/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -33072,13 +34098,19 @@ public final class Workspaces {
     internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_descriptor,
-        new java.lang.String[] { "StatusVersion", "Phase", "Conditions", "Message", "Url", "Admission", "Ports", "RecentFolders", "GitStatus", });
+        new java.lang.String[] { "StatusVersion", "Phase", "Conditions", "Message", "Url", "Admission", "Ports", "RecentFolders", "GitStatus", "Editor", });
     internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_Conditions_descriptor =
       internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_descriptor.getNestedTypes().get(0);
     internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_Conditions_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_Conditions_descriptor,
         new java.lang.String[] { "Failed", "Timeout", "FirstUserActivity", "StoppedByRequest", });
+    internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_EditorReference_descriptor =
+      internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_descriptor.getNestedTypes().get(1);
+    internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_EditorReference_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_experimental_v1_WorkspaceInstanceStatus_EditorReference_descriptor,
+        new java.lang.String[] { "Name", "Version", "PreferToolbox", });
     internal_static_gitpod_experimental_v1_Port_descriptor =
       getDescriptor().getMessageTypes().get(23);
     internal_static_gitpod_experimental_v1_Port_fieldAccessorTable = new

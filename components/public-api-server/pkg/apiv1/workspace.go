@@ -434,6 +434,21 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 	}, nil
 }
 
+func convertIdeConfig(ideConfig *protocol.WorkspaceInstanceIDEConfig) *v1.WorkspaceInstanceStatus_EditorReference {
+	if ideConfig == nil {
+		return nil
+	}
+	ideVersion := "stable"
+	if ideConfig.UseLatest {
+		ideVersion = "latest"
+	}
+	return &v1.WorkspaceInstanceStatus_EditorReference{
+		Name:          ideConfig.IDE,
+		Version:       ideVersion,
+		PreferToolbox: ideConfig.PreferToolbox,
+	}
+}
+
 func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.WorkspaceContext, config *protocol.WorkspaceConfig, shareable bool) (*v1.WorkspaceInstance, error) {
 	if wsi == nil {
 		return nil, nil
@@ -539,6 +554,7 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.W
 			Ports:         ports,
 			RecentFolders: recentFolders,
 			GitStatus:     gitStatus,
+			Editor:        convertIdeConfig(wsi.Configuration.IDEConfig),
 		},
 	}, nil
 }
