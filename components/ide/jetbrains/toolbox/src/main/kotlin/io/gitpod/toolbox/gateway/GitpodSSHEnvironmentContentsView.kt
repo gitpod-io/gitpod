@@ -14,6 +14,7 @@ import io.gitpod.toolbox.service.ConnectParams
 import io.gitpod.toolbox.service.GitpodConnectionProvider
 import io.gitpod.toolbox.service.GitpodPublicApiManager
 import io.gitpod.toolbox.service.Utils
+import io.gitpod.toolbox.utils.GitpodLogger
 import kotlinx.coroutines.future.future
 import java.util.concurrent.CompletableFuture
 
@@ -30,6 +31,7 @@ class GitpodSSHEnvironmentContentsView(
             val provider = GitpodConnectionProvider(authManager, connectParams, publicApi)
             val (connInfo, cancel) = provider.connect()
             this@GitpodSSHEnvironmentContentsView.cancel = cancel
+            GitpodLogger.info("=============test.getConnectionInfo port: ${connInfo.port}")
             return@future connInfo
         }
     }
@@ -37,6 +39,7 @@ class GitpodSSHEnvironmentContentsView(
     override fun addEnvironmentContentsListener(p0: ManualEnvironmentContentsView.Listener) {
         stateListeners += p0
         stateListeners.forEach{
+            // TODO: get from fetchJoinLink2Info
             it.onProjectListUpdated(listOf(object : CachedProjectStub {
                 override fun getPath(): String {
                     return "/workspace/template-golang-cli"

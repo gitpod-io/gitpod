@@ -80,7 +80,10 @@ class GitpodRemoteProviderEnvironment(
     override fun getId(): String = connectParams.uniqueID
     override fun getName(): String = connectParams.resolvedWorkspaceId
 
-    override fun getContentsView(): CompletableFuture<EnvironmentContentsView> = contentsViewFuture
+    override fun getContentsView(): CompletableFuture<EnvironmentContentsView> {
+        GitpodLogger.info("=============test.getContentView id: $id")
+        return contentsViewFuture
+    }
 
     override fun setVisible(visibilityState: EnvironmentVisibilityState) {
     }
