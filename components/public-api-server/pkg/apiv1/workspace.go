@@ -440,7 +440,7 @@ func convertIdeConfig(ideConfig *protocol.WorkspaceInstanceIDEConfig) *v1.Worksp
 	}
 	ideVersion := "stable"
 	if ideConfig.UseLatest {
-		ideVersion = "stable"
+		ideVersion = "latest"
 	}
 	return &v1.WorkspaceInstanceStatus_EditorReference{
 		Name:          ideConfig.IDE,
