@@ -427,7 +427,6 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 				},
 			}},
 		},
-		Editor:      convertIdeConfig(input.LatestInstance.Configuration.IDEConfig),
 		Description: input.Workspace.Description,
 		Status: &v1.WorkspaceStatus{
 			Instance: instance,
@@ -555,6 +554,7 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.W
 			Ports:         ports,
 			RecentFolders: recentFolders,
 			GitStatus:     gitStatus,
+			Editor:        convertIdeConfig(wsi.Configuration.IDEConfig),
 		},
 	}, nil
 }
