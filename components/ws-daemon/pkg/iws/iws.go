@@ -766,7 +766,7 @@ func (wbs *InWorkspaceServiceServer) MountNfs(ctx context.Context, req *api.Moun
 	}
 
 	log.WithField("source", req.Source).WithField("target", req.Target).WithField("staging", nodeStaging).WithField("args", req.Args).Info("Mounting nfs")
-	cmd := exec.CommandContext(ctx, "mount", "-t", "nfs4", "-o", req.Args, req.Source, nodeStaging)
+	cmd := exec.CommandContext(ctx, "nsenter", "-n", "-t", strconv.Itoa(int(supervisorPID)), "mount", "-t", "nfs4", "-o", req.Args, req.Source, nodeStaging)
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 
