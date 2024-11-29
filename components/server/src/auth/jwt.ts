@@ -45,7 +45,7 @@ export class AuthJWT {
         const keyID = decodedWithoutVerification.header.kid;
 
         if (!keyID) {
-            throw new Error("JWT token does not contain kid (key id) property.");
+            throw new Error("JWT token does not contain kid (key id) propertyaaaaaaa.");
         }
 
         if (!publicKeysByID[keyID]) {
