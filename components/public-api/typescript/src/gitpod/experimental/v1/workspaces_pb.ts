@@ -884,13 +884,6 @@ export class Workspace extends Message<Workspace> {
    */
   status?: WorkspaceStatus;
 
-  /**
-   * editor is the editor to be used in this workspace
-   *
-   * @generated from field: gitpod.experimental.v1.EditorReference editor = 7;
-   */
-  editor?: EditorReference;
-
   constructor(data?: PartialMessage<Workspace>) {
     super();
     proto3.util.initPartial(data, this);
@@ -905,7 +898,6 @@ export class Workspace extends Message<Workspace> {
     { no: 4, name: "context", kind: "message", T: WorkspaceContext },
     { no: 5, name: "description", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "status", kind: "message", T: WorkspaceStatus },
-    { no: 7, name: "editor", kind: "message", T: EditorReference },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Workspace {
@@ -922,58 +914,6 @@ export class Workspace extends Message<Workspace> {
 
   static equals(a: Workspace | PlainMessage<Workspace> | undefined, b: Workspace | PlainMessage<Workspace> | undefined): boolean {
     return proto3.util.equals(Workspace, a, b);
-  }
-}
-
-/**
- * @generated from message gitpod.experimental.v1.EditorReference
- */
-export class EditorReference extends Message<EditorReference> {
-  /**
-   * @generated from field: string name = 1;
-   */
-  name = "";
-
-  /**
-   * @generated from field: string version = 2;
-   */
-  version = "";
-
-  /**
-   * prefer_toolbox indicates whether the editor should be launched with the
-   * JetBrains Toolbox instead of JetBrains Gateway
-   *
-   * @generated from field: bool prefer_toolbox = 3;
-   */
-  preferToolbox = false;
-
-  constructor(data?: PartialMessage<EditorReference>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "gitpod.experimental.v1.EditorReference";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "prefer_toolbox", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EditorReference {
-    return new EditorReference().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EditorReference {
-    return new EditorReference().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EditorReference {
-    return new EditorReference().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: EditorReference | PlainMessage<EditorReference> | undefined, b: EditorReference | PlainMessage<EditorReference> | undefined): boolean {
-    return proto3.util.equals(EditorReference, a, b);
   }
 }
 
@@ -1458,6 +1398,13 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
    */
   gitStatus?: GitStatus;
 
+  /**
+   * editor is the editor to be used in this workspace
+   *
+   * @generated from field: gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference editor = 10;
+   */
+  editor?: WorkspaceInstanceStatus_EditorReference;
+
   constructor(data?: PartialMessage<WorkspaceInstanceStatus>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1475,6 +1422,7 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
     { no: 7, name: "ports", kind: "message", T: Port, repeated: true },
     { no: 8, name: "recent_folders", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 9, name: "git_status", kind: "message", T: GitStatus },
+    { no: 10, name: "editor", kind: "message", T: WorkspaceInstanceStatus_EditorReference },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInstanceStatus {
@@ -1660,6 +1608,58 @@ export class WorkspaceInstanceStatus_Conditions extends Message<WorkspaceInstanc
 
   static equals(a: WorkspaceInstanceStatus_Conditions | PlainMessage<WorkspaceInstanceStatus_Conditions> | undefined, b: WorkspaceInstanceStatus_Conditions | PlainMessage<WorkspaceInstanceStatus_Conditions> | undefined): boolean {
     return proto3.util.equals(WorkspaceInstanceStatus_Conditions, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference
+ */
+export class WorkspaceInstanceStatus_EditorReference extends Message<WorkspaceInstanceStatus_EditorReference> {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string version = 2;
+   */
+  version = "";
+
+  /**
+   * prefer_toolbox indicates whether the editor should be launched with the
+   * JetBrains Toolbox instead of JetBrains Gateway
+   *
+   * @generated from field: bool prefer_toolbox = 3;
+   */
+  preferToolbox = false;
+
+  constructor(data?: PartialMessage<WorkspaceInstanceStatus_EditorReference>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.experimental.v1.WorkspaceInstanceStatus.EditorReference";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "version", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "prefer_toolbox", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInstanceStatus_EditorReference {
+    return new WorkspaceInstanceStatus_EditorReference().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceInstanceStatus_EditorReference {
+    return new WorkspaceInstanceStatus_EditorReference().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceInstanceStatus_EditorReference {
+    return new WorkspaceInstanceStatus_EditorReference().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceInstanceStatus_EditorReference | PlainMessage<WorkspaceInstanceStatus_EditorReference> | undefined, b: WorkspaceInstanceStatus_EditorReference | PlainMessage<WorkspaceInstanceStatus_EditorReference> | undefined): boolean {
+    return proto3.util.equals(WorkspaceInstanceStatus_EditorReference, a, b);
   }
 }
 
