@@ -153,6 +153,18 @@ message Workspace {
 
   // status is the current status of this Workspace.
   WorkspaceStatus status = 6;
+
+  // editor is the editor to be used in this workspace
+  EditorReference editor = 7;
+}
+
+message EditorReference {
+  string name = 1;
+  string version = 2;
+
+  // prefer_toolbox indicates whether the editor should be launched with the
+  // JetBrains Toolbox instead of JetBrains Gateway
+  bool prefer_toolbox = 3;
 }
 
 // WorkspaceStatus represents the currently observed status of a Workspace, including data about child resources that belong to this Workspace.
