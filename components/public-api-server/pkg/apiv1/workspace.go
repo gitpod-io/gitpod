@@ -434,7 +434,7 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 	}, nil
 }
 
-func convertIdeConfig(ideConfig *protocol.WorkspaceInstanceIDEConfig) *v1.EditorReference {
+func convertIdeConfig(ideConfig *protocol.WorkspaceInstanceIDEConfig) *v1.WorkspaceInstanceStatus_EditorReference {
 	if ideConfig == nil {
 		return nil
 	}
@@ -442,7 +442,7 @@ func convertIdeConfig(ideConfig *protocol.WorkspaceInstanceIDEConfig) *v1.Editor
 	if ideConfig.UseLatest {
 		ideVersion = "stable"
 	}
-	return &v1.EditorReference{
+	return &v1.WorkspaceInstanceStatus_EditorReference{
 		Name:          ideConfig.IDE,
 		Version:       ideVersion,
 		PreferToolbox: ideConfig.PreferToolbox,
