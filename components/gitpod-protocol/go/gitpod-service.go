@@ -1765,8 +1765,16 @@ type WorkspaceInstanceConditions struct {
 
 // WorkspaceInstanceConfiguration is the WorkspaceInstanceConfiguration message type
 type WorkspaceInstanceConfiguration struct {
-	FeatureFlags []string `json:"featureFlags,omitempty"`
-	TheiaVersion string   `json:"theiaVersion,omitempty"`
+	FeatureFlags []string                    `json:"featureFlags,omitempty"`
+	TheiaVersion string                      `json:"theiaVersion,omitempty"`
+	IDEConfig    *WorkspaceInstanceIDEConfig `json:"ideConfig,omitempty"`
+}
+
+// WorkspaceInstanceIDEConfig is the ide config information of a workspace instance
+type WorkspaceInstanceIDEConfig struct {
+	UseLatest     bool   `json:"useLatest,omitempty"`
+	IDE           string `json:"ide,omitempty"`
+	PreferToolbox bool   `json:"preferToolbox,omitempty"`
 }
 
 // WorkspaceInstanceRepoStatus is the WorkspaceInstanceRepoStatus message type
