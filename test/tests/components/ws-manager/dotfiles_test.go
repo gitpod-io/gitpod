@@ -45,6 +45,7 @@ func TestDotfiles(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		// Scopes should larger than https://github.com/gitpod-io/gitpod/blob/main/components/supervisor/pkg/serverapi/publicapi.go#L99-L109
 		tokenId, err := api.CreateOAuth2Token(username, []string{
 			"function:getToken",
 			"function:openPort",
