@@ -53,6 +53,9 @@ export class BitbucketFileProvider implements FileProvider {
                 );
             }
 
+            if (err.name === "HTTPError") {
+                err = err.status; // we don't want to expose the full error message since it contains credentials
+            }
             log.error({ userId: user.id }, err);
             throw new Error(`Could not fetch ${path} of repository ${repository.owner}/${repository.name}: ${err}`);
         }
@@ -76,6 +79,9 @@ export class BitbucketFileProvider implements FileProvider {
             ).data;
             return contents as string;
         } catch (err) {
+            if (err.name === "HTTPError") {
+                err = err.status; // we don't want to expose the full error message since it contains credentials
+            }
             log.debug({ userId: user.id }, err);
         }
     }
