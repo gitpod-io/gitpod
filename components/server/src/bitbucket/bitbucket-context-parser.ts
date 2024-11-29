@@ -104,7 +104,11 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             return await this.handleNavigatorContext(ctx, user, host, owner, repoName);
         } catch (e) {
             span.addTags({ contextUrl }).log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket context", e);
+            let error = e;
+            if (e.name === "HTTPError") {
+                error = e.status; // we don't want to expose the full error message since it contains credentials
+            }
+            log.error({ userId: user.id }, "Error parsing Bitbucket context", error);
             throw e;
         } finally {
             span.finish();
@@ -211,7 +215,11 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             } as NavigatorContext;
         } catch (e) {
             span.log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket navigator request context", e);
+            let error = e;
+            if (e.name === "HTTPError") {
+                error = e.status; // we don't want to expose the full error message since it contains credentials
+            }
+            log.error({ userId: user.id }, "Error parsing Bitbucket navigator request context", error);
             throw e;
         } finally {
             span.finish();
@@ -272,7 +280,11 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             };
         } catch (e) {
             span.log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket pull request context", e);
+            let error = e;
+            if (e.name === "HTTPError") {
+                error = e.status; // we don't want to expose the full error message since it contains credentials
+            }
+            log.error({ userId: user.id }, "Error parsing Bitbucket pull request context", error);
             throw e;
         } finally {
             span.finish();
@@ -304,7 +316,11 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             };
         } catch (e) {
             span.log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket issue context", e);
+            let error = e;
+            if (e.name === "HTTPError") {
+                error = e.status; // we don't want to expose the full error message since it contains credentials
+            }
+            log.error({ userId: user.id }, "Error parsing Bitbucket issue context", error);
             throw e;
         } finally {
             span.finish();

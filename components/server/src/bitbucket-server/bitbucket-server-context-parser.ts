@@ -88,7 +88,11 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             return await this.handleNavigatorContext(ctx, user, repoKind, host, owner, repoName, more);
         } catch (e) {
             span.addTags({ contextUrl }).log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket context", e);
+            let error = e;
+            if (e.name === "HTTPError") {
+                error = e.status; // we don't want to expose the full error message since it contains credentials
+            }
+            log.error({ userId: user.id }, "Error parsing Bitbucket context", error);
             throw e;
         } finally {
             span.finish();
@@ -271,7 +275,11 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             };
         } catch (e) {
             span.log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket navigator request context", e);
+            let error = e;
+            if (e.name === "HTTPError") {
+                error = e.status; // we don't want to expose the full error message since it contains credentials
+            }
+            log.error({ userId: user.id }, "Error parsing Bitbucket navigator request context", error);
             throw e;
         } finally {
             span.finish();
