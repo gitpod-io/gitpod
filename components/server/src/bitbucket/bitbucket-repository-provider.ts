@@ -123,15 +123,14 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
 
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
         const api = await this.apiFactory.create(user);
-        try {
-            await api.repositories.get({ workspace: owner, repo_slug: repo });
-            // we assume that if the current token is good to read the repository details,
-            // then the repository is accessible
-            return true;
-        } catch (err) {
-            console.warn({ userId: user.id }, "hasReadAccess error", err, { owner, repo });
-            return false;
-        }
+        const result = await api.repositories.get({ workspace: owner, repo_slug: repo }).catch((e) => {
+            console.warn({ userId: user.id }, "hasReadAccess error", { owner, repo, status: e.status });
+            return null;
+        });
+
+        // we assume that if the current token is good to read the repository details,
+        // then the repository is accessible
+        return result !== null;
     }
 
     public async getCommitHistory(
