@@ -213,7 +213,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             } as NavigatorContext;
         } catch (e) {
             const error = e instanceof Error ? handleBitbucketError(e) : e;
-            span.log({ error: e });
+            span.log({ error });
             log.error({ userId: user.id }, "Error parsing Bitbucket navigator request context", error);
             throw e;
         } finally {
