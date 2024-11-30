@@ -13,6 +13,7 @@ import { AbstractContextParser, IContextParser, URLParts } from "../workspace/co
 import { URL } from "url";
 import { BitbucketServer, BitbucketServerApi } from "./bitbucket-server-api";
 import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
+import { handleBitbucketError } from "./utils";
 
 const DEFAULT_BRANCH = "master";
 
@@ -87,11 +88,8 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
 
             return await this.handleNavigatorContext(ctx, user, repoKind, host, owner, repoName, more);
         } catch (e) {
-            span.addTags({ contextUrl }).log({ error: e });
-            let error = e;
-            if (e.name === "HTTPError") {
-                error = e.status; // we don't want to expose the full error message since it contains credentials
-            }
+            const error = e instanceof Error ? handleBitbucketError(e) : e;
+            span.addTags({ contextUrl }).log({ error });
             log.error({ userId: user.id }, "Error parsing Bitbucket context", error);
             throw e;
         } finally {
@@ -274,11 +272,8 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
                 repository,
             };
         } catch (e) {
-            span.log({ error: e });
-            let error = e;
-            if (e.name === "HTTPError") {
-                error = e.status; // we don't want to expose the full error message since it contains credentials
-            }
+            const error = e instanceof Error ? handleBitbucketError(e) : e;
+            span.log({ error });
             log.error({ userId: user.id }, "Error parsing Bitbucket navigator request context", error);
             throw e;
         } finally {
