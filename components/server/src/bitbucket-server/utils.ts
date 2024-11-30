@@ -4,18 +4,22 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { HTTPError } from "bitbucket/src/error/types";
+import { RequestOptions } from "bitbucket/src/plugins/register-endpoints/types";
 
-export class BitbucketHttpError extends Error {
-    status: number;
-    constructor(originalErr: HTTPError, message: string) {
-        if (originalErr.request?.headers.authorization) {
-            originalErr.request.headers.authorization = "<redacted>";
-        }
-        super(message);
-    }
+// this, because for some reason we can't import HTTPError from bitbucket/src/error/types. This is only a subset of the actual class
+export abstract class HTTPError extends Error {
+    public request: RequestOptions | undefined;
 }
 
 export function handleBitbucketError(err: Error): Error {
-    return err instanceof HTTPError ? new BitbucketHttpError(err, "Error parsing BB context") : err;
+    if (err.name !== "HTTPError") {
+        return err;
+    }
+
+    const httpError = err as HTTPError;
+    if (httpError.request?.headers.authorization) {
+        httpError.request.headers.authorization = "<redacted>";
+    }
+
+    return httpError;
 }
