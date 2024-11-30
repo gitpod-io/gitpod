@@ -12,6 +12,7 @@ import { RepoURL } from "../repohost/repo-url";
 import { RepositoryProvider } from "../repohost/repository-provider";
 import { BitbucketApiFactory } from "./bitbucket-api-factory";
 import asyncBatch from "async-batch";
+import { handleBitbucketError } from "../bitbucket-server/utils";
 
 @injectable()
 export class BitbucketRepositoryProvider implements RepositoryProvider {
@@ -124,7 +125,8 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
     async hasReadAccess(user: User, owner: string, repo: string): Promise<boolean> {
         const api = await this.apiFactory.create(user);
         const result = await api.repositories.get({ workspace: owner, repo_slug: repo }).catch((e) => {
-            console.warn({ userId: user.id }, "hasReadAccess error", { owner, repo, status: e.status });
+            const error = e instanceof Error ? handleBitbucketError(e) : e;
+            console.warn({ userId: user.id }, "hasReadAccess error", error, { owner, repo });
             return null;
         });
 

@@ -9,6 +9,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { FileProvider, MaybeContent, RevisionNotFoundError } from "../repohost/file-provider";
 import { BitbucketApiFactory } from "./bitbucket-api-factory";
+import { handleBitbucketError } from "../bitbucket-server/utils";
 
 @injectable()
 export class BitbucketFileProvider implements FileProvider {
@@ -47,13 +48,14 @@ export class BitbucketFileProvider implements FileProvider {
 
             return lastCommit;
         } catch (err) {
-            if (err.status && err.status === 404) {
+            const error = err instanceof Error ? handleBitbucketError(err) : err;
+            if (error.status && error.status === 404) {
                 throw new RevisionNotFoundError(
                     `File ${path} does not exist in repository ${repository.owner}/${repository.name}`,
                 );
             }
 
-            log.error({ userId: user.id }, err);
+            log.error({ userId: user.id }, error);
             throw new Error(`Could not fetch ${path} of repository ${repository.owner}/${repository.name}: ${err}`);
         }
     }
@@ -76,7 +78,8 @@ export class BitbucketFileProvider implements FileProvider {
             ).data;
             return contents as string;
         } catch (err) {
-            log.debug({ userId: user.id }, err);
+            const error = err instanceof Error ? handleBitbucketError(err) : err;
+            log.debug({ userId: user.id }, error);
         }
     }
 }

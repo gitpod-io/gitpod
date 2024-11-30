@@ -20,6 +20,7 @@ import { NotFoundError } from "../errors";
 import { AbstractContextParser, IContextParser, IssueContexts } from "../workspace/context-parser";
 import { BitbucketApiFactory } from "./bitbucket-api-factory";
 import { BitbucketTokenHelper } from "./bitbucket-token-handler";
+import { handleBitbucketError } from "../bitbucket-server/utils";
 
 const DEFAULT_BRANCH = "master";
 
@@ -103,8 +104,9 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             }
             return await this.handleNavigatorContext(ctx, user, host, owner, repoName);
         } catch (e) {
-            span.addTags({ contextUrl }).log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket context", e);
+            const error = e instanceof Error ? handleBitbucketError(e) : e;
+            span.addTags({ contextUrl }).log({ error });
+            log.error({ userId: user.id }, "Error parsing Bitbucket context", error);
             throw e;
         } finally {
             span.finish();
@@ -210,8 +212,9 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
                 repository,
             } as NavigatorContext;
         } catch (e) {
-            span.log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket navigator request context", e);
+            const error = e instanceof Error ? handleBitbucketError(e) : e;
+            span.log({ error });
+            log.error({ userId: user.id }, "Error parsing Bitbucket navigator request context", error);
             throw e;
         } finally {
             span.finish();
@@ -271,8 +274,9 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
                 owner,
             };
         } catch (e) {
-            span.log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket pull request context", e);
+            const error = e instanceof Error ? handleBitbucketError(e) : e;
+            span.log({ error });
+            log.error({ userId: user.id }, "Error parsing Bitbucket pull request context", error);
             throw e;
         } finally {
             span.finish();
@@ -303,8 +307,9 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
                 localBranch: IssueContexts.toBranchName(user, more.title, more.nr),
             };
         } catch (e) {
-            span.log({ error: e });
-            log.error({ userId: user.id }, "Error parsing Bitbucket issue context", e);
+            const error = e instanceof Error ? handleBitbucketError(e) : e;
+            span.log({ error });
+            log.error({ userId: user.id }, "Error parsing Bitbucket issue context", error);
             throw e;
         } finally {
             span.finish();
