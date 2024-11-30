@@ -6,7 +6,7 @@
 
 import { RequestOptions } from "bitbucket/src/plugins/register-endpoints/types";
 
-// this, because for some reason we can't import HTTPError from bitbucket/src/error/types. This is only a subset of the actual class
+// For some reason we can't import HTTPError from bitbucket/src/error/types. This is only a subset of the actual class
 export abstract class HTTPError extends Error {
     public request: RequestOptions | undefined;
 }
