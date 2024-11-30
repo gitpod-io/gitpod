@@ -536,6 +536,11 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.W
 
 	gitStatus := convertGitStatus(wsi.GitStatus)
 
+	var editor *v1.WorkspaceInstanceStatus_EditorReference
+	if wsi.Configuration != nil && wsi.Configuration.IDEConfig != nil {
+		editor = convertIdeConfig(wsi.Configuration.IDEConfig)
+	}
+
 	return &v1.WorkspaceInstance{
 		InstanceId:  wsi.ID,
 		WorkspaceId: wsi.WorkspaceID,
@@ -554,7 +559,7 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.W
 			Ports:         ports,
 			RecentFolders: recentFolders,
 			GitStatus:     gitStatus,
-			Editor:        convertIdeConfig(wsi.Configuration.IDEConfig),
+			Editor:        editor,
 		},
 	}, nil
 }
