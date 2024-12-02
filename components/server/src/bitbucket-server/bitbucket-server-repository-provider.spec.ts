@@ -172,6 +172,11 @@ class TestBitbucketServerRepositoryProvider {
         const result = await this.service.searchRepos(this.user, "/2k-repos-1076", 100);
         expect(result).to.be.empty;
     }
+
+    @test async test_searchRepos_nameSubstring() {
+        const result = await this.service.searchRepos(this.user, "repos-1076", 100);
+        expect(result).to.be.empty;
+    }
 }
 
 module.exports = new TestBitbucketServerRepositoryProvider();
