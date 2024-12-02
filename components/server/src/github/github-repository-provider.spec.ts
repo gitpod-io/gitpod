@@ -62,7 +62,9 @@ class TestGithubContextRepositoryProvider {
         description: "",
         icon: "",
         host: "github.com",
-        oauth: "not-used" as any,
+        oauth: {
+            callBackUrl: "https://gitpod.example.com/auth/github/callback",
+        } as any,
     };
 
     @test public async testFetchCommitHistory() {
@@ -77,6 +79,26 @@ class TestGithubContextRepositoryProvider {
             "506e5aed317f28023994ecf8ca6ed91430e9c1a4",
             "f5b041513bfab914b5fbf7ae55788d9835004d76",
         ]);
+    }
+
+    @test public async testSearchRepos_onlyMatchesByPrefix() {
+        const resultA = await this.provider.searchRepos(this.user, "xample", 100);
+        expect(resultA.length).to.be.eq(0);
+
+        const resultB = await this.provider.searchRepos(this.user, "e", 100);
+        expect(resultB.length).to.be.eq(1);
+    }
+
+    @test public async testSearchRepos_matchesAgainstWholePath() {
+        const resultMatchesSuffix = await this.provider.searchRepos(this.user, "-integration-test/example", 100);
+        expect(resultMatchesSuffix.length).to.be.eq(1);
+
+        const resultDoesNotMatchSubstring = await this.provider.searchRepos(
+            this.user,
+            "gitpod-integration-test/exampl",
+            100,
+        );
+        expect(resultDoesNotMatchSubstring.length).to.be.eq(0);
     }
 
     @test public async testGetUserRepos() {
