@@ -4,8 +4,8 @@
 
 import com.github.jk1.license.filter.ExcludeTransitiveDependenciesFilter
 import com.github.jk1.license.render.JsonReportRenderer
-import org.jetbrains.intellij.pluginRepository.PluginRepositoryFactory
 import org.jetbrains.kotlin.com.intellij.openapi.util.SystemInfoRt
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.nio.file.Path
 import kotlin.io.path.div
 
@@ -94,10 +94,12 @@ licenseReport {
     filters = arrayOf(ExcludeTransitiveDependenciesFilter())
 }
 
+
+kotlin {
+    jvmToolchain(21)
+}
 tasks.compileKotlin {
-    kotlinOptions.freeCompilerArgs += listOf(
-        "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
-    )
+    compilerOptions.jvmTarget.set(JvmTarget.JVM_21)
 }
 
 val restartToolbox by tasks.creating {
@@ -180,8 +182,8 @@ val uploadPlugin by tasks.creating {
     dependsOn(pluginZip)
 
     doLast {
-        val token = System.getenv("JB_MARKETPLACE_PUBLISH_TOKEN")
-        val instance = PluginRepositoryFactory.create("https://plugins.jetbrains.com", token)
+//        val token = System.getenv("JB_MARKETPLACE_PUBLISH_TOKEN")
+//        val instance = PluginRepositoryFactory.create("https://plugins.jetbrains.com", token)
 
         // first upload
         // instance.uploader.uploadNewPlugin(
