@@ -22,7 +22,7 @@ import java.net.URI
 import java.util.*
 import java.util.concurrent.Future
 
-// TODO: Validate Scopes
+// TODO(hw): Validate Scopes
 val authScopesJetBrainsToolbox = listOf(
     "function:getGitpodTokenScopes",
     "function:getLoggedInUser",
