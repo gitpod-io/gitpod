@@ -5,7 +5,7 @@
 package io.gitpod.toolbox.service
 
 import com.jetbrains.rd.util.ConcurrentHashMap
-import com.jetbrains.toolbox.gateway.ssh.SshConnectionInfo
+import com.jetbrains.toolbox.api.remoteDev.ssh.SshConnectionInfo
 
 interface ConnectionInfoProvider {
     fun getUniqueID(): String

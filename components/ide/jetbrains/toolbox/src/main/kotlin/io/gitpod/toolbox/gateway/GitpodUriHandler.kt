@@ -24,7 +24,7 @@ abstract class AbstractUriHandler<T> : UriHandler<T> {
         handle(data)
         true
     } catch (e: Exception) {
-        GitpodLogger.warn("cannot parse URI", e)
+        GitpodLogger.warn(e, "cannot parse URI")
         false
     }
 }

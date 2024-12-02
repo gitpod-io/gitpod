@@ -4,14 +4,16 @@
 
 package io.gitpod.toolbox.components
 
+import com.jetbrains.toolbox.api.core.ui.icons.SvgIcon
 import io.gitpod.toolbox.gateway.GitpodGatewayExtension
 
 @Suppress("FunctionName")
-fun GitpodIcon(): ByteArray {
-    return GitpodGatewayExtension::class.java.getResourceAsStream("/icon.svg")?.readAllBytes() ?: byteArrayOf()
+fun GitpodIconGray(): SvgIcon {
+    return SvgIcon(GitpodGatewayExtension::class.java.getResourceAsStream("/icon-gray.svg")?.readAllBytes() ?: byteArrayOf())
 }
 
 @Suppress("FunctionName")
-fun GitpodIconColored(): ByteArray {
-    return GitpodGatewayExtension::class.java.getResourceAsStream("/icon-colored.svg")?.readAllBytes() ?: byteArrayOf()
+fun GitpodIcon(): SvgIcon {
+    return SvgIcon(GitpodGatewayExtension::class.java.getResourceAsStream("/icon.svg")?.readAllBytes() ?: byteArrayOf())
 }
+
