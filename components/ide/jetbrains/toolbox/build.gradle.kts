@@ -8,6 +8,9 @@ import org.jetbrains.kotlin.com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.nio.file.Path
 import kotlin.io.path.div
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 
 plugins {
     alias(libs.plugins.kotlin)
@@ -54,9 +57,9 @@ dependencies {
     implementation(libs.okhttp)
 }
 
-
 val pluginId = "io.gitpod.toolbox.gateway"
-val pluginVersion = "0.0.1-dev"
+val defaultVersion = "0.0.1-local-${LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMddHHmm"))}"
+val pluginVersion = providers.gradleProperty("pluginVersion").map { it.ifBlank { defaultVersion } }.getOrElse(defaultVersion)
 
 tasks.shadowJar {
     archiveBaseName.set(pluginId)
@@ -156,6 +159,7 @@ val copyPlugin by tasks.creating(Sync::class.java) {
         include("extension.json")
         include("dependencies.json")
         include("icon.svg")
+        include("icon-colored.svg")
     }
 
     into(targetDir)
@@ -173,9 +177,10 @@ val pluginZip by tasks.creating(Zip::class) {
     }
     from("src/main/resources") {
         include("icon.svg")
+        include("icon-colored.svg")
         rename("icon.svg", "pluginIcon.svg")
     }
-    archiveBaseName.set("$pluginId-$pluginVersion")
+    archiveBaseName.set(pluginId)
 }
 
 val uploadPlugin by tasks.creating {
