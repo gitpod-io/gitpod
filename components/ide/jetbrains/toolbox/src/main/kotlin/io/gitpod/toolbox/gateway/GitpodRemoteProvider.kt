@@ -30,7 +30,7 @@ class GitpodRemoteProvider(
     private val loginPage = GitpodLoginPage(authManger)
 
     // cache consumed environments map locally
-    private val environmentMap = mutableMapOf<String, Pair<Workspaces.Workspace, GitpodRemoteProviderEnvironment>>()
+    private val environmentMap = mutableMapOf<String, Pair<Workspaces.Workspace, GitpodRemoteEnvironment>>()
 
     private var pendingConnectParams: Pair<String, ConnectParams>? = null
     private val openInToolboxUriHandler = GitpodOpenInToolboxUriHandler { (gitpodHost, connectParams) ->
@@ -54,7 +54,7 @@ class GitpodRemoteProvider(
         var (workspace) = obj ?: Pair(null, null)
         if (obj == null) {
             workspace = publicApi.getWorkspace(workspaceId)
-            val env = GitpodRemoteProviderEnvironment(
+            val env = GitpodRemoteEnvironment(
                 authManger,
                 connectParams,
                 publicApi,
@@ -63,9 +63,10 @@ class GitpodRemoteProvider(
             environmentMap[connectParams.uniqueID] = Pair(workspace, env)
             consumer.consumeEnvironments(environmentMap.values.map { it.second })
         }
-        val joinLinkInfo = workspace!!.fetchJoinLink2Info(publicApi.getWorkspaceOwnerToken(workspaceId))
+        val joinLinkInfo = publicApi.fetchJoinLink2Info(workspaceId, workspace!!.getIDEUrl())
+        // TODO(hw): verify if it's working
         Utils.clientHelper.prepareClient(joinLinkInfo.ideVersion)
-        Utils.clientHelper.setAutoConnectOnEnvironmentReady(workspaceId, joinLinkInfo.ideVersion, joinLinkInfo.projectPath)
+        Utils.clientHelper.setAutoConnectOnEnvironmentReady(connectParams.uniqueID, joinLinkInfo.ideVersion, joinLinkInfo.projectPath)
     }
 
     private fun showWorkspacesList() {
@@ -77,7 +78,7 @@ class GitpodRemoteProvider(
             }
             consumer.consumeEnvironments(workspaces.map {
                 val connectParams = it.getConnectParams()
-                val env = environmentMap[connectParams.uniqueID]?.second ?: GitpodRemoteProviderEnvironment(
+                val env = environmentMap[connectParams.uniqueID]?.second ?: GitpodRemoteEnvironment(
                     authManger,
                     connectParams,
                     publicApi,

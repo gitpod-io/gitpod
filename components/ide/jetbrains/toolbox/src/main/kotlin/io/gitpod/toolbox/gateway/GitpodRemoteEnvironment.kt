@@ -6,12 +6,7 @@ package io.gitpod.toolbox.gateway
 
 import com.jetbrains.toolbox.gateway.AbstractRemoteProviderEnvironment
 import com.jetbrains.toolbox.gateway.EnvironmentVisibilityState
-import com.jetbrains.toolbox.gateway.deploy.CommandExecution
-import com.jetbrains.toolbox.gateway.deploy.HostAccessInterfaces
-import com.jetbrains.toolbox.gateway.deploy.HostCommandExecutor
-import com.jetbrains.toolbox.gateway.deploy.HostFileAccessor
 import com.jetbrains.toolbox.gateway.environments.EnvironmentContentsView
-import com.jetbrains.toolbox.gateway.environments.HostAccessCapableEnvironmentContentsView
 import com.jetbrains.toolbox.gateway.states.EnvironmentStateConsumer
 import com.jetbrains.toolbox.gateway.states.StandardRemoteEnvironmentState
 import com.jetbrains.toolbox.gateway.ui.ActionDescription
@@ -30,19 +25,15 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
 
-class GitpodRemoteProviderEnvironment(
+class GitpodRemoteEnvironment(
     private val authManager: GitpodAuthManager,
     private val connectParams: ConnectParams,
     private val publicApi: GitpodPublicApiManager, observablePropertiesFactory: ObservablePropertiesFactory?,
 ) : AbstractRemoteProviderEnvironment(observablePropertiesFactory), DisposableHandle {
     private val actionList = Utils.observablePropertiesFactory.emptyObservableList<ActionDescription>();
-    private val contentsViewFuture: CompletableFuture<EnvironmentContentsView> = CompletableFuture.completedFuture(
-        GitpodSSHEnvironmentContentsView(
-            authManager,
-            connectParams,
-            publicApi,
-        )
-    )
+    private val envContentsView = GitpodRemoteEnvironmentContentsView(connectParams, publicApi)
+    private val contentsViewFuture: CompletableFuture<EnvironmentContentsView> =
+        CompletableFuture.completedFuture(envContentsView)
     private var watchWorkspaceJob: Job? = null
 
     private val lastWSEnvState = MutableSharedFlow<WorkspaceEnvState>(1, 0, BufferOverflow.DROP_OLDEST)
@@ -65,6 +56,9 @@ class GitpodRemoteProviderEnvironment(
                 lastPhase = status.phase
                 GitpodLogger.debug("${connectParams.workspaceId} status updated: $lastPhase")
                 lastWSEnvState.tryEmit(WorkspaceEnvState(status.phase))
+                Utils.coroutineScope.launch {
+                    envContentsView.updateEnvironmentMeta(status)
+                }
             }
         }
     }
@@ -78,12 +72,9 @@ class GitpodRemoteProviderEnvironment(
     }
 
     override fun getId(): String = connectParams.uniqueID
-    override fun getName(): String = connectParams.resolvedWorkspaceId
+    override fun getName(): String = connectParams.uniqueID
 
-    override fun getContentsView(): CompletableFuture<EnvironmentContentsView> {
-        GitpodLogger.info("=============test.getContentView id: $id")
-        return contentsViewFuture
-    }
+    override fun getContentsView(): CompletableFuture<EnvironmentContentsView> = contentsViewFuture
 
     override fun setVisible(visibilityState: EnvironmentVisibilityState) {
     }
@@ -91,6 +82,7 @@ class GitpodRemoteProviderEnvironment(
     override fun getActionList(): ObservableList<ActionDescription> = actionList
 
     override fun onDelete() {
+        // TODO: delete workspace?
         watchWorkspaceJob?.cancel()
     }
 
@@ -120,4 +112,5 @@ private class WorkspaceEnvState(val phase: WorkspaceInstanceStatus.Phase) {
             WorkspaceInstanceStatus.Phase.PHASE_STOPPED to StandardRemoteEnvironmentState.Hibernated,
         )
     }
+    // TODO(hw): add customized state
 }
