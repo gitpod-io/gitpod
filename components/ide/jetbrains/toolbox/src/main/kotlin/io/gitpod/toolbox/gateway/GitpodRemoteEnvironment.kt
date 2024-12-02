@@ -4,14 +4,16 @@
 
 package io.gitpod.toolbox.gateway
 
-import com.jetbrains.toolbox.gateway.AbstractRemoteProviderEnvironment
-import com.jetbrains.toolbox.gateway.EnvironmentVisibilityState
-import com.jetbrains.toolbox.gateway.environments.EnvironmentContentsView
-import com.jetbrains.toolbox.gateway.states.EnvironmentStateConsumer
-import com.jetbrains.toolbox.gateway.states.StandardRemoteEnvironmentState
-import com.jetbrains.toolbox.gateway.ui.ActionDescription
-import com.jetbrains.toolbox.gateway.ui.ObservableList
-import com.jetbrains.toolbox.gateway.ui.ObservablePropertiesFactory
+import com.jetbrains.toolbox.api.remoteDev.AbstractRemoteProviderEnvironment
+import com.jetbrains.toolbox.api.remoteDev.EnvironmentVisibilityState
+import com.jetbrains.toolbox.api.remoteDev.environments.EnvironmentContentsView
+import com.jetbrains.toolbox.api.remoteDev.states.CustomRemoteEnvironmentState
+import com.jetbrains.toolbox.api.remoteDev.states.EnvironmentStateConsumer
+import com.jetbrains.toolbox.api.remoteDev.states.EnvironmentStateIcons
+import com.jetbrains.toolbox.api.remoteDev.states.StandardRemoteEnvironmentState
+import com.jetbrains.toolbox.api.ui.actions.ActionDescription
+import com.jetbrains.toolbox.api.ui.observables.ObservableList
+import com.jetbrains.toolbox.api.ui.observables.ObservablePropertiesFactory
 import io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus
 import io.gitpod.toolbox.auth.GitpodAuthManager
 import io.gitpod.toolbox.service.ConnectParams
@@ -100,17 +102,16 @@ private class WorkspaceEnvState(val phase: WorkspaceInstanceStatus.Phase) {
 
     companion object {
         val phaseToStateMap = mapOf(
-            WorkspaceInstanceStatus.Phase.PHASE_UNSPECIFIED to StandardRemoteEnvironmentState.Unreachable,
-            WorkspaceInstanceStatus.Phase.PHASE_PREPARING to StandardRemoteEnvironmentState.Initializing,
-            WorkspaceInstanceStatus.Phase.PHASE_IMAGEBUILD to StandardRemoteEnvironmentState.Initializing,
-            WorkspaceInstanceStatus.Phase.PHASE_PENDING to StandardRemoteEnvironmentState.Initializing,
-            WorkspaceInstanceStatus.Phase.PHASE_CREATING to StandardRemoteEnvironmentState.Initializing,
-            WorkspaceInstanceStatus.Phase.PHASE_INITIALIZING to StandardRemoteEnvironmentState.Initializing,
-            WorkspaceInstanceStatus.Phase.PHASE_RUNNING to StandardRemoteEnvironmentState.Active,
+            WorkspaceInstanceStatus.Phase.PHASE_UNSPECIFIED to CustomRemoteEnvironmentState("Unknown", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Inactive), false, EnvironmentStateIcons.Error),
+            WorkspaceInstanceStatus.Phase.PHASE_PREPARING to CustomRemoteEnvironmentState("Preparing", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Initializing), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_IMAGEBUILD to CustomRemoteEnvironmentState("Building", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Initializing), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_PENDING to CustomRemoteEnvironmentState("Initializing", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Initializing), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_CREATING to CustomRemoteEnvironmentState("Creating", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Initializing), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_INITIALIZING to CustomRemoteEnvironmentState("Initializing", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Initializing), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_RUNNING to CustomRemoteEnvironmentState("Running", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Active), true, EnvironmentStateIcons.Active),
             WorkspaceInstanceStatus.Phase.PHASE_INTERRUPTED to StandardRemoteEnvironmentState.Error,
-            WorkspaceInstanceStatus.Phase.PHASE_STOPPING to StandardRemoteEnvironmentState.Unreachable,
-            WorkspaceInstanceStatus.Phase.PHASE_STOPPED to StandardRemoteEnvironmentState.Hibernated,
+            WorkspaceInstanceStatus.Phase.PHASE_STOPPING to CustomRemoteEnvironmentState("Stopping", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Hibernating), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_STOPPED to CustomRemoteEnvironmentState("Stopped", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Hibernated), false, EnvironmentStateIcons.Hibernated),
         )
     }
-    // TODO(hw): add customized state
 }

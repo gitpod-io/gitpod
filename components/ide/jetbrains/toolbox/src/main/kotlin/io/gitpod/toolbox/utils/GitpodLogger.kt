@@ -4,10 +4,12 @@
 
 package io.gitpod.toolbox.utils
 
+import com.jetbrains.toolbox.api.core.diagnostics.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.spi.LocationAwareLogger
+import java.util.function.Supplier
 
-object GitpodLogger {
+object GitpodLogger: Logger {
     private val logger: LocationAwareLogger = LoggerFactory.getLogger(javaClass) as LocationAwareLogger
     private val FQCN = GitpodLogger::class.java.name
 
@@ -15,31 +17,84 @@ object GitpodLogger {
         return "[gitpod] $msg"
     }
 
-    fun info(message: String) {
-        logger.log(null, FQCN, LocationAwareLogger.INFO_INT, formatMessage(message), null, null)
+    override fun error(exception: Throwable, message: Supplier<String>) {
+        logger.log(null, FQCN, LocationAwareLogger.ERROR_INT, formatMessage(message.get()), null, exception)
     }
 
-    fun debug(message: String) {
-        logger.log(null, FQCN, LocationAwareLogger.DEBUG_INT, formatMessage(message), null, null)
+    override fun error(exception: Throwable, message: String) {
+        logger.log(null, FQCN, LocationAwareLogger.ERROR_INT, formatMessage(message), null, exception)
     }
 
-    fun warn(message: String) {
-        logger.log(null, FQCN, LocationAwareLogger.WARN_INT, formatMessage(message), null, null)
+    override fun error(message: Supplier<String>) {
+        logger.log(null, FQCN, LocationAwareLogger.ERROR_INT, formatMessage(message.get()), null, null)
     }
 
-    fun warn(message: String, throwable: Throwable?) {
-        logger.log(null, FQCN, LocationAwareLogger.WARN_INT, formatMessage(message), null, throwable)
-    }
-
-    fun error(message: String) {
+    override fun error(message: String) {
         logger.log(null, FQCN, LocationAwareLogger.ERROR_INT, formatMessage(message), null, null)
     }
 
-    fun error(message: String, throwable: Throwable?) {
-        logger.log(null, FQCN, LocationAwareLogger.ERROR_INT, formatMessage(message), null, throwable)
+    override fun warn(exception: Throwable, message: Supplier<String>) {
+        logger.log(null, FQCN, LocationAwareLogger.WARN_INT, formatMessage(message.get()), null, exception)
     }
 
-    fun trace(message: String) {
+    override fun warn(exception: Throwable, message: String) {
+        logger.log(null, FQCN, LocationAwareLogger.WARN_INT, formatMessage(message), null, exception)
+    }
+
+    override fun warn(message: Supplier<String>) {
+        logger.log(null, FQCN, LocationAwareLogger.WARN_INT, formatMessage(message.get()), null, null)
+    }
+
+    override fun warn(message: String) {
+        logger.log(null, FQCN, LocationAwareLogger.WARN_INT, formatMessage(message), null, null)
+    }
+
+    override fun debug(exception: Throwable, message: Supplier<String>) {
+        logger.log(null, FQCN, LocationAwareLogger.DEBUG_INT, formatMessage(message.get()), null, exception)
+    }
+
+    override fun debug(exception: Throwable, message: String) {
+        logger.log(null, FQCN, LocationAwareLogger.DEBUG_INT, formatMessage(message), null, exception)
+    }
+
+    override fun debug(message: Supplier<String>) {
+        logger.log(null, FQCN, LocationAwareLogger.DEBUG_INT, formatMessage(message.get()), null, null)
+    }
+
+    override fun debug(message: String) {
+        logger.log(null, FQCN, LocationAwareLogger.DEBUG_INT, formatMessage(message), null, null)
+    }
+
+    override fun info(exception: Throwable, message: Supplier<String>) {
+        logger.log(null, FQCN, LocationAwareLogger.INFO_INT, formatMessage(message.get()), null, exception)
+    }
+
+    override fun info(exception: Throwable, message: String) {
+        logger.log(null, FQCN, LocationAwareLogger.INFO_INT, formatMessage(message), null, exception)
+    }
+
+    override fun info(message: Supplier<String>) {
+        logger.log(null, FQCN, LocationAwareLogger.INFO_INT, formatMessage(message.get()), null, null)
+    }
+
+    override fun info(message: String) {
+        logger.log(null, FQCN, LocationAwareLogger.INFO_INT, formatMessage(message), null, null)
+    }
+
+    override fun trace(exception: Throwable, message: Supplier<String>) {
+        logger.log(null, FQCN, LocationAwareLogger.TRACE_INT, formatMessage(message.get()), null, exception)
+    }
+
+    override fun trace(exception: Throwable, message: String) {
+        logger.log(null, FQCN, LocationAwareLogger.TRACE_INT, formatMessage(message), null, exception)
+    }
+
+    override fun trace(message: Supplier<String>) {
+        logger.log(null, FQCN, LocationAwareLogger.TRACE_INT, formatMessage(message.get()), null, null)
+    }
+
+    override fun trace(message: String) {
         logger.log(null, FQCN, LocationAwareLogger.TRACE_INT, formatMessage(message), null, null)
     }
+
 }

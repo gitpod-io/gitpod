@@ -21,7 +21,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Request
-import java.net.URL
+import java.net.URI
 import java.time.Duration
 
 class GitpodPublicApiManager(private val authManger: GitpodAuthManager) {
@@ -72,7 +72,7 @@ class GitpodPublicApiManager(private val authManger: GitpodAuthManager) {
     suspend fun listWorkspaces(): List<Workspaces.Workspace> {
         val workspaceApi = workspaceApi ?: throw IllegalStateException("No client")
         val resp = workspaceApi.listWorkspaces(Workspaces.ListWorkspacesRequest.newBuilder().build())
-        return this.handleResp("listWorkspaces", resp).resultList.filter { it.status.instance.status.usingToolbox() }
+        return this.handleResp("listWorkspaces", resp).resultList.filter { it.status.instance.status.shouldListedInEnvironments() }
     }
 
     suspend fun getWorkspace(workspaceId: String): Workspaces.Workspace {
@@ -92,7 +92,7 @@ class GitpodPublicApiManager(private val authManger: GitpodAuthManager) {
 
     suspend fun fetchJoinLink2Info(workspaceId: String, ideURL: String): JoinLink2Response {
         val token = getWorkspaceOwnerToken(workspaceId)
-        val backendUrl = "https://24000-${URL(ideURL).host}/joinLink2"
+        val backendUrl = "https://24000-${URI(ideURL).host}/joinLink2"
         val client = Utils.httpClient
         val req = Request.Builder().url(backendUrl).header("x-gitpod-owner-token", token)
         val response = client.newCall(req.build()).await()
@@ -168,5 +168,3 @@ class AuthorizationInterceptor(private val token: String) : Interceptor {
         },
     )
 }
-
-// TODO: logger interceptor

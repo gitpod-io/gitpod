@@ -33,9 +33,9 @@
       }
     }
   },
-  "apiVersion": "0.1.0",
+  "apiVersion": "0.3",
   "compatibleVersionRange": {
-    "from": "2.1.0",
-    "to": "2.6.0"
+    "from": "2.6.0.0",
+    "to": "2.6.0.99999"
   }
 }

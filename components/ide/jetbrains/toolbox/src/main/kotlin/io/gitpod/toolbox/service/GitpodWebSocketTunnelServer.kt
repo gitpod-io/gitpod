@@ -43,13 +43,13 @@ class GitpodWebSocketTunnelServer(private val provider: ConnectionInfoProvider) 
                         }
                     } catch (t: Throwable) {
                         if (isActive) {
-                            GitpodLogger.error("$logPrefix failed to accept", t)
+                            GitpodLogger.error(t, "$logPrefix failed to accept")
                         }
                     }
                 }
             } catch (t: Throwable) {
                 if (isActive) {
-                    GitpodLogger.error("$logPrefix failed to listen", t)
+                    GitpodLogger.error(t, "$logPrefix failed to listen")
                 }
             } finally {
                 GitpodLogger.info("$logPrefix stopped")
@@ -90,7 +90,7 @@ class GitpodWebSocketTunnelServer(private val provider: ConnectionInfoProvider) 
             if (t is SocketException && t.message?.contains("Socket closed") == true) {
                 return
             }
-            GitpodLogger.error("$logPrefix failed to pipe", t)
+            GitpodLogger.error(t, "$logPrefix failed to pipe")
         } finally {
             clients.remove(socketClient)
             socketClient.close()
@@ -166,7 +166,11 @@ class GitpodWebSocketTunnelClient(private val logPrefix: String, private val tcp
     }
 
     override fun onError(session: Session?, thr: Throwable?) {
-        GitpodLogger.error("$logPrefix failed", thr)
+        if (thr != null) {
+            GitpodLogger.error(thr, "$logPrefix failed")
+        } else {
+            GitpodLogger.error("$logPrefix failed")
+        }
         this.doClose()
     }
 
@@ -174,12 +178,12 @@ class GitpodWebSocketTunnelClient(private val logPrefix: String, private val tcp
         try {
             tcpSocket.close()
         } catch (t: Throwable) {
-            GitpodLogger.error("$logPrefix failed to close socket", t)
+            GitpodLogger.error(t, "$logPrefix failed to close socket")
         }
         try {
             container?.stop()
         } catch (t: Throwable) {
-            GitpodLogger.error("$logPrefix failed to stop container", t)
+            GitpodLogger.error(t, "$logPrefix failed to stop container")
         }
     }
 
@@ -191,12 +195,12 @@ class GitpodWebSocketTunnelClient(private val logPrefix: String, private val tcp
         try {
             webSocketSession.close()
         } catch (t: Throwable) {
-            GitpodLogger.error("$logPrefix failed to close", t)
+            GitpodLogger.error(t, "$logPrefix failed to close")
         }
         try {
             container?.stop()
         } catch (t: Throwable) {
-            GitpodLogger.error("$logPrefix failed to stop container", t)
+            GitpodLogger.error(t, "$logPrefix failed to stop container")
         }
     }
 
