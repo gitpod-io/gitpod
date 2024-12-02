@@ -4,9 +4,14 @@
 
 package io.gitpod.toolbox.auth
 
-import com.jetbrains.toolbox.gateway.ui.*
+import com.jetbrains.toolbox.api.core.ui.icons.SvgIcon
+import com.jetbrains.toolbox.api.ui.actions.ActionDescription
+import com.jetbrains.toolbox.api.ui.components.LinkField
+import com.jetbrains.toolbox.api.ui.components.TextField
+import com.jetbrains.toolbox.api.ui.components.UiField
+import com.jetbrains.toolbox.api.ui.components.ValidationResult
 import io.gitpod.toolbox.components.AbstractUiPage
-import io.gitpod.toolbox.components.GitpodIconColored
+import io.gitpod.toolbox.components.GitpodIcon
 import io.gitpod.toolbox.components.SimpleButton
 import io.gitpod.toolbox.service.Utils
 
@@ -25,8 +30,9 @@ class GitpodLoginPage(private val authManager: GitpodAuthManager) : AbstractUiPa
         return mutableListOf(hostField, LinkField("Learn more", "https://gitpod.io/docs"))
     }
 
-    override fun getActionButtons(): MutableList<ActionDescription> {
-        return mutableListOf(SimpleButton("Login") action@{
+
+    override fun getActionButtons(): List<ActionDescription> {
+        return listOf(SimpleButton("Login") action@{
             val host = getFieldValue<String>(hostField) ?: return@action
             val url = authManager.getOAuthLoginUrl(host)
             Utils.openUrl(url)
@@ -37,7 +43,7 @@ class GitpodLoginPage(private val authManager: GitpodAuthManager) : AbstractUiPa
 
     override fun getDescription() = "Always ready to code."
 
-    override fun getSvgIcon(): ByteArray {
-        return GitpodIconColored()
+    override fun getSvgIcon(): SvgIcon {
+        return GitpodIcon()
     }
 }

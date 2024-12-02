@@ -7,7 +7,10 @@ import com.github.jk1.license.render.JsonReportRenderer
 import org.jetbrains.kotlin.com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.nio.file.Path
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.io.path.div
+
 
 plugins {
     alias(libs.plugins.kotlin)
@@ -15,6 +18,7 @@ plugins {
     `java-library`
     alias(libs.plugins.dependency.license.report)
     id("com.github.johnrengelman.shadow") version "8.1.1"
+    alias(libs.plugins.gradle.wrapper)
 }
 
 buildscript {
@@ -25,7 +29,17 @@ buildscript {
 
 repositories {
     mavenCentral()
-    maven("https://packages.jetbrains.team/maven/p/tbx/gateway")
+    maven("https://packages.jetbrains.team/maven/p/tbx/toolbox-api")
+}
+
+jvmWrapper {
+    unixJvmInstallDir = "jvm"
+    winJvmInstallDir = "jvm"
+    linuxAarch64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbr_jcef-21.0.5-linux-aarch64-b631.28.tar.gz"
+    linuxX64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbr_jcef-21.0.5-linux-x64-b631.28.tar.gz"
+    macAarch64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbr_jcef-21.0.5-osx-aarch64-b631.28.tar.gz"
+    macX64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbr_jcef-21.0.5-osx-x64-b631.28.tar.gz"
+    windowsX64JvmUrl = "https://cache-redirector.jetbrains.com/intellij-jbr/jbr_jcef-21.0.5-windows-x64-b631.28.tar.gz"
 }
 
 dependencies {
@@ -47,16 +61,19 @@ dependencies {
     // RD-Core https://mvnrepository.com/artifact/com.jetbrains.rd/rd-core
     implementation("com.jetbrains.rd:rd-core:2024.1.1")
 
-    implementation(libs.gateway.api)
+    compileOnly(libs.bundles.toolbox.plugin.api)
+//    implementation(libs.gateway.api)
     implementation(libs.slf4j)
     implementation(libs.bundles.serialization)
     implementation(libs.coroutines.core)
     implementation(libs.okhttp)
 }
 
-
 val pluginId = "io.gitpod.toolbox.gateway"
-val pluginVersion = "0.0.1-dev"
+val defaultVersion = "0.0.1-local-${LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMddHHmm"))}"
+val pluginVersion = providers.gradleProperty("pluginVersion").map { it.ifBlank { defaultVersion } }.getOrElse(defaultVersion)
+
+println("Plugin version: $pluginVersion")
 
 tasks.shadowJar {
     archiveBaseName.set(pluginId)
@@ -156,6 +173,7 @@ val copyPlugin by tasks.creating(Sync::class.java) {
         include("extension.json")
         include("dependencies.json")
         include("icon.svg")
+        include("icon-gray.svg")
     }
 
     into(targetDir)
@@ -173,9 +191,10 @@ val pluginZip by tasks.creating(Zip::class) {
     }
     from("src/main/resources") {
         include("icon.svg")
+        include("icon-gray.svg")
         rename("icon.svg", "pluginIcon.svg")
     }
-    archiveBaseName.set("$pluginId-$pluginVersion")
+    archiveBaseName.set(pluginId)
 }
 
 val uploadPlugin by tasks.creating {
