@@ -5,26 +5,19 @@
 package io.gitpod.toolbox.service
 
 import com.jetbrains.rd.util.ConcurrentHashMap
-import com.jetbrains.rd.util.URI
 import com.jetbrains.toolbox.gateway.ssh.SshConnectionInfo
-import io.gitpod.publicapi.experimental.v1.Workspaces
-import io.gitpod.toolbox.auth.GitpodAuthManager
-import io.gitpod.toolbox.utils.GitpodLogger
-import kotlinx.serialization.Serializable
 
-class GitpodConnectionProvider(
-    private val authManager: GitpodAuthManager,
-    private val connectParams: ConnectParams,
-    private val publicApi: GitpodPublicApiManager,
-) {
+interface ConnectionInfoProvider {
+    fun getUniqueID(): String
+    suspend fun getWebsocketTunnelUrl(): String
+    suspend fun getOwnerToken(): String
+}
+
+class GitpodConnectionProvider(private val provider: ConnectionInfoProvider) {
     private val activeConnections = ConcurrentHashMap<String, Boolean>()
 
-    suspend fun connect(): Pair<SshConnectionInfo, () -> Unit> {
-        val workspaceId = connectParams.workspaceId
-        val workspace = publicApi.getWorkspace(workspaceId)
-        val ownerToken = publicApi.getWorkspaceOwnerToken(workspaceId)
-
-        val (serverPort, cancel) = tunnelWithWebSocket(workspace, connectParams, ownerToken)
+    fun connect(): Pair<SshConnectionInfo, () -> Unit> {
+        val (serverPort, cancel) = tunnelWithWebSocket(provider)
 
         val connInfo = GitpodWebSocketSshConnectionInfo(
             "gitpod",
@@ -34,12 +27,8 @@ class GitpodConnectionProvider(
         return (connInfo to cancel)
     }
 
-    private fun tunnelWithWebSocket(
-        workspace: Workspaces.Workspace,
-        connectParams: ConnectParams,
-        ownerToken: String,
-    ): Pair<Int, () -> Unit> {
-        val connectionKeyId = connectParams.uniqueID
+    private fun tunnelWithWebSocket(provider: ConnectionInfoProvider): Pair<Int, () -> Unit> {
+        val connectionKeyId = provider.getUniqueID()
 
         var found = true
         activeConnections.computeIfAbsent(connectionKeyId) {
@@ -52,9 +41,7 @@ class GitpodConnectionProvider(
             throw IllegalStateException(errMessage)
         }
 
-        val workspaceHost = URI.create(workspace.status.instance.status.url).host
-        val server =
-            GitpodWebSocketTunnelServer("wss://${workspaceHost}/_supervisor/tunnel/ssh", ownerToken)
+        val server = GitpodWebSocketTunnelServer(provider)
 
         val cancelServer = server.start()
 
@@ -82,13 +69,5 @@ data class ConnectParams(
     val host: String,
     val debugWorkspace: Boolean = false,
 ) {
-    val resolvedWorkspaceId = "${if (debugWorkspace) "debug-" else ""}$workspaceId"
-    val title = "$resolvedWorkspaceId"
-    val uniqueID = "$workspaceId-$debugWorkspace"
+    val uniqueID = if (debugWorkspace) "debug-$workspaceId" else workspaceId
 }
-
-@Serializable
-private data class SSHPublicKey(
-    val type: String,
-    val value: String
-)

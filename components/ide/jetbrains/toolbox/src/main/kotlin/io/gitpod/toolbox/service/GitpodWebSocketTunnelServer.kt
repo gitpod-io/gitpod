@@ -22,24 +22,24 @@ import javax.websocket.*
 import javax.websocket.ClientEndpointConfig.Configurator
 import javax.websocket.MessageHandler.Partial
 
-class GitpodWebSocketTunnelServer(
-    private val url: String,
-    private val ownerToken: String,
-) {
+
+class GitpodWebSocketTunnelServer(private val provider: ConnectionInfoProvider) {
     val port: Int get() = serverSocket.localPort
     private val serverSocket = ServerSocket(0) // pass 0 to have the system choose a free port
-    private val logPrefix = "tunnel: [$url]:"
+    private val logPrefix = "tunnel: [${provider.getUniqueID()}]"
     private val clients = CopyOnWriteArrayList<GitpodWebSocketTunnelClient>()
 
     fun start(): () -> Unit {
         val job = Utils.coroutineScope.launch(Dispatchers.IO) {
-            GitpodLogger.info("tunnel: [$url]: listening on port $port")
+            GitpodLogger.info("$logPrefix listening on port $port")
             try {
                 while (isActive) {
                     try {
                         val clientSocket = serverSocket.accept()
-                        launch(Dispatchers.IO) {
-                            handleClientConnection(clientSocket)
+                        val url = provider.getWebsocketTunnelUrl()
+                        val ownerToken = provider.getOwnerToken()
+                        this.launch(Dispatchers.IO) {
+                            handleClientConnection(clientSocket, url, ownerToken)
                         }
                     } catch (t: Throwable) {
                         if (isActive) {
@@ -63,8 +63,8 @@ class GitpodWebSocketTunnelServer(
         }
     }
 
-    private fun handleClientConnection(clientSocket: Socket) {
-        val socketClient = GitpodWebSocketTunnelClient(url, clientSocket)
+    private fun handleClientConnection(clientSocket: Socket, url: String, ownerToken: String) {
+        val socketClient = GitpodWebSocketTunnelClient(logPrefix, clientSocket)
         try {
             val inputStream = clientSocket.getInputStream()
             val outputStream = clientSocket.getOutputStream()
@@ -75,7 +75,7 @@ class GitpodWebSocketTunnelServer(
                 GitpodLogger.trace("$logPrefix received ${data.size} bytes")
             }
 
-            connectToWebSocket(socketClient)
+            connectToWebSocket(socketClient, url, ownerToken)
 
             clients.add(socketClient)
 
@@ -97,7 +97,7 @@ class GitpodWebSocketTunnelServer(
         }
     }
 
-    private fun connectToWebSocket(socketClient: GitpodWebSocketTunnelClient) {
+    private fun connectToWebSocket(socketClient: GitpodWebSocketTunnelClient, url: String, ownerToken: String) {
         val ssl: SslContextFactory = SslContextFactory.Client()
         ssl.sslContext = SSLContext.getDefault()
         val httpClient = HttpClient(ssl)
@@ -149,11 +149,11 @@ class GitpodWebSocketTunnelServer(
 
 }
 
-class GitpodWebSocketTunnelClient(url: String, private val tcpSocket: Socket) : Endpoint(), Partial<ByteBuffer> {
+class GitpodWebSocketTunnelClient(private val logPrefix: String, private val tcpSocket: Socket) : Endpoint(),
+    Partial<ByteBuffer> {
     private lateinit var webSocketSession: Session
     var onMessageCallback: ((ByteArray) -> Unit)? = null
     var container: ClientContainer? = null
-    private val logPrefix = "tunnel: [$url]:"
 
     override fun onOpen(session: Session, config: EndpointConfig) {
         session.addMessageHandler(this)
