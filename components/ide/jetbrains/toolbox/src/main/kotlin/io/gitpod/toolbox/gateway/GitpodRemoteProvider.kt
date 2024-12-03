@@ -4,12 +4,12 @@
 
 package io.gitpod.toolbox.gateway
 
-import com.jetbrains.toolbox.gateway.ProviderVisibilityState
-import com.jetbrains.toolbox.gateway.RemoteEnvironmentConsumer
-import com.jetbrains.toolbox.gateway.RemoteProvider
-import com.jetbrains.toolbox.gateway.ui.AccountDropdownField
-import com.jetbrains.toolbox.gateway.ui.ActionDescription
-import com.jetbrains.toolbox.gateway.ui.UiPage
+import com.jetbrains.toolbox.api.remoteDev.ProviderVisibilityState
+import com.jetbrains.toolbox.api.remoteDev.RemoteEnvironmentConsumer
+import com.jetbrains.toolbox.api.remoteDev.RemoteProvider
+import com.jetbrains.toolbox.api.ui.actions.ActionDescription
+import com.jetbrains.toolbox.api.ui.components.AccountDropdownField
+import com.jetbrains.toolbox.api.ui.components.UiPage
 import io.gitpod.publicapi.experimental.v1.Workspaces
 import io.gitpod.toolbox.auth.GitpodAuthManager
 import io.gitpod.toolbox.auth.GitpodLoginPage
@@ -66,7 +66,11 @@ class GitpodRemoteProvider(
         val joinLinkInfo = publicApi.fetchJoinLink2Info(workspaceId, workspace!!.getIDEUrl())
         // TODO(hw): verify if it's working
         Utils.clientHelper.prepareClient(joinLinkInfo.ideVersion)
-        Utils.clientHelper.setAutoConnectOnEnvironmentReady(connectParams.uniqueID, joinLinkInfo.ideVersion, joinLinkInfo.projectPath)
+        Utils.clientHelper.setAutoConnectOnEnvironmentReady(
+            connectParams.uniqueID,
+            joinLinkInfo.ideVersion,
+            joinLinkInfo.projectPath
+        )
     }
 
     private fun showWorkspacesList() {
@@ -104,10 +108,10 @@ class GitpodRemoteProvider(
     override fun getOverrideUiPage(): UiPage? {
         authManger.addLoginListener {
             startup()
-            Utils.toolboxUi.showPluginEnvironmentsPage()
+            Utils.environmentUiPageManager.showPluginEnvironmentsPage(false)
         }
         authManger.addLogoutListener {
-            Utils.toolboxUi.showPluginEnvironmentsPage()
+            Utils.environmentUiPageManager.showPluginEnvironmentsPage(false)
         }
         val account = authManger.getCurrentAccount()
         account ?: return loginPage
@@ -117,7 +121,7 @@ class GitpodRemoteProvider(
                 return@launch
             }
             authManger.logout()
-            Utils.toolboxUi.showPluginEnvironmentsPage()
+            Utils.environmentUiPageManager.showPluginEnvironmentsPage(false)
         }
         return null
     }
@@ -137,11 +141,14 @@ class GitpodRemoteProvider(
     }
 
     override fun getAdditionalPluginActions(): MutableList<ActionDescription> {
-        return mutableListOf(
-            SimpleButton("View documents") {
-                Utils.openUrl("https://gitpod.io/docs")
-            },
-        )
+        val list = mutableListOf<ActionDescription>()
+        val account = authManger.getCurrentAccount()
+        if (account != null) {
+            list.add(SimpleButton("Open Dashboard") { Utils.openUrl("https://${account.getHost()}/workspaces") })
+        }
+        list.add(SimpleButton("View Documents") { Utils.openUrl("https://www.gitpod.io/docs/introduction/getting-started") })
+        list.add(SimpleButton("About Gitpod Flex") { Utils.openUrl("https://www.gitpod.io/docs/flex/getting-started") })
+        return list
     }
 
     override fun canCreateNewEnvironments(): Boolean = false

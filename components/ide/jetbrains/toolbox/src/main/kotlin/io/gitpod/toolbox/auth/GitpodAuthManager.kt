@@ -6,7 +6,7 @@ package io.gitpod.toolbox.auth
 
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
-import com.jetbrains.toolbox.gateway.auth.*
+import com.jetbrains.toolbox.api.core.auth.*
 import io.gitpod.publicapi.experimental.v1.UserServiceClient
 import io.gitpod.toolbox.service.GitpodPublicApiManager
 import io.gitpod.toolbox.service.Utils

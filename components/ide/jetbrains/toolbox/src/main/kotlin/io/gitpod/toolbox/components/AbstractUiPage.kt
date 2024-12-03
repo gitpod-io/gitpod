@@ -4,8 +4,8 @@
 
 package io.gitpod.toolbox.components
 
-import com.jetbrains.toolbox.gateway.ui.UiField
-import com.jetbrains.toolbox.gateway.ui.UiPage
+import com.jetbrains.toolbox.api.ui.components.UiField
+import com.jetbrains.toolbox.api.ui.components.UiPage
 
 abstract class AbstractUiPage : UiPage {
     private var stateAccessor: UiPage.UiFieldStateAccessor? = null

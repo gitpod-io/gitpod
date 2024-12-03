@@ -4,7 +4,7 @@
 
 package io.gitpod.toolbox.components
 
-import com.jetbrains.toolbox.gateway.ui.RunnableActionDescription
+import com.jetbrains.toolbox.api.ui.actions.RunnableActionDescription
 
 open class SimpleButton(private val title: String, private val action: () -> Unit = {}): RunnableActionDescription {
     override fun getLabel(): String {
