@@ -64,6 +64,31 @@ class TestGitlabRepositoryProvider {
             "f2d9790f2752a794517b949c65a773eb864844cd",
         ]);
     }
+
+    @test public async testSearchRepos_matchesSubstring() {
+        const result = await this.repositoryProvider.searchRepos(this.user, "est", 100);
+        expect(result.length).to.be.eq(1);
+    }
+
+    // The minimum search string length is 3 characters (unless there is an exact match).
+    @test public async testSearchRepos_shortSearchString_looseMatch() {
+        const resultA = await this.repositoryProvider.searchRepos(this.user, "t", 100);
+        expect(resultA.length).to.be.eq(0);
+
+        const resultB = await this.repositoryProvider.searchRepos(this.user, "te", 100);
+        expect(resultB.length).to.be.eq(0);
+    }
+
+    @test public async testSearchRepos_shortSearchString_exactMatch() {
+        const result = await this.repositoryProvider.searchRepos(this.user, "g", 100);
+        expect(result.length).to.be.eq(1);
+    }
+
+    // GitLab API does not support searching for repositories by their full path, only by their name.
+    @test public async testSearchRepos_noMatchAgainstWholePath() {
+        const result = await this.repositoryProvider.searchRepos(this.user, "gitpod-integration-tests/test", 100);
+        expect(result.length).to.be.eq(0);
+    }
 }
 
 module.exports = new TestGitlabRepositoryProvider();

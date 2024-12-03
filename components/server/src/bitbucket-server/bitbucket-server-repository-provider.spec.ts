@@ -153,6 +153,30 @@ class TestBitbucketServerRepositoryProvider {
             name: "browser-extension-test",
         });
     }
+
+    @test async test_searchRepos_ok() {
+        const result = await this.service.searchRepos(this.user, "2k-repos-1076", 100);
+        expect(result.length).to.be.eq(1);
+    }
+
+    @test async test_searchRepos_shortSearch() {
+        const resultA = await this.service.searchRepos(this.user, "2", 100);
+        expect(resultA).to.not.be.empty;
+
+        const resultB = await this.service.searchRepos(this.user, "2k", 100);
+        expect(resultB).to.not.be.empty;
+    }
+
+    // bitbucket searches for repo and project names, not for the full path
+    @test async test_searchRepos_pathSubstring() {
+        const result = await this.service.searchRepos(this.user, "/2k-repos-1076", 100);
+        expect(result).to.be.empty;
+    }
+
+    @test async test_searchRepos_nameSubstring() {
+        const result = await this.service.searchRepos(this.user, "repos-1076", 100);
+        expect(result).to.be.empty;
+    }
 }
 
 module.exports = new TestBitbucketServerRepositoryProvider();
