@@ -4,14 +4,14 @@
 
 package io.gitpod.toolbox.gateway
 
-import com.jetbrains.toolbox.gateway.AbstractRemoteProviderEnvironment
-import com.jetbrains.toolbox.gateway.EnvironmentVisibilityState
-import com.jetbrains.toolbox.gateway.environments.EnvironmentContentsView
-import com.jetbrains.toolbox.gateway.states.EnvironmentStateConsumer
-import com.jetbrains.toolbox.gateway.states.StandardRemoteEnvironmentState
-import com.jetbrains.toolbox.gateway.ui.ActionDescription
-import com.jetbrains.toolbox.gateway.ui.ObservableList
-import com.jetbrains.toolbox.gateway.ui.ObservablePropertiesFactory
+import com.jetbrains.toolbox.api.remoteDev.AbstractRemoteProviderEnvironment
+import com.jetbrains.toolbox.api.remoteDev.EnvironmentVisibilityState
+import com.jetbrains.toolbox.api.remoteDev.environments.EnvironmentContentsView
+import com.jetbrains.toolbox.api.remoteDev.states.EnvironmentStateConsumer
+import com.jetbrains.toolbox.api.remoteDev.states.StandardRemoteEnvironmentState
+import com.jetbrains.toolbox.api.ui.actions.ActionDescription
+import com.jetbrains.toolbox.api.ui.observables.ObservableList
+import com.jetbrains.toolbox.api.ui.observables.ObservablePropertiesFactory
 import io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus
 import io.gitpod.toolbox.auth.GitpodAuthManager
 import io.gitpod.toolbox.service.ConnectParams

@@ -4,11 +4,11 @@
 
 package io.gitpod.toolbox.gateway
 
-import com.jetbrains.toolbox.gateway.environments.CachedIdeStub
-import com.jetbrains.toolbox.gateway.environments.CachedProjectStub
-import com.jetbrains.toolbox.gateway.environments.ManualEnvironmentContentsView
-import com.jetbrains.toolbox.gateway.environments.SshEnvironmentContentsView
-import com.jetbrains.toolbox.gateway.ssh.SshConnectionInfo
+import com.jetbrains.toolbox.api.remoteDev.environments.CachedIdeStub
+import com.jetbrains.toolbox.api.remoteDev.environments.CachedProjectStub
+import com.jetbrains.toolbox.api.remoteDev.environments.ManualEnvironmentContentsView
+import com.jetbrains.toolbox.api.remoteDev.environments.SshEnvironmentContentsView
+import com.jetbrains.toolbox.api.remoteDev.ssh.SshConnectionInfo
 import io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus
 import io.gitpod.toolbox.service.*
 import io.gitpod.toolbox.utils.GitpodLogger

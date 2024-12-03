@@ -4,14 +4,14 @@
 
 package io.gitpod.toolbox.gateway
 
-import com.jetbrains.toolbox.gateway.GatewayExtension
-import com.jetbrains.toolbox.gateway.RemoteEnvironmentConsumer
-import com.jetbrains.toolbox.gateway.RemoteProvider
-import com.jetbrains.toolbox.gateway.ToolboxServiceLocator
+import com.jetbrains.toolbox.api.core.ServiceLocator
+import com.jetbrains.toolbox.api.remoteDev.RemoteDevExtension
+import com.jetbrains.toolbox.api.remoteDev.RemoteEnvironmentConsumer
+import com.jetbrains.toolbox.api.remoteDev.RemoteProvider
 import io.gitpod.toolbox.service.Utils
 
-class GitpodGatewayExtension : GatewayExtension {
-    override fun createRemoteProviderPluginInstance(serviceLocator: ToolboxServiceLocator): RemoteProvider {
+class GitpodGatewayExtension : RemoteDevExtension {
+    override fun createRemoteProviderPluginInstance(serviceLocator: ServiceLocator): RemoteProvider {
         Utils.initialize(serviceLocator)
         return GitpodRemoteProvider(serviceLocator.getService(RemoteEnvironmentConsumer::class.java))
     }
