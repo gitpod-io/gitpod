@@ -10,6 +10,7 @@ import com.jetbrains.toolbox.api.core.os.LocalDesktopManager
 import com.jetbrains.toolbox.api.remoteDev.connection.ClientHelper
 import com.jetbrains.toolbox.api.remoteDev.connection.ToolboxProxySettings
 import com.jetbrains.toolbox.api.remoteDev.ssh.validation.SshConnectionValidator
+import com.jetbrains.toolbox.api.remoteDev.states.EnvironmentStateColorPalette
 import com.jetbrains.toolbox.api.remoteDev.ui.EnvironmentUiPageManager
 import com.jetbrains.toolbox.api.ui.ToolboxUi
 import com.jetbrains.toolbox.api.ui.observables.ObservablePropertiesFactory
@@ -33,6 +34,7 @@ object Utils {
     lateinit var gitpodSettings: GitpodSettings private set
 
     lateinit var toolboxUi: ToolboxUi private set
+    lateinit var environmentStateColorPalette: EnvironmentStateColorPalette private set
     lateinit var localDesktopManager: LocalDesktopManager private set
     lateinit var environmentUiPageManager: EnvironmentUiPageManager private set
 
@@ -45,6 +47,7 @@ object Utils {
         coroutineScope = serviceLocator.getService(CoroutineScope::class.java)
         toolboxUi = serviceLocator.getService(ToolboxUi::class.java)
         localDesktopManager = serviceLocator.getService(LocalDesktopManager::class.java)
+        environmentStateColorPalette = serviceLocator.getService(EnvironmentStateColorPalette::class.java)
         environmentUiPageManager = serviceLocator.getService(EnvironmentUiPageManager::class.java)
         settingStore = serviceLocator.getService(PluginSettingsStore::class.java)
         sshConnectionValidator = serviceLocator.getService(SshConnectionValidator::class.java)

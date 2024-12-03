@@ -7,7 +7,9 @@ package io.gitpod.toolbox.gateway
 import com.jetbrains.toolbox.api.remoteDev.AbstractRemoteProviderEnvironment
 import com.jetbrains.toolbox.api.remoteDev.EnvironmentVisibilityState
 import com.jetbrains.toolbox.api.remoteDev.environments.EnvironmentContentsView
+import com.jetbrains.toolbox.api.remoteDev.states.CustomRemoteEnvironmentState
 import com.jetbrains.toolbox.api.remoteDev.states.EnvironmentStateConsumer
+import com.jetbrains.toolbox.api.remoteDev.states.EnvironmentStateIcons
 import com.jetbrains.toolbox.api.remoteDev.states.StandardRemoteEnvironmentState
 import com.jetbrains.toolbox.api.ui.actions.ActionDescription
 import com.jetbrains.toolbox.api.ui.observables.ObservableList
@@ -108,9 +110,9 @@ private class WorkspaceEnvState(val phase: WorkspaceInstanceStatus.Phase) {
             WorkspaceInstanceStatus.Phase.PHASE_INITIALIZING to StandardRemoteEnvironmentState.Initializing,
             WorkspaceInstanceStatus.Phase.PHASE_RUNNING to StandardRemoteEnvironmentState.Active,
             WorkspaceInstanceStatus.Phase.PHASE_INTERRUPTED to StandardRemoteEnvironmentState.Error,
-            WorkspaceInstanceStatus.Phase.PHASE_STOPPING to StandardRemoteEnvironmentState.Unreachable,
-            WorkspaceInstanceStatus.Phase.PHASE_STOPPED to StandardRemoteEnvironmentState.Hibernated,
+            WorkspaceInstanceStatus.Phase.PHASE_STOPPING to CustomRemoteEnvironmentState("Stopping", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Activating), false, EnvironmentStateIcons.Offline),
+//            WorkspaceInstanceStatus.Phase.PHASE_STOPPED to CustomRemoteEnvironmentState("Stopped", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Error), false, EnvironmentStateIcons.Offline),
+            WorkspaceInstanceStatus.Phase.PHASE_STOPPED to CustomRemoteEnvironmentState("Stopping", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Restarting), false, EnvironmentStateIcons.Connecting),
         )
     }
-    // TODO(hw): add customized state
 }
