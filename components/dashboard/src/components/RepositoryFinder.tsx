@@ -22,6 +22,8 @@ import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_
 import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
 import { PREDEFINED_REPOS } from "../data/git-providers/predefined-repos";
 import { useConfiguration, useListConfigurations } from "../data/configurations/configuration-queries";
+import { useUserLoader } from "../hooks/use-user-loader";
+import { conjunctScmProviders, getDeduplicatedScmProviders } from "../utils";
 
 const isPredefined = (repo: SuggestedRepository): boolean => {
     return PREDEFINED_REPOS.some((predefined) => predefined.url === repo.url) && !repo.configurationId;
@@ -54,6 +56,8 @@ export default function RepositoryFinder({
     onChange,
 }: RepositoryFinderProps) {
     const [searchString, setSearchString] = useState("");
+
+    const { user } = useUserLoader();
     const {
         data: unifiedRepos,
         isLoading,
@@ -119,6 +123,12 @@ export default function RepositoryFinder({
     ]);
 
     const authProviders = useAuthProviderDescriptions();
+
+    const usedProviders = useMemo(() => {
+        if (!user || !authProviders.data) return [];
+
+        return getDeduplicatedScmProviders(user, authProviders.data) ?? [];
+    }, [user, authProviders]);
 
     const handleSelectionChange = useCallback(
         (selectedID: string) => {
@@ -310,7 +320,7 @@ export default function RepositoryFinder({
             }
 
             if (
-                searchString.length >= 3 &&
+                searchString.length > 0 &&
                 authProviders.data?.some((p) => p.type === AuthProviderType.BITBUCKET_SERVER) &&
                 !onlyConfigurations
             ) {
@@ -327,8 +337,52 @@ export default function RepositoryFinder({
                 });
             }
 
-            if (searchString.length >= 3 && authProviders.data?.some((p) => p.type === AuthProviderType.AZURE_DEVOPS)) {
-                // ENT-780
+            if (
+                searchString.length > 0 &&
+                searchString.length < 3 &&
+                authProviders.data?.some((p) => p.type === AuthProviderType.GITLAB) &&
+                !onlyConfigurations
+            ) {
+                // add an element that tells the user that GitLab only does exact searches for short queries
+                result.push({
+                    id: "gitlab",
+                    element: (
+                        <div className="text-sm text-pk-content-tertiary flex items-center">
+                            <Exclamation2 className="w-4 h-4 mr-2" />
+                            <span>Search is too short for searching on GitLab.</span>
+                        </div>
+                    ),
+                    isSelectable: false,
+                });
+            }
+
+            const setupProvidersWithoutPathSearchSupport = usedProviders.filter((p) =>
+                ["Bitbucket", "Bitbucket Server", "GitLab"].includes(p),
+            );
+            if (
+                searchString.length > 1 &&
+                setupProvidersWithoutPathSearchSupport.length > 0 &&
+                searchString.includes("/")
+            ) {
+                result.push({
+                    id: "whole-path-matching-unsupported",
+                    element: (
+                        <div className="text-sm text-pk-content-tertiary flex items-center">
+                            <Exclamation2 className="w-4 h-4 mr-2" />
+                            <span>
+                                {usedProviders
+                                    ? conjunctScmProviders(setupProvidersWithoutPathSearchSupport)
+                                    : "Some providers"}{" "}
+                                only support searching by repository name, not full paths.
+                            </span>
+                        </div>
+                    ),
+                    isSelectable: false,
+                });
+            }
+
+            if (searchString.length > 0 && authProviders.data?.some((p) => p.type === AuthProviderType.AZURE_DEVOPS)) {
+                // CLC-780
                 result.push({
                     id: "azure-devops",
                     element: (
@@ -341,22 +395,17 @@ export default function RepositoryFinder({
                 });
             }
 
-            if (searchString.length < 3) {
-                // add an element that tells the user to type more
-                result.push({
-                    id: "not-searched",
-                    element: (
-                        <div className="text-sm text-pk-content-tertiary">
-                            Please type at least 3 characters to search.
-                        </div>
-                    ),
-                    isSelectable: false,
-                });
-            }
-
             return result;
         },
-        [isShowingExamples, onlyConfigurations, repos, hasMore, authProviders.data, filteredPredefinedRepos],
+        [
+            isShowingExamples,
+            onlyConfigurations,
+            repos,
+            hasMore,
+            authProviders.data,
+            filteredPredefinedRepos,
+            usedProviders,
+        ],
     );
 
     return (

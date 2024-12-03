@@ -7,8 +7,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import UAParser from "ua-parser-js";
 import { useUserLoader } from "../hooks/use-user-loader";
-import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
-import { AuthProviderDescription, AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provider-descriptions-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { trackEvent } from "../Analytics";
@@ -17,7 +15,7 @@ import bitbucketButton from "../images/browser-extension/bitbucket.webp";
 import githubButton from "../images/browser-extension/github.webp";
 import gitlabButton from "../images/browser-extension/gitlab.webp";
 import azuredevopsButton from "../images/browser-extension/azure-devops.webp";
-import uniq from "lodash/uniq";
+import { disjunctScmProviders, getDeduplicatedScmProviders } from "../utils";
 
 const browserExtensionImages = {
     Bitbucket: bitbucketButton,
@@ -31,7 +29,6 @@ type BrowserOption = {
     aliases?: string[];
     url: string;
 };
-type UnifiedAuthProvider = "Bitbucket" | "GitLab" | "GitHub" | "Azure DevOps";
 
 const installationOptions: BrowserOption[] = [
     {
@@ -45,45 +42,6 @@ const installationOptions: BrowserOption[] = [
         url: "https://chrome.google.com/webstore/detail/gitpod-always-ready-to-co/dodmmooeoklaejobgleioelladacbeki",
     },
 ];
-
-const isIdentity = (identity?: AuthProviderDescription): identity is AuthProviderDescription => !!identity;
-const unifyProviderType = (type: AuthProviderType): UnifiedAuthProvider | undefined => {
-    switch (type) {
-        case AuthProviderType.BITBUCKET:
-        case AuthProviderType.BITBUCKET_SERVER:
-            return "Bitbucket";
-        case AuthProviderType.GITHUB:
-            return "GitHub";
-        case AuthProviderType.GITLAB:
-            return "GitLab";
-        case AuthProviderType.AZURE_DEVOPS:
-            return "Azure DevOps";
-        default:
-            return undefined;
-    }
-};
-
-const isAuthProviderType = (type?: UnifiedAuthProvider): type is UnifiedAuthProvider => !!type;
-const getDeduplicatedScmProviders = (user: User, descriptions: AuthProviderDescription[]): UnifiedAuthProvider[] => {
-    const userIdentities = user.identities.map((identity) => identity.authProviderId);
-    const userProviders = userIdentities
-        .map((id) => descriptions?.find((provider) => provider.id === id))
-        .filter(isIdentity)
-        .map((provider) => provider.type);
-
-    const unifiedProviders = userProviders
-        .map((type) => unifyProviderType(type))
-        .filter(isAuthProviderType)
-        .sort();
-
-    return uniq(unifiedProviders);
-};
-
-const displayScmProviders = (providers: UnifiedAuthProvider[]): string => {
-    const formatter = new Intl.ListFormat("en", { style: "long", type: "disjunction" });
-
-    return formatter.format(providers);
-};
 
 /**
  * Determines whether the extension has been able to access the current site in the past month. If it hasn't, it's most likely not installed or misconfigured
@@ -108,7 +66,7 @@ export function BrowserExtensionBanner() {
         return getDeduplicatedScmProviders(user, authProviderDescriptions);
     }, [user, authProviderDescriptions]);
 
-    const scmProviderString = useMemo(() => usedProviders && displayScmProviders(usedProviders), [usedProviders]);
+    const scmProviderString = useMemo(() => usedProviders && disjunctScmProviders(usedProviders), [usedProviders]);
 
     const parser = useMemo(() => new UAParser(), []);
     const browserName = useMemo(() => parser.getBrowser().name?.toLowerCase(), [parser]);

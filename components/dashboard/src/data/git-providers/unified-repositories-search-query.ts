@@ -62,7 +62,7 @@ export const useUnifiedRepositorySearch = ({
     }, [configurationSearch.data, excludeConfigurations]);
 
     const filteredRepos = useMemo(() => {
-        const repos = [suggestedQuery.data || [], searchQuery.data || [], flattenedConfigurations ?? []].flat();
+        const repos = [suggestedQuery.data || [], flattenedConfigurations ?? [], searchQuery.data || []].flat();
         return deduplicateAndFilterRepositories(searchString, excludeConfigurations, onlyConfigurations, repos);
     }, [
         searchString,
@@ -113,7 +113,7 @@ export function deduplicateAndFilterRepositories(
         }
 
         // filter out entries that don't match the search string
-        if (!`${repo.url}${repo.configurationName || ""}`.toLowerCase().includes(searchString.trim().toLowerCase())) {
+        if (!`${repo.url}${repo.configurationName ?? ""}`.toLowerCase().includes(searchString.trim().toLowerCase())) {
             continue;
         }
         // filter out duplicates
