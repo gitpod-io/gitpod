@@ -444,6 +444,42 @@ func TestDeepCopyStruct(t *testing.T) {
 			},
 			CmpOpts: []cmp.Option{cmpopts.IgnoreUnexported(UnexportedStructToTest{})},
 		},
+		{
+			Name: "nil interface",
+			Struct: &struct {
+				Hashed       string `scrub:"hash"`
+				NilInterface interface{}
+			}{
+				Hashed: "foo",
+			},
+			Expectation: Expectation{
+				Result: &struct {
+					Hashed       string `scrub:"hash"`
+					NilInterface interface{}
+				}{
+					Hashed:       "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]",
+					NilInterface: nil,
+				},
+			},
+		},
+		{
+			Name: "nil point interface",
+			Struct: &struct {
+				Hashed       string `scrub:"hash"`
+				NilInterface *string
+			}{
+				Hashed: "foo",
+			},
+			Expectation: Expectation{
+				Result: &struct {
+					Hashed       string `scrub:"hash"`
+					NilInterface *string
+				}{
+					Hashed:       "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]",
+					NilInterface: nil,
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
