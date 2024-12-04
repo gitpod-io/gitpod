@@ -235,7 +235,6 @@ export function isTrustedUrlOrPath(urlOrPath: string) {
 }
 
 type UnifiedAuthProvider = "Bitbucket" | "GitLab" | "GitHub" | "Azure DevOps";
-
 const unifyProviderType = (type: AuthProviderType): UnifiedAuthProvider | undefined => {
     switch (type) {
         case AuthProviderType.BITBUCKET:
