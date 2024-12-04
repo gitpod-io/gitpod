@@ -311,157 +311,157 @@ func TestDeepCopyStruct(t *testing.T) {
 		Expectation Expectation
 		CmpOpts     []cmp.Option
 	}{
-		// {
-		// 	Name: "basic happy path",
-		// 	Struct: &struct {
-		// 		Username     string
-		// 		Email        string
-		// 		Password     string
-		// 		WorkspaceID  string
-		// 		LeaveMeAlone string
-		// 	}{Username: "foo", Email: "foo@bar.com", Password: "foobar", WorkspaceID: "gitpodio-gitpod-uesaddev73c", LeaveMeAlone: "foo"},
-		// 	Expectation: Expectation{
-		// 		Result: &struct {
-		// 			Username     string
-		// 			Email        string
-		// 			Password     string
-		// 			WorkspaceID  string
-		// 			LeaveMeAlone string
-		// 		}{Username: "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]", Email: "[redacted]", Password: "[redacted]", WorkspaceID: "[redacted:md5:a35538939333def8477b5c19ac694b35]", LeaveMeAlone: "foo"},
-		// 	},
-		// },
-		// {
-		// 	Name: "stuct without pointer",
-		// 	Struct: struct {
-		// 		Username     string
-		// 		Email        string
-		// 		Password     string
-		// 		WorkspaceID  string
-		// 		LeaveMeAlone string
-		// 	}{Username: "foo", Email: "foo@bar.com", Password: "foobar", WorkspaceID: "gitpodio-gitpod-uesaddev73c", LeaveMeAlone: "foo"},
-		// 	Expectation: Expectation{
-		// 		Result: struct {
-		// 			Username     string
-		// 			Email        string
-		// 			Password     string
-		// 			WorkspaceID  string
-		// 			LeaveMeAlone string
-		// 		}{Username: "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]", Email: "[redacted]", Password: "[redacted]", WorkspaceID: "[redacted:md5:a35538939333def8477b5c19ac694b35]", LeaveMeAlone: "foo"},
-		// 	},
-		// },
-		// {
-		// 	Name: "map field",
-		// 	Struct: &struct {
-		// 		WithMap map[string]interface{}
-		// 	}{
-		// 		WithMap: map[string]interface{}{
-		// 			"email": "foo@bar.com",
-		// 		},
-		// 	},
-		// 	Expectation: Expectation{
-		// 		Result: &struct{ WithMap map[string]any }{WithMap: map[string]any{"email": string("[redacted]")}},
-		// 	},
-		// },
-		// {
-		// 	Name: "slices",
-		// 	Struct: &struct {
-		// 		Slice []string
-		// 	}{Slice: []string{"foo", "bar", "foo@bar.com"}},
-		// 	Expectation: Expectation{
-		// 		Result: &struct {
-		// 			Slice []string
-		// 		}{Slice: []string{"foo", "bar", "[redacted:email]"}},
-		// 	},
-		// },
-		// {
-		// 	Name: "struct tags",
-		// 	Struct: &struct {
-		// 		Hashed   string `scrub:"hash"`
-		// 		Redacted string `scrub:"redact"`
-		// 		Email    string `scrub:"ignore"`
-		// 	}{
-		// 		Hashed:   "foo",
-		// 		Redacted: "foo",
-		// 		Email:    "foo",
-		// 	},
-		// 	Expectation: Expectation{
-		// 		Result: &struct {
-		// 			Hashed   string `scrub:"hash"`
-		// 			Redacted string `scrub:"redact"`
-		// 			Email    string `scrub:"ignore"`
-		// 		}{
-		// 			Hashed:   "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]",
-		// 			Redacted: "[redacted]",
-		// 			Email:    "foo",
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	Name: "trusted struct",
-		// 	Struct: scrubStructToTest(&StructToTest{
-		// 		Username: "foo",
-		// 		Email:    "foo@bar.com",
-		// 		Password: "foobar",
-		// 	}),
-		// 	Expectation: Expectation{
-		// 		Result: &TrustedStructToTest{
-		// 			StructToTest: StructToTest{
-		// 				Username: "foo",
-		// 				Email:    "trusted:[redacted:email]",
-		// 				Password: "trusted:[redacted]",
-		// 			},
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	Name: "trusted interface",
-		// 	Struct: scrubStructToTestAsTrustedValue(&StructToTest{
-		// 		Username: "foo",
-		// 		Email:    "foo@bar.com",
-		// 		Password: "foobar",
-		// 	}),
-		// 	Expectation: Expectation{
-		// 		Result: &TrustedStructToTest{
-		// 			StructToTest: StructToTest{
-		// 				Username: "foo",
-		// 				Email:    "trusted:[redacted:email]",
-		// 				Password: "trusted:[redacted]",
-		// 			},
-		// 		},
-		// 	},
-		// },
-		// {
-		// 	Name: "contains unexported pointers",
-		// 	Struct: UnexportedStructToTest{
-		// 		Exported:      "foo",
-		// 		unexportedPtr: nil,
-		// 	},
-		// 	Expectation: Expectation{
-		// 		Result: UnexportedStructToTest{
-		// 			Exported:      "foo",
-		// 			unexportedPtr: nil,
-		// 		},
-		// 	},
-		// 	CmpOpts: []cmp.Option{cmpopts.IgnoreUnexported(UnexportedStructToTest{})},
-		// },
-		// {
-		// 	Name: "nil interface",
-		// 	Struct: &struct {
-		// 		Hashed       string `scrub:"hash"`
-		// 		NilInterface interface{}
-		// 	}{
-		// 		Hashed: "foo",
-		// 	},
-		// 	Expectation: Expectation{
-		// 		Result: &struct {
-		// 			Hashed       string `scrub:"hash"`
-		// 			NilInterface interface{}
-		// 		}{
-		// 			Hashed:       "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]",
-		// 			NilInterface: nil,
-		// 		},
-		// 	},
-		// },
+		{
+			Name: "basic happy path",
+			Struct: &struct {
+				Username     string
+				Email        string
+				Password     string
+				WorkspaceID  string
+				LeaveMeAlone string
+			}{Username: "foo", Email: "foo@bar.com", Password: "foobar", WorkspaceID: "gitpodio-gitpod-uesaddev73c", LeaveMeAlone: "foo"},
+			Expectation: Expectation{
+				Result: &struct {
+					Username     string
+					Email        string
+					Password     string
+					WorkspaceID  string
+					LeaveMeAlone string
+				}{Username: "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]", Email: "[redacted]", Password: "[redacted]", WorkspaceID: "[redacted:md5:a35538939333def8477b5c19ac694b35]", LeaveMeAlone: "foo"},
+			},
+		},
+		{
+			Name: "stuct without pointer",
+			Struct: struct {
+				Username     string
+				Email        string
+				Password     string
+				WorkspaceID  string
+				LeaveMeAlone string
+			}{Username: "foo", Email: "foo@bar.com", Password: "foobar", WorkspaceID: "gitpodio-gitpod-uesaddev73c", LeaveMeAlone: "foo"},
+			Expectation: Expectation{
+				Result: struct {
+					Username     string
+					Email        string
+					Password     string
+					WorkspaceID  string
+					LeaveMeAlone string
+				}{Username: "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]", Email: "[redacted]", Password: "[redacted]", WorkspaceID: "[redacted:md5:a35538939333def8477b5c19ac694b35]", LeaveMeAlone: "foo"},
+			},
+		},
+		{
+			Name: "map field",
+			Struct: &struct {
+				WithMap map[string]interface{}
+			}{
+				WithMap: map[string]interface{}{
+					"email": "foo@bar.com",
+				},
+			},
+			Expectation: Expectation{
+				Result: &struct{ WithMap map[string]any }{WithMap: map[string]any{"email": string("[redacted]")}},
+			},
+		},
+		{
+			Name: "slices",
+			Struct: &struct {
+				Slice []string
+			}{Slice: []string{"foo", "bar", "foo@bar.com"}},
+			Expectation: Expectation{
+				Result: &struct {
+					Slice []string
+				}{Slice: []string{"foo", "bar", "[redacted:email]"}},
+			},
+		},
+		{
+			Name: "struct tags",
+			Struct: &struct {
+				Hashed   string `scrub:"hash"`
+				Redacted string `scrub:"redact"`
+				Email    string `scrub:"ignore"`
+			}{
+				Hashed:   "foo",
+				Redacted: "foo",
+				Email:    "foo",
+			},
+			Expectation: Expectation{
+				Result: &struct {
+					Hashed   string `scrub:"hash"`
+					Redacted string `scrub:"redact"`
+					Email    string `scrub:"ignore"`
+				}{
+					Hashed:   "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]",
+					Redacted: "[redacted]",
+					Email:    "foo",
+				},
+			},
+		},
+		{
+			Name: "trusted struct",
+			Struct: scrubStructToTest(&StructToTest{
+				Username: "foo",
+				Email:    "foo@bar.com",
+				Password: "foobar",
+			}),
+			Expectation: Expectation{
+				Result: &TrustedStructToTest{
+					StructToTest: StructToTest{
+						Username: "foo",
+						Email:    "trusted:[redacted:email]",
+						Password: "trusted:[redacted]",
+					},
+				},
+			},
+		},
+		{
+			Name: "trusted interface",
+			Struct: scrubStructToTestAsTrustedValue(&StructToTest{
+				Username: "foo",
+				Email:    "foo@bar.com",
+				Password: "foobar",
+			}),
+			Expectation: Expectation{
+				Result: &TrustedStructToTest{
+					StructToTest: StructToTest{
+						Username: "foo",
+						Email:    "trusted:[redacted:email]",
+						Password: "trusted:[redacted]",
+					},
+				},
+			},
+		},
+		{
+			Name: "contains unexported pointers",
+			Struct: UnexportedStructToTest{
+				Exported:      "foo",
+				unexportedPtr: nil,
+			},
+			Expectation: Expectation{
+				Result: UnexportedStructToTest{
+					Exported:      "foo",
+					unexportedPtr: nil,
+				},
+			},
+			CmpOpts: []cmp.Option{cmpopts.IgnoreUnexported(UnexportedStructToTest{})},
+		},
+		{
+			Name: "nil interface",
+			Struct: &struct {
+				Hashed       string `scrub:"hash"`
+				NilInterface interface{}
+			}{
+				Hashed: "foo",
+			},
+			Expectation: Expectation{
+				Result: &struct {
+					Hashed       string `scrub:"hash"`
+					NilInterface interface{}
+				}{
+					Hashed:       "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]",
+					NilInterface: nil,
+				},
+			},
+		},
 		{
 			Name: "nil point interface",
 			Struct: &struct {
