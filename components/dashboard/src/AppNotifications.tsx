@@ -20,7 +20,7 @@ import { useOrgBillingMode } from "./data/billing-mode/org-billing-mode-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
-const PRIVACY_POLICY_LAST_UPDATED = "2024-10-01";
+const PRIVACY_POLICY_LAST_UPDATED = "2024-12-03";
 
 interface Notification {
     id: string;
@@ -171,7 +171,8 @@ const AWS_REINVENT_NOTIFICATION = (updateUser: (user: Partial<UserProtocol>) => 
     return GENERAL_NOTIFICATION(
         "aws_reinvent_2024",
         <span className="text-md">
-            <b>See you at re:Invent!</b> Book a demo with us, and join our developer productivity leaders roundtable (limited tickets) |{" "}
+            <b>See you at re:Invent!</b> Book a demo with us, and join our developer productivity leaders roundtable
+            (limited tickets) |{" "}
             <a
                 className="text-kumquat-ripe font-bold"
                 href="https://www.gitpod.io/aws-reinvent-24"
