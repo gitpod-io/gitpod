@@ -360,7 +360,7 @@ export default function RepositoryFinder({
             }
 
             const setupProvidersWithoutPathSearchSupport = usedProviders.filter((p) =>
-                ["Bitbucket", "Bitbucket Server", "GitLab"].includes(p),
+                ["Bitbucket", "GitLab"].includes(p),
             );
             if (
                 !onlyConfigurations &&
@@ -385,11 +385,7 @@ export default function RepositoryFinder({
                 });
             }
 
-            if (
-                !onlyConfigurations &&
-                searchString.length > 0 &&
-                authProviders.data?.some((p) => p.type === AuthProviderType.AZURE_DEVOPS)
-            ) {
+            if (!onlyConfigurations && searchString.length > 0 && usedProviders.includes("Azure DevOps")) {
                 // CLC-780
                 result.push({
                     id: "azure-devops",

@@ -252,7 +252,6 @@ const unifyProviderType = (type: AuthProviderType): UnifiedAuthProvider | undefi
     }
 };
 
-const isAuthProviderType = (type?: UnifiedAuthProvider): type is UnifiedAuthProvider => !!type;
 export const getDeduplicatedScmProviders = (
     user: User,
     descriptions: AuthProviderDescription[],
@@ -265,7 +264,7 @@ export const getDeduplicatedScmProviders = (
 
     const unifiedProviders = userProviders
         .map((type) => unifyProviderType(type))
-        .filter(isAuthProviderType)
+        .filter((t) => !!t)
         .sort();
 
     return uniq(unifiedProviders);
