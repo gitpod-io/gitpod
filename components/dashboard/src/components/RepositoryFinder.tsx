@@ -320,9 +320,9 @@ export default function RepositoryFinder({
             }
 
             if (
+                !onlyConfigurations &&
                 searchString.length > 0 &&
-                authProviders.data?.some((p) => p.type === AuthProviderType.BITBUCKET_SERVER) &&
-                !onlyConfigurations
+                authProviders.data?.some((p) => p.type === AuthProviderType.BITBUCKET_SERVER)
             ) {
                 // add an element that tells the user that the Bitbucket Server does only support prefix search
                 result.push({
@@ -338,10 +338,10 @@ export default function RepositoryFinder({
             }
 
             if (
+                !onlyConfigurations &&
                 searchString.length > 0 &&
                 searchString.length < 3 &&
-                authProviders.data?.some((p) => p.type === AuthProviderType.GITLAB) &&
-                !onlyConfigurations
+                authProviders.data?.some((p) => p.type === AuthProviderType.GITLAB)
             ) {
                 // add an element that tells the user that GitLab only does exact searches for short queries
                 result.push({
@@ -360,6 +360,7 @@ export default function RepositoryFinder({
                 ["Bitbucket", "Bitbucket Server", "GitLab"].includes(p),
             );
             if (
+                !onlyConfigurations &&
                 searchString.length > 1 &&
                 setupProvidersWithoutPathSearchSupport.length > 0 &&
                 searchString.includes("/")
@@ -381,7 +382,11 @@ export default function RepositoryFinder({
                 });
             }
 
-            if (searchString.length > 0 && authProviders.data?.some((p) => p.type === AuthProviderType.AZURE_DEVOPS)) {
+            if (
+                !onlyConfigurations &&
+                searchString.length > 0 &&
+                authProviders.data?.some((p) => p.type === AuthProviderType.AZURE_DEVOPS)
+            ) {
                 // CLC-780
                 result.push({
                     id: "azure-devops",
