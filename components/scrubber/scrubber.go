@@ -388,6 +388,9 @@ func (s *scrubberImpl) deepCopyStruct(fieldName string, src reflect.Value, scrub
 		return dst
 
 	case reflect.Interface:
+		if src.IsNil() {
+			return src
+		}
 		dst := reflect.New(src.Elem().Type())
 		copied := s.deepCopyStruct(fieldName, src.Elem(), scrubTag, skipScrub)
 		dst.Elem().Set(copied)
