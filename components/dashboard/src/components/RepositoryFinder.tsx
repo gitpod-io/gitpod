@@ -341,7 +341,7 @@ export default function RepositoryFinder({
                 !onlyConfigurations &&
                 searchString.length > 0 &&
                 searchString.length < 3 &&
-                authProviders.data?.some((p) => p.type === AuthProviderType.GITLAB)
+                usedProviders.includes("GitLab")
             ) {
                 // add an element that tells the user that GitLab only does exact searches for short queries
                 result.push({
@@ -349,7 +349,10 @@ export default function RepositoryFinder({
                     element: (
                         <div className="text-sm text-pk-content-tertiary flex items-center">
                             <Exclamation2 className="w-4 h-4 mr-2" />
-                            <span>Search is too short for searching on GitLab.</span>
+                            <span>
+                                Search text is &lt; 3 characters. GitLab will only show exact matches for short
+                                searches.
+                            </span>
                         </div>
                     ),
                     isSelectable: false,
