@@ -236,7 +236,6 @@ export function isTrustedUrlOrPath(urlOrPath: string) {
 
 type UnifiedAuthProvider = "Bitbucket" | "GitLab" | "GitHub" | "Azure DevOps";
 
-const isIdentity = (identity?: AuthProviderDescription): identity is AuthProviderDescription => !!identity;
 const unifyProviderType = (type: AuthProviderType): UnifiedAuthProvider | undefined => {
     switch (type) {
         case AuthProviderType.BITBUCKET:
@@ -261,7 +260,7 @@ export const getDeduplicatedScmProviders = (
     const userIdentities = user.identities.map((identity) => identity.authProviderId);
     const userProviders = userIdentities
         .map((id) => descriptions?.find((provider) => provider.id === id))
-        .filter(isIdentity)
+        .filter((p) => !!p)
         .map((provider) => provider.type);
 
     const unifiedProviders = userProviders
