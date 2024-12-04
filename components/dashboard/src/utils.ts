@@ -4,7 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
+import { AuthProviderDescription, AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import EventEmitter from "events";
+import { uniq } from "lodash";
 
 export interface PollOptions<T> {
     backoffFactor: number;
@@ -230,3 +233,50 @@ export function isTrustedUrlOrPath(urlOrPath: string) {
     }
     return isTrusted;
 }
+
+type UnifiedAuthProvider = "Bitbucket" | "GitLab" | "GitHub" | "Azure DevOps";
+const unifyProviderType = (type: AuthProviderType): UnifiedAuthProvider | undefined => {
+    switch (type) {
+        case AuthProviderType.BITBUCKET:
+        case AuthProviderType.BITBUCKET_SERVER:
+            return "Bitbucket";
+        case AuthProviderType.GITHUB:
+            return "GitHub";
+        case AuthProviderType.GITLAB:
+            return "GitLab";
+        case AuthProviderType.AZURE_DEVOPS:
+            return "Azure DevOps";
+        default:
+            return undefined;
+    }
+};
+
+export const getDeduplicatedScmProviders = (
+    user: User,
+    descriptions: AuthProviderDescription[],
+): UnifiedAuthProvider[] => {
+    const userIdentities = user.identities.map((identity) => identity.authProviderId);
+    const userProviders = userIdentities
+        .map((id) => descriptions?.find((provider) => provider.id === id))
+        .filter((p) => !!p)
+        .map((provider) => provider.type);
+
+    const unifiedProviders = userProviders
+        .map((type) => unifyProviderType(type))
+        .filter((t) => !!t)
+        .sort();
+
+    return uniq(unifiedProviders);
+};
+
+export const disjunctScmProviders = (providers: UnifiedAuthProvider[]): string => {
+    const formatter = new Intl.ListFormat("en", { style: "long", type: "disjunction" });
+
+    return formatter.format(providers);
+};
+
+export const conjunctScmProviders = (providers: UnifiedAuthProvider[]): string => {
+    const formatter = new Intl.ListFormat("en", { style: "long", type: "conjunction" });
+
+    return formatter.format(providers);
+};

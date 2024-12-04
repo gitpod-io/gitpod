@@ -24,7 +24,7 @@ export const useSearchRepositories = ({ searchString, limit }: { searchString: s
             return repositories;
         },
         {
-            enabled: !!org && debouncedSearchString.length >= 3,
+            enabled: !!org && debouncedSearchString.trim().length > 0,
             // Need this to keep previous results while we wait for a new search to complete since debouncedSearchString changes and updates the key
             keepPreviousData: true,
             // We intentionally don't want to trigger refetches here to avoid a loading state side effect of focusing
