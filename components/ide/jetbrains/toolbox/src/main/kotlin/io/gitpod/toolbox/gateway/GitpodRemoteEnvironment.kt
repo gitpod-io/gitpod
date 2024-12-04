@@ -102,17 +102,16 @@ private class WorkspaceEnvState(val phase: WorkspaceInstanceStatus.Phase) {
 
     companion object {
         val phaseToStateMap = mapOf(
-            WorkspaceInstanceStatus.Phase.PHASE_UNSPECIFIED to StandardRemoteEnvironmentState.Unreachable,
-            WorkspaceInstanceStatus.Phase.PHASE_PREPARING to StandardRemoteEnvironmentState.Initializing,
-            WorkspaceInstanceStatus.Phase.PHASE_IMAGEBUILD to StandardRemoteEnvironmentState.Initializing,
-            WorkspaceInstanceStatus.Phase.PHASE_PENDING to StandardRemoteEnvironmentState.Initializing,
-            WorkspaceInstanceStatus.Phase.PHASE_CREATING to StandardRemoteEnvironmentState.Initializing,
-            WorkspaceInstanceStatus.Phase.PHASE_INITIALIZING to StandardRemoteEnvironmentState.Initializing,
-            WorkspaceInstanceStatus.Phase.PHASE_RUNNING to StandardRemoteEnvironmentState.Active,
+            WorkspaceInstanceStatus.Phase.PHASE_UNSPECIFIED to CustomRemoteEnvironmentState("Unknown", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Inactive), false, EnvironmentStateIcons.Error),
+            WorkspaceInstanceStatus.Phase.PHASE_PREPARING to CustomRemoteEnvironmentState("Preparing", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Initializing), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_IMAGEBUILD to CustomRemoteEnvironmentState("Building", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Initializing), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_PENDING to CustomRemoteEnvironmentState("Initializing", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Initializing), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_CREATING to CustomRemoteEnvironmentState("Creating", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Initializing), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_INITIALIZING to CustomRemoteEnvironmentState("Initializing", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Initializing), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_RUNNING to CustomRemoteEnvironmentState("Running", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Active), true, EnvironmentStateIcons.Active),
             WorkspaceInstanceStatus.Phase.PHASE_INTERRUPTED to StandardRemoteEnvironmentState.Error,
-            WorkspaceInstanceStatus.Phase.PHASE_STOPPING to CustomRemoteEnvironmentState("Stopping", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Activating), false, EnvironmentStateIcons.Offline),
-//            WorkspaceInstanceStatus.Phase.PHASE_STOPPED to CustomRemoteEnvironmentState("Stopped", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Error), false, EnvironmentStateIcons.Offline),
-            WorkspaceInstanceStatus.Phase.PHASE_STOPPED to CustomRemoteEnvironmentState("Stopping", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Restarting), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_STOPPING to CustomRemoteEnvironmentState("Stopping", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Hibernating), false, EnvironmentStateIcons.Connecting),
+            WorkspaceInstanceStatus.Phase.PHASE_STOPPED to CustomRemoteEnvironmentState("Stopped", Utils.environmentStateColorPalette.getColor(StandardRemoteEnvironmentState.Hibernated), false, EnvironmentStateIcons.Hibernated),
         )
     }
 }
