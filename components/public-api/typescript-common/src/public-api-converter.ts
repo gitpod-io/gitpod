@@ -155,6 +155,7 @@ import {
     WorkspacePort,
     WorkspacePort_Protocol,
     WorkspaceSession,
+    WorkspaceSession_Metrics,
     WorkspaceSnapshot,
     WorkspaceSpec,
     WorkspaceSpec_GitSpec,
@@ -198,6 +199,14 @@ export class PublicAPIConverter {
         if (arg.instance.stoppedTime) {
             result.stoppedTime = Timestamp.fromDate(new Date(arg.instance.stoppedTime));
         }
+
+        // todo(ft): update fixture tests
+        const { metrics: statistics } = arg.instance.status;
+        result.metrics = new WorkspaceSession_Metrics({
+            totalImageSize: statistics?.image?.totalSize ? BigInt(statistics.image.totalSize) : undefined,
+            workspaceImageSize: statistics?.image?.workspaceImageSize ? BigInt(statistics.image.workspaceImageSize) : undefined,
+        });
+
         return result;
     }
 
