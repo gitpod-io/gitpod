@@ -677,11 +677,10 @@ export class PrebuildManager {
         onLog: (chunk: Uint8Array) => Promise<void>,
     ): Promise<{ taskUrl: string } | undefined> {
         const prebuild = await this.getPrebuild({}, userId, prebuildId);
-        const organizationId = prebuild?.info.teamId;
-        if (!prebuild || !organizationId) {
+        if (!prebuild) {
             throw new ApplicationError(ErrorCodes.PRECONDITION_FAILED, "prebuild workspace not found");
         }
-        await this.auth.checkPermissionOnProject(userId, "read_prebuild", organizationId);
+        await this.auth.checkPermissionOnProject(userId, "read_prebuild", prebuild.info.projectId);
 
         const instance = await this.workspaceService.getCurrentInstance(userId, prebuild.workspace.id, {
             skipPermissionCheck: true,

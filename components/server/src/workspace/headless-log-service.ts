@@ -102,7 +102,7 @@ export class HeadlessLogService {
             }
         }
 
-        // we were unable to get a repsonse from supervisor - let's try content service next
+        // we were unable to get a response from supervisor - let's try content service next
         return await this.contentServiceListLogs(wsi, ownerId);
     }
 

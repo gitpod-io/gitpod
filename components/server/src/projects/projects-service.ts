@@ -447,8 +447,10 @@ export class ProjectsService {
                 partialProject.settings.prebuilds.triggerStrategy = "activity-based";
             }
         }
+
         return this.projectDB.updateProject(partialProject);
     }
+
     private async checkProjectSettings(userId: string, settings?: PartialProject["settings"]) {
         if (!settings) {
             return;
