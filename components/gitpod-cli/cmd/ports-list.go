@@ -22,7 +22,7 @@ var listPortsCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists the workspace ports and their states.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(cmd.Context(), 10*time.Second)
 		defer cancel()
 
 		client, err := supervisor.New(ctx)
