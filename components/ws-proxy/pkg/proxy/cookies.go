@@ -49,27 +49,37 @@ func readCookies(h http.Header, filter string) []*http.Cookie {
 			if filter != "" && filter != name {
 				continue
 			}
-			val, ok := parseCookieValue(val, true)
+			val, quoted, ok := parseCookieValue(val, true)
 			if !ok {
 				continue
 			}
-			cookies = append(cookies, &http.Cookie{Name: name, Value: val})
+			cookies = append(cookies, &http.Cookie{Name: name, Value: val, Quoted: quoted})
 		}
 	}
 	return cookies
 }
 
-func parseCookieValue(raw string, allowDoubleQuote bool) (string, bool) {
+// parseCookieValue parses a cookie value according to RFC 6265.
+// If allowDoubleQuote is true, parseCookieValue will consider that it
+// is parsing the cookie-value;
+// otherwise, it will consider that it is parsing a cookie-av value
+// (cookie attribute-value).
+//
+// It returns the parsed cookie value, a boolean indicating whether the
+// parsing was successful, and a boolean indicating whether the parsed
+// value was enclosed in double quotes.
+func parseCookieValue(raw string, allowDoubleQuote bool) (value string, quoted, ok bool) {
 	// Strip the quotes, if present.
 	if allowDoubleQuote && len(raw) > 1 && raw[0] == '"' && raw[len(raw)-1] == '"' {
 		raw = raw[1 : len(raw)-1]
+		quoted = true
 	}
 	for i := 0; i < len(raw); i++ {
 		if !validCookieValueByte(raw[i]) {
-			return "", false
+			return "", quoted, false
 		}
 	}
-	return raw, true
+	return raw, quoted, true
 }
 
 func validCookieValueByte(b byte) bool {
