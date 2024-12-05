@@ -90,7 +90,10 @@
         "headlessTaskFailed": ""
       },
       "ownerToken": "6BCmFzg6t0e9hDrPP8.pc8KGee8rxWKA",
-      "exposedPorts": []
+      "exposedPorts": [],
+      "metrics": {
+        "image": {}
+      }
     },
     "gitStatus": {
       "branch": "master",

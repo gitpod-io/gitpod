@@ -200,11 +200,10 @@ export class PublicAPIConverter {
             result.stoppedTime = Timestamp.fromDate(new Date(arg.instance.stoppedTime));
         }
 
-        // todo(ft): update fixture tests
-        const { metrics: statistics } = arg.instance.status;
+        const { metrics } = arg.instance.status;
         result.metrics = new WorkspaceSession_Metrics({
-            totalImageSize: statistics?.image?.totalSize ? BigInt(statistics.image.totalSize) : undefined,
-            workspaceImageSize: statistics?.image?.workspaceImageSize ? BigInt(statistics.image.workspaceImageSize) : undefined,
+            totalImageSize: metrics?.image?.totalSize ? BigInt(metrics.image.totalSize) : undefined,
+            workspaceImageSize: metrics?.image?.workspaceImageSize ? BigInt(metrics.image.workspaceImageSize) : undefined,
         });
 
         return result;
