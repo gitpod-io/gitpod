@@ -90,7 +90,12 @@
         "headlessTaskFailed": ""
       },
       "ownerToken": "M4GknXYd6ihLf6PLyPlVEghWy3TLvj7X",
-      "exposedPorts": []
+      "exposedPorts": [],
+      "metrics": {
+        "image": {
+          "workspaceImageSize": 25600000
+        }
+      }
     },
     "gitStatus": {
       "branch": "master",

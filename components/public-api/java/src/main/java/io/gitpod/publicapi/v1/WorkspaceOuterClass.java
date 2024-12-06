@@ -58630,6 +58630,21 @@ java.lang.String defaultValue) {
      * <code>.google.protobuf.Timestamp stopped_time = 7 [json_name = "stoppedTime"];</code>
      */
     com.google.protobuf.TimestampOrBuilder getStoppedTimeOrBuilder();
+
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+     * @return Whether the metrics field is set.
+     */
+    boolean hasMetrics();
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+     * @return The metrics.
+     */
+    io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics getMetrics();
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+     */
+    io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.MetricsOrBuilder getMetricsOrBuilder();
   }
   /**
    * Protobuf type {@code gitpod.v1.WorkspaceSession}
@@ -58667,6 +58682,554 @@ java.lang.String defaultValue) {
       return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Builder.class);
+    }
+
+    public interface MetricsOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:gitpod.v1.WorkspaceSession.Metrics)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <pre>
+       * workspace_image_size is the size of the workspace image in bytes
+       * </pre>
+       *
+       * <code>int64 workspace_image_size = 1 [json_name = "workspaceImageSize"];</code>
+       * @return The workspaceImageSize.
+       */
+      long getWorkspaceImageSize();
+
+      /**
+       * <pre>
+       * total_image_size is the total size of the image in bytes (includes Gitpod-specific layers like IDE)
+       * </pre>
+       *
+       * <code>int64 total_image_size = 2 [json_name = "totalImageSize"];</code>
+       * @return The totalImageSize.
+       */
+      long getTotalImageSize();
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.WorkspaceSession.Metrics}
+     */
+    public static final class Metrics extends
+        com.google.protobuf.GeneratedMessage implements
+        // @@protoc_insertion_point(message_implements:gitpod.v1.WorkspaceSession.Metrics)
+        MetricsOrBuilder {
+    private static final long serialVersionUID = 0L;
+      static {
+        com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+          com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+          /* major= */ 4,
+          /* minor= */ 27,
+          /* patch= */ 2,
+          /* suffix= */ "",
+          Metrics.class.getName());
+      }
+      // Use Metrics.newBuilder() to construct.
+      private Metrics(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+        super(builder);
+      }
+      private Metrics() {
+      }
+
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_Metrics_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_Metrics_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.Builder.class);
+      }
+
+      public static final int WORKSPACE_IMAGE_SIZE_FIELD_NUMBER = 1;
+      private long workspaceImageSize_ = 0L;
+      /**
+       * <pre>
+       * workspace_image_size is the size of the workspace image in bytes
+       * </pre>
+       *
+       * <code>int64 workspace_image_size = 1 [json_name = "workspaceImageSize"];</code>
+       * @return The workspaceImageSize.
+       */
+      @java.lang.Override
+      public long getWorkspaceImageSize() {
+        return workspaceImageSize_;
+      }
+
+      public static final int TOTAL_IMAGE_SIZE_FIELD_NUMBER = 2;
+      private long totalImageSize_ = 0L;
+      /**
+       * <pre>
+       * total_image_size is the total size of the image in bytes (includes Gitpod-specific layers like IDE)
+       * </pre>
+       *
+       * <code>int64 total_image_size = 2 [json_name = "totalImageSize"];</code>
+       * @return The totalImageSize.
+       */
+      @java.lang.Override
+      public long getTotalImageSize() {
+        return totalImageSize_;
+      }
+
+      private byte memoizedIsInitialized = -1;
+      @java.lang.Override
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      @java.lang.Override
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        if (workspaceImageSize_ != 0L) {
+          output.writeInt64(1, workspaceImageSize_);
+        }
+        if (totalImageSize_ != 0L) {
+          output.writeInt64(2, totalImageSize_);
+        }
+        getUnknownFields().writeTo(output);
+      }
+
+      @java.lang.Override
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (workspaceImageSize_ != 0L) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeInt64Size(1, workspaceImageSize_);
+        }
+        if (totalImageSize_ != 0L) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeInt64Size(2, totalImageSize_);
+        }
+        size += getUnknownFields().getSerializedSize();
+        memoizedSize = size;
+        return size;
+      }
+
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics)) {
+          return super.equals(obj);
+        }
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics other = (io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics) obj;
+
+        if (getWorkspaceImageSize()
+            != other.getWorkspaceImageSize()) return false;
+        if (getTotalImageSize()
+            != other.getTotalImageSize()) return false;
+        if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+        return true;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        hash = (37 * hash) + WORKSPACE_IMAGE_SIZE_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+            getWorkspaceImageSize());
+        hash = (37 * hash) + TOTAL_IMAGE_SIZE_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+            getTotalImageSize());
+        hash = (29 * hash) + getUnknownFields().hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      @java.lang.Override
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      @java.lang.Override
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code gitpod.v1.WorkspaceSession.Metrics}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:gitpod.v1.WorkspaceSession.Metrics)
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.MetricsOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_Metrics_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_Metrics_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.Builder.class);
+        }
+
+        // Construct using io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.newBuilder()
+        private Builder() {
+
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          super(parent);
+
+        }
+        @java.lang.Override
+        public Builder clear() {
+          super.clear();
+          bitField0_ = 0;
+          workspaceImageSize_ = 0L;
+          totalImageSize_ = 0L;
+          return this;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_Metrics_descriptor;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics getDefaultInstanceForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.getDefaultInstance();
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics build() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics buildPartial() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics result = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics(this);
+          if (bitField0_ != 0) { buildPartial0(result); }
+          onBuilt();
+          return result;
+        }
+
+        private void buildPartial0(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics result) {
+          int from_bitField0_ = bitField0_;
+          if (((from_bitField0_ & 0x00000001) != 0)) {
+            result.workspaceImageSize_ = workspaceImageSize_;
+          }
+          if (((from_bitField0_ & 0x00000002) != 0)) {
+            result.totalImageSize_ = totalImageSize_;
+          }
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics) {
+            return mergeFrom((io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics other) {
+          if (other == io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.getDefaultInstance()) return this;
+          if (other.getWorkspaceImageSize() != 0L) {
+            setWorkspaceImageSize(other.getWorkspaceImageSize());
+          }
+          if (other.getTotalImageSize() != 0L) {
+            setTotalImageSize(other.getTotalImageSize());
+          }
+          this.mergeUnknownFields(other.getUnknownFields());
+          onChanged();
+          return this;
+        }
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          if (extensionRegistry == null) {
+            throw new java.lang.NullPointerException();
+          }
+          try {
+            boolean done = false;
+            while (!done) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  done = true;
+                  break;
+                case 8: {
+                  workspaceImageSize_ = input.readInt64();
+                  bitField0_ |= 0x00000001;
+                  break;
+                } // case 8
+                case 16: {
+                  totalImageSize_ = input.readInt64();
+                  bitField0_ |= 0x00000002;
+                  break;
+                } // case 16
+                default: {
+                  if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                    done = true; // was an endgroup tag
+                  }
+                  break;
+                } // default:
+              } // switch (tag)
+            } // while (!done)
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.unwrapIOException();
+          } finally {
+            onChanged();
+          } // finally
+          return this;
+        }
+        private int bitField0_;
+
+        private long workspaceImageSize_ ;
+        /**
+         * <pre>
+         * workspace_image_size is the size of the workspace image in bytes
+         * </pre>
+         *
+         * <code>int64 workspace_image_size = 1 [json_name = "workspaceImageSize"];</code>
+         * @return The workspaceImageSize.
+         */
+        @java.lang.Override
+        public long getWorkspaceImageSize() {
+          return workspaceImageSize_;
+        }
+        /**
+         * <pre>
+         * workspace_image_size is the size of the workspace image in bytes
+         * </pre>
+         *
+         * <code>int64 workspace_image_size = 1 [json_name = "workspaceImageSize"];</code>
+         * @param value The workspaceImageSize to set.
+         * @return This builder for chaining.
+         */
+        public Builder setWorkspaceImageSize(long value) {
+
+          workspaceImageSize_ = value;
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * workspace_image_size is the size of the workspace image in bytes
+         * </pre>
+         *
+         * <code>int64 workspace_image_size = 1 [json_name = "workspaceImageSize"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearWorkspaceImageSize() {
+          bitField0_ = (bitField0_ & ~0x00000001);
+          workspaceImageSize_ = 0L;
+          onChanged();
+          return this;
+        }
+
+        private long totalImageSize_ ;
+        /**
+         * <pre>
+         * total_image_size is the total size of the image in bytes (includes Gitpod-specific layers like IDE)
+         * </pre>
+         *
+         * <code>int64 total_image_size = 2 [json_name = "totalImageSize"];</code>
+         * @return The totalImageSize.
+         */
+        @java.lang.Override
+        public long getTotalImageSize() {
+          return totalImageSize_;
+        }
+        /**
+         * <pre>
+         * total_image_size is the total size of the image in bytes (includes Gitpod-specific layers like IDE)
+         * </pre>
+         *
+         * <code>int64 total_image_size = 2 [json_name = "totalImageSize"];</code>
+         * @param value The totalImageSize to set.
+         * @return This builder for chaining.
+         */
+        public Builder setTotalImageSize(long value) {
+
+          totalImageSize_ = value;
+          bitField0_ |= 0x00000002;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * total_image_size is the total size of the image in bytes (includes Gitpod-specific layers like IDE)
+         * </pre>
+         *
+         * <code>int64 total_image_size = 2 [json_name = "totalImageSize"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearTotalImageSize() {
+          bitField0_ = (bitField0_ & ~0x00000002);
+          totalImageSize_ = 0L;
+          onChanged();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:gitpod.v1.WorkspaceSession.Metrics)
+      }
+
+      // @@protoc_insertion_point(class_scope:gitpod.v1.WorkspaceSession.Metrics)
+      private static final io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics();
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<Metrics>
+          PARSER = new com.google.protobuf.AbstractParser<Metrics>() {
+        @java.lang.Override
+        public Metrics parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          Builder builder = newBuilder();
+          try {
+            builder.mergeFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(builder.buildPartial());
+          } catch (com.google.protobuf.UninitializedMessageException e) {
+            throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+          } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(e)
+                .setUnfinishedMessage(builder.buildPartial());
+          }
+          return builder.buildPartial();
+        }
+      };
+
+      public static com.google.protobuf.Parser<Metrics> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<Metrics> getParserForType() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
     }
 
     private int bitField0_;
@@ -58865,6 +59428,32 @@ java.lang.String defaultValue) {
       return stoppedTime_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : stoppedTime_;
     }
 
+    public static final int METRICS_FIELD_NUMBER = 8;
+    private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics metrics_;
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+     * @return Whether the metrics field is set.
+     */
+    @java.lang.Override
+    public boolean hasMetrics() {
+      return ((bitField0_ & 0x00000040) != 0);
+    }
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+     * @return The metrics.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics getMetrics() {
+      return metrics_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.getDefaultInstance() : metrics_;
+    }
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.MetricsOrBuilder getMetricsOrBuilder() {
+      return metrics_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.getDefaultInstance() : metrics_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -58899,6 +59488,9 @@ java.lang.String defaultValue) {
       }
       if (((bitField0_ & 0x00000020) != 0)) {
         output.writeMessage(7, getStoppedTime());
+      }
+      if (((bitField0_ & 0x00000040) != 0)) {
+        output.writeMessage(8, getMetrics());
       }
       getUnknownFields().writeTo(output);
     }
@@ -58935,6 +59527,10 @@ java.lang.String defaultValue) {
       if (((bitField0_ & 0x00000020) != 0)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(7, getStoppedTime());
+      }
+      if (((bitField0_ & 0x00000040) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(8, getMetrics());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -58983,6 +59579,11 @@ java.lang.String defaultValue) {
         if (!getStoppedTime()
             .equals(other.getStoppedTime())) return false;
       }
+      if (hasMetrics() != other.hasMetrics()) return false;
+      if (hasMetrics()) {
+        if (!getMetrics()
+            .equals(other.getMetrics())) return false;
+      }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -59019,6 +59620,10 @@ java.lang.String defaultValue) {
       if (hasStoppedTime()) {
         hash = (37 * hash) + STOPPED_TIME_FIELD_NUMBER;
         hash = (53 * hash) + getStoppedTime().hashCode();
+      }
+      if (hasMetrics()) {
+        hash = (37 * hash) + METRICS_FIELD_NUMBER;
+        hash = (53 * hash) + getMetrics().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -59156,6 +59761,7 @@ java.lang.String defaultValue) {
           getStartedTimeFieldBuilder();
           getStoppingTimeFieldBuilder();
           getStoppedTimeFieldBuilder();
+          getMetricsFieldBuilder();
         }
       }
       @java.lang.Override
@@ -59192,6 +59798,11 @@ java.lang.String defaultValue) {
         if (stoppedTimeBuilder_ != null) {
           stoppedTimeBuilder_.dispose();
           stoppedTimeBuilder_ = null;
+        }
+        metrics_ = null;
+        if (metricsBuilder_ != null) {
+          metricsBuilder_.dispose();
+          metricsBuilder_ = null;
         }
         return this;
       }
@@ -59266,6 +59877,12 @@ java.lang.String defaultValue) {
               : stoppedTimeBuilder_.build();
           to_bitField0_ |= 0x00000020;
         }
+        if (((from_bitField0_ & 0x00000080) != 0)) {
+          result.metrics_ = metricsBuilder_ == null
+              ? metrics_
+              : metricsBuilder_.build();
+          to_bitField0_ |= 0x00000040;
+        }
         result.bitField0_ |= to_bitField0_;
       }
 
@@ -59303,6 +59920,9 @@ java.lang.String defaultValue) {
         }
         if (other.hasStoppedTime()) {
           mergeStoppedTime(other.getStoppedTime());
+        }
+        if (other.hasMetrics()) {
+          mergeMetrics(other.getMetrics());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -59377,6 +59997,13 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000040;
                 break;
               } // case 58
+              case 66: {
+                input.readMessage(
+                    getMetricsFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000080;
+                break;
+              } // case 66
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -60192,6 +60819,127 @@ java.lang.String defaultValue) {
         return stoppedTimeBuilder_;
       }
 
+      private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics metrics_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.MetricsOrBuilder> metricsBuilder_;
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+       * @return Whether the metrics field is set.
+       */
+      public boolean hasMetrics() {
+        return ((bitField0_ & 0x00000080) != 0);
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+       * @return The metrics.
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics getMetrics() {
+        if (metricsBuilder_ == null) {
+          return metrics_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.getDefaultInstance() : metrics_;
+        } else {
+          return metricsBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+       */
+      public Builder setMetrics(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics value) {
+        if (metricsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          metrics_ = value;
+        } else {
+          metricsBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+       */
+      public Builder setMetrics(
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.Builder builderForValue) {
+        if (metricsBuilder_ == null) {
+          metrics_ = builderForValue.build();
+        } else {
+          metricsBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+       */
+      public Builder mergeMetrics(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics value) {
+        if (metricsBuilder_ == null) {
+          if (((bitField0_ & 0x00000080) != 0) &&
+            metrics_ != null &&
+            metrics_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.getDefaultInstance()) {
+            getMetricsBuilder().mergeFrom(value);
+          } else {
+            metrics_ = value;
+          }
+        } else {
+          metricsBuilder_.mergeFrom(value);
+        }
+        if (metrics_ != null) {
+          bitField0_ |= 0x00000080;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+       */
+      public Builder clearMetrics() {
+        bitField0_ = (bitField0_ & ~0x00000080);
+        metrics_ = null;
+        if (metricsBuilder_ != null) {
+          metricsBuilder_.dispose();
+          metricsBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.Builder getMetricsBuilder() {
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return getMetricsFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.MetricsOrBuilder getMetricsOrBuilder() {
+        if (metricsBuilder_ != null) {
+          return metricsBuilder_.getMessageOrBuilder();
+        } else {
+          return metrics_ == null ?
+              io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.getDefaultInstance() : metrics_;
+        }
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.MetricsOrBuilder>
+          getMetricsFieldBuilder() {
+        if (metricsBuilder_ == null) {
+          metricsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.MetricsOrBuilder>(
+                  getMetrics(),
+                  getParentForChildren(),
+                  isClean());
+          metrics_ = null;
+        }
+        return metricsBuilder_;
+      }
+
       // @@protoc_insertion_point(builder_scope:gitpod.v1.WorkspaceSession)
     }
 
@@ -60568,6 +61316,11 @@ java.lang.String defaultValue) {
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_WorkspaceSession_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_WorkspaceSession_Metrics_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_WorkspaceSession_Metrics_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -60843,7 +61596,7 @@ java.lang.String defaultValue) {
       "onse\"\207\001\n\021WorkspaceSnapshot\022\016\n\002id\030\001 \001(\tR\002" +
       "id\022!\n\014workspace_id\030\002 \001(\tR\013workspaceId\022?\n" +
       "\rcreation_time\030\003 \001(\0132\032.google.protobuf.T" +
-      "imestampR\014creationTime\"\227\003\n\020WorkspaceSess" +
+      "imestampR\014creationTime\"\275\004\n\020WorkspaceSess" +
       "ion\022\016\n\002id\030\001 \001(\tR\002id\0222\n\tworkspace\030\002 \001(\0132\024" +
       ".gitpod.v1.WorkspaceR\tworkspace\022?\n\rcreat" +
       "ion_time\030\003 \001(\0132\032.google.protobuf.Timesta" +
@@ -60853,59 +61606,63 @@ java.lang.String defaultValue) {
       "f.TimestampR\013startedTime\022?\n\rstopping_tim" +
       "e\030\006 \001(\0132\032.google.protobuf.TimestampR\014sto" +
       "ppingTime\022=\n\014stopped_time\030\007 \001(\0132\032.google" +
-      ".protobuf.TimestampR\013stoppedTime*o\n\016Admi" +
-      "ssionLevel\022\037\n\033ADMISSION_LEVEL_UNSPECIFIE" +
-      "D\020\000\022\036\n\032ADMISSION_LEVEL_OWNER_ONLY\020\001\022\034\n\030A" +
-      "DMISSION_LEVEL_EVERYONE\020\0022\323\016\n\020WorkspaceS" +
-      "ervice\022Q\n\014GetWorkspace\022\036.gitpod.v1.GetWo" +
-      "rkspaceRequest\032\037.gitpod.v1.GetWorkspaceR" +
-      "esponse\"\000\022k\n\024WatchWorkspaceStatus\022&.gitp" +
-      "od.v1.WatchWorkspaceStatusRequest\032\'.gitp" +
-      "od.v1.WatchWorkspaceStatusResponse\"\0000\001\022W" +
-      "\n\016ListWorkspaces\022 .gitpod.v1.ListWorkspa" +
-      "cesRequest\032!.gitpod.v1.ListWorkspacesRes" +
-      "ponse\"\000\022l\n\025ListWorkspaceSessions\022\'.gitpo" +
-      "d.v1.ListWorkspaceSessionsRequest\032(.gitp" +
-      "od.v1.ListWorkspaceSessionsResponse\"\000\022r\n" +
-      "\027CreateAndStartWorkspace\022).gitpod.v1.Cre" +
-      "ateAndStartWorkspaceRequest\032*.gitpod.v1." +
-      "CreateAndStartWorkspaceResponse\"\000\022W\n\016Sta" +
-      "rtWorkspace\022 .gitpod.v1.StartWorkspaceRe" +
-      "quest\032!.gitpod.v1.StartWorkspaceResponse" +
-      "\"\000\022Z\n\017UpdateWorkspace\022!.gitpod.v1.Update" +
-      "WorkspaceRequest\032\".gitpod.v1.UpdateWorks" +
-      "paceResponse\"\000\022T\n\rStopWorkspace\022\037.gitpod" +
-      ".v1.StopWorkspaceRequest\032 .gitpod.v1.Sto" +
-      "pWorkspaceResponse\"\000\022Z\n\017DeleteWorkspace\022" +
-      "!.gitpod.v1.DeleteWorkspaceRequest\032\".git" +
-      "pod.v1.DeleteWorkspaceResponse\"\000\022i\n\024List" +
-      "WorkspaceClasses\022&.gitpod.v1.ListWorkspa" +
-      "ceClassesRequest\032\'.gitpod.v1.ListWorkspa" +
-      "ceClassesResponse\"\000\022Z\n\017ParseContextURL\022!" +
-      ".gitpod.v1.ParseContextURLRequest\032\".gitp" +
-      "od.v1.ParseContextURLResponse\"\000\022u\n\030GetWo" +
-      "rkspaceDefaultImage\022*.gitpod.v1.GetWorks" +
-      "paceDefaultImageRequest\032+.gitpod.v1.GetW" +
-      "orkspaceDefaultImageResponse\"\000\022T\n\rSendHe" +
-      "artBeat\022\037.gitpod.v1.SendHeartBeatRequest" +
-      "\032 .gitpod.v1.SendHeartBeatResponse\"\000\022o\n\026" +
-      "GetWorkspaceOwnerToken\022(.gitpod.v1.GetWo" +
-      "rkspaceOwnerTokenRequest\032).gitpod.v1.Get" +
-      "WorkspaceOwnerTokenResponse\"\000\022\204\001\n\035GetWor" +
-      "kspaceEditorCredentials\022/.gitpod.v1.GetW" +
-      "orkspaceEditorCredentialsRequest\0320.gitpo" +
-      "d.v1.GetWorkspaceEditorCredentialsRespon" +
-      "se\"\000\022r\n\027CreateWorkspaceSnapshot\022).gitpod" +
-      ".v1.CreateWorkspaceSnapshotRequest\032*.git" +
-      "pod.v1.CreateWorkspaceSnapshotResponse\"\000" +
-      "\022u\n\030WaitForWorkspaceSnapshot\022*.gitpod.v1" +
-      ".WaitForWorkspaceSnapshotRequest\032+.gitpo" +
-      "d.v1.WaitForWorkspaceSnapshotResponse\"\000\022" +
-      "f\n\023UpdateWorkspacePort\022%.gitpod.v1.Updat" +
-      "eWorkspacePortRequest\032&.gitpod.v1.Update" +
-      "WorkspacePortResponse\"\000BQ\n\026io.gitpod.pub" +
-      "licapi.v1Z7github.com/gitpod-io/gitpod/c" +
-      "omponents/public-api/go/v1b\006proto3"
+      ".protobuf.TimestampR\013stoppedTime\022=\n\007metr" +
+      "ics\030\010 \001(\0132#.gitpod.v1.WorkspaceSession.M" +
+      "etricsR\007metrics\032e\n\007Metrics\0220\n\024workspace_" +
+      "image_size\030\001 \001(\003R\022workspaceImageSize\022(\n\020" +
+      "total_image_size\030\002 \001(\003R\016totalImageSize*o" +
+      "\n\016AdmissionLevel\022\037\n\033ADMISSION_LEVEL_UNSP" +
+      "ECIFIED\020\000\022\036\n\032ADMISSION_LEVEL_OWNER_ONLY\020" +
+      "\001\022\034\n\030ADMISSION_LEVEL_EVERYONE\020\0022\323\016\n\020Work" +
+      "spaceService\022Q\n\014GetWorkspace\022\036.gitpod.v1" +
+      ".GetWorkspaceRequest\032\037.gitpod.v1.GetWork" +
+      "spaceResponse\"\000\022k\n\024WatchWorkspaceStatus\022" +
+      "&.gitpod.v1.WatchWorkspaceStatusRequest\032" +
+      "\'.gitpod.v1.WatchWorkspaceStatusResponse" +
+      "\"\0000\001\022W\n\016ListWorkspaces\022 .gitpod.v1.ListW" +
+      "orkspacesRequest\032!.gitpod.v1.ListWorkspa" +
+      "cesResponse\"\000\022l\n\025ListWorkspaceSessions\022\'" +
+      ".gitpod.v1.ListWorkspaceSessionsRequest\032" +
+      "(.gitpod.v1.ListWorkspaceSessionsRespons" +
+      "e\"\000\022r\n\027CreateAndStartWorkspace\022).gitpod." +
+      "v1.CreateAndStartWorkspaceRequest\032*.gitp" +
+      "od.v1.CreateAndStartWorkspaceResponse\"\000\022" +
+      "W\n\016StartWorkspace\022 .gitpod.v1.StartWorks" +
+      "paceRequest\032!.gitpod.v1.StartWorkspaceRe" +
+      "sponse\"\000\022Z\n\017UpdateWorkspace\022!.gitpod.v1." +
+      "UpdateWorkspaceRequest\032\".gitpod.v1.Updat" +
+      "eWorkspaceResponse\"\000\022T\n\rStopWorkspace\022\037." +
+      "gitpod.v1.StopWorkspaceRequest\032 .gitpod." +
+      "v1.StopWorkspaceResponse\"\000\022Z\n\017DeleteWork" +
+      "space\022!.gitpod.v1.DeleteWorkspaceRequest" +
+      "\032\".gitpod.v1.DeleteWorkspaceResponse\"\000\022i" +
+      "\n\024ListWorkspaceClasses\022&.gitpod.v1.ListW" +
+      "orkspaceClassesRequest\032\'.gitpod.v1.ListW" +
+      "orkspaceClassesResponse\"\000\022Z\n\017ParseContex" +
+      "tURL\022!.gitpod.v1.ParseContextURLRequest\032" +
+      "\".gitpod.v1.ParseContextURLResponse\"\000\022u\n" +
+      "\030GetWorkspaceDefaultImage\022*.gitpod.v1.Ge" +
+      "tWorkspaceDefaultImageRequest\032+.gitpod.v" +
+      "1.GetWorkspaceDefaultImageResponse\"\000\022T\n\r" +
+      "SendHeartBeat\022\037.gitpod.v1.SendHeartBeatR" +
+      "equest\032 .gitpod.v1.SendHeartBeatResponse" +
+      "\"\000\022o\n\026GetWorkspaceOwnerToken\022(.gitpod.v1" +
+      ".GetWorkspaceOwnerTokenRequest\032).gitpod." +
+      "v1.GetWorkspaceOwnerTokenResponse\"\000\022\204\001\n\035" +
+      "GetWorkspaceEditorCredentials\022/.gitpod.v" +
+      "1.GetWorkspaceEditorCredentialsRequest\0320" +
+      ".gitpod.v1.GetWorkspaceEditorCredentials" +
+      "Response\"\000\022r\n\027CreateWorkspaceSnapshot\022)." +
+      "gitpod.v1.CreateWorkspaceSnapshotRequest" +
+      "\032*.gitpod.v1.CreateWorkspaceSnapshotResp" +
+      "onse\"\000\022u\n\030WaitForWorkspaceSnapshot\022*.git" +
+      "pod.v1.WaitForWorkspaceSnapshotRequest\032+" +
+      ".gitpod.v1.WaitForWorkspaceSnapshotRespo" +
+      "nse\"\000\022f\n\023UpdateWorkspacePort\022%.gitpod.v1" +
+      ".UpdateWorkspacePortRequest\032&.gitpod.v1." +
+      "UpdateWorkspacePortResponse\"\000BQ\n\026io.gitp" +
+      "od.publicapi.v1Z7github.com/gitpod-io/gi" +
+      "tpod/components/public-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -61305,7 +62062,13 @@ java.lang.String defaultValue) {
     internal_static_gitpod_v1_WorkspaceSession_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceSession_descriptor,
-        new java.lang.String[] { "Id", "Workspace", "CreationTime", "DeployedTime", "StartedTime", "StoppingTime", "StoppedTime", });
+        new java.lang.String[] { "Id", "Workspace", "CreationTime", "DeployedTime", "StartedTime", "StoppingTime", "StoppedTime", "Metrics", });
+    internal_static_gitpod_v1_WorkspaceSession_Metrics_descriptor =
+      internal_static_gitpod_v1_WorkspaceSession_descriptor.getNestedTypes().get(0);
+    internal_static_gitpod_v1_WorkspaceSession_Metrics_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_WorkspaceSession_Metrics_descriptor,
+        new java.lang.String[] { "WorkspaceImageSize", "TotalImageSize", });
     descriptor.resolveAllFeaturesImmutable();
     io.gitpod.publicapi.v1.Editor.getDescriptor();
     io.gitpod.publicapi.v1.Envvar.getDescriptor();

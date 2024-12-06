@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -908,6 +908,11 @@ export class WorkspaceMetadata extends jspb.Message {
     getProject(): string | undefined;
     setProject(value: string): WorkspaceMetadata;
 
+    hasMetrics(): boolean;
+    clearMetrics(): void;
+    getMetrics(): WorkspaceMetadata.Metrics | undefined;
+    setMetrics(value?: WorkspaceMetadata.Metrics): WorkspaceMetadata;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceMetadata.AsObject;
     static toObject(includeInstance: boolean, msg: WorkspaceMetadata): WorkspaceMetadata.AsObject;
@@ -927,7 +932,56 @@ export namespace WorkspaceMetadata {
         annotationsMap: Array<[string, string]>,
         team?: string,
         project?: string,
+        metrics?: WorkspaceMetadata.Metrics.AsObject,
     }
+
+
+    export class ImageInfo extends jspb.Message {
+        getTotalSize(): number;
+        setTotalSize(value: number): ImageInfo;
+        getWorkspaceImageSize(): number;
+        setWorkspaceImageSize(value: number): ImageInfo;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): ImageInfo.AsObject;
+        static toObject(includeInstance: boolean, msg: ImageInfo): ImageInfo.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: ImageInfo, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): ImageInfo;
+        static deserializeBinaryFromReader(message: ImageInfo, reader: jspb.BinaryReader): ImageInfo;
+    }
+
+    export namespace ImageInfo {
+        export type AsObject = {
+            totalSize: number,
+            workspaceImageSize: number,
+        }
+    }
+
+    export class Metrics extends jspb.Message {
+
+        hasImage(): boolean;
+        clearImage(): void;
+        getImage(): WorkspaceMetadata.ImageInfo | undefined;
+        setImage(value?: WorkspaceMetadata.ImageInfo): Metrics;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): Metrics.AsObject;
+        static toObject(includeInstance: boolean, msg: Metrics): Metrics.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: Metrics, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): Metrics;
+        static deserializeBinaryFromReader(message: Metrics, reader: jspb.BinaryReader): Metrics;
+    }
+
+    export namespace Metrics {
+        export type AsObject = {
+            image?: WorkspaceMetadata.ImageInfo.AsObject,
+        }
+    }
+
 }
 
 export class WorkspaceRuntimeInfo extends jspb.Message {

@@ -884,6 +884,14 @@ message WorkspaceSnapshot {
 }
 
 message WorkspaceSession {
+  message Metrics {
+    // workspace_image_size is the size of the workspace image in bytes
+    int64 workspace_image_size = 1;
+
+    // total_image_size is the total size of the image in bytes (includes Gitpod-specific layers like IDE)
+    int64 total_image_size = 2;
+  }
+
   string id = 1;
 
   Workspace workspace = 2;
@@ -893,4 +901,6 @@ message WorkspaceSession {
   google.protobuf.Timestamp started_time = 5;
   google.protobuf.Timestamp stopping_time = 6;
   google.protobuf.Timestamp stopped_time = 7;
+
+  Metrics metrics = 8;
 }

@@ -87,7 +87,11 @@
         "creationTime": "2024-05-13T07:06:47.659Z",
         "startedTime": "2024-05-13T07:09:16.390Z",
         "stoppingTime": "2024-05-13T07:09:16.615Z",
-        "stoppedTime": "2024-05-13T07:09:29.912Z"
+        "stoppedTime": "2024-05-13T07:09:29.912Z",
+        "metrics": {
+            "workspaceImageSize": "25600000",
+            "totalImageSize": "0"
+        }
     },
     "err": ""
 }

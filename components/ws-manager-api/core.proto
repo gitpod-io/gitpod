@@ -97,7 +97,7 @@ message StartWorkspaceRequest {
     // see https://developers.google.com/protocol-buffers/docs/proto3#reserved reg. gRPC field deprecation
     reserved 5;
 
-    // Type denots the kind of workspace we ought to start
+    // Type denotes the kind of workspace we ought to start
     WorkspaceType type = 6;
 }
 
@@ -290,9 +290,9 @@ message WorkspaceStatus {
     string id = 1;
 
     // version of the status update. Workspace instances themselves are unversioned,
-    // but their statuus has different versions.
+    // but their status has different versions.
     // The value of this field has no semantic meaning (e.g. don't interpret it as
-    // as a timestemp), but it can be used to impose a partial order.
+    // as a timestamp), but it can be used to impose a partial order.
     // If a.status_version < b.status_version then a was the status before b.
     uint64 status_version = 10;
 
@@ -510,6 +510,17 @@ enum WorkspacePhase {
 
 // WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
 message WorkspaceMetadata {
+    message ImageInfo {
+        // TotalSize is the total size of the image
+        int64 total_size = 1;
+
+        // WorkspaceImageSize is the size of the workspace image
+        int64 workspace_image_size = 2;
+    }
+    message Metrics {
+        ImageInfo image = 1;
+    }
+
     // owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
     string owner = 1;
 
@@ -528,10 +539,13 @@ message WorkspaceMetadata {
 
     // project the workspace belongs to, if the workspace is not associated with a project, this property will be empty
     optional string project = 6;
+
+    // metrics contains metrics about the workspace
+    Metrics metrics = 7;
 }
 
 // WorkspaceRuntimeInfo details the workspace's runtime, e.g. executing system, node other information
-// about the environment the workspace runs in. This information serves a diangostic purpose only and
+// about the environment the workspace runs in. This information serves a diagnostic purpose only and
 // should not be directly acted upon.
 message WorkspaceRuntimeInfo {
     // node_name is the name of the node the workspace runs on
