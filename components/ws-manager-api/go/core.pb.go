@@ -2600,7 +2600,7 @@ type WorkspaceMetadata struct {
 	Team *string `protobuf:"bytes,5,opt,name=team,proto3,oneof" json:"team,omitempty"`
 	// project the workspace belongs to, if the workspace is not associated with a project, this property will be empty
 	Project *string `protobuf:"bytes,6,opt,name=project,proto3,oneof" json:"project,omitempty"`
-	// metrics contains statistics about the workspace
+	// metrics contains metrics about the workspace
 	Metrics *WorkspaceMetadata_Metrics `protobuf:"bytes,7,opt,name=metrics,proto3" json:"metrics,omitempty"`
 }
 

@@ -540,7 +540,7 @@ message WorkspaceMetadata {
     // project the workspace belongs to, if the workspace is not associated with a project, this property will be empty
     optional string project = 6;
 
-    // metrics contains statistics about the workspace
+    // metrics contains metrics about the workspace
     Metrics metrics = 7;
 }
 
