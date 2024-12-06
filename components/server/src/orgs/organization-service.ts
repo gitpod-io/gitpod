@@ -152,7 +152,7 @@ export class OrganizationService {
         if (!user) {
             throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, `User not authenticated. Please login.`);
         }
-        const mayCreateOrganization = await this.userAuthentication.mayCreateOrJoinOrganization(user);
+        const mayCreateOrganization = await this.userAuthentication.mayCreateOrganization(user);
         if (!mayCreateOrganization) {
             throw new ApplicationError(
                 ErrorCodes.PERMISSION_DENIED,

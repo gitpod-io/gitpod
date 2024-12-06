@@ -21,6 +21,7 @@ const featureFlags = {
     repositoryFinderSearch: false,
     // dummy specified dataops feature, default false
     dataops: false,
+    enable_multi_org: false,
     showBrowserExtensionPromotion: false,
     enable_experimental_jbtb: false,
     enabled_configuration_prebuild_full_clone: false,

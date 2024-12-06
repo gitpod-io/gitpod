@@ -1446,7 +1446,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("joinTeam");
 
-        const mayCreateOrganization = await this.userAuthentication.mayCreateOrJoinOrganization(user);
+        const mayCreateOrganization = await this.userAuthentication.mayJoinOrganization(user);
         if (!mayCreateOrganization) {
             throw new ApplicationError(
                 ErrorCodes.PERMISSION_DENIED,
