@@ -87,9 +87,18 @@ export class GetOnboardingStateResponse extends Message<GetOnboardingStateRespon
  */
 export class OnboardingState extends Message<OnboardingState> {
   /**
+   * Whether at least one organization has completed the onboarding
+   *
    * @generated from field: bool completed = 1;
    */
   completed = false;
+
+  /**
+   * The total number of organizations
+   *
+   * @generated from field: int32 organization_count_total = 2;
+   */
+  organizationCountTotal = 0;
 
   constructor(data?: PartialMessage<OnboardingState>) {
     super();
@@ -100,6 +109,7 @@ export class OnboardingState extends Message<OnboardingState> {
   static readonly typeName = "gitpod.v1.OnboardingState";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "completed", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "organization_count_total", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OnboardingState {
@@ -749,5 +759,110 @@ export class BlockedEmailDomain extends Message<BlockedEmailDomain> {
 
   static equals(a: BlockedEmailDomain | PlainMessage<BlockedEmailDomain> | undefined, b: BlockedEmailDomain | PlainMessage<BlockedEmailDomain> | undefined): boolean {
     return proto3.util.equals(BlockedEmailDomain, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetInstallationConfigurationRequest
+ */
+export class GetInstallationConfigurationRequest extends Message<GetInstallationConfigurationRequest> {
+  constructor(data?: PartialMessage<GetInstallationConfigurationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetInstallationConfigurationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetInstallationConfigurationRequest {
+    return new GetInstallationConfigurationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetInstallationConfigurationRequest {
+    return new GetInstallationConfigurationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetInstallationConfigurationRequest {
+    return new GetInstallationConfigurationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetInstallationConfigurationRequest | PlainMessage<GetInstallationConfigurationRequest> | undefined, b: GetInstallationConfigurationRequest | PlainMessage<GetInstallationConfigurationRequest> | undefined): boolean {
+    return proto3.util.equals(GetInstallationConfigurationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetInstallationConfigurationResponse
+ */
+export class GetInstallationConfigurationResponse extends Message<GetInstallationConfigurationResponse> {
+  /**
+   * @generated from field: gitpod.v1.InstallationConfiguration configuration = 1;
+   */
+  configuration?: InstallationConfiguration;
+
+  constructor(data?: PartialMessage<GetInstallationConfigurationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetInstallationConfigurationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "configuration", kind: "message", T: InstallationConfiguration },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetInstallationConfigurationResponse {
+    return new GetInstallationConfigurationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetInstallationConfigurationResponse {
+    return new GetInstallationConfigurationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetInstallationConfigurationResponse {
+    return new GetInstallationConfigurationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetInstallationConfigurationResponse | PlainMessage<GetInstallationConfigurationResponse> | undefined, b: GetInstallationConfigurationResponse | PlainMessage<GetInstallationConfigurationResponse> | undefined): boolean {
+    return proto3.util.equals(GetInstallationConfigurationResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.InstallationConfiguration
+ */
+export class InstallationConfiguration extends Message<InstallationConfiguration> {
+  /**
+   * @generated from field: bool is_dedicated_installation = 1;
+   */
+  isDedicatedInstallation = false;
+
+  constructor(data?: PartialMessage<InstallationConfiguration>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.InstallationConfiguration";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "is_dedicated_installation", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InstallationConfiguration {
+    return new InstallationConfiguration().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InstallationConfiguration {
+    return new InstallationConfiguration().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InstallationConfiguration {
+    return new InstallationConfiguration().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: InstallationConfiguration | PlainMessage<InstallationConfiguration> | undefined, b: InstallationConfiguration | PlainMessage<InstallationConfiguration> | undefined): boolean {
+    return proto3.util.equals(InstallationConfiguration, a, b);
   }
 }

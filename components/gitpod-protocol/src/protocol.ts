@@ -1456,9 +1456,7 @@ export namespace AuthProviderEntry {
 }
 
 export interface Configuration {
-    readonly daysBeforeGarbageCollection: number;
-    readonly garbageCollectionStartDate: number;
-    readonly isSingleOrgInstallation: boolean;
+    readonly isDedicatedInstallation: boolean;
 }
 
 export interface StripeConfig {

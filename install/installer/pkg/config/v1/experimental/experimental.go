@@ -269,8 +269,9 @@ type ServerConfig struct {
 	DisableWorkspaceGarbageCollection bool              `json:"disableWorkspaceGarbageCollection"`
 	DisableCompleteSnapshotJob        bool              `json:"disableCompleteSnapshotJob"`
 	InactivityPeriodForReposInDays    *int              `json:"inactivityPeriodForReposInDays"`
-	ShowSetupModal                    *bool             `json:"showSetupModal"`
-	IsSingleOrgInstallation           bool              `json:"isSingleOrgInstallation"`
+	// deprecated: use IsDedicatedInstallation instead
+	IsSingleOrgInstallation bool `json:"isSingleOrgInstallation"`
+	IsDedicatedInstallation bool `json:"isDedicatedInstallation"`
 
 	// @deprecated use containerRegistry.privateBaseImageAllowList instead
 	DefaultBaseImageRegistryWhiteList []string `json:"defaultBaseImageRegistryWhitelist"`

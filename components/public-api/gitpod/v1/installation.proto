@@ -31,6 +31,9 @@ service InstallationService {
 
   // GetOnboardingState returns the onboarding state of the installation.
   rpc GetOnboardingState(GetOnboardingStateRequest) returns (GetOnboardingStateResponse) {}
+
+  // GetInstallationConfiguration returns configuration of the installation.
+  rpc GetInstallationConfiguration(GetInstallationConfigurationRequest) returns (GetInstallationConfigurationResponse) {}
 }
 
 message GetOnboardingStateRequest {}
@@ -39,7 +42,11 @@ message GetOnboardingStateResponse {
 }
 
 message OnboardingState {
+  // Whether at least one organization has completed the onboarding
   bool completed = 1;
+
+  // The total number of organizations
+  int32 organization_count_total = 2;
 }
 
 message GetInstallationWorkspaceDefaultImageRequest {}
@@ -143,4 +150,12 @@ message BlockedEmailDomain {
   string domain = 2;
 
   bool negative = 3;
+}
+
+message GetInstallationConfigurationRequest {}
+message GetInstallationConfigurationResponse {
+  InstallationConfiguration configuration = 1;
+}
+message InstallationConfiguration {
+  bool is_dedicated_installation = 1;
 }

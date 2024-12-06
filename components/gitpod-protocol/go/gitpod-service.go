@@ -1886,8 +1886,7 @@ type VSCodeConfig struct {
 
 // Configuration is the Configuration message type
 type Configuration struct {
-	DaysBeforeGarbageCollection float64 `json:"daysBeforeGarbageCollection,omitempty"`
-	GarbageCollectionStartDate  float64 `json:"garbageCollectionStartDate,omitempty"`
+	IsDedicatedInstallation bool `json:"isDedicatedInstallation,omitempty"`
 }
 
 // EnvVar is the EnvVar message type

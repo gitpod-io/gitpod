@@ -273,7 +273,7 @@ fi
 #
 if [[ "${GITPOD_WITH_DEDICATED_EMU}" == "true" ]]
 then
-  yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.isSingleOrgInstallation "true"
+  yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.isDedicatedInstallation "true"
 fi
 
 #

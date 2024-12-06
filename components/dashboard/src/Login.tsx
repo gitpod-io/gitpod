@@ -311,10 +311,7 @@ const LoginContent = ({
                         </LoginButton>
                     ))
                 )}
-                <SSOLoginForm
-                    onSuccess={authorizeSuccessful}
-                    singleOrgMode={!!authProviders.data && authProviders.data.length === 0}
-                />
+                <SSOLoginForm onSuccess={authorizeSuccessful} />
             </div>
             {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
         </div>

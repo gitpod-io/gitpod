@@ -110,7 +110,7 @@ export class VerificationService {
     ) {
         if (this.config.twilioConfig) {
             this.verifyService = new TwilioVerificationEndpoint(this.config);
-        } else if (this.config.devBranch && !this.config.isSingleOrgInstallation) {
+        } else if (this.config.devBranch && !this.config.isDedicatedInstallation) {
             // preview environments get the mock verification endpoint
             this.verifyService = new MockVerificationEndpoint();
         }

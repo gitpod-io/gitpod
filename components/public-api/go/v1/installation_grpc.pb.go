@@ -41,6 +41,8 @@ type InstallationServiceClient interface {
 	CreateBlockedEmailDomain(ctx context.Context, in *CreateBlockedEmailDomainRequest, opts ...grpc.CallOption) (*CreateBlockedEmailDomainResponse, error)
 	// GetOnboardingState returns the onboarding state of the installation.
 	GetOnboardingState(ctx context.Context, in *GetOnboardingStateRequest, opts ...grpc.CallOption) (*GetOnboardingStateResponse, error)
+	// GetInstallationConfiguration returns configuration of the installation.
+	GetInstallationConfiguration(ctx context.Context, in *GetInstallationConfigurationRequest, opts ...grpc.CallOption) (*GetInstallationConfigurationResponse, error)
 }
 
 type installationServiceClient struct {
@@ -114,6 +116,15 @@ func (c *installationServiceClient) GetOnboardingState(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *installationServiceClient) GetInstallationConfiguration(ctx context.Context, in *GetInstallationConfigurationRequest, opts ...grpc.CallOption) (*GetInstallationConfigurationResponse, error) {
+	out := new(GetInstallationConfigurationResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.InstallationService/GetInstallationConfiguration", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InstallationServiceServer is the server API for InstallationService service.
 // All implementations must embed UnimplementedInstallationServiceServer
 // for forward compatibility
@@ -133,6 +144,8 @@ type InstallationServiceServer interface {
 	CreateBlockedEmailDomain(context.Context, *CreateBlockedEmailDomainRequest) (*CreateBlockedEmailDomainResponse, error)
 	// GetOnboardingState returns the onboarding state of the installation.
 	GetOnboardingState(context.Context, *GetOnboardingStateRequest) (*GetOnboardingStateResponse, error)
+	// GetInstallationConfiguration returns configuration of the installation.
+	GetInstallationConfiguration(context.Context, *GetInstallationConfigurationRequest) (*GetInstallationConfigurationResponse, error)
 	mustEmbedUnimplementedInstallationServiceServer()
 }
 
@@ -160,6 +173,9 @@ func (UnimplementedInstallationServiceServer) CreateBlockedEmailDomain(context.C
 }
 func (UnimplementedInstallationServiceServer) GetOnboardingState(context.Context, *GetOnboardingStateRequest) (*GetOnboardingStateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOnboardingState not implemented")
+}
+func (UnimplementedInstallationServiceServer) GetInstallationConfiguration(context.Context, *GetInstallationConfigurationRequest) (*GetInstallationConfigurationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInstallationConfiguration not implemented")
 }
 func (UnimplementedInstallationServiceServer) mustEmbedUnimplementedInstallationServiceServer() {}
 
@@ -300,6 +316,24 @@ func _InstallationService_GetOnboardingState_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InstallationService_GetInstallationConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInstallationConfigurationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InstallationServiceServer).GetInstallationConfiguration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.InstallationService/GetInstallationConfiguration",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InstallationServiceServer).GetInstallationConfiguration(ctx, req.(*GetInstallationConfigurationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InstallationService_ServiceDesc is the grpc.ServiceDesc for InstallationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -334,6 +368,10 @@ var InstallationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOnboardingState",
 			Handler:    _InstallationService_GetOnboardingState_Handler,
+		},
+		{
+			MethodName: "GetInstallationConfiguration",
+			Handler:    _InstallationService_GetInstallationConfiguration_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

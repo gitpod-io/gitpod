@@ -12,9 +12,10 @@ import { useOnBlurError } from "../hooks/use-onblur-error";
 import { openOIDCStartWindow } from "../provider-utils";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { useLocation } from "react-router";
+import { useOnboardingState } from "../dedicated-setup/use-needs-setup";
+import { getOrgSlugFromQuery } from "../data/organizations/orgs-query";
 
 type Props = {
-    singleOrgMode?: boolean;
     onSuccess: () => void;
 };
 
@@ -27,11 +28,16 @@ function getOrgSlugFromPath(path: string) {
     return pathSegments[2];
 }
 
-export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
+export const SSOLoginForm: FC<Props> = ({ onSuccess }) => {
     const location = useLocation();
+    const { data: onboardingState } = useOnboardingState();
+    const singleOrgMode = (onboardingState?.organizationCountTotal || 0) < 2;
 
     const [orgSlug, setOrgSlug] = useState(
-        getOrgSlugFromPath(location.pathname) || window.localStorage.getItem("sso-org-slug") || "",
+        getOrgSlugFromPath(location.pathname) ||
+            window.localStorage.getItem("sso-org-slug") ||
+            getOrgSlugFromQuery(location.search) ||
+            "",
     );
     const [error, setError] = useState("");
 
@@ -78,7 +84,7 @@ export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
             <div className="mt-10 space-y-2 w-56">
                 {!singleOrgMode && (
                     <TextInputField
-                        label="Organization Slug"
+                        label="Organization"
                         placeholder="my-organization"
                         value={orgSlug}
                         onChange={setOrgSlug}

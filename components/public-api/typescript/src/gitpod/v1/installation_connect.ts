@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateBlockedEmailDomainRequest, CreateBlockedEmailDomainResponse, CreateBlockedRepositoryRequest, CreateBlockedRepositoryResponse, DeleteBlockedRepositoryRequest, DeleteBlockedRepositoryResponse, GetInstallationWorkspaceDefaultImageRequest, GetInstallationWorkspaceDefaultImageResponse, GetOnboardingStateRequest, GetOnboardingStateResponse, ListBlockedEmailDomainsRequest, ListBlockedEmailDomainsResponse, ListBlockedRepositoriesRequest, ListBlockedRepositoriesResponse } from "./installation_pb.js";
+import { CreateBlockedEmailDomainRequest, CreateBlockedEmailDomainResponse, CreateBlockedRepositoryRequest, CreateBlockedRepositoryResponse, DeleteBlockedRepositoryRequest, DeleteBlockedRepositoryResponse, GetInstallationConfigurationRequest, GetInstallationConfigurationResponse, GetInstallationWorkspaceDefaultImageRequest, GetInstallationWorkspaceDefaultImageResponse, GetOnboardingStateRequest, GetOnboardingStateResponse, ListBlockedEmailDomainsRequest, ListBlockedEmailDomainsResponse, ListBlockedRepositoriesRequest, ListBlockedRepositoriesResponse } from "./installation_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -94,6 +94,17 @@ export const InstallationService = {
       name: "GetOnboardingState",
       I: GetOnboardingStateRequest,
       O: GetOnboardingStateResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetInstallationConfiguration returns configuration of the installation.
+     *
+     * @generated from rpc gitpod.v1.InstallationService.GetInstallationConfiguration
+     */
+    getInstallationConfiguration: {
+      name: "GetInstallationConfiguration",
+      I: GetInstallationConfigurationRequest,
+      O: GetInstallationConfigurationResponse,
       kind: MethodKind.Unary,
     },
   }

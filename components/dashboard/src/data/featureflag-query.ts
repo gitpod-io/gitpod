@@ -15,12 +15,12 @@ const featureFlags = {
     // Default to true to enable on gitpod dedicated until ff support is added for dedicated
     orgGitAuthProviders: true,
     userGitAuthProviders: false,
-    enableDedicatedOnboardingFlow: false,
     // Local SSH feature of VS Code Desktop Extension
     gitpod_desktop_use_local_ssh_proxy: false,
     enabledOrbitalDiscoveries: "",
     // dummy specified dataops feature, default false
     dataops: false,
+    enable_multi_org: false,
     showBrowserExtensionPromotion: false,
     enable_experimental_jbtb: false,
     enabled_configuration_prebuild_full_clone: false,

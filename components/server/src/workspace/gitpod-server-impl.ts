@@ -517,9 +517,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getConfiguration(ctx: TraceContext): Promise<Configuration> {
         return {
-            garbageCollectionStartDate: this.config.workspaceGarbageCollection.startDate,
-            daysBeforeGarbageCollection: this.config.workspaceGarbageCollection.minAgeDays,
-            isSingleOrgInstallation: this.config.isSingleOrgInstallation,
+            isDedicatedInstallation: this.config.isDedicatedInstallation,
         };
     }
 
@@ -1435,15 +1433,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // Note: this operation is per-user only, hence needs no resource guard
         const user = await this.checkAndBlockUser("createTeam");
-
-        const mayCreateOrganization = await this.userAuthentication.mayCreateOrJoinOrganization(user);
-        if (!mayCreateOrganization) {
-            throw new ApplicationError(
-                ErrorCodes.PERMISSION_DENIED,
-                "Organizational accounts are not allowed to create new organizations",
-            );
-        }
-
         const org = await this.organizationService.createOrganization(user.id, name);
         // create a cost center
         await this.usageService.getCostCenter(user.id, org.id);
@@ -1457,7 +1446,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("joinTeam");
 
-        const mayCreateOrganization = await this.userAuthentication.mayCreateOrJoinOrganization(user);
+        const mayCreateOrganization = await this.userAuthentication.mayJoinOrganization(user);
         if (!mayCreateOrganization) {
             throw new ApplicationError(
                 ErrorCodes.PERMISSION_DENIED,

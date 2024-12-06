@@ -17,3 +17,14 @@ export const useInstallationDefaultWorkspaceImageQuery = () => {
         },
     });
 };
+
+export const useInstallationConfiguration = () => {
+    return useQuery({
+        queryKey: ["installation-configuration"],
+        staleTime: 1000 * 60 * 10, // 10 minute
+        queryFn: async () => {
+            const response = await installationClient.getInstallationConfiguration({});
+            return response.configuration;
+        },
+    });
+};

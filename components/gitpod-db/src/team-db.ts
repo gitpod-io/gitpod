@@ -18,7 +18,7 @@ export const TeamDB = Symbol("TeamDB");
 export interface TeamDB extends TransactionalDB<TeamDB> {
     findTeams(
         offset: number,
-        limit: number,
+        limit: number | undefined,
         orderBy: keyof Team,
         orderDir: "ASC" | "DESC",
         searchTerm?: string,

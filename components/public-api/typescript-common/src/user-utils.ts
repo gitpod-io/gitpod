@@ -73,3 +73,24 @@ export function getName(user: User | UserProtocol): string | undefined {
 export function isOrganizationOwned(user: User | UserProtocol) {
     return !!user.organizationId;
 }
+
+/**
+ * gitpod.io: Only installation-level users are allowed to create orgs (installation-level users on gitpod.io, and admin user on Dedicated)
+ * Dedicated: Only if multiOrg is enabled, installation-level users can create orgs
+ * @param user
+ * @param isDedicated
+ * @param isMultiOrgEnabled
+ * @returns
+ */
+export function isAllowedToCreateOrganization(
+    user: User | UserProtocol,
+    isDedicated: boolean,
+    isMultiOrgEnabled?: boolean,
+): boolean {
+    if (!isDedicated) {
+        // gitpod.io case
+        return !isOrganizationOwned(user);
+    }
+
+    return !isOrganizationOwned(user) && !!isMultiOrgEnabled;
+}

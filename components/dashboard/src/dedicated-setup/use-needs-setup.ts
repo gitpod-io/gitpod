@@ -5,17 +5,18 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { noPersistence } from "../data/setup";
 import { installationClient } from "../service/public-api";
 import { GetOnboardingStateRequest } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
+import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
 
 /**
  * @description Returns a flage stating if the current installation still needs setup before it can be used. Also returns an isLoading indicator as the check is async
  */
 export const useNeedsSetup = () => {
     const { data: onboardingState, isLoading } = useOnboardingState();
-    const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
+    const { data: installationConfig } = useInstallationConfiguration();
+    const isDedicatedInstallation = !!installationConfig?.isDedicatedInstallation;
 
     // This needs to only be true if we've loaded the onboarding state
     let needsSetup = !isLoading && onboardingState && onboardingState.completed !== true;
@@ -25,14 +26,14 @@ export const useNeedsSetup = () => {
     }
 
     return {
-        needsSetup: enableDedicatedOnboardingFlow && needsSetup,
+        needsSetup: isDedicatedInstallation && needsSetup,
         // disabled queries stay in `isLoading` state, so checking feature flag here too
-        isLoading: enableDedicatedOnboardingFlow && isLoading,
+        isLoading: isDedicatedInstallation && isLoading,
     };
 };
 
-const useOnboardingState = () => {
-    const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
+export const useOnboardingState = () => {
+    const { data: installationConfig } = useInstallationConfiguration();
 
     return useQuery(
         noPersistence(["onboarding-state"]),
@@ -42,7 +43,7 @@ const useOnboardingState = () => {
         },
         {
             // Only query if feature flag is enabled
-            enabled: enableDedicatedOnboardingFlow,
+            enabled: !!installationConfig?.isDedicatedInstallation,
         },
     );
 };
