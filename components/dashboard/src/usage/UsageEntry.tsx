@@ -83,7 +83,7 @@ export const UsageEntry: FC<Props> = ({ usage }) => {
     );
 };
 
-const DisplayName: FC<{ workspaceClass: string }> = ({ workspaceClass }) => {
+export const DisplayName: FC<{ workspaceClass: string }> = ({ workspaceClass }) => {
     const supportedClasses = useWorkspaceClasses();
 
     const workspaceDisplayName = supportedClasses.data?.find((wc) => wc.id === workspaceClass)?.displayName;
@@ -118,7 +118,7 @@ const getMinutes = (usage: Usage) => {
     return inMinutes + " min";
 };
 
-const displayTime = (time: string | number) => {
+export const displayTime = (time: string | number) => {
     const options: Intl.DateTimeFormatOptions = {
         day: "numeric",
         month: "short",
