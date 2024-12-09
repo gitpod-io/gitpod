@@ -16,6 +16,9 @@ import { useCallback } from "react";
 import { noPersistence } from "../../data/setup";
 import { Timestamp } from "@bufbuild/protobuf";
 
+const pageSize = 100;
+const maxPages = 100; // safety limit if something goes wrong with pagination
+
 type GetAllWorkspaceSessionsArgs = Pick<ListWorkspaceSessionsRequest, "to" | "from" | "organizationId"> & {
     signal?: AbortSignal;
     onProgress?: (percentage: number) => void;
@@ -27,24 +30,23 @@ export const getAllWorkspaceSessions = async ({
     organizationId,
     onProgress,
 }: GetAllWorkspaceSessionsArgs): Promise<WorkspaceSession[]> => {
-    let page = 0;
     const records: WorkspaceSession[] = [];
-
-    while (true) {
-        if (signal?.aborted === true) {
-            return [];
-        }
-
-        const response = await workspaceClient.listWorkspaceSessions({
-            organizationId,
-            from,
-            to,
-            pagination: {
-                page,
-                pageSize: 100,
+    let page = 0;
+    while (!signal?.aborted && page < maxPages) {
+        const response = await workspaceClient.listWorkspaceSessions(
+            {
+                organizationId,
+                from,
+                to,
+                pagination: {
+                    page,
+                    pageSize,
+                },
             },
-        });
-        console.log(response.workspaceSessions.length);
+            {
+                signal,
+            },
+        );
         if (response.workspaceSessions.length === 0) {
             break;
         }
@@ -106,6 +108,11 @@ const downloadUsageCSV = async ({
     const csvRows = rows.map((row) => {
         const rowString = fields
             .map((fieldName) => {
+                const value = row[fieldName];
+                if (typeof value === "bigint") {
+                    return value.toString();
+                }
+
                 return JSON.stringify(row[fieldName]);
             })
             .join(",");
@@ -171,6 +178,10 @@ export const transformSessionRecord = (session: WorkspaceSession) => {
         contextURL: session.workspace?.metadata?.originalContextUrl,
         workspaceType: displayWorkspaceType(session.workspace?.spec?.type),
         workspaceClass: session.workspace?.spec?.class,
+
+        workspaceImageSize: session.metrics?.workspaceImageSize,
+        workspaceImageTotalSize: session.metrics?.totalImageSize,
+        ide: session.workspace?.spec?.editor?.name, // maybe?
     };
 
     return row;

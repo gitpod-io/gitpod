@@ -205,7 +205,7 @@ export const DownloadUsage = ({ from, to }: DownloadUsageProps) => {
 
     return (
         <Button variant="secondary" onClick={handleDownload} className="gap-1" disabled={downloadDisabled}>
-            <DownloadIcon />
+            <DownloadIcon strokeWidth={3} className="w-4" />
             <span>Export as CSV</span>
         </Button>
     );
