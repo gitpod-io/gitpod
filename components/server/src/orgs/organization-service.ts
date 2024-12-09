@@ -13,6 +13,7 @@ import {
     TeamMembershipInvite,
     WorkspaceTimeoutDuration,
     OrgMemberRole,
+    User,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -33,7 +34,7 @@ import { StripeService } from "../billing/stripe-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { UsageService } from "./usage-service";
 import { CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
-import { UserAuthentication } from "../user/user-authentication";
+import { CreateUserParams, UserAuthentication } from "../user/user-authentication";
 
 @injectable()
 export class OrganizationService {
@@ -322,6 +323,26 @@ export class OrganizationService {
         });
 
         return invite.teamId;
+    }
+
+    /**
+     * Convenience method, analogue to UserService.createUser()
+``
+     */
+    public async createOrgOwnedUser(params: CreateUserParams & { organizationId: string }): Promise<User> {
+        return this.userDB.transaction(async (_, ctx) => {
+            const user = await this.userService.createUser(params, ctx);
+
+            await this.addOrUpdateMember(
+                SYSTEM_USER_ID,
+                params.organizationId,
+                user.id,
+                "member",
+                { flexibleRole: true },
+                ctx,
+            );
+            return user;
+        });
     }
 
     /**
