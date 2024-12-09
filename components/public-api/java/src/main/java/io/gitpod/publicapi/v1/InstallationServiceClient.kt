@@ -137,4 +137,22 @@ public class InstallationServiceClient(
     ),
   )
 
+
+  /**
+   *  GetInstallationConfiguration returns configuration of the installation.
+   */
+  override suspend
+      fun getInstallationConfiguration(request: Installation.GetInstallationConfigurationRequest,
+      headers: Headers): ResponseMessage<Installation.GetInstallationConfigurationResponse> =
+      client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.InstallationService/GetInstallationConfiguration",
+      io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationRequest::class,
+      io.gitpod.publicapi.v1.Installation.GetInstallationConfigurationResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
 }

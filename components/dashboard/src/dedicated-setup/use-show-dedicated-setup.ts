@@ -5,9 +5,9 @@
  */
 
 import { useQueryParams } from "../hooks/use-query-params";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { useCallback, useState } from "react";
 import { isCurrentHostExcludedFromSetup, useNeedsSetup } from "./use-needs-setup";
+import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
 
 const FORCE_SETUP_PARAM = "dedicated-setup";
 const FORCE_SETUP_PARAM_VALUE = "force";
@@ -21,7 +21,8 @@ export const useShowDedicatedSetup = () => {
     // again in case onboarding state isn't updated right away
     const [inProgress, setInProgress] = useState(false);
 
-    const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
+    const { data: installationConfig } = useInstallationConfiguration();
+    const enableDedicatedOnboardingFlow = !!installationConfig?.isDedicatedInstallation;
     const params = useQueryParams();
 
     const { needsSetup } = useNeedsSetup();

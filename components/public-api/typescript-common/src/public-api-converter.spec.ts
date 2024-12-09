@@ -277,10 +277,11 @@ describe("PublicAPIConverter", () => {
         it("should convert", () => {
             const result = converter.toOnboardingState({
                 isCompleted: true,
-                hasAnyOrg: true,
+                organizationCountTotal: 1,
             });
             expect(result).to.deep.equal({
                 completed: true,
+                organizationCountTotal: 1,
             });
         });
     });

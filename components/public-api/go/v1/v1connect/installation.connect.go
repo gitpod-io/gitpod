@@ -46,6 +46,8 @@ type InstallationServiceClient interface {
 	CreateBlockedEmailDomain(context.Context, *connect_go.Request[v1.CreateBlockedEmailDomainRequest]) (*connect_go.Response[v1.CreateBlockedEmailDomainResponse], error)
 	// GetOnboardingState returns the onboarding state of the installation.
 	GetOnboardingState(context.Context, *connect_go.Request[v1.GetOnboardingStateRequest]) (*connect_go.Response[v1.GetOnboardingStateResponse], error)
+	// GetInstallationConfiguration returns configuration of the installation.
+	GetInstallationConfiguration(context.Context, *connect_go.Request[v1.GetInstallationConfigurationRequest]) (*connect_go.Response[v1.GetInstallationConfigurationResponse], error)
 }
 
 // NewInstallationServiceClient constructs a client for the gitpod.v1.InstallationService service.
@@ -93,6 +95,11 @@ func NewInstallationServiceClient(httpClient connect_go.HTTPClient, baseURL stri
 			baseURL+"/gitpod.v1.InstallationService/GetOnboardingState",
 			opts...,
 		),
+		getInstallationConfiguration: connect_go.NewClient[v1.GetInstallationConfigurationRequest, v1.GetInstallationConfigurationResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.InstallationService/GetInstallationConfiguration",
+			opts...,
+		),
 	}
 }
 
@@ -105,6 +112,7 @@ type installationServiceClient struct {
 	listBlockedEmailDomains              *connect_go.Client[v1.ListBlockedEmailDomainsRequest, v1.ListBlockedEmailDomainsResponse]
 	createBlockedEmailDomain             *connect_go.Client[v1.CreateBlockedEmailDomainRequest, v1.CreateBlockedEmailDomainResponse]
 	getOnboardingState                   *connect_go.Client[v1.GetOnboardingStateRequest, v1.GetOnboardingStateResponse]
+	getInstallationConfiguration         *connect_go.Client[v1.GetInstallationConfigurationRequest, v1.GetInstallationConfigurationResponse]
 }
 
 // GetInstallationWorkspaceDefaultImage calls
@@ -143,6 +151,11 @@ func (c *installationServiceClient) GetOnboardingState(ctx context.Context, req 
 	return c.getOnboardingState.CallUnary(ctx, req)
 }
 
+// GetInstallationConfiguration calls gitpod.v1.InstallationService.GetInstallationConfiguration.
+func (c *installationServiceClient) GetInstallationConfiguration(ctx context.Context, req *connect_go.Request[v1.GetInstallationConfigurationRequest]) (*connect_go.Response[v1.GetInstallationConfigurationResponse], error) {
+	return c.getInstallationConfiguration.CallUnary(ctx, req)
+}
+
 // InstallationServiceHandler is an implementation of the gitpod.v1.InstallationService service.
 type InstallationServiceHandler interface {
 	// GetInstallationWorkspaceDefaultImage returns the default image for current
@@ -160,6 +173,8 @@ type InstallationServiceHandler interface {
 	CreateBlockedEmailDomain(context.Context, *connect_go.Request[v1.CreateBlockedEmailDomainRequest]) (*connect_go.Response[v1.CreateBlockedEmailDomainResponse], error)
 	// GetOnboardingState returns the onboarding state of the installation.
 	GetOnboardingState(context.Context, *connect_go.Request[v1.GetOnboardingStateRequest]) (*connect_go.Response[v1.GetOnboardingStateResponse], error)
+	// GetInstallationConfiguration returns configuration of the installation.
+	GetInstallationConfiguration(context.Context, *connect_go.Request[v1.GetInstallationConfigurationRequest]) (*connect_go.Response[v1.GetInstallationConfigurationResponse], error)
 }
 
 // NewInstallationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -204,6 +219,11 @@ func NewInstallationServiceHandler(svc InstallationServiceHandler, opts ...conne
 		svc.GetOnboardingState,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.InstallationService/GetInstallationConfiguration", connect_go.NewUnaryHandler(
+		"/gitpod.v1.InstallationService/GetInstallationConfiguration",
+		svc.GetInstallationConfiguration,
+		opts...,
+	))
 	return "/gitpod.v1.InstallationService/", mux
 }
 
@@ -236,4 +256,8 @@ func (UnimplementedInstallationServiceHandler) CreateBlockedEmailDomain(context.
 
 func (UnimplementedInstallationServiceHandler) GetOnboardingState(context.Context, *connect_go.Request[v1.GetOnboardingStateRequest]) (*connect_go.Response[v1.GetOnboardingStateResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.InstallationService.GetOnboardingState is not implemented"))
+}
+
+func (UnimplementedInstallationServiceHandler) GetInstallationConfiguration(context.Context, *connect_go.Request[v1.GetInstallationConfigurationRequest]) (*connect_go.Response[v1.GetInstallationConfigurationResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.InstallationService.GetInstallationConfiguration is not implemented"))
 }

@@ -131,62 +131,6 @@ const INVALID_BILLING_ADDRESS = (stripePortalUrl: string | undefined) => {
     } as Notification;
 };
 
-const GENERAL_NOTIFICATION = (
-    id: string,
-    message: JSX.Element,
-    updateUser: (user: Partial<UserProtocol>) => Promise<User>,
-    eventName: string = "general_notification",
-) => {
-    return {
-        id,
-        type: "info",
-        preventDismiss: true,
-        onClose: async () => {
-            let dismissSuccess = false;
-            try {
-                const updatedUser = await updateUser({
-                    additionalData: {
-                        profile: {
-                            coachmarksDismissals: {
-                                [id]: new Date().toISOString(),
-                            },
-                        },
-                    },
-                });
-                dismissSuccess = !!updatedUser;
-            } catch (err) {
-                dismissSuccess = false;
-            } finally {
-                trackEvent("coachmark_dismissed", {
-                    name: eventName,
-                    success: dismissSuccess,
-                });
-            }
-        },
-        message,
-    } as Notification;
-};
-
-const AWS_REINVENT_NOTIFICATION = (updateUser: (user: Partial<UserProtocol>) => Promise<User>) => {
-    return GENERAL_NOTIFICATION(
-        "aws_reinvent_2024",
-        <span className="text-md">
-            <b>See you at re:Invent!</b> Book a demo with us, and join our developer productivity leaders roundtable
-            (limited tickets) |{" "}
-            <a
-                className="text-kumquat-ripe font-bold"
-                href="https://www.gitpod.io/aws-reinvent-24"
-                target="_blank"
-                rel="noreferrer"
-            >
-                Learn more
-            </a>
-        </span>,
-        updateUser,
-        "aws_reinvent_notification",
-    );
-};
-
 export function AppNotifications() {
     const [topNotification, setTopNotification] = useState<Notification | undefined>(undefined);
     const { user, loading } = useUserLoader();
@@ -218,10 +162,6 @@ export function AppNotifications() {
 
                 if (isGitpodIo() && !user?.profile?.coachmarksDismissals[GITPOD_FLEX_INTRODUCTION_COACHMARK_KEY]) {
                     notifications.push(GITPOD_FLEX_INTRODUCTION((u: Partial<UserProtocol>) => mutateAsync(u)));
-                }
-
-                if (isGitpodIo() && !user?.profile?.coachmarksDismissals["aws_reinvent_2024"]) {
-                    notifications.push(AWS_REINVENT_NOTIFICATION((u: Partial<UserProtocol>) => mutateAsync(u)));
                 }
             }
 

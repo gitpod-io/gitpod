@@ -61,14 +61,31 @@ export function useCurrentOrg(): { data?: Organization; isLoading: boolean } {
         return { data: undefined, isLoading: true };
     }
     let orgId = localStorage.getItem("active-org");
+    let org: Organization | undefined = undefined;
+    if (orgId) {
+        org = orgs.data.find((org) => org.id === orgId);
+    }
+
+    // 1. Check for org slug
+    const orgSlugParam = getOrgSlugFromQuery(location.search);
+    if (orgSlugParam) {
+        org = orgs.data.find((org) => org.slug === orgSlugParam);
+    }
+
+    // 2. Check for org id
+    // id is more speficic than slug, so it takes precedence
     const orgIdParam = new URLSearchParams(location.search).get("org");
     if (orgIdParam) {
         orgId = orgIdParam;
+        org = orgs.data.find((org) => org.id === orgId);
     }
-    let org = orgs.data.find((org) => org.id === orgId);
+
+    // 3. Fallback: pick the first org
     if (!org) {
         org = orgs.data[0];
     }
+
+    // Persist the selected org
     if (org) {
         localStorage.setItem("active-org", org.id);
     } else if (orgId && (orgs.isLoading || orgs.isStale)) {
@@ -78,4 +95,8 @@ export function useCurrentOrg(): { data?: Organization; isLoading: boolean } {
         localStorage.removeItem("active-org");
     }
     return { data: org, isLoading: false };
+}
+
+export function getOrgSlugFromQuery(search: string): string | undefined {
+    return new URLSearchParams(search).get("orgSlug") || undefined;
 }

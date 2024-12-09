@@ -157,8 +157,6 @@ export interface ConfigSerialized {
         passlist: string[];
     };
 
-    showSetupModal: boolean;
-
     admin: {
         credentialsPath: string;
     };
@@ -274,7 +272,8 @@ export interface ConfigSerialized {
         address: string;
     };
 
-    isSingleOrgInstallation: boolean;
+    /** true if this is a Dedicated */
+    isDedicatedInstallation: boolean;
 }
 
 export interface CookieConfig {

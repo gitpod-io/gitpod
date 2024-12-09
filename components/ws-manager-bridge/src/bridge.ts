@@ -334,8 +334,9 @@ export class WorkspaceManagerBridge implements Disposable {
             instance.status.ownerToken = status.auth!.ownerToken;
             instance.status.metrics = {
                 image: {
-                    totalSize: status.metadata.metrics?.image?.totalSize,
-                    workspaceImageSize: status.metadata.metrics?.image?.workspaceImageSize,
+                    totalSize: instance.status.metrics?.image?.totalSize || status.metadata.metrics?.image?.totalSize,
+                    workspaceImageSize:
+                        instance.status.metrics?.image?.totalSize || status.metadata.metrics?.image?.workspaceImageSize,
                 },
             };
 

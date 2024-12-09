@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM } from "@gitpod/gitpod-db/lib";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
 import { Organization, OrganizationSettings, TeamMemberRole, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -473,4 +473,54 @@ describe("OrganizationService", async () => {
         );
         await assertUpdateSettings("should enable workspace sharing", { workspaceSharingDisabled: false }, {});
     });
+
+    it("org-owned users can't create new organizations", async () => {
+        const userDB = container.get<UserDB>(UserDB);
+        const os = container.get(OrganizationService);
+
+        // create the owner (installation-level)
+        const owner = await userDB.newUser();
+
+        // create an org
+        const orgService = container.get(OrganizationService);
+        const myOrg = await orgService.createOrganization(owner.id, "my-org");
+
+        // create org-owned user
+        const member = await createOrgOwnedUser(os, myOrg.id);
+
+        await expectError(ErrorCodes.PERMISSION_DENIED, () => os.createOrganization(member.id, "member's crew"));
+    });
+
+    it("org-owned users can't join another org", async () => {
+        const userDB = container.get<UserDB>(UserDB);
+        const os = container.get(OrganizationService);
+
+        // create the owner (installation-level)
+        const owner = await userDB.newUser();
+
+        // create the orgs
+        const orgService = container.get(OrganizationService);
+        const myOrg = await orgService.createOrganization(owner.id, "my-org");
+        const anotherOrg = await orgService.createOrganization(owner.id, "another-org");
+
+        // create org-owned user
+        const member = await createOrgOwnedUser(os, myOrg.id);
+
+        const failingInvite = await orgService.getOrCreateInvite(owner.id, anotherOrg.id);
+        await expectError(ErrorCodes.PERMISSION_DENIED, () => os.joinOrganization(member.id, failingInvite.id));
+    });
 });
+
+async function createOrgOwnedUser(os: OrganizationService, organizationId: string) {
+    // create org-owned member
+    return os.createOrgOwnedUser({
+        organizationId,
+        identity: {
+            authId: "123",
+            authProviderId: "https://accounts.google.com",
+            authName: "member",
+            lastSigninTime: new Date().toISOString(),
+        },
+        userUpdate: (user) => {},
+    });
+}

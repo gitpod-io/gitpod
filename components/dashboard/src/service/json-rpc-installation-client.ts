@@ -22,6 +22,8 @@ import {
     GetInstallationWorkspaceDefaultImageResponse,
     GetOnboardingStateRequest,
     GetOnboardingStateResponse,
+    GetInstallationConfigurationRequest,
+    GetInstallationConfigurationResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { getGitpodService } from "./service";
@@ -128,6 +130,16 @@ export class JsonRpcInstallationClient implements PromiseClient<typeof Installat
         const info = await getGitpodService().server.getOnboardingState();
         return new GetOnboardingStateResponse({
             onboardingState: converter.toOnboardingState(info),
+        });
+    }
+
+    async getInstallationConfiguration(
+        request: Partial<GetInstallationConfigurationRequest>,
+        _options?: CallOptions | undefined,
+    ): Promise<GetInstallationConfigurationResponse> {
+        const config = await getGitpodService().server.getConfiguration();
+        return new GetInstallationConfigurationResponse({
+            configuration: converter.toInstallationConfiguration(config),
         });
     }
 }
