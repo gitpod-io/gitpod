@@ -326,7 +326,8 @@ export class OrganizationService {
     }
 
     /**
-     * Conveniece method, analogue to UserService.createUser()
+     * Convenience method, analogue to UserService.createUser()
+``
      */
     public async createOrgOwnedUser(params: CreateUserParams & { organizationId: string }): Promise<User> {
         return this.userDB.transaction(async (_, ctx) => {
