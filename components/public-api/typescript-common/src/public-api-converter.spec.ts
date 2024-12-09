@@ -86,7 +86,7 @@ describe("PublicAPIConverter", () => {
                     input.arg1,
                     input.arg2 ? Workspace.fromJson(input.arg2) : undefined,
                 );
-                // Use toJsonString since JSON.stringify cann't decode BigInt
+                // Use toJsonString since JSON.stringify can't decode BigInt
                 return JSON.parse(result.toJsonString());
             });
         });

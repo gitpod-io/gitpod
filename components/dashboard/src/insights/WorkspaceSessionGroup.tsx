@@ -64,11 +64,11 @@ export const WorkspaceSessionGroup = ({ id, sessions, member }: Props) => {
                         )}
                     </span>
                 </div>
-                <AccordionTrigger className="w-full">
-                    <div className="flex flex-col col-span-2 my-auto">
+                <div className="flex flex-col col-span-2 my-auto">
+                    <AccordionTrigger className="w-full">
                         <span className="text-gray-400 dark:text-gray-500 truncate font-medium">{sessions.length}</span>
-                    </div>
-                </AccordionTrigger>
+                    </AccordionTrigger>
+                </div>
             </div>
             <AccordionContent>
                 <div className="px-3 py-2 space-y-2">

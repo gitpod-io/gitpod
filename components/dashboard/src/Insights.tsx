@@ -8,7 +8,7 @@ import type { OrganizationMember } from "@gitpod/public-api/lib/gitpod/v1/organi
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { Heading2, Subheading } from "@podkit/typography/Headings";
 import classNames from "classnames";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Accordion } from "./components/accordion/Accordion";
 import Alert from "./components/Alert";
 import Header from "./components/Header";
@@ -17,19 +17,71 @@ import { useWorkspaceSessions } from "./data/insights/list-workspace-sessions-qu
 import { useListOrganizationMembers } from "./data/organizations/members-query";
 import { WorkspaceSessionGroup } from "./insights/WorkspaceSessionGroup";
 import { gitpodHostUrl } from "./service/service";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
+import dayjs from "dayjs";
+import { Timestamp } from "@bufbuild/protobuf";
+import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { TextMuted } from "@podkit/typography/TextMuted";
+import { DownloadInsightsToast } from "./insights/download/DownloadInsights";
+import { useCurrentOrg } from "./data/organizations/orgs-query";
+import { useToast } from "./components/toasts/Toasts";
+import { useTemporaryState } from "./hooks/use-temporary-value";
+import { DownloadIcon } from "lucide-react";
+import { Button } from "@podkit/buttons/Button";
 
 export const Insights = () => {
-    const { data, error: errorMessage, isLoading } = useWorkspaceSessions();
+    const [prebuildsFilter, setPrebuildsFilter] = useState<"week" | "month" | "year">("week");
+    const [upperBound, lowerBound] = useMemo(() => {
+        const from = dayjs().subtract(1, prebuildsFilter);
+
+        const fromTimestamp = Timestamp.fromDate(from.toDate());
+        const toTimestamp = Timestamp.fromDate(new Date());
+        return [fromTimestamp, toTimestamp];
+    }, [prebuildsFilter]);
+    const {
+        data,
+        error: errorMessage,
+        isLoading,
+        isFetchingNextPage,
+        hasNextPage,
+        fetchNextPage,
+    } = useWorkspaceSessions({
+        from: upperBound,
+        to: lowerBound,
+    });
     const membersQuery = useListOrganizationMembers();
     const members: OrganizationMember[] = useMemo(() => membersQuery.data || [], [membersQuery.data]);
 
-    const sessions = data ?? [];
+    const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;
+    const sessions = useMemo(() => data?.pages.flatMap((p) => p) ?? [], [data]);
     const grouped = Object.groupBy(sessions, (ws) => ws.workspace?.id ?? "unknown");
+    const [page, setPage] = useState(0);
 
     return (
         <>
             <Header title="Insights" subtitle="Insights into workspace sessions in your organization" />
             <div className="app-container pt-5">
+                <div
+                    className={classNames(
+                        "flex flex-col items-start space-y-3 justify-between",
+                        "md:flex-row md:items-center md:space-x-4 md:space-y-0",
+                    )}
+                >
+                    <Select value={prebuildsFilter} onValueChange={(v) => setPrebuildsFilter(v as any)}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select time range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="day">Last 24 hours</SelectItem>{" "}
+                            {/* here for debugging, probably not useful */}
+                            <SelectItem value="week">Last 7 days</SelectItem>
+                            <SelectItem value="month">Last 30 days</SelectItem>
+                            <SelectItem value="year">Last 365 days</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <DownloadUsage from={upperBound} to={lowerBound} />
+                </div>
+
                 <div
                     className={classNames(
                         "flex flex-col items-start space-y-3 justify-between px-3",
@@ -100,8 +152,62 @@ export const Insights = () => {
                         )}
                     </ItemsList>
                 </div>
+
+                <div className="mt-4 mb-8 flex flex-row justify-center">
+                    {hasNextPage ? (
+                        <LoadingButton
+                            variant="secondary"
+                            onClick={() => {
+                                setPage(page + 1);
+                                fetchNextPage();
+                            }}
+                            loading={isFetchingNextPage}
+                        >
+                            Load more
+                        </LoadingButton>
+                    ) : (
+                        hasMoreThanOnePage && <TextMuted>All workspace sessions are loaded</TextMuted>
+                    )}
+                </div>
             </div>
         </>
+    );
+};
+
+type DownloadUsageProps = {
+    from: Timestamp;
+    to: Timestamp;
+};
+export const DownloadUsage = ({ from, to }: DownloadUsageProps) => {
+    const { data: org } = useCurrentOrg();
+    const { toast } = useToast();
+    // When we start the download, we disable the button for a short time
+    const [downloadDisabled, setDownloadDisabled] = useTemporaryState(false, 1000);
+
+    const handleDownload = useCallback(async () => {
+        if (!org) {
+            return;
+        }
+
+        setDownloadDisabled(true);
+        toast(
+            <DownloadInsightsToast
+                organizationName={org?.slug ?? org?.id}
+                organizationId={org.id}
+                from={from}
+                to={to}
+            />,
+            {
+                autoHide: false,
+            },
+        );
+    }, [org, setDownloadDisabled, toast, from, to]);
+
+    return (
+        <Button variant="secondary" onClick={handleDownload} className="gap-1" disabled={downloadDisabled}>
+            <DownloadIcon />
+            <span>Export as CSV</span>
+        </Button>
     );
 };
 
