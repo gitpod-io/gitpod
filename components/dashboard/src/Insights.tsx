@@ -96,8 +96,8 @@ export const Insights = () => {
                 )}
 
                 <div className="flex flex-col w-full mb-8">
-                    <ItemsList className="mt-2 text-gray-400 dark:text-gray-500">
-                        <Item header={false} className="grid grid-cols-12 gap-x-3 bg-gray-100 dark:bg-gray-800">
+                    <ItemsList className="mt-2 text-pk-content-secondary">
+                        <Item header={false} className="grid grid-cols-12 gap-x-3 bg-pk-surface-tertiary">
                             <ItemField className="col-span-2 my-auto">
                                 <span>Type</span>
                             </ItemField>
@@ -113,7 +113,7 @@ export const Insights = () => {
                         </Item>
 
                         {isLoading && (
-                            <div className="flex items-center justify-center w-full space-x-2 text-gray-400 text-sm pt-16 pb-40">
+                            <div className="flex items-center justify-center w-full space-x-2 text-pk-content-primary text-sm pt-16 pb-40">
                                 <LoadingState />
                                 <span>Loading usage...</span>
                             </div>

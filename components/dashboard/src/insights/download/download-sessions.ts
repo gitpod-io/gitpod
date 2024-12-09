@@ -9,12 +9,13 @@ import {
     WorkspaceSession,
     WorkspaceSpec_WorkspaceType,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { workspaceClient } from "../../service/public-api";
+import { organizationClient, workspaceClient } from "../../service/public-api";
 import dayjs from "dayjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { noPersistence } from "../../data/setup";
 import { Timestamp } from "@bufbuild/protobuf";
+import type { OrganizationMember } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 const pageSize = 100;
 const maxPages = 100; // safety limit if something goes wrong with pagination
@@ -100,7 +101,19 @@ const downloadUsageCSV = async ({
         };
     }
 
-    const rows = records.map(transformSessionRecord).filter((r) => !!r);
+    const orgMembers = await organizationClient.listOrganizationMembers({
+        organizationId,
+    });
+
+    const rows = records
+        .map((record) => {
+            const member = orgMembers.members.find((m) => m.userId === record.workspace?.metadata?.ownerId);
+            if (!member) {
+                return null;
+            }
+            return transformSessionRecord(record, member);
+        })
+        .filter((r) => !!r);
     const fields = Object.keys(rows[0]) as (keyof ReturnType<typeof transformSessionRecord>)[];
 
     // TODO: look into a lib to handle this more robustly
@@ -122,6 +135,8 @@ const downloadUsageCSV = async ({
 
     // Prepend Header
     csvRows.unshift(fields.join(","));
+
+    console.log(csvRows);
 
     const blob = new Blob([`\ufeff${csvRows.join("\n")}`], {
         type: "text/csv;charset=utf-8",
@@ -157,7 +172,7 @@ const displayTime = (timestamp?: Timestamp) => {
     return timestamp.toDate().toISOString();
 };
 
-export const transformSessionRecord = (session: WorkspaceSession) => {
+export const transformSessionRecord = (session: WorkspaceSession, member: OrganizationMember) => {
     const row = {
         // id: session.id, // although it's defined in the proto, it doesn't actually ever get applied
 
@@ -171,8 +186,8 @@ export const transformSessionRecord = (session: WorkspaceSession) => {
         workspaceId: session?.workspace?.id,
         instanceId: session.workspace?.status?.instanceId,
         configurationId: session.workspace?.metadata?.configurationId,
-        userId: session.workspace?.metadata?.ownerId,
-        userName: session.workspace?.metadata?.ownerId, // todo(ft): add actual name somehow
+        userId: member.userId,
+        userName: member.fullName, // todo(ft): add actual name somehow
         // userAvatarURL: metadata.userAvatarURL, // maybe?, probably not
 
         contextURL: session.workspace?.metadata?.originalContextUrl,

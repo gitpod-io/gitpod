@@ -28,30 +28,26 @@ export const WorkspaceSessionGroup = ({ id, sessions, member }: Props) => {
         <AccordionItem key={id} value={id}>
             <div className="w-full p-3 grid grid-cols-12 gap-x-3 justify-between transition ease-in-out rounded-xl">
                 <div className="flex flex-col col-span-2 my-auto">
-                    <span className="text-gray-600 dark:text-gray-100 text-md font-medium">
-                        {getType(workspace.spec?.type)}
-                    </span>
-                    <span className="text-sm text-gray-400 dark:text-gray-500">
+                    <span className="text-pk-content-primary text-md font-medium">{getType(workspace.spec?.type)}</span>
+                    <span className="text-sm text-pk-content-tertiary">
                         {workspace.spec?.class ? <DisplayName workspaceClass={workspace?.spec?.class} /> : "n/a"}
                     </span>
                 </div>
                 <div className="flex flex-col col-span-5 my-auto">
                     <div className="flex">
-                        <span className="truncate text-gray-600 dark:text-gray-100 text-md font-medium">
-                            {workspace.id}
-                        </span>
+                        <span className="truncate text-pk-content-primary text-md font-medium">{workspace.id}</span>
                     </div>
-                    <span className="text-sm truncate text-gray-400 dark:text-gray-500">
+                    <span className="text-sm truncate text-pk-content-secondary">
                         {workspace.metadata?.originalContextUrl && toRemoteURL(workspace.metadata?.originalContextUrl)}
                     </span>
                 </div>
                 <div className="flex flex-col col-span-3 my-auto">
-                    <span className="text-right text-gray-500 dark:text-gray-400 font-medium">
+                    <span className="text-right text-pk-content-secondary font-medium">
                         {workspace.spec?.type === WorkspaceSpec_WorkspaceType.PREBUILD ? (
-                            <>
+                            <div className="flex">
                                 <UsageIcon className="my-auto w-4 h-4 mr-1" />
-                                <span className="text-sm text-gray-400 dark:text-gray-500">Gitpod</span>
-                            </>
+                                <span className="text-sm">Gitpod</span>
+                            </div>
                         ) : (
                             <div className="flex">
                                 <img
@@ -59,20 +55,20 @@ export const WorkspaceSessionGroup = ({ id, sessions, member }: Props) => {
                                     src={member?.avatarUrl ?? ""}
                                     alt=""
                                 />
-                                <span className="text-sm text-gray-400 dark:text-gray-500">{member?.fullName}</span>
+                                <span className="text-sm">{member?.fullName}</span>
                             </div>
                         )}
                     </span>
                 </div>
                 <div className="flex flex-col col-span-2 my-auto">
                     <AccordionTrigger className="w-full">
-                        <span className="text-gray-400 dark:text-gray-500 truncate font-medium">{sessions.length}</span>
+                        <span className="text-pk-content-primary truncate font-medium">{sessions.length}</span>
                     </AccordionTrigger>
                 </div>
             </div>
             <AccordionContent>
                 <div className="px-3 py-2 space-y-2">
-                    <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Workspace starts:</h4>
+                    <h4 className="text-sm font-medium text-pk-content-primary">Workspace starts:</h4>
                     <ul className="space-y-1">
                         {sessions.map((session, index) => (
                             <WorkspaceSessionEntry key={session.id || index} session={session} index={index} />
