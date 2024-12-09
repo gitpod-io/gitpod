@@ -78,7 +78,7 @@ describe("OrganizationService", async () => {
             } as any as InstallationService);
             container.bind(StripeService).toConstantValue({} as any as StripeService);
             container.bind(UsageService).toConstantValue({} as any as UsageService);
-            container.bind(UserAuthentication).toSelf().inSingletonScope();
+            container.bind(UserAuthentication).toConstantValue({} as any as UserAuthentication);
             os = container.get(OrganizationService);
         });
 
