@@ -140,11 +140,9 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
             page.limit,
             page.offset,
         );
-        const resultTotal = results.length;
         const response = new ListWorkspaceSessionsResponse();
         response.workspaceSessions = results.map((session) => this.apiConverter.toWorkspaceSession(session));
-        response.pagination = new PaginationResponse();
-        response.pagination.total = resultTotal;
+
         return response;
     }
 

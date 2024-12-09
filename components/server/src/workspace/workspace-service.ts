@@ -1323,7 +1323,7 @@ export class WorkspaceService {
             const workspace = await this.doGetWorkspace(userId, workspaceId);
             await check(instance, workspace);
 
-            const wasClosed = !!(options && options.wasClosed);
+            const wasClosed = options.wasClosed ?? false;
             await this.db.updateLastHeartbeat(instanceId, userId, new Date(), wasClosed);
 
             const req = new MarkActiveRequest();
