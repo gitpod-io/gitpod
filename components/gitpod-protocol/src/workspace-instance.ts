@@ -333,7 +333,13 @@ export interface ImageBuildLogInfo {
  */
 export interface WorkspaceInstanceMetrics {
     image?: Partial<{
+        /**
+         * the total size of the image in bytes (includes Gitpod-specific layers like IDE)
+         */
         totalSize: number;
+        /**
+         * the size of the workspace image in bytes
+         */
         workspaceImageSize: number;
     }>;
 }
