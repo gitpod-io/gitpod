@@ -19,6 +19,7 @@ import { Config } from "../config";
 import { IDEService } from "../ide-service";
 import { StripeService } from "../billing/stripe-service";
 import { UsageService } from "./usage-service";
+import { UserAuthentication } from "../user/user-authentication";
 
 const expect = chai.expect;
 
@@ -77,6 +78,7 @@ describe("OrganizationService", async () => {
             } as any as InstallationService);
             container.bind(StripeService).toConstantValue({} as any as StripeService);
             container.bind(UsageService).toConstantValue({} as any as UsageService);
+            container.bind(UserAuthentication).toConstantValue({} as any as UserAuthentication);
             os = container.get(OrganizationService);
         });
 

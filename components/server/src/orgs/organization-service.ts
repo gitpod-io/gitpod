@@ -13,6 +13,7 @@ import {
     TeamMembershipInvite,
     WorkspaceTimeoutDuration,
     OrgMemberRole,
+    User,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -33,6 +34,7 @@ import { StripeService } from "../billing/stripe-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { UsageService } from "./usage-service";
 import { CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
+import { CreateUserParams, UserAuthentication } from "../user/user-authentication";
 
 @injectable()
 export class OrganizationService {
@@ -49,6 +51,7 @@ export class OrganizationService {
         @inject(UsageService) private readonly usageService: UsageService,
         @inject(DefaultWorkspaceImageValidator)
         private readonly validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator,
+        @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
     ) {}
 
     async listOrganizations(
@@ -145,6 +148,19 @@ export class OrganizationService {
     }
 
     async createOrganization(userId: string, name: string): Promise<Organization> {
+        // TODO(gpl): Should we use the authorization layer to make this decision?
+        const user = await this.userDB.findUserById(userId);
+        if (!user) {
+            throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, `User not authenticated. Please login.`);
+        }
+        const mayCreateOrganization = await this.userAuthentication.mayCreateOrganization(user);
+        if (!mayCreateOrganization) {
+            throw new ApplicationError(
+                ErrorCodes.PERMISSION_DENIED,
+                "Organizational accounts are not allowed to create new organizations",
+            );
+        }
+
         let result: Organization;
         try {
             result = await this.teamDB.transaction(async (db) => {
@@ -254,6 +270,19 @@ export class OrganizationService {
     }
 
     public async joinOrganization(userId: string, inviteId: string): Promise<string> {
+        const user = await this.userDB.findUserById(userId);
+        if (!user) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `User ${userId} not found`);
+        }
+
+        const mayJoinOrganization = await this.userAuthentication.mayJoinOrganization(user);
+        if (!mayJoinOrganization) {
+            throw new ApplicationError(
+                ErrorCodes.PERMISSION_DENIED,
+                "Organizational accounts are not allowed to join other organizations",
+            );
+        }
+
         // Invites can be used by anyone, as long as they know the invite ID, hence needs no resource guard
         const invite = await this.teamDB.findTeamMembershipInviteById(inviteId);
         if (!invite || invite.invalidationTime !== "") {
@@ -261,10 +290,6 @@ export class OrganizationService {
         }
         if (await this.teamDB.hasActiveSSO(invite.teamId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
-        }
-        const user = await this.userDB.findUserById(userId);
-        if (!user) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `User ${userId} not found`);
         }
 
         // set skipRoleUpdate=true to avoid member/owner click join link again cause role change
@@ -298,6 +323,26 @@ export class OrganizationService {
         });
 
         return invite.teamId;
+    }
+
+    /**
+     * Convenience method, analogue to UserService.createUser()
+``
+     */
+    public async createOrgOwnedUser(params: CreateUserParams & { organizationId: string }): Promise<User> {
+        return this.userDB.transaction(async (_, ctx) => {
+            const user = await this.userService.createUser(params, ctx);
+
+            await this.addOrUpdateMember(
+                SYSTEM_USER_ID,
+                params.organizationId,
+                user.id,
+                "member",
+                { flexibleRole: true },
+                ctx,
+            );
+            return user;
+        });
     }
 
     /**

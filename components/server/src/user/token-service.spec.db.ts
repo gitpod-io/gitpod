@@ -8,12 +8,10 @@ import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-s
 import * as chai from "chai";
 import "mocha";
 import { Container } from "inversify";
-import { createTestContainer, withTestCtx } from "../test/service-testing-container-module";
+import { createTestContainer } from "../test/service-testing-container-module";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { OrganizationService } from "../orgs/organization-service";
-import { SYSTEM_USER } from "../authorization/authorizer";
-import { UserService } from "./user-service";
 import { Organization, Token, User } from "@gitpod/gitpod-protocol";
 import { TokenService } from "./token-service";
 import { TokenProvider } from "./token-provider";
@@ -33,11 +31,9 @@ describe("TokenService", async () => {
 
     let container: Container;
     let tokenService: TokenService;
-    let userService: UserService;
     let userDB: UserDB;
     let orgService: OrganizationService;
     let org: Organization;
-    let owner: User;
     let user: User;
 
     let token: Token;
@@ -127,23 +123,10 @@ describe("TokenService", async () => {
 
         tokenService = container.get<TokenService>(TokenService);
         userDB = container.get<UserDB>(UserDB);
-        userService = container.get<UserService>(UserService);
         orgService = container.get<OrganizationService>(OrganizationService);
         org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
-        const invite = await orgService.getOrCreateInvite(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
-        // first not builtin user join an org will be an owner
-        owner = await userService.createUser({
-            organizationId: org.id,
-            identity: {
-                authId: "foo",
-                authName: "bar",
-                authProviderId: "github",
-                primaryEmail: "yolo@yolo.com",
-            },
-        });
-        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(owner.id, invite.id));
 
-        user = await userService.createUser({
+        user = await orgService.createOrgOwnedUser({
             organizationId: org.id,
             identity: {
                 authId: githubUserAuthId,
@@ -159,7 +142,6 @@ describe("TokenService", async () => {
             primaryEmail: "yolo@yolo.com",
         });
         await userDB.storeUser(user);
-        await withTestCtx(SYSTEM_USER, () => orgService.joinOrganization(user.id, invite.id));
 
         // test data
         token = <Token>{

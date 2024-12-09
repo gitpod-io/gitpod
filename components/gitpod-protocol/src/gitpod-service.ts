@@ -489,11 +489,10 @@ export namespace GitpodServer {
          * Whether this Gitpod instance is already configured with SSO.
          */
         readonly isCompleted: boolean;
-
         /**
-         * Whether this Gitpod instance has at least one org.
+         * Total number of organizations.
          */
-        readonly hasAnyOrg: boolean;
+        readonly organizationCountTotal: number;
     }
 }
 

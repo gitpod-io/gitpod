@@ -56,4 +56,12 @@ public interface InstallationServiceClientInterface {
    */
   public suspend fun getOnboardingState(request: Installation.GetOnboardingStateRequest,
       headers: Headers = emptyMap()): ResponseMessage<Installation.GetOnboardingStateResponse>
+
+  /**
+   *  GetInstallationConfiguration returns configuration of the installation.
+   */
+  public suspend
+      fun getInstallationConfiguration(request: Installation.GetInstallationConfigurationRequest,
+      headers: Headers = emptyMap()):
+      ResponseMessage<Installation.GetInstallationConfigurationResponse>
 }

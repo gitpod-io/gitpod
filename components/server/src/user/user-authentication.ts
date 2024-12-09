@@ -16,6 +16,8 @@ import { EmailAddressAlreadyTakenException, SelectAccountException } from "../au
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { UserService } from "./user-service";
 import { Authorizer } from "../authorization/authorizer";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { isOrganizationOwned, isAllowedToCreateOrganization } from "@gitpod/public-api-common/lib/user-utils";
 
 export interface CreateUserParams {
     organizationId?: string;
@@ -193,12 +195,26 @@ export class UserAuthentication {
     }
 
     /**
-     * Only installation-level users are allowed to create/join other orgs then the one they belong to
+     * Only installation-level users are allowed to join other orgs then the one they belong to
      * @param user
      * @returns
      */
-    async mayCreateOrJoinOrganization(user: User): Promise<boolean> {
-        return !user.organizationId;
+    async mayJoinOrganization(user: User): Promise<boolean> {
+        return !isOrganizationOwned(user);
+    }
+
+    /**
+     * gitpod.io: Only installation-level users are allowed to create orgs
+     * Dedicated: Only if multiOrg is enabled, installation-level users (=admin-user) can create orgs
+     * @param user
+     * @returns
+     */
+    async mayCreateOrganization(user: User): Promise<boolean> {
+        const isDedicated = this.config.isDedicatedInstallation;
+        const isMultiOrgEnabled = await getExperimentsClientForBackend().getValueAsync("enable_multi_org", false, {
+            gitpodHost: this.config.hostUrl.url.host,
+        });
+        return isAllowedToCreateOrganization(user, isDedicated, isMultiOrgEnabled);
     }
 
     async isBlocked(params: CheckIsBlockedParams): Promise<boolean> {

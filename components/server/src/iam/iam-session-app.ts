@@ -16,7 +16,6 @@ import { reportJWTCookieIssued } from "../prometheus-metrics";
 import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "../user/user-service";
-import { UserDB } from "@gitpod/gitpod-db/lib";
 import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { runWithSubjectId, runWithRequestContext } from "../util/request-context";
 
@@ -29,7 +28,6 @@ export class IamSessionApp {
         @inject(UserService) private readonly userService: UserService,
         @inject(OrganizationService) private readonly orgService: OrganizationService,
         @inject(SessionHandler) private readonly session: SessionHandler,
-        @inject(UserDB) private readonly userDb: UserDB,
     ) {}
 
     public getMiddlewares() {
@@ -167,30 +165,15 @@ export class IamSessionApp {
     private async createNewOIDCUser(payload: OIDCCreateSessionPayload): Promise<User> {
         const { claims, organizationId } = payload;
 
-        return this.userDb.transaction(async (_, ctx) => {
-            // Until we support SKIM (or any other means to sync accounts) we create new users here as a side-effect of the login
-            const user = await this.userService.createUser(
-                {
-                    organizationId,
-                    identity: { ...this.mapOIDCProfileToIdentity(payload), lastSigninTime: new Date().toISOString() },
-                    userUpdate: (user) => {
-                        user.fullName = claims.name;
-                        user.name = claims.name;
-                        user.avatarUrl = claims.picture;
-                    },
-                },
-                ctx,
-            );
-
-            await this.orgService.addOrUpdateMember(
-                SYSTEM_USER_ID,
-                organizationId,
-                user.id,
-                "member",
-                { flexibleRole: true },
-                ctx,
-            );
-            return user;
+        // Until we support SKIM (or any other means to sync accounts) we create new users here as a side-effect of the login
+        return this.orgService.createOrgOwnedUser({
+            organizationId,
+            identity: { ...this.mapOIDCProfileToIdentity(payload), lastSigninTime: new Date().toISOString() },
+            userUpdate: (user) => {
+                user.fullName = claims.name;
+                user.name = claims.name;
+                user.avatarUrl = claims.picture;
+            },
         });
     }
 }
