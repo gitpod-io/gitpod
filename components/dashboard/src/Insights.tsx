@@ -32,7 +32,7 @@ import { Button } from "@podkit/buttons/Button";
 export const Insights = () => {
     const [prebuildsFilter, setPrebuildsFilter] = useState<"week" | "month" | "year">("week");
     const [upperBound, lowerBound] = useMemo(() => {
-        const from = dayjs().subtract(1, prebuildsFilter);
+        const from = dayjs().subtract(1, prebuildsFilter).startOf("day");
 
         const fromTimestamp = Timestamp.fromDate(from.toDate());
         const toTimestamp = Timestamp.fromDate(new Date());
@@ -72,8 +72,8 @@ export const Insights = () => {
                             <SelectValue placeholder="Select time range" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="day">Last 24 hours</SelectItem>{" "}
                             {/* here for debugging, probably not useful */}
+                            <SelectItem value="day">Last 24 hours</SelectItem>{" "}
                             <SelectItem value="week">Last 7 days</SelectItem>
                             <SelectItem value="month">Last 30 days</SelectItem>
                             <SelectItem value="year">Last 365 days</SelectItem>
