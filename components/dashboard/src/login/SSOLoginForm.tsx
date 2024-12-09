@@ -35,7 +35,7 @@ export const SSOLoginForm: FC<Props> = ({ onSuccess }) => {
     const singleOrgMode = (onboardingState?.organizationCountTotal || 0) < 2;
 
     const [orgSlug, setOrgSlug] = useState(
-        getOrgSlugFromPath(location.pathname) || readSSOOrgSlug() || getOrgSlugFromQuery(location.search) || "",
+        getOrgSlugFromPath(location.pathname) || getOrgSlugFromQuery(location.search) || readSSOOrgSlug() || "",
     );
     const [error, setError] = useState("");
 
