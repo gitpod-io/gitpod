@@ -269,6 +269,19 @@ export class OrganizationService {
     }
 
     public async joinOrganization(userId: string, inviteId: string): Promise<string> {
+        const user = await this.userDB.findUserById(userId);
+        if (!user) {
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `User ${userId} not found`);
+        }
+
+        const mayJoinOrganization = await this.userAuthentication.mayJoinOrganization(user);
+        if (!mayJoinOrganization) {
+            throw new ApplicationError(
+                ErrorCodes.PERMISSION_DENIED,
+                "Organizational accounts are not allowed to join other organizations",
+            );
+        }
+
         // Invites can be used by anyone, as long as they know the invite ID, hence needs no resource guard
         const invite = await this.teamDB.findTeamMembershipInviteById(inviteId);
         if (!invite || invite.invalidationTime !== "") {
@@ -276,10 +289,6 @@ export class OrganizationService {
         }
         if (await this.teamDB.hasActiveSSO(invite.teamId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
-        }
-        const user = await this.userDB.findUserById(userId);
-        if (!user) {
-            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `User ${userId} not found`);
         }
 
         // set skipRoleUpdate=true to avoid member/owner click join link again cause role change
