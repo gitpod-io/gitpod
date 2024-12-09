@@ -3696,6 +3696,11 @@ export class WorkspaceSession extends Message<WorkspaceSession> {
    */
   stoppedTime?: Timestamp;
 
+  /**
+   * @generated from field: gitpod.v1.WorkspaceSession.Metrics metrics = 8;
+   */
+  metrics?: WorkspaceSession_Metrics;
+
   constructor(data?: PartialMessage<WorkspaceSession>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3711,6 +3716,7 @@ export class WorkspaceSession extends Message<WorkspaceSession> {
     { no: 5, name: "started_time", kind: "message", T: Timestamp },
     { no: 6, name: "stopping_time", kind: "message", T: Timestamp },
     { no: 7, name: "stopped_time", kind: "message", T: Timestamp },
+    { no: 8, name: "metrics", kind: "message", T: WorkspaceSession_Metrics },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession {
@@ -3727,5 +3733,52 @@ export class WorkspaceSession extends Message<WorkspaceSession> {
 
   static equals(a: WorkspaceSession | PlainMessage<WorkspaceSession> | undefined, b: WorkspaceSession | PlainMessage<WorkspaceSession> | undefined): boolean {
     return proto3.util.equals(WorkspaceSession, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WorkspaceSession.Metrics
+ */
+export class WorkspaceSession_Metrics extends Message<WorkspaceSession_Metrics> {
+  /**
+   * workspace_image_size is the size of the workspace image in bytes
+   *
+   * @generated from field: int64 workspace_image_size = 1;
+   */
+  workspaceImageSize = protoInt64.zero;
+
+  /**
+   * total_image_size is the total size of the image in bytes (includes Gitpod-specific layers like IDE)
+   *
+   * @generated from field: int64 total_image_size = 2;
+   */
+  totalImageSize = protoInt64.zero;
+
+  constructor(data?: PartialMessage<WorkspaceSession_Metrics>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceSession.Metrics";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_image_size", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 2, name: "total_image_size", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession_Metrics {
+    return new WorkspaceSession_Metrics().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSession_Metrics {
+    return new WorkspaceSession_Metrics().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSession_Metrics {
+    return new WorkspaceSession_Metrics().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceSession_Metrics | PlainMessage<WorkspaceSession_Metrics> | undefined, b: WorkspaceSession_Metrics | PlainMessage<WorkspaceSession_Metrics> | undefined): boolean {
+    return proto3.util.equals(WorkspaceSession_Metrics, a, b);
   }
 }

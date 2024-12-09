@@ -75,7 +75,13 @@
         "stoppedByRequest": false,
         "headlessTaskFailed": ""
       },
-      "exposedPorts": []
+      "exposedPorts": [],
+      "metrics": {
+        "image": {
+          "totalSize": 35600000,
+          "workspaceImageSize": 25600000
+        }
+      }
     },
     "gitStatus": null,
     "phasePersisted": "creating",

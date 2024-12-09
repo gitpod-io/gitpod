@@ -332,6 +332,13 @@ export class WorkspaceManagerBridge implements Disposable {
             instance.status.podName = instance.status.podName || status.runtime?.podName;
             instance.status.nodeIp = instance.status.nodeIp || status.runtime?.nodeIp;
             instance.status.ownerToken = status.auth!.ownerToken;
+            instance.status.metrics = {
+                image: {
+                    totalSize: instance.status.metrics?.image?.totalSize || status.metadata.metrics?.image?.totalSize,
+                    workspaceImageSize:
+                        instance.status.metrics?.image?.totalSize || status.metadata.metrics?.image?.workspaceImageSize,
+                },
+            };
 
             let lifecycleHandler: (() => Promise<void>) | undefined;
             switch (status.phase) {

@@ -85,7 +85,11 @@
         "creationTime": "2023-10-16T20:18:24.923Z",
         "startedTime": "2023-10-16T20:18:26.923Z",
         "stoppingTime": "2023-10-16T20:28:24.923Z",
-        "stoppedTime": "2023-10-16T20:28:44.923Z"
+        "stoppedTime": "2023-10-16T20:28:44.923Z",
+        "metrics": {
+            "workspaceImageSize": "25600000",
+            "totalImageSize": "35600000"
+        }
     },
     "err": ""
 }

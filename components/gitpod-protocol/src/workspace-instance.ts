@@ -75,7 +75,7 @@ export interface WorkspaceInstance {
 // WorkspaceInstanceStatus describes the current state of a workspace instance
 export interface WorkspaceInstanceStatus {
     // version is the current version of the workspace instance status
-    // Note: consider this value opague. The only guarantee given is that it imposes
+    // Note: consider this value opaque. The only guarantee given is that it imposes
     //       a partial order on status updates, i.e. a.version > b.version -> a newer than b.
     version?: number;
 
@@ -105,6 +105,9 @@ export interface WorkspaceInstanceStatus {
 
     // ownerToken is the token one needs to access the workspace. Its presence is checked by ws-proxy.
     ownerToken?: string;
+
+    // metrics contains metrics about the workspace instance
+    metrics?: WorkspaceInstanceMetrics;
 }
 
 // WorkspaceInstancePhase describes a high-level state of a workspace instance
@@ -122,11 +125,11 @@ export type WorkspaceInstancePhase =
     | "building"
 
     // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
-    // some space within the cluster. If for example the cluster needs to scale up to accomodate the
+    // some space within the cluster. If for example the cluster needs to scale up to accommodate the
     // workspace, the workspace will be in Pending state until that happened.
     | "pending"
 
-    // Creating means the workspace is currently being created. Thati includes downloading the images required
+    // Creating means the workspace is currently being created. That includes downloading the images required
     // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
     // network speed, image size and cache states.
     | "creating"
@@ -193,7 +196,7 @@ export interface WorkspaceInstancePort {
     // The outward-facing port number
     port: number;
 
-    // The visiblity of this port. Optional for backwards compatibility.
+    // The visibility of this port. Optional for backwards compatibility.
     visibility?: PortVisibility;
 
     // Public, outward-facing URL where the port can be accessed on.
@@ -280,7 +283,7 @@ export interface IdeSetup {
 // WorkspaceInstanceConfiguration contains all per-instance configuration
 export interface WorkspaceInstanceConfiguration {
     // theiaVersion is the version of Theia this workspace instance uses
-    // @deprected: replaced with the ideImage field
+    // @deprecated: replaced with the ideImage field
     theiaVersion?: string;
 
     // feature flags are the lowercase feature-flag names as passed to ws-manager
@@ -323,4 +326,20 @@ export interface ImageBuildInfo {
 export interface ImageBuildLogInfo {
     url: string;
     headers: { [key: string]: string };
+}
+
+/**
+ * Holds metrics about the workspace instance
+ */
+export interface WorkspaceInstanceMetrics {
+    image?: Partial<{
+        /**
+         * the total size of the image in bytes (includes Gitpod-specific layers like IDE)
+         */
+        totalSize: number;
+        /**
+         * the size of the workspace image in bytes
+         */
+        workspaceImageSize: number;
+    }>;
 }

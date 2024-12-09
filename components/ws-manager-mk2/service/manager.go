@@ -53,7 +53,7 @@ import (
 const (
 	// stopWorkspaceNormallyGracePeriod is the grace period we use when stopping a pod with StopWorkspaceNormally policy
 	stopWorkspaceNormallyGracePeriod = 30 * time.Second
-	// stopWorkspaceImmediatelyGracePeriod is the grace period we use when stopping a pod as soon as possbile
+	// stopWorkspaceImmediatelyGracePeriod is the grace period we use when stopping a pod as soon as possible
 	stopWorkspaceImmediatelyGracePeriod = 1 * time.Second
 )
 
@@ -1105,6 +1105,16 @@ func (wsm *WorkspaceManagerServer) extractWorkspaceStatus(ws *workspacev1.Worksp
 		})
 	}
 
+	var metrics *wsmanapi.WorkspaceMetadata_Metrics
+	if ws.Status.ImageInfo != nil {
+		metrics = &wsmanapi.WorkspaceMetadata_Metrics{
+			Image: &wsmanapi.WorkspaceMetadata_ImageInfo{
+				TotalSize:          ws.Status.ImageInfo.TotalSize,
+				WorkspaceImageSize: ws.Status.ImageInfo.WorkspaceImageSize,
+			},
+		}
+	}
+
 	res := &wsmanapi.WorkspaceStatus{
 		Id:            ws.Name,
 		StatusVersion: version,
@@ -1113,6 +1123,7 @@ func (wsm *WorkspaceManagerServer) extractWorkspaceStatus(ws *workspacev1.Worksp
 			MetaId:      ws.Spec.Ownership.WorkspaceID,
 			StartedAt:   timestamppb.New(ws.CreationTimestamp.Time),
 			Annotations: ws.Annotations,
+			Metrics:     metrics,
 		},
 		Spec: &wsmanapi.WorkspaceSpec{
 			Class:          ws.Spec.Class,
