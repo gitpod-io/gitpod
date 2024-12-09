@@ -721,6 +721,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.3",
+            "image": "{{.Repository}}/ide/webstorm:commit-b888cca216e44c9ba4b0c0d3a2df781bd0d36db5",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-c4d3eb3938883b57ba300459feab0a16c1ee4312",
+              "{{.Repository}}/ide/jb-launcher:commit-7f43d48115b891e21545a08480e2f1e4e86e449d"
+            ]
+          },
+          {
             "version": "2024.2.4",
             "image": "{{.Repository}}/ide/webstorm:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
             "imageLayers": [
