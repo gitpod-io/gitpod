@@ -208,6 +208,8 @@ export class PublicAPIConverter {
             workspaceImageSize: metrics?.image?.workspaceImageSize ? BigInt(metrics.image.workspaceImageSize) : undefined,
         });
 
+        result.id = arg.instance.id;
+
         return result;
     }
 

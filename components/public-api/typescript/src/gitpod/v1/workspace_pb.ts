@@ -1316,7 +1316,7 @@ export class WorkspaceSpec extends Message<WorkspaceSpec> {
   initializer?: WorkspaceInitializer;
 
   /**
-   * Type denots the kind of workspace we ought to start
+   * Type denotes the kind of workspace we ought to start
    *
    * @generated from field: gitpod.v1.WorkspaceSpec.WorkspaceType type = 2;
    */
@@ -1352,7 +1352,7 @@ export class WorkspaceSpec extends Message<WorkspaceSpec> {
   timeout?: WorkspaceSpec_Timeout;
 
   /**
-   * admission controlls who can access the workspace and its ports.
+   * admission controls who can access the workspace and its ports.
    *
    * @generated from field: gitpod.v1.AdmissionLevel admission = 7;
    */
@@ -1484,7 +1484,7 @@ proto3.util.setEnumType(WorkspaceSpec_WorkspaceType, "gitpod.v1.WorkspaceSpec.Wo
  */
 export class WorkspaceSpec_Timeout extends Message<WorkspaceSpec_Timeout> {
   /**
-   * inacitivity is the maximum time of inactivity before the workspace is
+   * inactivity is the maximum time of inactivity before the workspace is
    * stopped or paused
    *
    * @generated from field: google.protobuf.Duration inactivity = 1;
@@ -1492,7 +1492,7 @@ export class WorkspaceSpec_Timeout extends Message<WorkspaceSpec_Timeout> {
   inactivity?: Duration;
 
   /**
-   * inacitivity is the maximum time of disconnection before the workspace is
+   * inactivity is the maximum time of disconnection before the workspace is
    * stopped or paused set to zero to disable.
    *
    * @generated from field: google.protobuf.Duration disconnected = 2;
@@ -1593,8 +1593,8 @@ export class WorkspaceSpec_GitSpec extends Message<WorkspaceSpec_GitSpec> {
 export class WorkspaceStatus extends Message<WorkspaceStatus> {
   /**
    * version of the status update. Workspace instances themselves are
-   * unversioned, but their statuus has different versions. The value of this
-   * field has no semantic meaning (e.g. don't interpret it as as a timestemp),
+   * unversioned, but their status has different versions. The value of this
+   * field has no semantic meaning (e.g. don't interpret it as as a timestamp),
    * but it can be used to impose a partial order. If a.status_version <
    * b.status_version then a was the status before b.
    *
@@ -2108,7 +2108,7 @@ export enum WorkspacePhase_Phase {
   /**
    * Pending means the workspace does not yet consume resources in the
    * cluster, but rather is looking for some space within the cluster. If for
-   * example the cluster needs to scale up to accomodate the workspace, the
+   * example the cluster needs to scale up to accommodate the workspace, the
    * workspace will be in Pending state until that happened.
    *
    * @generated from enum value: PHASE_PENDING = 3;

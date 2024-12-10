@@ -306,7 +306,7 @@ const (
 	WorkspacePhase_PHASE_IMAGEBUILD WorkspacePhase_Phase = 2
 	// Pending means the workspace does not yet consume resources in the
 	// cluster, but rather is looking for some space within the cluster. If for
-	// example the cluster needs to scale up to accomodate the workspace, the
+	// example the cluster needs to scale up to accommodate the workspace, the
 	// workspace will be in Pending state until that happened.
 	WorkspacePhase_PHASE_PENDING WorkspacePhase_Phase = 3
 	// Creating means the workspace is currently being created. That includes
@@ -1959,7 +1959,7 @@ type WorkspaceSpec struct {
 
 	// initializer configures how the workspace is to be initialized
 	Initializer *WorkspaceInitializer `protobuf:"bytes,1,opt,name=initializer,proto3" json:"initializer,omitempty"`
-	// Type denots the kind of workspace we ought to start
+	// Type denotes the kind of workspace we ought to start
 	Type WorkspaceSpec_WorkspaceType `protobuf:"varint,2,opt,name=type,proto3,enum=gitpod.v1.WorkspaceSpec_WorkspaceType" json:"type,omitempty"`
 	// ports is the set of ports which ought to be exposed to the internet
 	Ports []*WorkspacePort `protobuf:"bytes,3,rep,name=ports,proto3" json:"ports,omitempty"`
@@ -1970,7 +1970,7 @@ type WorkspaceSpec struct {
 	Git *WorkspaceSpec_GitSpec `protobuf:"bytes,5,opt,name=git,proto3" json:"git,omitempty"`
 	// Timeout configures the workspace timeout
 	Timeout *WorkspaceSpec_Timeout `protobuf:"bytes,6,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	// admission controlls who can access the workspace and its ports.
+	// admission controls who can access the workspace and its ports.
 	Admission AdmissionLevel `protobuf:"varint,7,opt,name=admission,proto3,enum=gitpod.v1.AdmissionLevel" json:"admission,omitempty"`
 	// Class denotes the class of the workspace we ought to start
 	Class string `protobuf:"bytes,8,opt,name=class,proto3" json:"class,omitempty"`
@@ -2120,8 +2120,8 @@ type WorkspaceStatus struct {
 	unknownFields protoimpl.UnknownFields
 
 	// version of the status update. Workspace instances themselves are
-	// unversioned, but their statuus has different versions. The value of this
-	// field has no semantic meaning (e.g. don't interpret it as as a timestemp),
+	// unversioned, but their status has different versions. The value of this
+	// field has no semantic meaning (e.g. don't interpret it as as a timestamp),
 	// but it can be used to impose a partial order. If a.status_version <
 	// b.status_version then a was the status before b.
 	StatusVersion uint64 `protobuf:"varint,1,opt,name=status_version,json=statusVersion,proto3" json:"status_version,omitempty"`
@@ -3910,10 +3910,10 @@ type WorkspaceSpec_Timeout struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// inacitivity is the maximum time of inactivity before the workspace is
+	// inactivity is the maximum time of inactivity before the workspace is
 	// stopped or paused
 	Inactivity *durationpb.Duration `protobuf:"bytes,1,opt,name=inactivity,proto3" json:"inactivity,omitempty"`
-	// inacitivity is the maximum time of disconnection before the workspace is
+	// inactivity is the maximum time of disconnection before the workspace is
 	// stopped or paused set to zero to disable.
 	Disconnected *durationpb.Duration `protobuf:"bytes,2,opt,name=disconnected,proto3" json:"disconnected,omitempty"`
 	// maximum lifetime of the workspace

@@ -6,6 +6,7 @@
 
 import {
     ListWorkspaceSessionsRequest,
+    PrebuildInitializer,
     WorkspaceSession,
     WorkspaceSpec_WorkspaceType,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
@@ -173,24 +174,36 @@ const displayTime = (timestamp?: Timestamp) => {
 };
 
 export const transformSessionRecord = (session: WorkspaceSession, member: OrganizationMember) => {
+    const initializerType = session.workspace?.spec?.initializer?.specs;
+    const prebuildInitializer = initializerType?.find((i) => i.spec.case === "prebuild")?.spec.value as
+        | PrebuildInitializer
+        | undefined;
+
+    const url = new URL(session.workspace?.metadata?.originalContextUrl ?? "");
+    const [lastSegment = "", ...rest] = url.pathname.slice(1).split("/").reverse();
+    const firstSegment = rest.reverse().join("/");
+
     const row = {
-        // id: session.id, // although it's defined in the proto, it doesn't actually ever get applied
+        id: session.id,
 
         creationTime: displayTime(session.creationTime),
         deployedTime: displayTime(session.deployedTime),
         startedTime: displayTime(session.startedTime),
-        stoppingTIme: displayTime(session.stoppingTime),
+        stoppingTime: displayTime(session.stoppingTime),
         stoppedTime: displayTime(session.stoppedTime),
 
         // draft: session.draft ? "true" : "false", // should we indicate here somehow that the ws is still running?
-        workspaceId: session?.workspace?.id,
-        instanceId: session.workspace?.status?.instanceId,
-        configurationId: session.workspace?.metadata?.configurationId,
-        userId: member.userId,
-        userName: member.fullName, // todo(ft): add actual name somehow
+        workspaceID: session?.workspace?.id,
+        configurationID: session.workspace?.metadata?.configurationId,
+        prebuildID: prebuildInitializer?.prebuildId,
+        userID: member.userId,
+        userName: member.fullName,
         // userAvatarURL: metadata.userAvatarURL, // maybe?, probably not
 
         contextURL: session.workspace?.metadata?.originalContextUrl,
+        contextURLSegment_1: firstSegment,
+        contextURLSegment_2: lastSegment,
+
         workspaceType: displayWorkspaceType(session.workspace?.spec?.type),
         workspaceClass: session.workspace?.spec?.class,
 
@@ -198,6 +211,8 @@ export const transformSessionRecord = (session: WorkspaceSession, member: Organi
         workspaceImageTotalSize: session.metrics?.totalImageSize,
         ide: session.workspace?.spec?.editor?.name, // maybe?
     };
+
+    console.log(row);
 
     return row;
 };

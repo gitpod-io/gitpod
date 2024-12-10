@@ -20854,7 +20854,7 @@ java.lang.String defaultValue) {
 
     /**
      * <pre>
-     * Type denots the kind of workspace we ought to start
+     * Type denotes the kind of workspace we ought to start
      * </pre>
      *
      * <code>.gitpod.v1.WorkspaceSpec.WorkspaceType type = 2 [json_name = "type"];</code>
@@ -20863,7 +20863,7 @@ java.lang.String defaultValue) {
     int getTypeValue();
     /**
      * <pre>
-     * Type denots the kind of workspace we ought to start
+     * Type denotes the kind of workspace we ought to start
      * </pre>
      *
      * <code>.gitpod.v1.WorkspaceSpec.WorkspaceType type = 2 [json_name = "type"];</code>
@@ -21020,7 +21020,7 @@ java.lang.String defaultValue) {
 
     /**
      * <pre>
-     * admission controlls who can access the workspace and its ports.
+     * admission controls who can access the workspace and its ports.
      * </pre>
      *
      * <code>.gitpod.v1.AdmissionLevel admission = 7 [json_name = "admission"];</code>
@@ -21029,7 +21029,7 @@ java.lang.String defaultValue) {
     int getAdmissionValue();
     /**
      * <pre>
-     * admission controlls who can access the workspace and its ports.
+     * admission controls who can access the workspace and its ports.
      * </pre>
      *
      * <code>.gitpod.v1.AdmissionLevel admission = 7 [json_name = "admission"];</code>
@@ -21423,7 +21423,7 @@ java.lang.String defaultValue) {
 
       /**
        * <pre>
-       * inacitivity is the maximum time of inactivity before the workspace is
+       * inactivity is the maximum time of inactivity before the workspace is
        * stopped or paused
        * </pre>
        *
@@ -21433,7 +21433,7 @@ java.lang.String defaultValue) {
       boolean hasInactivity();
       /**
        * <pre>
-       * inacitivity is the maximum time of inactivity before the workspace is
+       * inactivity is the maximum time of inactivity before the workspace is
        * stopped or paused
        * </pre>
        *
@@ -21443,7 +21443,7 @@ java.lang.String defaultValue) {
       com.google.protobuf.Duration getInactivity();
       /**
        * <pre>
-       * inacitivity is the maximum time of inactivity before the workspace is
+       * inactivity is the maximum time of inactivity before the workspace is
        * stopped or paused
        * </pre>
        *
@@ -21453,7 +21453,7 @@ java.lang.String defaultValue) {
 
       /**
        * <pre>
-       * inacitivity is the maximum time of disconnection before the workspace is
+       * inactivity is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -21463,7 +21463,7 @@ java.lang.String defaultValue) {
       boolean hasDisconnected();
       /**
        * <pre>
-       * inacitivity is the maximum time of disconnection before the workspace is
+       * inactivity is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -21473,7 +21473,7 @@ java.lang.String defaultValue) {
       com.google.protobuf.Duration getDisconnected();
       /**
        * <pre>
-       * inacitivity is the maximum time of disconnection before the workspace is
+       * inactivity is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -21554,7 +21554,7 @@ java.lang.String defaultValue) {
       private com.google.protobuf.Duration inactivity_;
       /**
        * <pre>
-       * inacitivity is the maximum time of inactivity before the workspace is
+       * inactivity is the maximum time of inactivity before the workspace is
        * stopped or paused
        * </pre>
        *
@@ -21567,7 +21567,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * inacitivity is the maximum time of inactivity before the workspace is
+       * inactivity is the maximum time of inactivity before the workspace is
        * stopped or paused
        * </pre>
        *
@@ -21580,7 +21580,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * inacitivity is the maximum time of inactivity before the workspace is
+       * inactivity is the maximum time of inactivity before the workspace is
        * stopped or paused
        * </pre>
        *
@@ -21595,7 +21595,7 @@ java.lang.String defaultValue) {
       private com.google.protobuf.Duration disconnected_;
       /**
        * <pre>
-       * inacitivity is the maximum time of disconnection before the workspace is
+       * inactivity is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -21608,7 +21608,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * inacitivity is the maximum time of disconnection before the workspace is
+       * inactivity is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -21621,7 +21621,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * inacitivity is the maximum time of disconnection before the workspace is
+       * inactivity is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -22070,7 +22070,7 @@ java.lang.String defaultValue) {
             com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> inactivityBuilder_;
         /**
          * <pre>
-         * inacitivity is the maximum time of inactivity before the workspace is
+         * inactivity is the maximum time of inactivity before the workspace is
          * stopped or paused
          * </pre>
          *
@@ -22082,7 +22082,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of inactivity before the workspace is
+         * inactivity is the maximum time of inactivity before the workspace is
          * stopped or paused
          * </pre>
          *
@@ -22098,7 +22098,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of inactivity before the workspace is
+         * inactivity is the maximum time of inactivity before the workspace is
          * stopped or paused
          * </pre>
          *
@@ -22119,7 +22119,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of inactivity before the workspace is
+         * inactivity is the maximum time of inactivity before the workspace is
          * stopped or paused
          * </pre>
          *
@@ -22138,7 +22138,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of inactivity before the workspace is
+         * inactivity is the maximum time of inactivity before the workspace is
          * stopped or paused
          * </pre>
          *
@@ -22164,7 +22164,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of inactivity before the workspace is
+         * inactivity is the maximum time of inactivity before the workspace is
          * stopped or paused
          * </pre>
          *
@@ -22182,7 +22182,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of inactivity before the workspace is
+         * inactivity is the maximum time of inactivity before the workspace is
          * stopped or paused
          * </pre>
          *
@@ -22195,7 +22195,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of inactivity before the workspace is
+         * inactivity is the maximum time of inactivity before the workspace is
          * stopped or paused
          * </pre>
          *
@@ -22211,7 +22211,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of inactivity before the workspace is
+         * inactivity is the maximum time of inactivity before the workspace is
          * stopped or paused
          * </pre>
          *
@@ -22236,7 +22236,7 @@ java.lang.String defaultValue) {
             com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> disconnectedBuilder_;
         /**
          * <pre>
-         * inacitivity is the maximum time of disconnection before the workspace is
+         * inactivity is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -22248,7 +22248,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of disconnection before the workspace is
+         * inactivity is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -22264,7 +22264,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of disconnection before the workspace is
+         * inactivity is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -22285,7 +22285,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of disconnection before the workspace is
+         * inactivity is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -22304,7 +22304,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of disconnection before the workspace is
+         * inactivity is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -22330,7 +22330,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of disconnection before the workspace is
+         * inactivity is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -22348,7 +22348,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of disconnection before the workspace is
+         * inactivity is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -22361,7 +22361,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of disconnection before the workspace is
+         * inactivity is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -22377,7 +22377,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inacitivity is the maximum time of disconnection before the workspace is
+         * inactivity is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -23386,7 +23386,7 @@ java.lang.String defaultValue) {
     private int type_ = 0;
     /**
      * <pre>
-     * Type denots the kind of workspace we ought to start
+     * Type denotes the kind of workspace we ought to start
      * </pre>
      *
      * <code>.gitpod.v1.WorkspaceSpec.WorkspaceType type = 2 [json_name = "type"];</code>
@@ -23397,7 +23397,7 @@ java.lang.String defaultValue) {
     }
     /**
      * <pre>
-     * Type denots the kind of workspace we ought to start
+     * Type denotes the kind of workspace we ought to start
      * </pre>
      *
      * <code>.gitpod.v1.WorkspaceSpec.WorkspaceType type = 2 [json_name = "type"];</code>
@@ -23615,7 +23615,7 @@ java.lang.String defaultValue) {
     private int admission_ = 0;
     /**
      * <pre>
-     * admission controlls who can access the workspace and its ports.
+     * admission controls who can access the workspace and its ports.
      * </pre>
      *
      * <code>.gitpod.v1.AdmissionLevel admission = 7 [json_name = "admission"];</code>
@@ -23626,7 +23626,7 @@ java.lang.String defaultValue) {
     }
     /**
      * <pre>
-     * admission controlls who can access the workspace and its ports.
+     * admission controls who can access the workspace and its ports.
      * </pre>
      *
      * <code>.gitpod.v1.AdmissionLevel admission = 7 [json_name = "admission"];</code>
@@ -24858,7 +24858,7 @@ java.lang.String defaultValue) {
       private int type_ = 0;
       /**
        * <pre>
-       * Type denots the kind of workspace we ought to start
+       * Type denotes the kind of workspace we ought to start
        * </pre>
        *
        * <code>.gitpod.v1.WorkspaceSpec.WorkspaceType type = 2 [json_name = "type"];</code>
@@ -24869,7 +24869,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Type denots the kind of workspace we ought to start
+       * Type denotes the kind of workspace we ought to start
        * </pre>
        *
        * <code>.gitpod.v1.WorkspaceSpec.WorkspaceType type = 2 [json_name = "type"];</code>
@@ -24884,7 +24884,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Type denots the kind of workspace we ought to start
+       * Type denotes the kind of workspace we ought to start
        * </pre>
        *
        * <code>.gitpod.v1.WorkspaceSpec.WorkspaceType type = 2 [json_name = "type"];</code>
@@ -24897,7 +24897,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Type denots the kind of workspace we ought to start
+       * Type denotes the kind of workspace we ought to start
        * </pre>
        *
        * <code>.gitpod.v1.WorkspaceSpec.WorkspaceType type = 2 [json_name = "type"];</code>
@@ -24915,7 +24915,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Type denots the kind of workspace we ought to start
+       * Type denotes the kind of workspace we ought to start
        * </pre>
        *
        * <code>.gitpod.v1.WorkspaceSpec.WorkspaceType type = 2 [json_name = "type"];</code>
@@ -25887,7 +25887,7 @@ java.lang.String defaultValue) {
       private int admission_ = 0;
       /**
        * <pre>
-       * admission controlls who can access the workspace and its ports.
+       * admission controls who can access the workspace and its ports.
        * </pre>
        *
        * <code>.gitpod.v1.AdmissionLevel admission = 7 [json_name = "admission"];</code>
@@ -25898,7 +25898,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * admission controlls who can access the workspace and its ports.
+       * admission controls who can access the workspace and its ports.
        * </pre>
        *
        * <code>.gitpod.v1.AdmissionLevel admission = 7 [json_name = "admission"];</code>
@@ -25913,7 +25913,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * admission controlls who can access the workspace and its ports.
+       * admission controls who can access the workspace and its ports.
        * </pre>
        *
        * <code>.gitpod.v1.AdmissionLevel admission = 7 [json_name = "admission"];</code>
@@ -25926,7 +25926,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * admission controlls who can access the workspace and its ports.
+       * admission controls who can access the workspace and its ports.
        * </pre>
        *
        * <code>.gitpod.v1.AdmissionLevel admission = 7 [json_name = "admission"];</code>
@@ -25944,7 +25944,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * admission controlls who can access the workspace and its ports.
+       * admission controls who can access the workspace and its ports.
        * </pre>
        *
        * <code>.gitpod.v1.AdmissionLevel admission = 7 [json_name = "admission"];</code>
@@ -26803,8 +26803,8 @@ java.lang.String defaultValue) {
     /**
      * <pre>
      * version of the status update. Workspace instances themselves are
-     * unversioned, but their statuus has different versions. The value of this
-     * field has no semantic meaning (e.g. don't interpret it as as a timestemp),
+     * unversioned, but their status has different versions. The value of this
+     * field has no semantic meaning (e.g. don't interpret it as as a timestamp),
      * but it can be used to impose a partial order. If a.status_version &lt;
      * b.status_version then a was the status before b.
      * </pre>
@@ -28821,8 +28821,8 @@ java.lang.String defaultValue) {
     /**
      * <pre>
      * version of the status update. Workspace instances themselves are
-     * unversioned, but their statuus has different versions. The value of this
-     * field has no semantic meaning (e.g. don't interpret it as as a timestemp),
+     * unversioned, but their status has different versions. The value of this
+     * field has no semantic meaning (e.g. don't interpret it as as a timestamp),
      * but it can be used to impose a partial order. If a.status_version &lt;
      * b.status_version then a was the status before b.
      * </pre>
@@ -29607,8 +29607,8 @@ java.lang.String defaultValue) {
       /**
        * <pre>
        * version of the status update. Workspace instances themselves are
-       * unversioned, but their statuus has different versions. The value of this
-       * field has no semantic meaning (e.g. don't interpret it as as a timestemp),
+       * unversioned, but their status has different versions. The value of this
+       * field has no semantic meaning (e.g. don't interpret it as as a timestamp),
        * but it can be used to impose a partial order. If a.status_version &lt;
        * b.status_version then a was the status before b.
        * </pre>
@@ -29623,8 +29623,8 @@ java.lang.String defaultValue) {
       /**
        * <pre>
        * version of the status update. Workspace instances themselves are
-       * unversioned, but their statuus has different versions. The value of this
-       * field has no semantic meaning (e.g. don't interpret it as as a timestemp),
+       * unversioned, but their status has different versions. The value of this
+       * field has no semantic meaning (e.g. don't interpret it as as a timestamp),
        * but it can be used to impose a partial order. If a.status_version &lt;
        * b.status_version then a was the status before b.
        * </pre>
@@ -29643,8 +29643,8 @@ java.lang.String defaultValue) {
       /**
        * <pre>
        * version of the status update. Workspace instances themselves are
-       * unversioned, but their statuus has different versions. The value of this
-       * field has no semantic meaning (e.g. don't interpret it as as a timestemp),
+       * unversioned, but their status has different versions. The value of this
+       * field has no semantic meaning (e.g. don't interpret it as as a timestamp),
        * but it can be used to impose a partial order. If a.status_version &lt;
        * b.status_version then a was the status before b.
        * </pre>
@@ -33820,7 +33820,7 @@ java.lang.String defaultValue) {
        * <pre>
        * Pending means the workspace does not yet consume resources in the
        * cluster, but rather is looking for some space within the cluster. If for
-       * example the cluster needs to scale up to accomodate the workspace, the
+       * example the cluster needs to scale up to accommodate the workspace, the
        * workspace will be in Pending state until that happened.
        * </pre>
        *
@@ -33938,7 +33938,7 @@ java.lang.String defaultValue) {
        * <pre>
        * Pending means the workspace does not yet consume resources in the
        * cluster, but rather is looking for some space within the cluster. If for
-       * example the cluster needs to scale up to accomodate the workspace, the
+       * example the cluster needs to scale up to accommodate the workspace, the
        * workspace will be in Pending state until that happened.
        * </pre>
        *
