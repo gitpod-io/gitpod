@@ -12,6 +12,7 @@ import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { toRemoteURL } from "../projects/render-utils";
 import { DisplayName } from "../usage/UsageEntry";
 import { WorkspaceSessionEntry } from "./WorkspaceSession";
+import { displayWorkspaceType } from "./download/download-sessions";
 
 type Props = {
     id: string;
@@ -28,7 +29,9 @@ export const WorkspaceSessionGroup = ({ id, sessions, member }: Props) => {
         <AccordionItem key={id} value={id}>
             <div className="w-full p-3 grid grid-cols-12 gap-x-3 justify-between transition ease-in-out rounded-xl">
                 <div className="flex flex-col col-span-2 my-auto">
-                    <span className="text-pk-content-primary text-md font-medium">{getType(workspace.spec?.type)}</span>
+                    <span className="text-pk-content-primary text-md font-medium capitalize">
+                        {displayWorkspaceType(workspace.spec?.type)}
+                    </span>
                     <span className="text-sm text-pk-content-tertiary">
                         {workspace.spec?.class ? <DisplayName workspaceClass={workspace?.spec?.class} /> : "n/a"}
                     </span>
@@ -78,17 +81,6 @@ export const WorkspaceSessionGroup = ({ id, sessions, member }: Props) => {
             </AccordionContent>
         </AccordionItem>
     );
-};
-
-const getType = (type?: WorkspaceSpec_WorkspaceType) => {
-    switch (type) {
-        case WorkspaceSpec_WorkspaceType.PREBUILD:
-            return "Prebuild";
-        case WorkspaceSpec_WorkspaceType.REGULAR:
-            return "Workspace";
-        default:
-            return "Unknown";
-    }
 };
 
 export const displayTime = (time: Timestamp) => {

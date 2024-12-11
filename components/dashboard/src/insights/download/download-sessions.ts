@@ -150,18 +150,14 @@ const downloadUsageCSV = async ({
     };
 };
 
-const displayWorkspaceType = (type?: WorkspaceSpec_WorkspaceType) => {
-    if (!type) {
-        return "" as const;
-    }
-
+export const displayWorkspaceType = (type?: WorkspaceSpec_WorkspaceType) => {
     switch (type) {
-        case WorkspaceSpec_WorkspaceType.REGULAR:
-            return "Regular" as const;
         case WorkspaceSpec_WorkspaceType.PREBUILD:
-            return "Prebuild" as const;
+            return "prebuild" as const;
+        case WorkspaceSpec_WorkspaceType.REGULAR:
+            return "workspace" as const;
         default:
-            throw new Error(`Unknown workspace type: ${type}`);
+            return "unknown" as const;
     }
 };
 
