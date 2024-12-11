@@ -17,9 +17,11 @@ import {
     settingsPathPersonalAccessTokenCreate,
     settingsPathPersonalAccessTokenEdit,
     settingsPathPersonalAccessTokens,
+    settingsPathPlans,
     settingsPathPreferences,
     settingsPathSSHKeys,
     settingsPathVariables,
+    switchToPAYGPathMain,
     usagePathMain,
 } from "../user-settings/settings.routes";
 import { getURLHash, isGitpodIo } from "../utils";
@@ -123,6 +125,20 @@ export const AppRoutes = () => {
                         <Switch>
                             <Route path="/open">
                                 <Redirect to="/new" />
+                            </Route>
+                            <Route
+                                path={[
+                                    switchToPAYGPathMain,
+                                    settingsPathPlans,
+                                    "/old-team-plans",
+                                    "/teams",
+                                    "/subscription",
+                                    "/upgrade-subscription",
+                                    "/plans",
+                                ]}
+                                exact
+                            >
+                                <Redirect to={"/billing"} />
                             </Route>
                             <Route path={workspacesPathMain} exact component={Workspaces} />
                             <Route path={settingsPathAccount} exact component={Account} />
