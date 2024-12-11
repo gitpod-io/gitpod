@@ -179,10 +179,6 @@ export const transformSessionRecord = (session: WorkspaceSession, member: Organi
         | PrebuildInitializer
         | undefined;
 
-    const url = new URL(session.workspace?.metadata?.originalContextUrl ?? "");
-    const [lastSegment = "", ...rest] = url.pathname.slice(1).split("/").reverse();
-    const firstSegment = rest.reverse().join("/");
-
     const row = {
         id: session.id,
 
@@ -198,18 +194,22 @@ export const transformSessionRecord = (session: WorkspaceSession, member: Organi
         prebuildID: prebuildInitializer?.prebuildId,
         userID: member.userId,
         userName: member.fullName,
-        // userAvatarURL: metadata.userAvatarURL, // maybe?, probably not
 
         contextURL: session.workspace?.metadata?.originalContextUrl,
-        contextURLSegment_1: firstSegment,
-        contextURLSegment_2: lastSegment,
+        contextURL_cloneURL: session.workspace?.metadata?.context?.repository?.cloneUrl,
+        contextURLSegment_1: session.workspace?.metadata?.context?.repository?.owner,
+        contextURLSegment_2: session.workspace?.metadata?.context?.repository?.name,
 
         workspaceType: displayWorkspaceType(session.workspace?.spec?.type),
         workspaceClass: session.workspace?.spec?.class,
 
         workspaceImageSize: session.metrics?.workspaceImageSize,
         workspaceImageTotalSize: session.metrics?.totalImageSize,
-        ide: session.workspace?.spec?.editor?.name, // maybe?
+
+        timeout: session.workspace?.spec?.timeout?.inactivity?.seconds,
+        ide: session.workspace?.spec?.editor?.name,
+        // this would be useful if the version was not just "latest" or "stable". We'd most likely have to do an OCI lookup from the `ideImage` on the instance
+        // ideVersion: session.workspace?.spec?.editor?.version,
     };
 
     console.log(row);
@@ -228,15 +228,7 @@ export const useDownloadSessionsCSV = (args: Args) => {
     const query = useQuery<DownloadUsageCSVResponse, Error>(
         key,
         async ({ signal }) => {
-            const resp = await downloadUsageCSV({ ...args, signal });
-
-            // Introduce a slight artificial delay when completed to allow progress to finish the transition to 100%
-            // While this feels a bit odd here instead of in the component, it's much easier to add
-            // the delay here than track it in react state
-            // 1000ms because the transition duration is 1000ms
-            await new Promise((r) => setTimeout(r, 1000));
-
-            return resp;
+            return downloadUsageCSV({ ...args, signal });
         },
         {
             retry: false,
