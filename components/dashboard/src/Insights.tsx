@@ -72,8 +72,6 @@ export const Insights = () => {
                             <SelectValue placeholder="Select time range" />
                         </SelectTrigger>
                         <SelectContent>
-                            {/* here for debugging, probably not useful */}
-                            <SelectItem value="day">Last 24 hours</SelectItem>{" "}
                             <SelectItem value="week">Last 7 days</SelectItem>
                             <SelectItem value="month">Last 30 days</SelectItem>
                             <SelectItem value="year">Last 365 days</SelectItem>
@@ -91,7 +89,7 @@ export const Insights = () => {
 
                 {errorMessage && (
                     <Alert type="error" className="mt-4">
-                        {errorMessage}
+                        {errorMessage instanceof Error ? errorMessage.message : "An error occurred."}
                     </Alert>
                 )}
 
