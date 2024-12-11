@@ -233,10 +233,8 @@ export class WorkspaceService {
     }
 
     async getWorkspace(userId: string, workspaceId: string): Promise<WorkspaceInfo> {
-        const [workspace, latestInstance] = await Promise.all([
-            this.doGetWorkspace(userId, workspaceId),
-            this.db.findCurrentInstance(workspaceId),
-        ]);
+        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        const latestInstance = await this.db.findCurrentInstance(workspaceId);
 
         return {
             workspace,
