@@ -207,9 +207,8 @@ export const transformSessionRecord = (session: WorkspaceSession, member: Organi
         workspaceImageTotalSize: session.metrics?.totalImageSize,
 
         timeout: session.workspace?.spec?.timeout?.inactivity?.seconds,
-        ide: session.workspace?.spec?.editor?.name,
-        // this would be useful if the version was not just "latest" or "stable". We'd most likely have to do an OCI lookup from the `ideImage` on the instance
-        // ideVersion: session.workspace?.spec?.editor?.version,
+        editor: session.workspace?.spec?.editor?.name,
+        editorVersion: session.workspace?.spec?.editor?.version, // indicates whether user selected the stable or latest editor release channel
     };
 
     console.log(row);
