@@ -1,6 +1,6 @@
 {
     "result": {
-        "id": "",
+        "id": "8e8c7061-f312-4265-8d78-d824c0470dde",
         "workspace": {
             "id": "sveneffting-2048intermi-5vb9hvqev88",
             "metadata": {
@@ -11,7 +11,21 @@
                 "name": "svenefftinge/2048-in-terminal - master",
                 "pinned": false,
                 "originalContextUrl": "https://github.com/svenefftinge/2048-in-terminal",
-                "warnings": []
+                "warnings": [],
+                "context": {
+                    "path": "",
+                    "ref": "master",
+                    "refType": "REF_TYPE_BRANCH",
+                    "revision": "aac9c200a79e37ebe216bb90c829d5ab2771f2ee",
+                    "repository": {
+                        "cloneUrl": "https://github.com/svenefftinge/2048-in-terminal.git",
+                        "defaultBranch": "master",
+                        "host": "github.com",
+                        "owner": "svenefftinge",
+                        "name": "2048-in-terminal",
+                        "private": false
+                    }
+                }
             },
             "spec": {
                 "initializer": {

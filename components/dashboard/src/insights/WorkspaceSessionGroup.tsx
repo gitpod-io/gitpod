@@ -6,7 +6,7 @@
 
 import { Timestamp } from "@bufbuild/protobuf";
 import { OrganizationMember } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import { WorkspaceSpec_WorkspaceType } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { WorkspaceSession, WorkspaceSpec_WorkspaceType } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { AccordionContent, AccordionItem, AccordionTrigger } from "../components/accordion/Accordion";
 import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { toRemoteURL } from "../projects/render-utils";
@@ -16,7 +16,7 @@ import { displayWorkspaceType } from "./download/download-sessions";
 
 type Props = {
     id: string;
-    sessions: any[];
+    sessions: WorkspaceSession[];
     member?: OrganizationMember;
 };
 export const WorkspaceSessionGroup = ({ id, sessions, member }: Props) => {

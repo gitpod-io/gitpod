@@ -17,7 +17,7 @@ export const WorkspaceSessionEntry = ({ session, index }: Props) => {
     return (
         <li key={index} className="text-sm text-gray-600 dark:text-gray-300">
             {session.creationTime ? displayTime(session.creationTime) : "n/a"} (
-            {session.workspace?.status?.instanceId.slice(0, 7) || "No instance ID"}){isRunning ? " - running" : ""}
+            {session.id.slice(0, 7) || "No instance ID"}){isRunning ? " - running" : ""}
         </li>
     );
 };
