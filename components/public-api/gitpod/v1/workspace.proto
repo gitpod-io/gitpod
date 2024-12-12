@@ -376,7 +376,7 @@ message WorkspaceSpec {
     // inactivity is the maximum time of inactivity before the workspace is
     // stopped or paused
     google.protobuf.Duration inactivity = 1;
-    // inactivity is the maximum time of disconnection before the workspace is
+    // disconnected is the maximum time of disconnection before the workspace is
     // stopped or paused set to zero to disable.
     google.protobuf.Duration disconnected = 2;
     // maximum lifetime of the workspace
