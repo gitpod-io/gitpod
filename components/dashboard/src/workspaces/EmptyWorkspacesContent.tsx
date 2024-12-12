@@ -8,37 +8,23 @@ import { LinkButton } from "@podkit/buttons/LinkButton";
 import { Heading2, Subheading } from "@podkit/typography/Headings";
 import { trackVideoClick } from "../Analytics";
 
-import "lite-youtube-embed/src/lite-yt-embed.css";
-import "lite-youtube-embed/src/lite-yt-embed";
-
-declare global {
-    namespace JSX {
-        interface IntrinsicElements {
-            "lite-youtube": any;
-        }
-    }
-}
+import { VideoSection } from "../onboarding/VideoSection";
 
 export const EmptyWorkspacesContent = () => {
-    const onPlayerStateChange = () => {
+    const handlePlay = () => {
         trackVideoClick("create-new-workspace");
     };
 
     return (
         <div className="app-container flex flex-col space-y-2">
             <div className="px-6 mt-16 flex flex-col xl:flex-row items-center justify-center gap-x-14 gap-y-10 min-h-96 min-w-96">
-                <lite-youtube
-                    videoid="1ZBN-b2cIB8"
-                    width="535"
-                    height="307"
-                    onClick={onPlayerStateChange}
-                    style={{
-                        width: "535px",
-                        backgroundImage: "url('https://i.ytimg.com/vi_webp/1ZBN-b2cIB8/maxresdefault.webp')",
-                    }}
-                    class="rounded-xl"
-                    playlabel="Gitpod in under 120 seconds"
-                ></lite-youtube>
+                <VideoSection
+                    metadataVideoTitle="Gitpod demo"
+                    playbackId="m01BUvCkTz7HzQKFoIcQmK00Rx5laLLoMViWBstetmvLs"
+                    poster="https://i.ytimg.com/vi_webp/1ZBN-b2cIB8/maxresdefault.webp"
+                    playerProps={{ onPlay: handlePlay, defaultHiddenCaptions: true }}
+                    className="w-[535px] rounded-xl"
+                />
                 <div className="flex flex-col items-center xl:items-start justify-center">
                     <Heading2 className="mb-4 !font-semibold !text-lg">Create your first workspace</Heading2>
                     <Subheading className="max-w-xs xl:text-left text-center">
