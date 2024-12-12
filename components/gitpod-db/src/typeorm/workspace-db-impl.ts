@@ -469,8 +469,8 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .andWhere("wsi.creationTime >= :periodStart", { periodStart: periodStart.toISOString() })
             .andWhere("wsi.creationTime <= :periodEnd", { periodEnd: periodEnd.toISOString() })
             .orderBy("wsi.creationTime", "DESC")
-            .offset(offset)
-            .limit(limit)
+            .skip(offset)
+            .take(limit)
             .getMany();
 
         const resultSessions: { instance: WorkspaceInstance; workspace: Workspace }[] = [];

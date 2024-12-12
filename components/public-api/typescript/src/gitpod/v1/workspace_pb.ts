@@ -1316,7 +1316,7 @@ export class WorkspaceSpec extends Message<WorkspaceSpec> {
   initializer?: WorkspaceInitializer;
 
   /**
-   * Type denots the kind of workspace we ought to start
+   * Type denotes the kind of workspace we ought to start
    *
    * @generated from field: gitpod.v1.WorkspaceSpec.WorkspaceType type = 2;
    */
@@ -1352,7 +1352,7 @@ export class WorkspaceSpec extends Message<WorkspaceSpec> {
   timeout?: WorkspaceSpec_Timeout;
 
   /**
-   * admission controlls who can access the workspace and its ports.
+   * admission controls who can access the workspace and its ports.
    *
    * @generated from field: gitpod.v1.AdmissionLevel admission = 7;
    */
@@ -1484,7 +1484,7 @@ proto3.util.setEnumType(WorkspaceSpec_WorkspaceType, "gitpod.v1.WorkspaceSpec.Wo
  */
 export class WorkspaceSpec_Timeout extends Message<WorkspaceSpec_Timeout> {
   /**
-   * inacitivity is the maximum time of inactivity before the workspace is
+   * inactivity is the maximum time of inactivity before the workspace is
    * stopped or paused
    *
    * @generated from field: google.protobuf.Duration inactivity = 1;
@@ -1492,7 +1492,7 @@ export class WorkspaceSpec_Timeout extends Message<WorkspaceSpec_Timeout> {
   inactivity?: Duration;
 
   /**
-   * inacitivity is the maximum time of disconnection before the workspace is
+   * disconnected is the maximum time of disconnection before the workspace is
    * stopped or paused set to zero to disable.
    *
    * @generated from field: google.protobuf.Duration disconnected = 2;
@@ -1593,8 +1593,8 @@ export class WorkspaceSpec_GitSpec extends Message<WorkspaceSpec_GitSpec> {
 export class WorkspaceStatus extends Message<WorkspaceStatus> {
   /**
    * version of the status update. Workspace instances themselves are
-   * unversioned, but their statuus has different versions. The value of this
-   * field has no semantic meaning (e.g. don't interpret it as as a timestemp),
+   * unversioned, but their status has different versions. The value of this
+   * field has no semantic meaning (e.g. don't interpret it as as a timestamp),
    * but it can be used to impose a partial order. If a.status_version <
    * b.status_version then a was the status before b.
    *
@@ -2108,7 +2108,7 @@ export enum WorkspacePhase_Phase {
   /**
    * Pending means the workspace does not yet consume resources in the
    * cluster, but rather is looking for some space within the cluster. If for
-   * example the cluster needs to scale up to accomodate the workspace, the
+   * example the cluster needs to scale up to accommodate the workspace, the
    * workspace will be in Pending state until that happened.
    *
    * @generated from enum value: PHASE_PENDING = 3;
@@ -2996,7 +2996,7 @@ export class UpdateWorkspaceRequest_UpdateWorkspaceSpec extends Message<UpdateWo
   timeout?: UpdateWorkspaceRequest_UpdateTimeout;
 
   /**
-   * admission controlls who can access the workspace and its ports.
+   * admission controls who can access the workspace and its ports.
    *
    * @generated from field: optional gitpod.v1.AdmissionLevel admission = 2;
    */
@@ -3701,6 +3701,16 @@ export class WorkspaceSession extends Message<WorkspaceSession> {
    */
   metrics?: WorkspaceSession_Metrics;
 
+  /**
+   * @generated from field: gitpod.v1.WorkspaceSession.Owner owner = 9;
+   */
+  owner?: WorkspaceSession_Owner;
+
+  /**
+   * @generated from field: gitpod.v1.WorkspaceSession.WorkspaceContext context = 10;
+   */
+  context?: WorkspaceSession_WorkspaceContext;
+
   constructor(data?: PartialMessage<WorkspaceSession>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3717,6 +3727,8 @@ export class WorkspaceSession extends Message<WorkspaceSession> {
     { no: 6, name: "stopping_time", kind: "message", T: Timestamp },
     { no: 7, name: "stopped_time", kind: "message", T: Timestamp },
     { no: 8, name: "metrics", kind: "message", T: WorkspaceSession_Metrics },
+    { no: 9, name: "owner", kind: "message", T: WorkspaceSession_Owner },
+    { no: 10, name: "context", kind: "message", T: WorkspaceSession_WorkspaceContext },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession {
@@ -3733,6 +3745,229 @@ export class WorkspaceSession extends Message<WorkspaceSession> {
 
   static equals(a: WorkspaceSession | PlainMessage<WorkspaceSession> | undefined, b: WorkspaceSession | PlainMessage<WorkspaceSession> | undefined): boolean {
     return proto3.util.equals(WorkspaceSession, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WorkspaceSession.Owner
+ */
+export class WorkspaceSession_Owner extends Message<WorkspaceSession_Owner> {
+  /**
+   * id is the ID of the user who created the workspace
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * name is the full name of the user who created the workspace
+   *
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * avatar_url is the URL of the user's avatar
+   *
+   * @generated from field: string avatar_url = 3;
+   */
+  avatarUrl = "";
+
+  constructor(data?: PartialMessage<WorkspaceSession_Owner>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceSession.Owner";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "avatar_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession_Owner {
+    return new WorkspaceSession_Owner().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSession_Owner {
+    return new WorkspaceSession_Owner().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSession_Owner {
+    return new WorkspaceSession_Owner().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceSession_Owner | PlainMessage<WorkspaceSession_Owner> | undefined, b: WorkspaceSession_Owner | PlainMessage<WorkspaceSession_Owner> | undefined): boolean {
+    return proto3.util.equals(WorkspaceSession_Owner, a, b);
+  }
+}
+
+/**
+ * WorkspaceContext is the git context from which the workspace is created
+ *
+ * @generated from message gitpod.v1.WorkspaceSession.WorkspaceContext
+ */
+export class WorkspaceSession_WorkspaceContext extends Message<WorkspaceSession_WorkspaceContext> {
+  /**
+   * path is the path of the context (the path following the base repository URL)
+   *
+   * @generated from field: string path = 1;
+   */
+  path = "";
+
+  /**
+   * ref is the branch or tag name of the repository
+   *
+   * @generated from field: string ref = 2;
+   */
+  ref = "";
+
+  /**
+   * ref_type is the type of the ref
+   *
+   * @generated from field: gitpod.v1.WorkspaceSession.WorkspaceContext.RefType ref_type = 3;
+   */
+  refType = WorkspaceSession_WorkspaceContext_RefType.UNSPECIFIED;
+
+  /**
+   * revision is the commit hash of the context
+   *
+   * @generated from field: string revision = 4;
+   */
+  revision = "";
+
+  /**
+   * repository is the repository of the context
+   *
+   * @generated from field: gitpod.v1.WorkspaceSession.WorkspaceContext.Repository repository = 5;
+   */
+  repository?: WorkspaceSession_WorkspaceContext_Repository;
+
+  constructor(data?: PartialMessage<WorkspaceSession_WorkspaceContext>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceSession.WorkspaceContext";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "path", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "ref", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "ref_type", kind: "enum", T: proto3.getEnumType(WorkspaceSession_WorkspaceContext_RefType) },
+    { no: 4, name: "revision", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "repository", kind: "message", T: WorkspaceSession_WorkspaceContext_Repository },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession_WorkspaceContext {
+    return new WorkspaceSession_WorkspaceContext().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSession_WorkspaceContext {
+    return new WorkspaceSession_WorkspaceContext().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSession_WorkspaceContext {
+    return new WorkspaceSession_WorkspaceContext().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceSession_WorkspaceContext | PlainMessage<WorkspaceSession_WorkspaceContext> | undefined, b: WorkspaceSession_WorkspaceContext | PlainMessage<WorkspaceSession_WorkspaceContext> | undefined): boolean {
+    return proto3.util.equals(WorkspaceSession_WorkspaceContext, a, b);
+  }
+}
+
+/**
+ * @generated from enum gitpod.v1.WorkspaceSession.WorkspaceContext.RefType
+ */
+export enum WorkspaceSession_WorkspaceContext_RefType {
+  /**
+   * @generated from enum value: REF_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: REF_TYPE_BRANCH = 1;
+   */
+  BRANCH = 1,
+
+  /**
+   * @generated from enum value: REF_TYPE_TAG = 2;
+   */
+  TAG = 2,
+
+  /**
+   * @generated from enum value: REF_TYPE_REVISION = 3;
+   */
+  REVISION = 3,
+}
+// Retrieve enum metadata with: proto3.getEnumType(WorkspaceSession_WorkspaceContext_RefType)
+proto3.util.setEnumType(WorkspaceSession_WorkspaceContext_RefType, "gitpod.v1.WorkspaceSession.WorkspaceContext.RefType", [
+  { no: 0, name: "REF_TYPE_UNSPECIFIED" },
+  { no: 1, name: "REF_TYPE_BRANCH" },
+  { no: 2, name: "REF_TYPE_TAG" },
+  { no: 3, name: "REF_TYPE_REVISION" },
+]);
+
+/**
+ * @generated from message gitpod.v1.WorkspaceSession.WorkspaceContext.Repository
+ */
+export class WorkspaceSession_WorkspaceContext_Repository extends Message<WorkspaceSession_WorkspaceContext_Repository> {
+  /**
+   * clone_url is the repository url as you would pass it to "git clone".
+   *
+   * @generated from field: string clone_url = 1;
+   */
+  cloneUrl = "";
+
+  /**
+   * host is the host of the SCM
+   *
+   * @generated from field: string host = 2;
+   */
+  host = "";
+
+  /**
+   * owner is the owner of the repository
+   *
+   * @generated from field: string owner = 3;
+   */
+  owner = "";
+
+  /**
+   * name is the name of the repository
+   *
+   * @generated from field: string name = 4;
+   */
+  name = "";
+
+  constructor(data?: PartialMessage<WorkspaceSession_WorkspaceContext_Repository>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceSession.WorkspaceContext.Repository";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "clone_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "owner", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession_WorkspaceContext_Repository {
+    return new WorkspaceSession_WorkspaceContext_Repository().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSession_WorkspaceContext_Repository {
+    return new WorkspaceSession_WorkspaceContext_Repository().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSession_WorkspaceContext_Repository {
+    return new WorkspaceSession_WorkspaceContext_Repository().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceSession_WorkspaceContext_Repository | PlainMessage<WorkspaceSession_WorkspaceContext_Repository> | undefined, b: WorkspaceSession_WorkspaceContext_Repository | PlainMessage<WorkspaceSession_WorkspaceContext_Repository> | undefined): boolean {
+    return proto3.util.equals(WorkspaceSession_WorkspaceContext_Repository, a, b);
   }
 }
 

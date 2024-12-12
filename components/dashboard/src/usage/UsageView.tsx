@@ -73,7 +73,7 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
         [updatePageParams],
     );
 
-    let errorMessage = useMemo(() => {
+    const errorMessage = useMemo(() => {
         let errorMessage = "";
 
         if (usagePage.error) {
@@ -87,7 +87,7 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
         return errorMessage;
     }, [usagePage.error]);
 
-    const usageEntries = usagePage.data?.usageEntriesList || [];
+    const usageEntries = usagePage.data?.usageEntriesList ?? [];
 
     const readableSchedulerDuration = useMemo(() => {
         const intervalMinutes = usagePage.data?.ledgerIntervalMinutes;
@@ -95,7 +95,7 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
             return "";
         }
 
-        return `${intervalMinutes} minute${intervalMinutes !== 1 ? "s" : "" }`;
+        return `${intervalMinutes} minute${intervalMinutes !== 1 ? "s" : ""}`;
     }, [usagePage.data]);
 
     return (

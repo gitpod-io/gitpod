@@ -1,6 +1,6 @@
 {
     "result": {
-        "id": "",
+        "id": "226695b4-f10a-471a-a219-9b657645bf78",
         "workspace": {
             "id": "akosyakov-parceldemo-4crqn25qlwi",
             "metadata": {
@@ -89,6 +89,23 @@
         "metrics": {
             "workspaceImageSize": "25600000",
             "totalImageSize": "35600000"
+        },
+        "owner": {
+            "id": "123",
+            "name": "Kum Quat",
+            "avatarUrl": ""
+        },
+        "context": {
+            "path": "",
+            "ref": "master",
+            "refType": "REF_TYPE_BRANCH",
+            "revision": "60dbf818194082ef1a368bacd49cfd25a34c9256",
+            "repository": {
+                "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",
+                "host": "github.com",
+                "owner": "akosyakov",
+                "name": "parcel-demo"
+            }
         }
     },
     "err": ""

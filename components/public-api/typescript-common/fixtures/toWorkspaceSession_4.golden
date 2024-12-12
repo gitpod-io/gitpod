@@ -1,6 +1,6 @@
 {
     "result": {
-        "id": "",
+        "id": "36cd2611-fd7e-4462-832c-4122bd4ce6ef",
         "workspace": {
             "id": "sveneffting-2048intermi-5vb9hvqev88",
             "metadata": {
@@ -91,6 +91,23 @@
         "metrics": {
             "workspaceImageSize": "0",
             "totalImageSize": "0"
+        },
+        "owner": {
+            "id": "123",
+            "name": "Kum Quat",
+            "avatarUrl": ""
+        },
+        "context": {
+            "path": "",
+            "ref": "master",
+            "refType": "REF_TYPE_BRANCH",
+            "revision": "aac9c200a79e37ebe216bb90c829d5ab2771f2ee",
+            "repository": {
+                "cloneUrl": "https://github.com/svenefftinge/2048-in-terminal.git",
+                "host": "github.com",
+                "owner": "svenefftinge",
+                "name": "2048-in-terminal"
+            }
         }
     },
     "err": ""
