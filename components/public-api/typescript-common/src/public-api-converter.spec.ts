@@ -28,7 +28,7 @@ import { startFixtureTest } from "./fixtures.spec";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { BranchMatchingStrategy } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
-import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { Workspace, WorkspacePhase_Phase, WorkspaceSession_Owner } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
 
 describe("PublicAPIConverter", () => {
@@ -106,7 +106,10 @@ describe("PublicAPIConverter", () => {
 
         it("toWorkspaceSession", async () => {
             await startFixtureTest("../fixtures/toWorkspaceSession_*.json", async (input) =>
-                converter.toWorkspaceSession(input),
+                converter.toWorkspaceSession(input, new WorkspaceSession_Owner({
+                    id: "123",
+                    name: "Kum Quat"
+                })),
             );
         });
 

@@ -105,6 +105,10 @@
         "metrics": {
             "workspaceImageSize": "25600000",
             "totalImageSize": "0"
+        },
+        "owner": {
+            "id": "123",
+            "name": "Kum Quat"
         }
     },
     "err": ""

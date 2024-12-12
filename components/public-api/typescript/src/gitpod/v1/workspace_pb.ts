@@ -1682,7 +1682,7 @@ export class WorkspaceSpec_Timeout extends Message<WorkspaceSpec_Timeout> {
   inactivity?: Duration;
 
   /**
-   * inactivity is the maximum time of disconnection before the workspace is
+   * disconnected is the maximum time of disconnection before the workspace is
    * stopped or paused set to zero to disable.
    *
    * @generated from field: google.protobuf.Duration disconnected = 2;
@@ -3891,6 +3891,11 @@ export class WorkspaceSession extends Message<WorkspaceSession> {
    */
   metrics?: WorkspaceSession_Metrics;
 
+  /**
+   * @generated from field: gitpod.v1.WorkspaceSession.Owner owner = 9;
+   */
+  owner?: WorkspaceSession_Owner;
+
   constructor(data?: PartialMessage<WorkspaceSession>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3907,6 +3912,7 @@ export class WorkspaceSession extends Message<WorkspaceSession> {
     { no: 6, name: "stopping_time", kind: "message", T: Timestamp },
     { no: 7, name: "stopped_time", kind: "message", T: Timestamp },
     { no: 8, name: "metrics", kind: "message", T: WorkspaceSession_Metrics },
+    { no: 9, name: "owner", kind: "message", T: WorkspaceSession_Owner },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession {
@@ -3923,6 +3929,61 @@ export class WorkspaceSession extends Message<WorkspaceSession> {
 
   static equals(a: WorkspaceSession | PlainMessage<WorkspaceSession> | undefined, b: WorkspaceSession | PlainMessage<WorkspaceSession> | undefined): boolean {
     return proto3.util.equals(WorkspaceSession, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WorkspaceSession.Owner
+ */
+export class WorkspaceSession_Owner extends Message<WorkspaceSession_Owner> {
+  /**
+   * id is the ID of the user who created the workspace
+   *
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * name is the full name of the user who created the workspace
+   *
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * avatar_url is the URL of the user's avatar
+   *
+   * @generated from field: string avatar_url = 3;
+   */
+  avatarUrl = "";
+
+  constructor(data?: PartialMessage<WorkspaceSession_Owner>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceSession.Owner";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "avatar_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession_Owner {
+    return new WorkspaceSession_Owner().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSession_Owner {
+    return new WorkspaceSession_Owner().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSession_Owner {
+    return new WorkspaceSession_Owner().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceSession_Owner | PlainMessage<WorkspaceSession_Owner> | undefined, b: WorkspaceSession_Owner | PlainMessage<WorkspaceSession_Owner> | undefined): boolean {
+    return proto3.util.equals(WorkspaceSession_Owner, a, b);
   }
 }
 

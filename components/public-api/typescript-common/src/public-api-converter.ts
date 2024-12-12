@@ -170,6 +170,7 @@ import {
     WorkspaceStatus_WorkspaceConditions,
     WorkspaceContext_RefType,
     WorkspaceContext_Repository,
+    WorkspaceSession_Owner,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { BigIntToJson } from "@gitpod/gitpod-protocol/lib/util/stringify";
 import { getPrebuildLogPath } from "./prebuild-utils";
@@ -186,7 +187,7 @@ export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configurati
  * - methods converting from gRPC to JSON-RPC is called `from*`
  */
 export class PublicAPIConverter {
-    toWorkspaceSession(arg: WorkspaceSessionProtocol): WorkspaceSession {
+    toWorkspaceSession(arg: WorkspaceSessionProtocol, owner: WorkspaceSession_Owner): WorkspaceSession {
         const workspace = this.toWorkspace({
             workspace: arg.workspace,
             latestInstance: arg.instance,
@@ -214,6 +215,7 @@ export class PublicAPIConverter {
         });
 
         result.id = arg.instance.id;
+        result.owner = owner;
 
         return result;
     }

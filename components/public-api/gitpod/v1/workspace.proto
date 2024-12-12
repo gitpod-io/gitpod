@@ -931,6 +931,17 @@ message WorkspaceSnapshot {
 }
 
 message WorkspaceSession {
+  message Owner {
+    // id is the ID of the user who created the workspace
+    string id = 1;
+
+    // name is the full name of the user who created the workspace
+    string name = 2;
+
+    // avatar_url is the URL of the user's avatar
+    string avatar_url = 3;
+  }
+
   message Metrics {
     // workspace_image_size is the size of the workspace image in bytes
     int64 workspace_image_size = 1;
@@ -950,4 +961,5 @@ message WorkspaceSession {
   google.protobuf.Timestamp stopped_time = 7;
 
   Metrics metrics = 8;
+  Owner owner = 9;
 }

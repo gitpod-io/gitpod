@@ -10,13 +10,12 @@ import {
     WorkspaceSession,
     WorkspaceSpec_WorkspaceType,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
-import { organizationClient, workspaceClient } from "../../service/public-api";
+import { workspaceClient } from "../../service/public-api";
 import dayjs from "dayjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { noPersistence } from "../../data/setup";
 import { Timestamp } from "@bufbuild/protobuf";
-import type { OrganizationMember } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 
 const pageSize = 100;
 const maxPages = 100; // safety limit if something goes wrong with pagination
@@ -102,17 +101,9 @@ const downloadUsageCSV = async ({
         };
     }
 
-    const orgMembers = await organizationClient.listOrganizationMembers({
-        organizationId,
-    });
-
     const rows = records
         .map((record) => {
-            const member = orgMembers.members.find((m) => m.userId === record.workspace?.metadata?.ownerId);
-            if (!member) {
-                return null;
-            }
-            return transformSessionRecord(record, member);
+            return transformSessionRecord(record);
         })
         .filter((r) => !!r);
     const fields = Object.keys(rows[0]) as (keyof ReturnType<typeof transformSessionRecord>)[];
@@ -167,7 +158,7 @@ const displayTime = (timestamp?: Timestamp) => {
     return timestamp.toDate().toISOString();
 };
 
-export const transformSessionRecord = (session: WorkspaceSession, member: OrganizationMember) => {
+export const transformSessionRecord = (session: WorkspaceSession) => {
     const initializerType = session.workspace?.spec?.initializer?.specs;
     const prebuildInitializer = initializerType?.find((i) => i.spec.case === "prebuild")?.spec.value as
         | PrebuildInitializer
@@ -186,8 +177,8 @@ export const transformSessionRecord = (session: WorkspaceSession, member: Organi
         workspaceID: session?.workspace?.id,
         configurationID: session.workspace?.metadata?.configurationId,
         prebuildID: prebuildInitializer?.prebuildId,
-        userID: member.userId,
-        userName: member.fullName,
+        userID: session.owner?.id,
+        userName: session.owner?.name,
 
         contextURL: session.workspace?.metadata?.originalContextUrl,
         contextURL_cloneURL: session.workspace?.metadata?.context?.repository?.cloneUrl,

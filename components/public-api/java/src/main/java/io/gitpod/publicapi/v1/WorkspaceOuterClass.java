@@ -24526,7 +24526,7 @@ java.lang.String defaultValue) {
 
       /**
        * <pre>
-       * inactivity is the maximum time of disconnection before the workspace is
+       * disconnected is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -24536,7 +24536,7 @@ java.lang.String defaultValue) {
       boolean hasDisconnected();
       /**
        * <pre>
-       * inactivity is the maximum time of disconnection before the workspace is
+       * disconnected is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -24546,7 +24546,7 @@ java.lang.String defaultValue) {
       com.google.protobuf.Duration getDisconnected();
       /**
        * <pre>
-       * inactivity is the maximum time of disconnection before the workspace is
+       * disconnected is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -24668,7 +24668,7 @@ java.lang.String defaultValue) {
       private com.google.protobuf.Duration disconnected_;
       /**
        * <pre>
-       * inactivity is the maximum time of disconnection before the workspace is
+       * disconnected is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -24681,7 +24681,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * inactivity is the maximum time of disconnection before the workspace is
+       * disconnected is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -24694,7 +24694,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * inactivity is the maximum time of disconnection before the workspace is
+       * disconnected is the maximum time of disconnection before the workspace is
        * stopped or paused set to zero to disable.
        * </pre>
        *
@@ -25309,7 +25309,7 @@ java.lang.String defaultValue) {
             com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> disconnectedBuilder_;
         /**
          * <pre>
-         * inactivity is the maximum time of disconnection before the workspace is
+         * disconnected is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -25321,7 +25321,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inactivity is the maximum time of disconnection before the workspace is
+         * disconnected is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -25337,7 +25337,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inactivity is the maximum time of disconnection before the workspace is
+         * disconnected is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -25358,7 +25358,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inactivity is the maximum time of disconnection before the workspace is
+         * disconnected is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -25377,7 +25377,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inactivity is the maximum time of disconnection before the workspace is
+         * disconnected is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -25403,7 +25403,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inactivity is the maximum time of disconnection before the workspace is
+         * disconnected is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -25421,7 +25421,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inactivity is the maximum time of disconnection before the workspace is
+         * disconnected is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -25434,7 +25434,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inactivity is the maximum time of disconnection before the workspace is
+         * disconnected is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -25450,7 +25450,7 @@ java.lang.String defaultValue) {
         }
         /**
          * <pre>
-         * inactivity is the maximum time of disconnection before the workspace is
+         * disconnected is the maximum time of disconnection before the workspace is
          * stopped or paused set to zero to disable.
          * </pre>
          *
@@ -61718,6 +61718,21 @@ java.lang.String defaultValue) {
      * <code>.gitpod.v1.WorkspaceSession.Metrics metrics = 8 [json_name = "metrics"];</code>
      */
     io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.MetricsOrBuilder getMetricsOrBuilder();
+
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+     * @return Whether the owner field is set.
+     */
+    boolean hasOwner();
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+     * @return The owner.
+     */
+    io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner getOwner();
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+     */
+    io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.OwnerOrBuilder getOwnerOrBuilder();
   }
   /**
    * Protobuf type {@code gitpod.v1.WorkspaceSession}
@@ -61755,6 +61770,920 @@ java.lang.String defaultValue) {
       return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Builder.class);
+    }
+
+    public interface OwnerOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:gitpod.v1.WorkspaceSession.Owner)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <pre>
+       * id is the ID of the user who created the workspace
+       * </pre>
+       *
+       * <code>string id = 1 [json_name = "id"];</code>
+       * @return The id.
+       */
+      java.lang.String getId();
+      /**
+       * <pre>
+       * id is the ID of the user who created the workspace
+       * </pre>
+       *
+       * <code>string id = 1 [json_name = "id"];</code>
+       * @return The bytes for id.
+       */
+      com.google.protobuf.ByteString
+          getIdBytes();
+
+      /**
+       * <pre>
+       * name is the full name of the user who created the workspace
+       * </pre>
+       *
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @return The name.
+       */
+      java.lang.String getName();
+      /**
+       * <pre>
+       * name is the full name of the user who created the workspace
+       * </pre>
+       *
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @return The bytes for name.
+       */
+      com.google.protobuf.ByteString
+          getNameBytes();
+
+      /**
+       * <pre>
+       * avatar_url is the URL of the user's avatar
+       * </pre>
+       *
+       * <code>string avatar_url = 3 [json_name = "avatarUrl"];</code>
+       * @return The avatarUrl.
+       */
+      java.lang.String getAvatarUrl();
+      /**
+       * <pre>
+       * avatar_url is the URL of the user's avatar
+       * </pre>
+       *
+       * <code>string avatar_url = 3 [json_name = "avatarUrl"];</code>
+       * @return The bytes for avatarUrl.
+       */
+      com.google.protobuf.ByteString
+          getAvatarUrlBytes();
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.WorkspaceSession.Owner}
+     */
+    public static final class Owner extends
+        com.google.protobuf.GeneratedMessage implements
+        // @@protoc_insertion_point(message_implements:gitpod.v1.WorkspaceSession.Owner)
+        OwnerOrBuilder {
+    private static final long serialVersionUID = 0L;
+      static {
+        com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+          com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+          /* major= */ 4,
+          /* minor= */ 27,
+          /* patch= */ 2,
+          /* suffix= */ "",
+          Owner.class.getName());
+      }
+      // Use Owner.newBuilder() to construct.
+      private Owner(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+        super(builder);
+      }
+      private Owner() {
+        id_ = "";
+        name_ = "";
+        avatarUrl_ = "";
+      }
+
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_Owner_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_Owner_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.Builder.class);
+      }
+
+      public static final int ID_FIELD_NUMBER = 1;
+      @SuppressWarnings("serial")
+      private volatile java.lang.Object id_ = "";
+      /**
+       * <pre>
+       * id is the ID of the user who created the workspace
+       * </pre>
+       *
+       * <code>string id = 1 [json_name = "id"];</code>
+       * @return The id.
+       */
+      @java.lang.Override
+      public java.lang.String getId() {
+        java.lang.Object ref = id_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          id_ = s;
+          return s;
+        }
+      }
+      /**
+       * <pre>
+       * id is the ID of the user who created the workspace
+       * </pre>
+       *
+       * <code>string id = 1 [json_name = "id"];</code>
+       * @return The bytes for id.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getIdBytes() {
+        java.lang.Object ref = id_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          id_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int NAME_FIELD_NUMBER = 2;
+      @SuppressWarnings("serial")
+      private volatile java.lang.Object name_ = "";
+      /**
+       * <pre>
+       * name is the full name of the user who created the workspace
+       * </pre>
+       *
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @return The name.
+       */
+      @java.lang.Override
+      public java.lang.String getName() {
+        java.lang.Object ref = name_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          name_ = s;
+          return s;
+        }
+      }
+      /**
+       * <pre>
+       * name is the full name of the user who created the workspace
+       * </pre>
+       *
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @return The bytes for name.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getNameBytes() {
+        java.lang.Object ref = name_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          name_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int AVATAR_URL_FIELD_NUMBER = 3;
+      @SuppressWarnings("serial")
+      private volatile java.lang.Object avatarUrl_ = "";
+      /**
+       * <pre>
+       * avatar_url is the URL of the user's avatar
+       * </pre>
+       *
+       * <code>string avatar_url = 3 [json_name = "avatarUrl"];</code>
+       * @return The avatarUrl.
+       */
+      @java.lang.Override
+      public java.lang.String getAvatarUrl() {
+        java.lang.Object ref = avatarUrl_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          avatarUrl_ = s;
+          return s;
+        }
+      }
+      /**
+       * <pre>
+       * avatar_url is the URL of the user's avatar
+       * </pre>
+       *
+       * <code>string avatar_url = 3 [json_name = "avatarUrl"];</code>
+       * @return The bytes for avatarUrl.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString
+          getAvatarUrlBytes() {
+        java.lang.Object ref = avatarUrl_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          avatarUrl_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      private byte memoizedIsInitialized = -1;
+      @java.lang.Override
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      @java.lang.Override
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(id_)) {
+          com.google.protobuf.GeneratedMessage.writeString(output, 1, id_);
+        }
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(name_)) {
+          com.google.protobuf.GeneratedMessage.writeString(output, 2, name_);
+        }
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(avatarUrl_)) {
+          com.google.protobuf.GeneratedMessage.writeString(output, 3, avatarUrl_);
+        }
+        getUnknownFields().writeTo(output);
+      }
+
+      @java.lang.Override
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(id_)) {
+          size += com.google.protobuf.GeneratedMessage.computeStringSize(1, id_);
+        }
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(name_)) {
+          size += com.google.protobuf.GeneratedMessage.computeStringSize(2, name_);
+        }
+        if (!com.google.protobuf.GeneratedMessage.isStringEmpty(avatarUrl_)) {
+          size += com.google.protobuf.GeneratedMessage.computeStringSize(3, avatarUrl_);
+        }
+        size += getUnknownFields().getSerializedSize();
+        memoizedSize = size;
+        return size;
+      }
+
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner)) {
+          return super.equals(obj);
+        }
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner other = (io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner) obj;
+
+        if (!getId()
+            .equals(other.getId())) return false;
+        if (!getName()
+            .equals(other.getName())) return false;
+        if (!getAvatarUrl()
+            .equals(other.getAvatarUrl())) return false;
+        if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+        return true;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        hash = (37 * hash) + ID_FIELD_NUMBER;
+        hash = (53 * hash) + getId().hashCode();
+        hash = (37 * hash) + NAME_FIELD_NUMBER;
+        hash = (53 * hash) + getName().hashCode();
+        hash = (37 * hash) + AVATAR_URL_FIELD_NUMBER;
+        hash = (53 * hash) + getAvatarUrl().hashCode();
+        hash = (29 * hash) + getUnknownFields().hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      @java.lang.Override
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      @java.lang.Override
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code gitpod.v1.WorkspaceSession.Owner}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:gitpod.v1.WorkspaceSession.Owner)
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.OwnerOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_Owner_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_Owner_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.Builder.class);
+        }
+
+        // Construct using io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.newBuilder()
+        private Builder() {
+
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          super(parent);
+
+        }
+        @java.lang.Override
+        public Builder clear() {
+          super.clear();
+          bitField0_ = 0;
+          id_ = "";
+          name_ = "";
+          avatarUrl_ = "";
+          return this;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_Owner_descriptor;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner getDefaultInstanceForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.getDefaultInstance();
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner build() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner buildPartial() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner result = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner(this);
+          if (bitField0_ != 0) { buildPartial0(result); }
+          onBuilt();
+          return result;
+        }
+
+        private void buildPartial0(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner result) {
+          int from_bitField0_ = bitField0_;
+          if (((from_bitField0_ & 0x00000001) != 0)) {
+            result.id_ = id_;
+          }
+          if (((from_bitField0_ & 0x00000002) != 0)) {
+            result.name_ = name_;
+          }
+          if (((from_bitField0_ & 0x00000004) != 0)) {
+            result.avatarUrl_ = avatarUrl_;
+          }
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner) {
+            return mergeFrom((io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner other) {
+          if (other == io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.getDefaultInstance()) return this;
+          if (!other.getId().isEmpty()) {
+            id_ = other.id_;
+            bitField0_ |= 0x00000001;
+            onChanged();
+          }
+          if (!other.getName().isEmpty()) {
+            name_ = other.name_;
+            bitField0_ |= 0x00000002;
+            onChanged();
+          }
+          if (!other.getAvatarUrl().isEmpty()) {
+            avatarUrl_ = other.avatarUrl_;
+            bitField0_ |= 0x00000004;
+            onChanged();
+          }
+          this.mergeUnknownFields(other.getUnknownFields());
+          onChanged();
+          return this;
+        }
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          if (extensionRegistry == null) {
+            throw new java.lang.NullPointerException();
+          }
+          try {
+            boolean done = false;
+            while (!done) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  done = true;
+                  break;
+                case 10: {
+                  id_ = input.readStringRequireUtf8();
+                  bitField0_ |= 0x00000001;
+                  break;
+                } // case 10
+                case 18: {
+                  name_ = input.readStringRequireUtf8();
+                  bitField0_ |= 0x00000002;
+                  break;
+                } // case 18
+                case 26: {
+                  avatarUrl_ = input.readStringRequireUtf8();
+                  bitField0_ |= 0x00000004;
+                  break;
+                } // case 26
+                default: {
+                  if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                    done = true; // was an endgroup tag
+                  }
+                  break;
+                } // default:
+              } // switch (tag)
+            } // while (!done)
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.unwrapIOException();
+          } finally {
+            onChanged();
+          } // finally
+          return this;
+        }
+        private int bitField0_;
+
+        private java.lang.Object id_ = "";
+        /**
+         * <pre>
+         * id is the ID of the user who created the workspace
+         * </pre>
+         *
+         * <code>string id = 1 [json_name = "id"];</code>
+         * @return The id.
+         */
+        public java.lang.String getId() {
+          java.lang.Object ref = id_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            id_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <pre>
+         * id is the ID of the user who created the workspace
+         * </pre>
+         *
+         * <code>string id = 1 [json_name = "id"];</code>
+         * @return The bytes for id.
+         */
+        public com.google.protobuf.ByteString
+            getIdBytes() {
+          java.lang.Object ref = id_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            id_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <pre>
+         * id is the ID of the user who created the workspace
+         * </pre>
+         *
+         * <code>string id = 1 [json_name = "id"];</code>
+         * @param value The id to set.
+         * @return This builder for chaining.
+         */
+        public Builder setId(
+            java.lang.String value) {
+          if (value == null) { throw new NullPointerException(); }
+          id_ = value;
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * id is the ID of the user who created the workspace
+         * </pre>
+         *
+         * <code>string id = 1 [json_name = "id"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearId() {
+          id_ = getDefaultInstance().getId();
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * id is the ID of the user who created the workspace
+         * </pre>
+         *
+         * <code>string id = 1 [json_name = "id"];</code>
+         * @param value The bytes for id to set.
+         * @return This builder for chaining.
+         */
+        public Builder setIdBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) { throw new NullPointerException(); }
+          checkByteStringIsUtf8(value);
+          id_ = value;
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+
+        private java.lang.Object name_ = "";
+        /**
+         * <pre>
+         * name is the full name of the user who created the workspace
+         * </pre>
+         *
+         * <code>string name = 2 [json_name = "name"];</code>
+         * @return The name.
+         */
+        public java.lang.String getName() {
+          java.lang.Object ref = name_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            name_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <pre>
+         * name is the full name of the user who created the workspace
+         * </pre>
+         *
+         * <code>string name = 2 [json_name = "name"];</code>
+         * @return The bytes for name.
+         */
+        public com.google.protobuf.ByteString
+            getNameBytes() {
+          java.lang.Object ref = name_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            name_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <pre>
+         * name is the full name of the user who created the workspace
+         * </pre>
+         *
+         * <code>string name = 2 [json_name = "name"];</code>
+         * @param value The name to set.
+         * @return This builder for chaining.
+         */
+        public Builder setName(
+            java.lang.String value) {
+          if (value == null) { throw new NullPointerException(); }
+          name_ = value;
+          bitField0_ |= 0x00000002;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * name is the full name of the user who created the workspace
+         * </pre>
+         *
+         * <code>string name = 2 [json_name = "name"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearName() {
+          name_ = getDefaultInstance().getName();
+          bitField0_ = (bitField0_ & ~0x00000002);
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * name is the full name of the user who created the workspace
+         * </pre>
+         *
+         * <code>string name = 2 [json_name = "name"];</code>
+         * @param value The bytes for name to set.
+         * @return This builder for chaining.
+         */
+        public Builder setNameBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) { throw new NullPointerException(); }
+          checkByteStringIsUtf8(value);
+          name_ = value;
+          bitField0_ |= 0x00000002;
+          onChanged();
+          return this;
+        }
+
+        private java.lang.Object avatarUrl_ = "";
+        /**
+         * <pre>
+         * avatar_url is the URL of the user's avatar
+         * </pre>
+         *
+         * <code>string avatar_url = 3 [json_name = "avatarUrl"];</code>
+         * @return The avatarUrl.
+         */
+        public java.lang.String getAvatarUrl() {
+          java.lang.Object ref = avatarUrl_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            avatarUrl_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <pre>
+         * avatar_url is the URL of the user's avatar
+         * </pre>
+         *
+         * <code>string avatar_url = 3 [json_name = "avatarUrl"];</code>
+         * @return The bytes for avatarUrl.
+         */
+        public com.google.protobuf.ByteString
+            getAvatarUrlBytes() {
+          java.lang.Object ref = avatarUrl_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            avatarUrl_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <pre>
+         * avatar_url is the URL of the user's avatar
+         * </pre>
+         *
+         * <code>string avatar_url = 3 [json_name = "avatarUrl"];</code>
+         * @param value The avatarUrl to set.
+         * @return This builder for chaining.
+         */
+        public Builder setAvatarUrl(
+            java.lang.String value) {
+          if (value == null) { throw new NullPointerException(); }
+          avatarUrl_ = value;
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * avatar_url is the URL of the user's avatar
+         * </pre>
+         *
+         * <code>string avatar_url = 3 [json_name = "avatarUrl"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearAvatarUrl() {
+          avatarUrl_ = getDefaultInstance().getAvatarUrl();
+          bitField0_ = (bitField0_ & ~0x00000004);
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * avatar_url is the URL of the user's avatar
+         * </pre>
+         *
+         * <code>string avatar_url = 3 [json_name = "avatarUrl"];</code>
+         * @param value The bytes for avatarUrl to set.
+         * @return This builder for chaining.
+         */
+        public Builder setAvatarUrlBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) { throw new NullPointerException(); }
+          checkByteStringIsUtf8(value);
+          avatarUrl_ = value;
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:gitpod.v1.WorkspaceSession.Owner)
+      }
+
+      // @@protoc_insertion_point(class_scope:gitpod.v1.WorkspaceSession.Owner)
+      private static final io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner();
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<Owner>
+          PARSER = new com.google.protobuf.AbstractParser<Owner>() {
+        @java.lang.Override
+        public Owner parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          Builder builder = newBuilder();
+          try {
+            builder.mergeFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(builder.buildPartial());
+          } catch (com.google.protobuf.UninitializedMessageException e) {
+            throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+          } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(e)
+                .setUnfinishedMessage(builder.buildPartial());
+          }
+          return builder.buildPartial();
+        }
+      };
+
+      public static com.google.protobuf.Parser<Owner> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<Owner> getParserForType() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
     }
 
     public interface MetricsOrBuilder extends
@@ -62527,6 +63456,32 @@ java.lang.String defaultValue) {
       return metrics_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.getDefaultInstance() : metrics_;
     }
 
+    public static final int OWNER_FIELD_NUMBER = 9;
+    private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner owner_;
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+     * @return Whether the owner field is set.
+     */
+    @java.lang.Override
+    public boolean hasOwner() {
+      return ((bitField0_ & 0x00000080) != 0);
+    }
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+     * @return The owner.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner getOwner() {
+      return owner_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.getDefaultInstance() : owner_;
+    }
+    /**
+     * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.OwnerOrBuilder getOwnerOrBuilder() {
+      return owner_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.getDefaultInstance() : owner_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -62564,6 +63519,9 @@ java.lang.String defaultValue) {
       }
       if (((bitField0_ & 0x00000040) != 0)) {
         output.writeMessage(8, getMetrics());
+      }
+      if (((bitField0_ & 0x00000080) != 0)) {
+        output.writeMessage(9, getOwner());
       }
       getUnknownFields().writeTo(output);
     }
@@ -62604,6 +63562,10 @@ java.lang.String defaultValue) {
       if (((bitField0_ & 0x00000040) != 0)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(8, getMetrics());
+      }
+      if (((bitField0_ & 0x00000080) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(9, getOwner());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -62657,6 +63619,11 @@ java.lang.String defaultValue) {
         if (!getMetrics()
             .equals(other.getMetrics())) return false;
       }
+      if (hasOwner() != other.hasOwner()) return false;
+      if (hasOwner()) {
+        if (!getOwner()
+            .equals(other.getOwner())) return false;
+      }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -62697,6 +63664,10 @@ java.lang.String defaultValue) {
       if (hasMetrics()) {
         hash = (37 * hash) + METRICS_FIELD_NUMBER;
         hash = (53 * hash) + getMetrics().hashCode();
+      }
+      if (hasOwner()) {
+        hash = (37 * hash) + OWNER_FIELD_NUMBER;
+        hash = (53 * hash) + getOwner().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -62835,6 +63806,7 @@ java.lang.String defaultValue) {
           getStoppingTimeFieldBuilder();
           getStoppedTimeFieldBuilder();
           getMetricsFieldBuilder();
+          getOwnerFieldBuilder();
         }
       }
       @java.lang.Override
@@ -62876,6 +63848,11 @@ java.lang.String defaultValue) {
         if (metricsBuilder_ != null) {
           metricsBuilder_.dispose();
           metricsBuilder_ = null;
+        }
+        owner_ = null;
+        if (ownerBuilder_ != null) {
+          ownerBuilder_.dispose();
+          ownerBuilder_ = null;
         }
         return this;
       }
@@ -62956,6 +63933,12 @@ java.lang.String defaultValue) {
               : metricsBuilder_.build();
           to_bitField0_ |= 0x00000040;
         }
+        if (((from_bitField0_ & 0x00000100) != 0)) {
+          result.owner_ = ownerBuilder_ == null
+              ? owner_
+              : ownerBuilder_.build();
+          to_bitField0_ |= 0x00000080;
+        }
         result.bitField0_ |= to_bitField0_;
       }
 
@@ -62996,6 +63979,9 @@ java.lang.String defaultValue) {
         }
         if (other.hasMetrics()) {
           mergeMetrics(other.getMetrics());
+        }
+        if (other.hasOwner()) {
+          mergeOwner(other.getOwner());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -63077,6 +64063,13 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000080;
                 break;
               } // case 66
+              case 74: {
+                input.readMessage(
+                    getOwnerFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000100;
+                break;
+              } // case 74
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -64013,6 +65006,127 @@ java.lang.String defaultValue) {
         return metricsBuilder_;
       }
 
+      private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner owner_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.OwnerOrBuilder> ownerBuilder_;
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+       * @return Whether the owner field is set.
+       */
+      public boolean hasOwner() {
+        return ((bitField0_ & 0x00000100) != 0);
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+       * @return The owner.
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner getOwner() {
+        if (ownerBuilder_ == null) {
+          return owner_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.getDefaultInstance() : owner_;
+        } else {
+          return ownerBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+       */
+      public Builder setOwner(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner value) {
+        if (ownerBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          owner_ = value;
+        } else {
+          ownerBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+       */
+      public Builder setOwner(
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.Builder builderForValue) {
+        if (ownerBuilder_ == null) {
+          owner_ = builderForValue.build();
+        } else {
+          ownerBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+       */
+      public Builder mergeOwner(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner value) {
+        if (ownerBuilder_ == null) {
+          if (((bitField0_ & 0x00000100) != 0) &&
+            owner_ != null &&
+            owner_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.getDefaultInstance()) {
+            getOwnerBuilder().mergeFrom(value);
+          } else {
+            owner_ = value;
+          }
+        } else {
+          ownerBuilder_.mergeFrom(value);
+        }
+        if (owner_ != null) {
+          bitField0_ |= 0x00000100;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+       */
+      public Builder clearOwner() {
+        bitField0_ = (bitField0_ & ~0x00000100);
+        owner_ = null;
+        if (ownerBuilder_ != null) {
+          ownerBuilder_.dispose();
+          ownerBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.Builder getOwnerBuilder() {
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return getOwnerFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+       */
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.OwnerOrBuilder getOwnerOrBuilder() {
+        if (ownerBuilder_ != null) {
+          return ownerBuilder_.getMessageOrBuilder();
+        } else {
+          return owner_ == null ?
+              io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.getDefaultInstance() : owner_;
+        }
+      }
+      /**
+       * <code>.gitpod.v1.WorkspaceSession.Owner owner = 9 [json_name = "owner"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.OwnerOrBuilder>
+          getOwnerFieldBuilder() {
+        if (ownerBuilder_ == null) {
+          ownerBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Owner.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.OwnerOrBuilder>(
+                  getOwner(),
+                  getParentForChildren(),
+                  isClean());
+          owner_ = null;
+        }
+        return ownerBuilder_;
+      }
+
       // @@protoc_insertion_point(builder_scope:gitpod.v1.WorkspaceSession)
     }
 
@@ -64400,6 +65514,11 @@ java.lang.String defaultValue) {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_WorkspaceSession_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_WorkspaceSession_Owner_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_WorkspaceSession_Owner_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_v1_WorkspaceSession_Metrics_descriptor;
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -64693,7 +65812,7 @@ java.lang.String defaultValue) {
       "kspaceSnapshot\022\016\n\002id\030\001 \001(\tR\002id\022!\n\014worksp" +
       "ace_id\030\002 \001(\tR\013workspaceId\022?\n\rcreation_ti" +
       "me\030\003 \001(\0132\032.google.protobuf.TimestampR\014cr" +
-      "eationTime\"\275\004\n\020WorkspaceSession\022\016\n\002id\030\001 " +
+      "eationTime\"\302\005\n\020WorkspaceSession\022\016\n\002id\030\001 " +
       "\001(\tR\002id\0222\n\tworkspace\030\002 \001(\0132\024.gitpod.v1.W" +
       "orkspaceR\tworkspace\022?\n\rcreation_time\030\003 \001" +
       "(\0132\032.google.protobuf.TimestampR\014creation" +
@@ -64705,61 +65824,65 @@ java.lang.String defaultValue) {
       "\014stopped_time\030\007 \001(\0132\032.google.protobuf.Ti" +
       "mestampR\013stoppedTime\022=\n\007metrics\030\010 \001(\0132#." +
       "gitpod.v1.WorkspaceSession.MetricsR\007metr" +
-      "ics\032e\n\007Metrics\0220\n\024workspace_image_size\030\001" +
-      " \001(\003R\022workspaceImageSize\022(\n\020total_image_" +
-      "size\030\002 \001(\003R\016totalImageSize*o\n\016AdmissionL" +
-      "evel\022\037\n\033ADMISSION_LEVEL_UNSPECIFIED\020\000\022\036\n" +
-      "\032ADMISSION_LEVEL_OWNER_ONLY\020\001\022\034\n\030ADMISSI" +
-      "ON_LEVEL_EVERYONE\020\0022\323\016\n\020WorkspaceService" +
-      "\022Q\n\014GetWorkspace\022\036.gitpod.v1.GetWorkspac" +
-      "eRequest\032\037.gitpod.v1.GetWorkspaceRespons" +
-      "e\"\000\022k\n\024WatchWorkspaceStatus\022&.gitpod.v1." +
-      "WatchWorkspaceStatusRequest\032\'.gitpod.v1." +
-      "WatchWorkspaceStatusResponse\"\0000\001\022W\n\016List" +
-      "Workspaces\022 .gitpod.v1.ListWorkspacesReq" +
-      "uest\032!.gitpod.v1.ListWorkspacesResponse\"" +
-      "\000\022l\n\025ListWorkspaceSessions\022\'.gitpod.v1.L" +
-      "istWorkspaceSessionsRequest\032(.gitpod.v1." +
-      "ListWorkspaceSessionsResponse\"\000\022r\n\027Creat" +
-      "eAndStartWorkspace\022).gitpod.v1.CreateAnd" +
-      "StartWorkspaceRequest\032*.gitpod.v1.Create" +
-      "AndStartWorkspaceResponse\"\000\022W\n\016StartWork" +
-      "space\022 .gitpod.v1.StartWorkspaceRequest\032" +
-      "!.gitpod.v1.StartWorkspaceResponse\"\000\022Z\n\017" +
-      "UpdateWorkspace\022!.gitpod.v1.UpdateWorksp" +
-      "aceRequest\032\".gitpod.v1.UpdateWorkspaceRe" +
-      "sponse\"\000\022T\n\rStopWorkspace\022\037.gitpod.v1.St" +
-      "opWorkspaceRequest\032 .gitpod.v1.StopWorks" +
-      "paceResponse\"\000\022Z\n\017DeleteWorkspace\022!.gitp" +
-      "od.v1.DeleteWorkspaceRequest\032\".gitpod.v1" +
-      ".DeleteWorkspaceResponse\"\000\022i\n\024ListWorksp" +
-      "aceClasses\022&.gitpod.v1.ListWorkspaceClas" +
-      "sesRequest\032\'.gitpod.v1.ListWorkspaceClas" +
-      "sesResponse\"\000\022Z\n\017ParseContextURL\022!.gitpo" +
-      "d.v1.ParseContextURLRequest\032\".gitpod.v1." +
-      "ParseContextURLResponse\"\000\022u\n\030GetWorkspac" +
-      "eDefaultImage\022*.gitpod.v1.GetWorkspaceDe" +
-      "faultImageRequest\032+.gitpod.v1.GetWorkspa" +
-      "ceDefaultImageResponse\"\000\022T\n\rSendHeartBea" +
-      "t\022\037.gitpod.v1.SendHeartBeatRequest\032 .git" +
-      "pod.v1.SendHeartBeatResponse\"\000\022o\n\026GetWor" +
-      "kspaceOwnerToken\022(.gitpod.v1.GetWorkspac" +
-      "eOwnerTokenRequest\032).gitpod.v1.GetWorksp" +
-      "aceOwnerTokenResponse\"\000\022\204\001\n\035GetWorkspace" +
-      "EditorCredentials\022/.gitpod.v1.GetWorkspa" +
-      "ceEditorCredentialsRequest\0320.gitpod.v1.G" +
-      "etWorkspaceEditorCredentialsResponse\"\000\022r" +
-      "\n\027CreateWorkspaceSnapshot\022).gitpod.v1.Cr" +
-      "eateWorkspaceSnapshotRequest\032*.gitpod.v1" +
-      ".CreateWorkspaceSnapshotResponse\"\000\022u\n\030Wa" +
-      "itForWorkspaceSnapshot\022*.gitpod.v1.WaitF" +
-      "orWorkspaceSnapshotRequest\032+.gitpod.v1.W" +
-      "aitForWorkspaceSnapshotResponse\"\000\022f\n\023Upd" +
-      "ateWorkspacePort\022%.gitpod.v1.UpdateWorks" +
-      "pacePortRequest\032&.gitpod.v1.UpdateWorksp" +
-      "acePortResponse\"\000BQ\n\026io.gitpod.publicapi" +
-      ".v1Z7github.com/gitpod-io/gitpod/compone" +
-      "nts/public-api/go/v1b\006proto3"
+      "ics\0227\n\005owner\030\t \001(\0132!.gitpod.v1.Workspace" +
+      "Session.OwnerR\005owner\032J\n\005Owner\022\016\n\002id\030\001 \001(" +
+      "\tR\002id\022\022\n\004name\030\002 \001(\tR\004name\022\035\n\navatar_url\030" +
+      "\003 \001(\tR\tavatarUrl\032e\n\007Metrics\0220\n\024workspace" +
+      "_image_size\030\001 \001(\003R\022workspaceImageSize\022(\n" +
+      "\020total_image_size\030\002 \001(\003R\016totalImageSize*" +
+      "o\n\016AdmissionLevel\022\037\n\033ADMISSION_LEVEL_UNS" +
+      "PECIFIED\020\000\022\036\n\032ADMISSION_LEVEL_OWNER_ONLY" +
+      "\020\001\022\034\n\030ADMISSION_LEVEL_EVERYONE\020\0022\323\016\n\020Wor" +
+      "kspaceService\022Q\n\014GetWorkspace\022\036.gitpod.v" +
+      "1.GetWorkspaceRequest\032\037.gitpod.v1.GetWor" +
+      "kspaceResponse\"\000\022k\n\024WatchWorkspaceStatus" +
+      "\022&.gitpod.v1.WatchWorkspaceStatusRequest" +
+      "\032\'.gitpod.v1.WatchWorkspaceStatusRespons" +
+      "e\"\0000\001\022W\n\016ListWorkspaces\022 .gitpod.v1.List" +
+      "WorkspacesRequest\032!.gitpod.v1.ListWorksp" +
+      "acesResponse\"\000\022l\n\025ListWorkspaceSessions\022" +
+      "\'.gitpod.v1.ListWorkspaceSessionsRequest" +
+      "\032(.gitpod.v1.ListWorkspaceSessionsRespon" +
+      "se\"\000\022r\n\027CreateAndStartWorkspace\022).gitpod" +
+      ".v1.CreateAndStartWorkspaceRequest\032*.git" +
+      "pod.v1.CreateAndStartWorkspaceResponse\"\000" +
+      "\022W\n\016StartWorkspace\022 .gitpod.v1.StartWork" +
+      "spaceRequest\032!.gitpod.v1.StartWorkspaceR" +
+      "esponse\"\000\022Z\n\017UpdateWorkspace\022!.gitpod.v1" +
+      ".UpdateWorkspaceRequest\032\".gitpod.v1.Upda" +
+      "teWorkspaceResponse\"\000\022T\n\rStopWorkspace\022\037" +
+      ".gitpod.v1.StopWorkspaceRequest\032 .gitpod" +
+      ".v1.StopWorkspaceResponse\"\000\022Z\n\017DeleteWor" +
+      "kspace\022!.gitpod.v1.DeleteWorkspaceReques" +
+      "t\032\".gitpod.v1.DeleteWorkspaceResponse\"\000\022" +
+      "i\n\024ListWorkspaceClasses\022&.gitpod.v1.List" +
+      "WorkspaceClassesRequest\032\'.gitpod.v1.List" +
+      "WorkspaceClassesResponse\"\000\022Z\n\017ParseConte" +
+      "xtURL\022!.gitpod.v1.ParseContextURLRequest" +
+      "\032\".gitpod.v1.ParseContextURLResponse\"\000\022u" +
+      "\n\030GetWorkspaceDefaultImage\022*.gitpod.v1.G" +
+      "etWorkspaceDefaultImageRequest\032+.gitpod." +
+      "v1.GetWorkspaceDefaultImageResponse\"\000\022T\n" +
+      "\rSendHeartBeat\022\037.gitpod.v1.SendHeartBeat" +
+      "Request\032 .gitpod.v1.SendHeartBeatRespons" +
+      "e\"\000\022o\n\026GetWorkspaceOwnerToken\022(.gitpod.v" +
+      "1.GetWorkspaceOwnerTokenRequest\032).gitpod" +
+      ".v1.GetWorkspaceOwnerTokenResponse\"\000\022\204\001\n" +
+      "\035GetWorkspaceEditorCredentials\022/.gitpod." +
+      "v1.GetWorkspaceEditorCredentialsRequest\032" +
+      "0.gitpod.v1.GetWorkspaceEditorCredential" +
+      "sResponse\"\000\022r\n\027CreateWorkspaceSnapshot\022)" +
+      ".gitpod.v1.CreateWorkspaceSnapshotReques" +
+      "t\032*.gitpod.v1.CreateWorkspaceSnapshotRes" +
+      "ponse\"\000\022u\n\030WaitForWorkspaceSnapshot\022*.gi" +
+      "tpod.v1.WaitForWorkspaceSnapshotRequest\032" +
+      "+.gitpod.v1.WaitForWorkspaceSnapshotResp" +
+      "onse\"\000\022f\n\023UpdateWorkspacePort\022%.gitpod.v" +
+      "1.UpdateWorkspacePortRequest\032&.gitpod.v1" +
+      ".UpdateWorkspacePortResponse\"\000BQ\n\026io.git" +
+      "pod.publicapi.v1Z7github.com/gitpod-io/g" +
+      "itpod/components/public-api/go/v1b\006proto" +
+      "3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -65171,9 +66294,15 @@ java.lang.String defaultValue) {
     internal_static_gitpod_v1_WorkspaceSession_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceSession_descriptor,
-        new java.lang.String[] { "Id", "Workspace", "CreationTime", "DeployedTime", "StartedTime", "StoppingTime", "StoppedTime", "Metrics", });
-    internal_static_gitpod_v1_WorkspaceSession_Metrics_descriptor =
+        new java.lang.String[] { "Id", "Workspace", "CreationTime", "DeployedTime", "StartedTime", "StoppingTime", "StoppedTime", "Metrics", "Owner", });
+    internal_static_gitpod_v1_WorkspaceSession_Owner_descriptor =
       internal_static_gitpod_v1_WorkspaceSession_descriptor.getNestedTypes().get(0);
+    internal_static_gitpod_v1_WorkspaceSession_Owner_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_WorkspaceSession_Owner_descriptor,
+        new java.lang.String[] { "Id", "Name", "AvatarUrl", });
+    internal_static_gitpod_v1_WorkspaceSession_Metrics_descriptor =
+      internal_static_gitpod_v1_WorkspaceSession_descriptor.getNestedTypes().get(1);
     internal_static_gitpod_v1_WorkspaceSession_Metrics_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceSession_Metrics_descriptor,

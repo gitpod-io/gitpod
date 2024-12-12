@@ -9,13 +9,12 @@ import { displayTime } from "./WorkspaceSessionGroup";
 
 type Props = {
     session: WorkspaceSession;
-    index: number;
 };
-export const WorkspaceSessionEntry = ({ session, index }: Props) => {
+export const WorkspaceSessionEntry = ({ session }: Props) => {
     const isRunning = session?.workspace?.status?.phase?.name === WorkspacePhase_Phase.RUNNING;
 
     return (
-        <li key={index} className="text-sm text-gray-600 dark:text-gray-300">
+        <li className="text-sm text-gray-600 dark:text-gray-300">
             {session.creationTime ? displayTime(session.creationTime) : "n/a"} (
             {session.id.slice(0, 7) || "No instance ID"}){isRunning ? " - running" : ""}
         </li>

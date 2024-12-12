@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import type { OrganizationMember } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { Heading2, Subheading } from "@podkit/typography/Headings";
 import classNames from "classnames";
@@ -14,7 +13,6 @@ import Alert from "./components/Alert";
 import Header from "./components/Header";
 import { Item, ItemField, ItemsList } from "./components/ItemsList";
 import { useWorkspaceSessions } from "./data/insights/list-workspace-sessions-query";
-import { useListOrganizationMembers } from "./data/organizations/members-query";
 import { WorkspaceSessionGroup } from "./insights/WorkspaceSessionGroup";
 import { gitpodHostUrl } from "./service/service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
@@ -49,8 +47,6 @@ export const Insights = () => {
         from: upperBound,
         to: lowerBound,
     });
-    const membersQuery = useListOrganizationMembers();
-    const members: OrganizationMember[] = useMemo(() => membersQuery.data || [], [membersQuery.data]);
 
     const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;
     const sessions = useMemo(() => data?.pages.flatMap((p) => p) ?? [], [data]);
@@ -123,13 +119,8 @@ export const Insights = () => {
                                     if (!sessions?.length) {
                                         return null;
                                     }
-                                    const member = members.find(
-                                        (m) => m.userId === sessions[0]?.workspace?.metadata?.ownerId,
-                                    );
 
-                                    return (
-                                        <WorkspaceSessionGroup key={id} id={id} sessions={sessions} member={member} />
-                                    );
+                                    return <WorkspaceSessionGroup key={id} id={id} sessions={sessions} />;
                                 })}
                             </Accordion>
                         )}
