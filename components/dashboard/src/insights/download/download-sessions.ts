@@ -137,8 +137,6 @@ const downloadUsageCSV = async ({
     // Prepend Header
     csvRows.unshift(fields.join(","));
 
-    console.log(csvRows);
-
     const blob = new Blob([`\ufeff${csvRows.join("\n")}`], {
         type: "text/csv;charset=utf-8",
     });
@@ -206,8 +204,6 @@ export const transformSessionRecord = (session: WorkspaceSession, member: Organi
         editor: session.workspace?.spec?.editor?.name,
         editorVersion: session.workspace?.spec?.editor?.version, // indicates whether user selected the stable or latest editor release channel
     };
-
-    console.log(row);
 
     return row;
 };
