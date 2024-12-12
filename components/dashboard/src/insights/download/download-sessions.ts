@@ -101,11 +101,7 @@ const downloadUsageCSV = async ({
         };
     }
 
-    const rows = records
-        .map((record) => {
-            return transformSessionRecord(record);
-        })
-        .filter((r) => !!r);
+    const rows = records.map(transformSessionRecord).filter((r) => !!r);
     const fields = Object.keys(rows[0]) as (keyof ReturnType<typeof transformSessionRecord>)[];
 
     // TODO: look into a lib to handle this more robustly
