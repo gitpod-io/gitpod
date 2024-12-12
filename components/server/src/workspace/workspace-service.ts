@@ -234,9 +234,7 @@ export class WorkspaceService {
 
     async getWorkspace(userId: string, workspaceId: string): Promise<WorkspaceInfo> {
         const workspace = await this.doGetWorkspace(userId, workspaceId);
-
-        const latestInstancePromise = this.db.findCurrentInstance(workspaceId);
-        const latestInstance = await latestInstancePromise;
+        const latestInstance = await this.db.findCurrentInstance(workspaceId);
 
         return {
             workspace,
@@ -1323,7 +1321,7 @@ export class WorkspaceService {
             const workspace = await this.doGetWorkspace(userId, workspaceId);
             await check(instance, workspace);
 
-            const wasClosed = !!(options && options.wasClosed);
+            const wasClosed = options.wasClosed ?? false;
             await this.db.updateLastHeartbeat(instanceId, userId, new Date(), wasClosed);
 
             const req = new MarkActiveRequest();

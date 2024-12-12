@@ -46,11 +46,12 @@ import {
     WorkspacePort_Protocol,
     ListWorkspaceSessionsRequest,
     ListWorkspaceSessionsResponse,
+    WorkspaceSession_Owner,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { inject, injectable } from "inversify";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
-import { ctxClientRegion, ctxSignal, ctxUserId } from "../util/request-context";
+import { ctxClientRegion, ctxSignal, ctxUserId, runWithSubjectId } from "../util/request-context";
 import { parsePagination } from "@gitpod/public-api-common/lib/public-api-pagination";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { validate as uuidValidate } from "uuid";
@@ -59,6 +60,7 @@ import { ContextService } from "../workspace/context-service";
 import { UserService } from "../user/user-service";
 import { ContextParser } from "../workspace/context-parser-service";
 import { matchesNewWorkspaceIdExactly as isWorkspaceId } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 
 @injectable()
 export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceInterface> {
@@ -132,6 +134,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "'from' is after 'to'");
         }
 
+        const ownerMeta = new Map<string, WorkspaceSession_Owner>();
         const results = await this.workspaceService.listWorkspaceSessions(
             ctxUserId(),
             req.organizationId,
@@ -140,11 +143,29 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
             page.limit,
             page.offset,
         );
-        const resultTotal = results.length;
+        for (const { workspace } of results) {
+            const { ownerId } = workspace;
+            if (ownerId) {
+                if (!ownerMeta.has(ownerId)) {
+                    const user = await runWithSubjectId(SYSTEM_USER, async () =>
+                        this.userService.findUserById(SYSTEM_USER_ID, ownerId),
+                    );
+                    ownerMeta.set(
+                        ownerId,
+                        new WorkspaceSession_Owner({
+                            id: ownerId,
+                            name: user.fullName,
+                            avatarUrl: user.avatarUrl,
+                        }),
+                    );
+                }
+            }
+        }
         const response = new ListWorkspaceSessionsResponse();
-        response.workspaceSessions = results.map((session) => this.apiConverter.toWorkspaceSession(session));
-        response.pagination = new PaginationResponse();
-        response.pagination.total = resultTotal;
+        response.workspaceSessions = results.map((session) =>
+            this.apiConverter.toWorkspaceSession(session, ownerMeta.get(session.workspace.ownerId)!),
+        );
+
         return response;
     }
 
