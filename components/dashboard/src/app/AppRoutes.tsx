@@ -69,6 +69,7 @@ const WorkspacesSearch = React.lazy(() => import(/* webpackPrefetch: true */ "..
 const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/ProjectsSearch"));
 const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/TeamsSearch"));
 const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
+const Insights = React.lazy(() => import(/* webpackPrefetch: true */ "../Insights"));
 const ConfigurationListPage = React.lazy(
     () => import(/* webpackPrefetch: true */ "../repositories/list/RepositoryList"),
 );
@@ -125,7 +126,6 @@ export const AppRoutes = () => {
                             <Route path="/open">
                                 <Redirect to="/new" />
                             </Route>
-                            {/* TODO(gpl): Remove once we don't need the redirect anymore */}
                             <Route
                                 path={[
                                     switchToPAYGPathMain,
@@ -143,6 +143,7 @@ export const AppRoutes = () => {
                             <Route path={workspacesPathMain} exact component={Workspaces} />
                             <Route path={settingsPathAccount} exact component={Account} />
                             <Route path={usagePathMain} exact component={Usage} />
+                            <Route path={"/insights"} exact component={Insights} />
                             <Route path={settingsPathIntegrations} exact component={Integrations} />
                             <Route path={settingsPathNotifications} exact component={Notifications} />
                             <Route path={settingsPathVariables} exact component={EnvironmentVariables} />

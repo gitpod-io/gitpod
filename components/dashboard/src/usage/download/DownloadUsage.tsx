@@ -61,7 +61,6 @@ export const DownloadUsage: FC<Props> = ({ attributionId, startDate, endDate }) 
 type DownloadUsageToastProps = Props & {
     orgName: string;
 };
-
 const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDate, startDate, orgName }) => {
     const [progress, setProgress] = useState(0);
 

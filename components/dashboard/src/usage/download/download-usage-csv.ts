@@ -9,7 +9,7 @@ import dayjs from "dayjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ListUsageRequest } from "@gitpod/gitpod-protocol/lib/usage";
 import { getAllUsageRecords } from "./get-usage-records";
-import { UsageCSVRow, transformUsageRecord } from "./transform-usage-record";
+import { transformUsageRecord, UsageCSVRow } from "./transform-usage-record";
 import { noPersistence } from "../../data/setup";
 
 type Args = Pick<ListUsageRequest, "attributionId" | "from" | "to"> & {
@@ -52,7 +52,7 @@ const downloadUsageCSV = async ({
         };
     }
 
-    const rows = records.map(transformUsageRecord).filter(Boolean) as UsageCSVRow[];
+    const rows = records.map(transformUsageRecord).filter((r) => !!r);
     const fields = Object.keys(rows[0]) as (keyof UsageCSVRow)[];
 
     // TODO: look into a lib to handle this more robustly

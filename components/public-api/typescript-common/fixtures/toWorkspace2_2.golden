@@ -9,7 +9,21 @@
             "name": "gitpod-io/gitpod - main",
             "pinned": true,
             "originalContextUrl": "https://github.com/gitpod-io/gitpod",
-            "warnings": []
+            "warnings": [],
+            "context": {
+                "path": "",
+                "ref": "main",
+                "refType": "REF_TYPE_BRANCH",
+                "revision": "eb6a504011d82fe87d0746012c75b4916ce54480",
+                "repository": {
+                    "cloneUrl": "https://github.com/gitpod-io/gitpod.git",
+                    "defaultBranch": "main",
+                    "host": "github.com",
+                    "owner": "gitpod-io",
+                    "name": "gitpod",
+                    "private": false
+                }
+            }
         },
         "spec": {
             "initializer": {

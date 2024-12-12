@@ -40,6 +40,8 @@ import {
     WorkspaceInfo,
     WorkspaceSession as WorkspaceSessionProtocol,
     Configuration as GitpodServerInstallationConfiguration,
+    NavigatorContext,
+    RefType,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import { AuditLog as AuditLogProtocol } from "@gitpod/gitpod-protocol/lib/audit-log";
 import {
@@ -152,6 +154,7 @@ import {
     WorkspaceInitializer,
     WorkspaceInitializer_Spec,
     WorkspaceMetadata,
+    WorkspaceContext as WorkspaceContextPublicAPI,
     WorkspacePhase,
     WorkspacePhase_Phase,
     WorkspacePort,
@@ -165,6 +168,9 @@ import {
     WorkspaceStatus,
     WorkspaceStatus_PrebuildResult,
     WorkspaceStatus_WorkspaceConditions,
+    WorkspaceContext_RefType,
+    WorkspaceContext_Repository,
+    WorkspaceSession_Owner,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { BigIntToJson } from "@gitpod/gitpod-protocol/lib/util/stringify";
 import { getPrebuildLogPath } from "./prebuild-utils";
@@ -181,7 +187,7 @@ export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configurati
  * - methods converting from gRPC to JSON-RPC is called `from*`
  */
 export class PublicAPIConverter {
-    toWorkspaceSession(arg: WorkspaceSessionProtocol): WorkspaceSession {
+    toWorkspaceSession(arg: WorkspaceSessionProtocol, owner: WorkspaceSession_Owner): WorkspaceSession {
         const workspace = this.toWorkspace({
             workspace: arg.workspace,
             latestInstance: arg.instance,
@@ -207,6 +213,9 @@ export class PublicAPIConverter {
             totalImageSize: metrics?.image?.totalSize ? BigInt(metrics.image.totalSize) : undefined,
             workspaceImageSize: metrics?.image?.workspaceImageSize ? BigInt(metrics.image.workspaceImageSize) : undefined,
         });
+
+        result.id = arg.instance.id;
+        result.owner = owner;
 
         return result;
     }
@@ -444,8 +453,43 @@ export class PublicAPIConverter {
             if (contextUrl) {
                 metadata.originalContextUrl = contextUrl;
             }
+            metadata.context = this.toWorkspaceMetadataContext(arg.workspace.context);
         }
         return metadata;
+    }
+
+    toWorkspaceMetadataContext(arg: WorkspaceContext): WorkspaceContextPublicAPI {
+        const result = new WorkspaceContextPublicAPI();
+        if (NavigatorContext.is(arg)) {
+            result.revision = arg.revision;
+            result.refType = this.toRefType(arg.refType);
+            result.path = arg.path;
+            result.repository = new WorkspaceContext_Repository({
+                defaultBranch: arg.repository.defaultBranch,
+                cloneUrl: arg.repository.cloneUrl,
+                host: arg.repository.host,
+                owner: arg.repository.owner,
+                name: arg.repository.name,
+                private: arg.repository.private,
+            });
+        }
+
+        result.ref = arg.ref ?? "";
+
+        return result;
+    }
+
+    toRefType(refType: RefType | undefined): WorkspaceContext_RefType {
+        switch (refType) {
+            case "branch":
+                return WorkspaceContext_RefType.BRANCH;
+            case "tag":
+                return WorkspaceContext_RefType.TAG;
+            case "revision":
+                return WorkspaceContext_RefType.REVISION;
+            default:
+                return WorkspaceContext_RefType.UNSPECIFIED;
+        }
     }
 
     toWorkspaceConditions(conditions: WorkspaceInstanceConditions | undefined): WorkspaceStatus_WorkspaceConditions {
