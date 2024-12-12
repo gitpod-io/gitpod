@@ -9,21 +9,7 @@
             "name": "gitpod-io/workspace-images - main",
             "pinned": false,
             "originalContextUrl": "https://github.com/gitpod-io/workspace-images",
-            "warnings": [],
-            "context": {
-                "path": "",
-                "ref": "main",
-                "refType": "REF_TYPE_BRANCH",
-                "revision": "fa52963fa39227bcfbf005d396eb753bf3981e40",
-                "repository": {
-                    "cloneUrl": "https://github.com/gitpod-io/workspace-images.git",
-                    "defaultBranch": "main",
-                    "host": "github.com",
-                    "owner": "gitpod-io",
-                    "name": "workspace-images",
-                    "private": false
-                }
-            }
+            "warnings": []
         },
         "spec": {
             "initializer": {

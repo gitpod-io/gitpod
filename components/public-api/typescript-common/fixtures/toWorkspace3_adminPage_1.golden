@@ -9,21 +9,7 @@
             "name": "description",
             "pinned": true,
             "originalContextUrl": "https://github.com/gitpod-io/contextURL",
-            "warnings": [],
-            "context": {
-                "path": "",
-                "ref": "master",
-                "refType": "REF_TYPE_BRANCH",
-                "revision": "revision",
-                "repository": {
-                    "cloneUrl": "https://github.com/gitpod-io/contextURL.git",
-                    "defaultBranch": "",
-                    "host": "github.com",
-                    "owner": "gitpod-io",
-                    "name": "contextURL",
-                    "private": true
-                }
-            }
+            "warnings": []
         },
         "spec": {
             "initializer": {

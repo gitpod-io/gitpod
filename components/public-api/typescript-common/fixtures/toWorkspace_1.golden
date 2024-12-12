@@ -5,19 +5,7 @@
             "ownerId": "827df1c8-d42d-4a69-bc38-64089af1f711",
             "organizationId": "ec76db37-9a48-4e2d-a78e-0ec7d2b4d2c0",
             "name": "akosyakov/parcel-demo - master",
-            "originalContextUrl": "https://github.com/akosyakov/parcel-demo",
-            "context": {
-                "ref": "master",
-                "refType": "REF_TYPE_BRANCH",
-                "revision": "60dbf818194082ef1a368bacd49cfd25a34c9256",
-                "repository": {
-                    "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",
-                    "defaultBranch": "master",
-                    "host": "github.com",
-                    "owner": "akosyakov",
-                    "name": "parcel-demo"
-                }
-            }
+            "originalContextUrl": "https://github.com/akosyakov/parcel-demo"
         },
         "spec": {
             "initializer": {

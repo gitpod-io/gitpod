@@ -11,21 +11,7 @@
                 "name": "svenefftinge/2048-in-terminal - master",
                 "pinned": false,
                 "originalContextUrl": "https://github.com/svenefftinge/2048-in-terminal",
-                "warnings": [],
-                "context": {
-                    "path": "",
-                    "ref": "master",
-                    "refType": "REF_TYPE_BRANCH",
-                    "revision": "aac9c200a79e37ebe216bb90c829d5ab2771f2ee",
-                    "repository": {
-                        "cloneUrl": "https://github.com/svenefftinge/2048-in-terminal.git",
-                        "defaultBranch": "master",
-                        "host": "github.com",
-                        "owner": "svenefftinge",
-                        "name": "2048-in-terminal",
-                        "private": false
-                    }
-                }
+                "warnings": []
             },
             "spec": {
                 "initializer": {
@@ -108,7 +94,20 @@
         },
         "owner": {
             "id": "123",
-            "name": "Kum Quat"
+            "name": "Kum Quat",
+            "avatarUrl": ""
+        },
+        "context": {
+            "path": "",
+            "ref": "master",
+            "refType": "REF_TYPE_BRANCH",
+            "revision": "aac9c200a79e37ebe216bb90c829d5ab2771f2ee",
+            "repository": {
+                "cloneUrl": "https://github.com/svenefftinge/2048-in-terminal.git",
+                "host": "github.com",
+                "owner": "svenefftinge",
+                "name": "2048-in-terminal"
+            }
         }
     },
     "err": ""

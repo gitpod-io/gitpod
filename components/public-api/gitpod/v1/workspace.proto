@@ -319,53 +319,6 @@ message WorkspaceMetadata {
 
   // warnings are user-facing warnings that should be displayed to the user when trying to start the workspace
   repeated string warnings = 8;
-
-  // context is the context from which the workspace is created
-  WorkspaceContext context = 9;
-}
-
-// WorkspaceContext is the git context from which the workspace is created
-message WorkspaceContext {
-  enum RefType {
-    REF_TYPE_UNSPECIFIED = 0;
-    REF_TYPE_BRANCH = 1;
-    REF_TYPE_TAG = 2;
-    REF_TYPE_REVISION = 3;
-  }
-
-  message Repository {
-    // clone_url is the repository url as you would pass it to "git clone".
-    string clone_url = 1;
-
-    // default_branch is the default branch of the repository
-    string default_branch = 2;
-
-    // host is the host of the SCM
-    string host = 3;
-
-    // owner is the owner of the repository
-    string owner = 4;
-
-    // name is the name of the repository
-    string name = 5;
-
-    // private indicates whether the repository is private
-    bool private = 6;
-  }
-
-  string path = 1;
-
-  // ref is the branch or tag name of the repository
-  string ref = 2;
-
-  // ref_type is the type of the ref
-  RefType ref_type = 3;
-
-  // revision is the commit hash of the context
-  string revision = 4;
-
-  // repository is the repository of the context
-  Repository repository = 5;
 }
 
 // WorkspaceSpec specifies the configuration of a workspace for a workspace
@@ -815,7 +768,7 @@ message UpdateWorkspaceRequest {
     // timeout configures the workspace timeout
     optional UpdateTimeout timeout = 1;
 
-    // admission controlls who can access the workspace and its ports.
+    // admission controls who can access the workspace and its ports.
     optional AdmissionLevel admission = 2;
 
     // Note(cw): repeated fields have implicit presence. There's a difference
@@ -942,6 +895,44 @@ message WorkspaceSession {
     string avatar_url = 3;
   }
 
+  // WorkspaceContext is the git context from which the workspace is created
+  message WorkspaceContext {
+    enum RefType {
+      REF_TYPE_UNSPECIFIED = 0;
+      REF_TYPE_BRANCH = 1;
+      REF_TYPE_TAG = 2;
+      REF_TYPE_REVISION = 3;
+    }
+
+    message Repository {
+      // clone_url is the repository url as you would pass it to "git clone".
+      string clone_url = 1;
+
+      // host is the host of the SCM
+      string host = 2;
+
+      // owner is the owner of the repository
+      string owner = 3;
+      // name is the name of the repository
+      string name = 4;
+    }
+
+    // path is the path of the context (the path following the base repository URL)
+    string path = 1;
+
+    // ref is the branch or tag name of the repository
+    string ref = 2;
+
+    // ref_type is the type of the ref
+    RefType ref_type = 3;
+
+    // revision is the commit hash of the context
+    string revision = 4;
+
+    // repository is the repository of the context
+    Repository repository = 5;
+  }
+
   message Metrics {
     // workspace_image_size is the size of the workspace image in bytes
     int64 workspace_image_size = 1;
@@ -962,4 +953,5 @@ message WorkspaceSession {
 
   Metrics metrics = 8;
   Owner owner = 9;
+  WorkspaceContext context = 10;
 }

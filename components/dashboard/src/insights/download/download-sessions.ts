@@ -177,9 +177,9 @@ export const transformSessionRecord = (session: WorkspaceSession) => {
         userName: session.owner?.name,
 
         contextURL: session.workspace?.metadata?.originalContextUrl,
-        contextURL_cloneURL: session.workspace?.metadata?.context?.repository?.cloneUrl,
-        contextURLSegment_1: session.workspace?.metadata?.context?.repository?.owner,
-        contextURLSegment_2: session.workspace?.metadata?.context?.repository?.name,
+        contextURL_cloneURL: session.context?.repository?.cloneUrl,
+        contextURLSegment_1: session?.context?.repository?.owner,
+        contextURLSegment_2: session?.context?.repository?.name,
 
         workspaceType: displayWorkspaceType(session.workspace?.spec?.type),
         workspaceClass: session.workspace?.spec?.class,

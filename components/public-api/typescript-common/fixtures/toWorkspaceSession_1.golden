@@ -11,21 +11,7 @@
                 "name": "akosyakov/parcel-demo - master",
                 "pinned": false,
                 "originalContextUrl": "https://github.com/akosyakov/parcel-demo",
-                "warnings": [],
-                "context": {
-                    "path": "",
-                    "ref": "master",
-                    "refType": "REF_TYPE_BRANCH",
-                    "revision": "60dbf818194082ef1a368bacd49cfd25a34c9256",
-                    "repository": {
-                        "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",
-                        "defaultBranch": "master",
-                        "host": "github.com",
-                        "owner": "akosyakov",
-                        "name": "parcel-demo",
-                        "private": false
-                    }
-                }
+                "warnings": []
             },
             "spec": {
                 "initializer": {
@@ -106,7 +92,20 @@
         },
         "owner": {
             "id": "123",
-            "name": "Kum Quat"
+            "name": "Kum Quat",
+            "avatarUrl": ""
+        },
+        "context": {
+            "path": "",
+            "ref": "master",
+            "refType": "REF_TYPE_BRANCH",
+            "revision": "60dbf818194082ef1a368bacd49cfd25a34c9256",
+            "repository": {
+                "cloneUrl": "https://github.com/akosyakov/parcel-demo.git",
+                "host": "github.com",
+                "owner": "akosyakov",
+                "name": "parcel-demo"
+            }
         }
     },
     "err": ""

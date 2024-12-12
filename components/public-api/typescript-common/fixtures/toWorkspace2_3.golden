@@ -9,21 +9,7 @@
             "name": "gitpod-io/empty ",
             "pinned": false,
             "originalContextUrl": "https://github.com/gitpod-io/empty",
-            "warnings": [],
-            "context": {
-                "path": "",
-                "ref": "",
-                "refType": "REF_TYPE_UNSPECIFIED",
-                "revision": "",
-                "repository": {
-                    "cloneUrl": "https://github.com/gitpod-io/empty.git",
-                    "defaultBranch": "",
-                    "host": "github.com",
-                    "owner": "gitpod-io",
-                    "name": "empty",
-                    "private": false
-                }
-            }
+            "warnings": []
         },
         "spec": {
             "initializer": {

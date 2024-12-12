@@ -154,7 +154,6 @@ import {
     WorkspaceInitializer,
     WorkspaceInitializer_Spec,
     WorkspaceMetadata,
-    WorkspaceContext as WorkspaceContextPublicAPI,
     WorkspacePhase,
     WorkspacePhase_Phase,
     WorkspacePort,
@@ -168,9 +167,10 @@ import {
     WorkspaceStatus,
     WorkspaceStatus_PrebuildResult,
     WorkspaceStatus_WorkspaceConditions,
-    WorkspaceContext_RefType,
-    WorkspaceContext_Repository,
     WorkspaceSession_Owner,
+    WorkspaceSession_WorkspaceContext,
+    WorkspaceSession_WorkspaceContext_Repository,
+    WorkspaceSession_WorkspaceContext_RefType
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { BigIntToJson } from "@gitpod/gitpod-protocol/lib/util/stringify";
 import { getPrebuildLogPath } from "./prebuild-utils";
@@ -216,6 +216,7 @@ export class PublicAPIConverter {
 
         result.id = arg.instance.id;
         result.owner = owner;
+        result.context = this.toWorkspaceSessionContext(arg.workspace.context);
 
         return result;
     }
@@ -453,42 +454,38 @@ export class PublicAPIConverter {
             if (contextUrl) {
                 metadata.originalContextUrl = contextUrl;
             }
-            metadata.context = this.toWorkspaceMetadataContext(arg.workspace.context);
         }
         return metadata;
     }
 
-    toWorkspaceMetadataContext(arg: WorkspaceContext): WorkspaceContextPublicAPI {
-        const result = new WorkspaceContextPublicAPI();
+    toWorkspaceSessionContext(arg: WorkspaceContext): WorkspaceSession_WorkspaceContext {
+        const result = new WorkspaceSession_WorkspaceContext();
         if (NavigatorContext.is(arg)) {
             result.revision = arg.revision;
             result.refType = this.toRefType(arg.refType);
             result.path = arg.path;
-            result.repository = new WorkspaceContext_Repository({
-                defaultBranch: arg.repository.defaultBranch,
+            result.repository = new WorkspaceSession_WorkspaceContext_Repository({
                 cloneUrl: arg.repository.cloneUrl,
                 host: arg.repository.host,
                 owner: arg.repository.owner,
                 name: arg.repository.name,
-                private: arg.repository.private,
             });
         }
-
         result.ref = arg.ref ?? "";
 
         return result;
     }
 
-    toRefType(refType: RefType | undefined): WorkspaceContext_RefType {
+    toRefType(refType: RefType | undefined): WorkspaceSession_WorkspaceContext_RefType {
         switch (refType) {
             case "branch":
-                return WorkspaceContext_RefType.BRANCH;
+                return WorkspaceSession_WorkspaceContext_RefType.BRANCH;
             case "tag":
-                return WorkspaceContext_RefType.TAG;
+                return WorkspaceSession_WorkspaceContext_RefType.TAG;
             case "revision":
-                return WorkspaceContext_RefType.REVISION;
+                return WorkspaceSession_WorkspaceContext_RefType.REVISION;
             default:
-                return WorkspaceContext_RefType.UNSPECIFIED;
+                return WorkspaceSession_WorkspaceContext_RefType.UNSPECIFIED;
         }
     }
 
