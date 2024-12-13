@@ -35,7 +35,7 @@ export const WorkspaceClassesOptions = (props: WorkspaceClassesOptionsProps) => 
     return (
         <div className={cn("space-y-2", props.className)}>
             {props.classes.map((cls) => (
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center" key={cls.id}>
                     <CpuIcon size={20} />
                     <div>
                         <span className="font-medium text-pk-content-primary">{cls.displayName}</span>

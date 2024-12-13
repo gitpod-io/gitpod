@@ -1130,6 +1130,7 @@ export class PublicAPIConverter {
                 role: this.toOrgMemberRole(role as OrgMemberRole),
                 permissions: permissions.map((permission) => this.toOrganizationPermission(permission)),
             })),
+            maxParallelRunningWorkspaces: settings.maxParallelRunningWorkspaces ?? 0,
         });
     }
 

@@ -13,6 +13,8 @@ import {
     WORKSPACE_LIFETIME_SHORT,
     User,
     BillingTier,
+    MAX_PARALLEL_WORKSPACES_PAID,
+    MAX_PARALLEL_WORKSPACES_FREE,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { inject, injectable } from "inversify";
@@ -21,9 +23,6 @@ import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage
 import { UsageService } from "../orgs/usage-service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { VerificationService } from "../auth/verification-service";
-
-const MAX_PARALLEL_WORKSPACES_FREE = 4;
-const MAX_PARALLEL_WORKSPACES_PAID = 16;
 
 /**
  * EntitlementService implementation for Usage-Based Pricing (UBP)
@@ -77,7 +76,7 @@ export class EntitlementServiceUBP implements EntitlementService {
         return undefined;
     }
 
-    private async getMaxParallelWorkspaces(userId: string, organizationId: string): Promise<number> {
+    async getMaxParallelWorkspaces(userId: string, organizationId: string): Promise<number> {
         if (await this.hasPaidSubscription(userId, organizationId)) {
             return MAX_PARALLEL_WORKSPACES_PAID;
         } else {

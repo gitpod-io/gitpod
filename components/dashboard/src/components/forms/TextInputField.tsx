@@ -44,7 +44,6 @@ interface TextInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement
     onChange?: (newValue: string) => void;
     onBlur?: () => void;
 }
-
 export const TextInput: FunctionComponent<TextInputProps> = memo(({ className, onChange, onBlur, ...props }) => {
     const handleChange = useCallback(
         (e) => {

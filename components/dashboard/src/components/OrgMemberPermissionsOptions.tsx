@@ -47,7 +47,7 @@ export const OrgMemberPermissionRestrictionsOptions = ({
     return (
         <div className={cn("space-y-2", className)}>
             {rolesAllowedToOpenArbitraryRepositories.map((entry) => (
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center" key={entry}>
                     <UserIcon size={20} />
                     <div>
                         <span className="font-medium text-pk-content-primary capitalize">{entry}</span>
@@ -116,6 +116,7 @@ export const OrganizationRoleRestrictionModal = ({
                         <OrganizationRoleRestrictionSwitch
                             role={role}
                             checked={!restrictedRoles.includes(role)}
+                            key={role}
                             onCheckedChange={(checked) => {
                                 console.log(role, { checked });
                                 if (!checked) {

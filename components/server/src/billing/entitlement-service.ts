@@ -10,6 +10,8 @@ import {
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
     WORKSPACE_LIFETIME_LONG,
+    MAX_PARALLEL_WORKSPACES_FREE,
+    MAX_PARALLEL_WORKSPACES_PAID,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingTier } from "@gitpod/gitpod-protocol/lib/protocol";
@@ -47,6 +49,14 @@ export interface EntitlementService {
         organizationId: string,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult>;
+
+    /**
+     * What amount of parallel workspaces a user may start based on their subscription
+     * @param userId
+     * @param organizationId
+     * @returns the maximum number of parallel workspaces the user may start
+     */
+    getMaxParallelWorkspaces(userId: string, organizationId: string): Promise<number>;
 
     /**
      * A user may set the workspace timeout if they have a professional subscription
@@ -116,6 +126,21 @@ export class EntitlementServiceImpl implements EntitlementService {
         } catch (err) {
             log.warn({ userId: user.id }, "EntitlementService error: mayStartWorkspace", err);
             return {}; // When there is an EntitlementService error, we never want to break workspace starts
+        }
+    }
+
+    async getMaxParallelWorkspaces(userId: string, organizationId: string): Promise<number> {
+        try {
+            const billingMode = await this.billingModes.getBillingMode(userId, organizationId);
+            switch (billingMode.mode) {
+                case "none":
+                    return MAX_PARALLEL_WORKSPACES_PAID;
+                case "usage-based":
+                    return this.ubp.getMaxParallelWorkspaces(userId, organizationId);
+            }
+        } catch (err) {
+            log.warn({ userId }, "EntitlementService error: getMaxParallelWorkspaces", err);
+            return MAX_PARALLEL_WORKSPACES_FREE;
         }
     }
 
