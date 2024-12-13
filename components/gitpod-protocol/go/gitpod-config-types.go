@@ -112,6 +112,9 @@ type Jetbrains struct {
 	// List of plugins which should be installed for all JetBrains product for users of this workspace. From the JetBrains Marketplace page, find a page of the required plugin, select 'Versions' tab, click any version to copy pluginId (short name such as org.rust.lang) of the plugin you want to install.
 	Plugins []string `yaml:"plugins,omitempty" json:"plugins,omitempty"`
 
+	// List of additional projects that the JetBrains editor would open
+	Projects []string `yaml:"projects,omitempty" json:"projects,omitempty"`
+
 	// Configure PyCharm integration
 	Pycharm *JetbrainsProduct `yaml:"pycharm,omitempty" json:"pycharm,omitempty"`
 

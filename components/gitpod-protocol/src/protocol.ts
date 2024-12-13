@@ -767,6 +767,10 @@ export interface JetBrainsConfig {
     rider?: JetBrainsProductConfig;
     clion?: JetBrainsProductConfig;
     rustrover?: JetBrainsProductConfig;
+    /**
+     * List of additonal projects that JetBrains editor would open with
+     */
+    projects?: string[];
 }
 export interface JetBrainsProductConfig {
     prebuilds?: JetBrainsPrebuilds;
