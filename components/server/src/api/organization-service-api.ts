@@ -327,7 +327,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
                 ctxUserId(),
                 req.organizationId,
             );
-            if (req.maxParallelRunningWorkspaces > maxAllowance) {
+            if (maxAllowance && req.maxParallelRunningWorkspaces > maxAllowance) {
                 throw new ApplicationError(
                     ErrorCodes.BAD_REQUEST,
                     `maxParallelRunningWorkspaces must be <= ${maxAllowance}`,

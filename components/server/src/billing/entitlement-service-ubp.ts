@@ -15,6 +15,7 @@ import {
     BillingTier,
     MAX_PARALLEL_WORKSPACES_PAID,
     MAX_PARALLEL_WORKSPACES_FREE,
+    OrganizationSettings,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { inject, injectable } from "inversify";
@@ -38,6 +39,7 @@ export class EntitlementServiceUBP implements EntitlementService {
         user: User,
         organizationId: string,
         runningInstances: Promise<WorkspaceInstance[]>,
+        organizationSettings?: OrganizationSettings,
     ): Promise<MayStartWorkspaceResult> {
         const verification = await this.verificationService.needsVerification(user);
         if (verification) {
@@ -47,7 +49,12 @@ export class EntitlementServiceUBP implements EntitlementService {
         }
 
         const hasHitParallelWorkspaceLimit = async (): Promise<HitParallelWorkspaceLimit | undefined> => {
-            const max = await this.getMaxParallelWorkspaces(user.id, organizationId);
+            const maxParallelRunningWorkspaces = organizationSettings?.maxParallelRunningWorkspaces;
+            const planAllowance = await this.getMaxParallelWorkspaces(user.id, organizationId);
+            const max = maxParallelRunningWorkspaces
+                ? Math.min(planAllowance, maxParallelRunningWorkspaces)
+                : planAllowance;
+
             const current = (await runningInstances).filter((i) => i.status.phase !== "preparing").length;
             if (current >= max) {
                 return {
