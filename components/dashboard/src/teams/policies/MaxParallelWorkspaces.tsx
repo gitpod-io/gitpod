@@ -9,10 +9,11 @@ import { FormEvent, useEffect, useState } from "react";
 import { ConfigurationSettingsField } from "../../repositories/detail/ConfigurationSettingsField";
 import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { InputField } from "../../components/forms/InputField";
-import { TextInput } from "../../components/forms/TextInputField";
+import { NumberInput } from "../../components/forms/TextInputField";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { MAX_PARALLEL_WORKSPACES_FREE, MAX_PARALLEL_WORKSPACES_PAID } from "@gitpod/gitpod-protocol";
 import { PlainMessage } from "@bufbuild/protobuf";
+import { useInstallationConfiguration } from "../../data/installation/default-workspace-image-query";
 
 type Props = {
     isOwner: boolean;
@@ -40,6 +41,8 @@ export const MaxParallelWorkspaces = ({
     );
 
     const organizationDefault = isPaidPlan ? MAX_PARALLEL_WORKSPACES_PAID : MAX_PARALLEL_WORKSPACES_FREE;
+    const { data: installationConfig } = useInstallationConfiguration();
+    const isDedicatedInstallation = !!installationConfig?.isDedicatedInstallation;
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -66,13 +69,15 @@ export const MaxParallelWorkspaces = ({
             </Subheading>
             <form onSubmit={handleSubmit}>
                 <InputField label="Maximum parallel running workspaces" error={error} className="mb-4">
-                    <TextInput
+                    <NumberInput
                         value={maxParallelWorkspaces ?? ""}
                         onChange={(newValue) => {
-                            setMaxParallelWorkspaces(parseInt(newValue));
+                            setMaxParallelWorkspaces(newValue);
                             setError(undefined);
                         }}
                         disabled={isLoading || !isOwner}
+                        min={0}
+                        max={isDedicatedInstallation ? undefined : organizationDefault}
                     />
                 </InputField>
                 <LoadingButton type="submit" loading={isLoading} disabled={!isOwner}>
