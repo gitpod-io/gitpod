@@ -54,8 +54,8 @@ import { RelationshipUpdateJob } from "./authorization/relationship-updater-job"
 import { SpiceDBClientProvider, spiceDBConfigFromEnv } from "./authorization/spicedb";
 import { createSpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { BillingModes } from "./billing/billing-mode";
-import { EntitlementService, EntitlementServiceImpl, LazyOrganizationService } from "./billing/entitlement-service";
-import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
+import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
+import { EntitlementServiceUBP, LazyOrganizationService } from "./billing/entitlement-service-ubp";
 import { StripeService } from "./billing/stripe-service";
 import { CodeSyncService } from "./code-sync/code-sync-service";
 import { Config, ConfigFile } from "./config";

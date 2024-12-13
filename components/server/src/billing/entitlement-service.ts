@@ -12,18 +12,13 @@ import {
     WORKSPACE_LIFETIME_LONG,
     MAX_PARALLEL_WORKSPACES_FREE,
     MAX_PARALLEL_WORKSPACES_PAID,
-    OrganizationSettings,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingTier } from "@gitpod/gitpod-protocol/lib/protocol";
 import { inject, injectable } from "inversify";
 import { BillingModes } from "./billing-mode";
-import { EntitlementServiceUBP } from "./entitlement-service-ubp";
+import { EntitlementServiceUBP, LazyOrganizationService } from "./entitlement-service-ubp";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import type { OrganizationService } from "../orgs/organization-service";
-
-export const LazyOrganizationService = Symbol("LazyOrganizationService");
-export type LazyOrganizationService = () => OrganizationService;
 
 export interface MayStartWorkspaceResult {
     hitParallelWorkspaceLimit?: HitParallelWorkspaceLimit;
@@ -53,7 +48,6 @@ export interface EntitlementService {
         user: User,
         organizationId: string,
         runningInstances: Promise<WorkspaceInstance[]>,
-        organizationSettings?: OrganizationSettings,
     ): Promise<MayStartWorkspaceResult>;
 
     /**
@@ -118,7 +112,6 @@ export class EntitlementServiceImpl implements EntitlementService {
         user: User,
         organizationId: string,
         runningInstances: Promise<WorkspaceInstance[]>,
-        organizationSettings?: OrganizationSettings,
     ): Promise<MayStartWorkspaceResult> {
         try {
             const billingMode = await this.billingModes.getBillingMode(user.id, organizationId);
@@ -127,6 +120,7 @@ export class EntitlementServiceImpl implements EntitlementService {
             switch (billingMode.mode) {
                 case "none":
                     // the default limit is MAX_PARALLEL_WORKSPACES_PAID, but organizations can set their own different limit
+                    // we use || here because the default value is 0 and we want to use the default limit if the organization limit is not set
                     const maxParallelRunningWorkspaces =
                         organizationSettings.maxParallelRunningWorkspaces || MAX_PARALLEL_WORKSPACES_PAID;
                     const current = (await runningInstances).filter((i) => i.status.phase !== "preparing").length;
@@ -141,7 +135,7 @@ export class EntitlementServiceImpl implements EntitlementService {
 
                     return {};
                 case "usage-based":
-                    return this.ubp.mayStartWorkspace(user, organizationId, runningInstances, organizationSettings);
+                    return this.ubp.mayStartWorkspace(user, organizationId, runningInstances);
                 default:
                     throw new Error("Unsupported billing mode: " + (billingMode as any).mode); // safety net
             }

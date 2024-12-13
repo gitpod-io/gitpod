@@ -15,7 +15,6 @@ import {
     BillingTier,
     MAX_PARALLEL_WORKSPACES_PAID,
     MAX_PARALLEL_WORKSPACES_FREE,
-    OrganizationSettings,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { inject, injectable } from "inversify";
@@ -24,6 +23,10 @@ import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage
 import { UsageService } from "../orgs/usage-service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { VerificationService } from "../auth/verification-service";
+import type { OrganizationService } from "../orgs/organization-service";
+
+export const LazyOrganizationService = Symbol("LazyOrganizationService");
+export type LazyOrganizationService = () => OrganizationService;
 
 /**
  * EntitlementService implementation for Usage-Based Pricing (UBP)
@@ -33,13 +36,13 @@ export class EntitlementServiceUBP implements EntitlementService {
     constructor(
         @inject(UsageService) private readonly usageService: UsageService,
         @inject(VerificationService) private readonly verificationService: VerificationService,
+        @inject(LazyOrganizationService) private readonly organizationService: LazyOrganizationService,
     ) {}
 
     async mayStartWorkspace(
         user: User,
         organizationId: string,
         runningInstances: Promise<WorkspaceInstance[]>,
-        organizationSettings?: OrganizationSettings,
     ): Promise<MayStartWorkspaceResult> {
         const verification = await this.verificationService.needsVerification(user);
         if (verification) {
@@ -49,7 +52,10 @@ export class EntitlementServiceUBP implements EntitlementService {
         }
 
         const hasHitParallelWorkspaceLimit = async (): Promise<HitParallelWorkspaceLimit | undefined> => {
-            const maxParallelRunningWorkspaces = organizationSettings?.maxParallelRunningWorkspaces;
+            const { maxParallelRunningWorkspaces } = await this.organizationService().getSettings(
+                user.id,
+                organizationId,
+            );
             const planAllowance = await this.getMaxParallelWorkspaces(user.id, organizationId);
             const max = maxParallelRunningWorkspaces
                 ? Math.min(planAllowance, maxParallelRunningWorkspaces)
