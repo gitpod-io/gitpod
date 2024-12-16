@@ -899,7 +899,7 @@ export class WorkspaceService {
                 ErrorCodes.TOO_MANY_RUNNING_WORKSPACES,
                 `You cannot run more than ${max} workspace${
                     max === 1 ? "" : "s"
-                } at the same time. Please stop a workspace before starting another one.`,
+                } at the same time as per your organization settings. Please stop a workspace before starting another one.`,
             );
         }
     }
