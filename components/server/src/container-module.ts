@@ -55,7 +55,7 @@ import { SpiceDBClientProvider, spiceDBConfigFromEnv } from "./authorization/spi
 import { createSpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
-import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
+import { EntitlementServiceUBP, LazyOrganizationService } from "./billing/entitlement-service-ubp";
 import { StripeService } from "./billing/stripe-service";
 import { CodeSyncService } from "./code-sync/code-sync-service";
 import { Config, ConfigFile } from "./config";
@@ -277,6 +277,11 @@ export const productionContainerModule = new ContainerModule(
         bind(HeadlessLogController).toSelf().inSingletonScope();
 
         bind(OrganizationService).toSelf().inSingletonScope();
+        bind(LazyOrganizationService).toFactory((ctx) => {
+            return () => {
+                return ctx.container.get<OrganizationService>(OrganizationService);
+            };
+        });
         bind(ProjectsService).toSelf().inSingletonScope();
         bind(ScmService).toSelf().inSingletonScope();
 

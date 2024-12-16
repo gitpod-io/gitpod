@@ -581,6 +581,9 @@ export class OrganizationService {
         if (settings.roleRestrictions) {
             result.roleRestrictions = settings.roleRestrictions;
         }
+        if (settings.maxParallelRunningWorkspaces) {
+            result.maxParallelRunningWorkspaces = settings.maxParallelRunningWorkspaces;
+        }
 
         return result;
     }

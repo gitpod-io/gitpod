@@ -377,6 +377,9 @@ export const WORKSPACE_TIMEOUT_EXTENDED: WorkspaceTimeoutDuration = "180m";
 export const WORKSPACE_LIFETIME_SHORT: WorkspaceTimeoutDuration = "8h";
 export const WORKSPACE_LIFETIME_LONG: WorkspaceTimeoutDuration = "36h";
 
+export const MAX_PARALLEL_WORKSPACES_FREE = 4;
+export const MAX_PARALLEL_WORKSPACES_PAID = 16;
+
 export const createServiceMock = function <C extends GitpodClient, S extends GitpodServer>(
     methods: Partial<JsonRpcProxy<S>>,
 ): GitpodServiceImpl<C, S> {

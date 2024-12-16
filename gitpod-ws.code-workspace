@@ -22,6 +22,9 @@
             "path": "components/gitpod-cli"
         },
         {
+            "path": "components/dashboard"
+        },
+        {
             "path": "components/gitpod-protocol"
         },
         {

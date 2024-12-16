@@ -24,6 +24,7 @@ type UpdateOrganizationSettingsArgs = Partial<
         | "defaultRole"
         | "timeoutSettings"
         | "roleRestrictions"
+        | "maxParallelRunningWorkspaces"
     >
 >;
 
@@ -43,10 +44,11 @@ export const useUpdateOrgSettingsMutation = () => {
             defaultRole,
             timeoutSettings,
             roleRestrictions,
+            maxParallelRunningWorkspaces,
         }) => {
             const settings = await organizationClient.updateOrganizationSettings({
                 organizationId: teamId,
-                workspaceSharingDisabled: workspaceSharingDisabled || false,
+                workspaceSharingDisabled: workspaceSharingDisabled ?? false,
                 defaultWorkspaceImage,
                 allowedWorkspaceClasses,
                 updatePinnedEditorVersions: !!pinnedEditorVersions,
@@ -57,6 +59,7 @@ export const useUpdateOrgSettingsMutation = () => {
                 timeoutSettings,
                 roleRestrictions,
                 updateRoleRestrictions: !!roleRestrictions,
+                maxParallelRunningWorkspaces,
             });
             return settings.settings!;
         },
