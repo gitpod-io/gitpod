@@ -60,7 +60,6 @@ export const useUpdateOrgSettingsMutation = () => {
                 roleRestrictions,
                 updateRoleRestrictions: !!roleRestrictions,
                 maxParallelRunningWorkspaces,
-                updateMaxParallelRunningWorkspaces: maxParallelRunningWorkspaces !== undefined,
             });
             return settings.settings!;
         },

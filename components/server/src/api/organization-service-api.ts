@@ -313,13 +313,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             }
         }
 
-        if (!req.updateMaxParallelRunningWorkspaces && typeof req.maxParallelRunningWorkspaces === "number") {
-            throw new ApplicationError(
-                ErrorCodes.BAD_REQUEST,
-                "updateMaxParallelRunningWorkspaces is required to be true when updating maxParallelRunningWorkspaces",
-            );
-        }
-        if (req.updateMaxParallelRunningWorkspaces && typeof req.maxParallelRunningWorkspaces === "number") {
+        if (typeof req.maxParallelRunningWorkspaces === "number") {
             if (req.maxParallelRunningWorkspaces < 0) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "maxParallelRunningWorkspaces must be >= 0");
             }

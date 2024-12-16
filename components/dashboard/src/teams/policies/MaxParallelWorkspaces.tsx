@@ -18,7 +18,7 @@ import { useInstallationConfiguration } from "../../data/installation/default-wo
 type Props = {
     isOwner: boolean;
     isLoading: boolean;
-    isPaidPlan: boolean;
+    isPaidOrDedicated: boolean;
     settings?: OrganizationSettings;
     handleUpdateTeamSettings: (
         newSettings: Partial<PlainMessage<OrganizationSettings>>,
@@ -32,7 +32,7 @@ export const MaxParallelWorkspaces = ({
     isOwner,
     isLoading,
     settings,
-    isPaidPlan,
+    isPaidOrDedicated,
     handleUpdateTeamSettings,
 }: Props) => {
     const [error, setError] = useState<string | undefined>(undefined);
@@ -40,7 +40,7 @@ export const MaxParallelWorkspaces = ({
         settings?.maxParallelRunningWorkspaces ?? 0,
     );
 
-    const organizationDefault = isPaidPlan ? MAX_PARALLEL_WORKSPACES_PAID : MAX_PARALLEL_WORKSPACES_FREE;
+    const organizationDefault = isPaidOrDedicated ? MAX_PARALLEL_WORKSPACES_PAID : MAX_PARALLEL_WORKSPACES_FREE;
     const { data: installationConfig } = useInstallationConfiguration();
     const isDedicatedInstallation = !!installationConfig?.isDedicatedInstallation;
 

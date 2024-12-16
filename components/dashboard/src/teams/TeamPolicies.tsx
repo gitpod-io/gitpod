@@ -122,7 +122,7 @@ export default function TeamPoliciesPage() {
         [workspaceTimeout, allowTimeoutChangeByMembers, handleUpdateTeamSettings],
     );
 
-    const isPaidPlan =
+    const isPaidOrDedicated =
         billingMode.data?.mode === "none" || (billingMode.data?.mode === "usage-based" && billingMode.data?.paid);
 
     return (
@@ -157,7 +157,7 @@ export default function TeamPoliciesPage() {
 
                     <ConfigurationSettingsField>
                         <Heading3>Workspace timeouts</Heading3>
-                        {!isPaidPlan && (
+                        {!isPaidOrDedicated && (
                             <Alert type="info" className="my-3">
                                 Setting Workspace timeouts is only available for organizations on a paid plan. Visit{" "}
                                 <Link to={"/billing"} className="gp-link">
@@ -181,7 +181,7 @@ export default function TeamPoliciesPage() {
                                     value={workspaceTimeout ?? ""}
                                     placeholder="e.g. 30m"
                                     onChange={setWorkspaceTimeout}
-                                    disabled={updateTeamSettings.isLoading || !isOwner || !isPaidPlan}
+                                    disabled={updateTeamSettings.isLoading || !isOwner || !isPaidOrDedicated}
                                 />
                             </InputField>
                             <CheckboxInputField
@@ -190,14 +190,14 @@ export default function TeamPoliciesPage() {
                                 checked={!!allowTimeoutChangeByMembers}
                                 containerClassName="my-4"
                                 onChange={setAllowTimeoutChangeByMembers}
-                                disabled={updateTeamSettings.isLoading || !isOwner || !isPaidPlan}
+                                disabled={updateTeamSettings.isLoading || !isOwner || !isPaidOrDedicated}
                             />
                             <LoadingButton
                                 type="submit"
                                 loading={updateTeamSettings.isLoading}
                                 disabled={
                                     !isOwner ||
-                                    !isPaidPlan ||
+                                    !isPaidOrDedicated ||
                                     (workspaceTimeout ===
                                         converter.toDurationString(settings?.timeoutSettings?.inactivity) &&
                                         allowTimeoutChangeByMembers === !settings?.timeoutSettings?.denyUserTimeouts)
@@ -213,7 +213,7 @@ export default function TeamPoliciesPage() {
                         isLoading={updateTeamSettings.isLoading}
                         settings={settings}
                         handleUpdateTeamSettings={handleUpdateTeamSettings}
-                        isPaidPlan={isPaidPlan}
+                        isPaidOrDedicated={isPaidOrDedicated}
                     />
 
                     <OrgWorkspaceClassesOptions

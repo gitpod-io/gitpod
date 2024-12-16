@@ -182,9 +182,6 @@ message UpdateOrganizationSettingsRequest {
   // update_role_restrictions specifies whether role_restrictions should be updated
   optional bool update_role_restrictions = 13;
 
-  // update_max_parallel_running_workspaces specifies whether max_parallel_running_workspaces should be updated
-  optional bool update_max_parallel_running_workspaces = 14;
-
   // max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
   optional int32 max_parallel_running_workspaces = 15;
 }

@@ -642,13 +642,6 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   updateRoleRestrictions?: boolean;
 
   /**
-   * update_max_parallel_running_workspaces specifies whether max_parallel_running_workspaces should be updated
-   *
-   * @generated from field: optional bool update_max_parallel_running_workspaces = 14;
-   */
-  updateMaxParallelRunningWorkspaces?: boolean;
-
-  /**
    * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
    *
    * @generated from field: optional int32 max_parallel_running_workspaces = 15;
@@ -675,7 +668,6 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
     { no: 11, name: "timeout_settings", kind: "message", T: TimeoutSettings, opt: true },
     { no: 12, name: "role_restrictions", kind: "message", T: RoleRestrictionEntry, repeated: true },
     { no: 13, name: "update_role_restrictions", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 14, name: "update_max_parallel_running_workspaces", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 15, name: "max_parallel_running_workspaces", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
   ]);
 
