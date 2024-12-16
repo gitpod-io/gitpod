@@ -39,7 +39,7 @@ export class DBOrgSettings implements OrganizationSettings {
     @Column("json", { nullable: true })
     roleRestrictions?: RoleRestrictions | undefined;
 
-    @Column({ type: "int" })
+    @Column({ type: "int", default: 0 })
     maxParallelRunningWorkspaces: number;
 
     @Column()
