@@ -92,7 +92,7 @@ const RepositoryListPage: FC = () => {
 
     return (
         <>
-            <div className="app-container mb-8">
+            <div className="app-container pb-8">
                 <PageHeading
                     title="Repository settings"
                     subtitle="Configure and refine the experience of working with a repository in Gitpod."

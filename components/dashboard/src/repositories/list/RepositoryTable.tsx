@@ -132,7 +132,7 @@ export const RepositoryTable: FC<Props> = ({
                     </div>
                 )}
 
-                <div className="mt-4 mb-8 flex flex-row justify-center">
+                <div className="mt-4 flex flex-row justify-center">
                     {hasNextPage ? (
                         <LoadingButton variant="secondary" onClick={onLoadNextPage} loading={isFetchingNextPage}>
                             Load more
