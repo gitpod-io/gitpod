@@ -24,6 +24,7 @@ import { PREDEFINED_REPOS } from "../data/git-providers/predefined-repos";
 import { useConfiguration, useListConfigurations } from "../data/configurations/configuration-queries";
 import { useUserLoader } from "../hooks/use-user-loader";
 import { conjunctScmProviders, getDeduplicatedScmProviders } from "../utils";
+import { cn } from "@podkit/lib/cn";
 
 const isPredefined = (repo: SuggestedRepository): boolean => {
     return PREDEFINED_REPOS.some((predefined) => predefined.url === repo.url) && !repo.configurationId;
@@ -169,9 +170,9 @@ export default function RepositoryFinder({
         return (
             <div className="flex flex-col overflow-hidden" aria-label={`Demo: ${repo.url}`}>
                 <div className="flex items-center">
-                    <GitpodRepositoryTemplate className="w-5 h-5 text-pk-content-tertiary mr-2" />
+                    <GitpodRepositoryTemplate className="w-5 h-5 text-pk-content-secondary mr-2" />
                     <span className="text-sm font-semibold">{repo.repoName}</span>
-                    <MiddleDot className="px-0.5 text-pk-content-tertiary" />
+                    <MiddleDot className="px-0.5 text-pk-content-secondary" />
                     <span
                         className="text-sm whitespace-nowrap truncate overflow-ellipsis text-pk-content-secondary"
                         title={repo.repoPath}
@@ -313,7 +314,7 @@ export default function RepositoryFinder({
                 result.push({
                     id: "more",
                     element: (
-                        <div className="text-sm text-pk-content-tertiary">Repo missing? Try refining your search.</div>
+                        <div className="text-sm text-pk-content-secondary">Repo missing? Try refining your search.</div>
                     ),
                     isSelectable: false,
                 });
@@ -328,7 +329,7 @@ export default function RepositoryFinder({
                 result.push({
                     id: "bitbucket-server",
                     element: (
-                        <div className="text-sm text-pk-content-tertiary flex items-center">
+                        <div className="text-sm text-pk-content-secondary flex items-center">
                             <Exclamation2 className="w-4 h-4 mr-2" />
                             <span>Bitbucket Server only supports searching by prefix.</span>
                         </div>
@@ -347,7 +348,7 @@ export default function RepositoryFinder({
                 result.push({
                     id: "gitlab",
                     element: (
-                        <div className="text-sm text-pk-content-tertiary flex items-center">
+                        <div className="text-sm text-pk-content-secondary flex items-center">
                             <Exclamation2 className="w-4 h-4 mr-2" />
                             <span>
                                 Search text is &lt; 3 characters. GitLab will only show exact matches for short
@@ -371,7 +372,7 @@ export default function RepositoryFinder({
                 result.push({
                     id: "whole-path-matching-unsupported",
                     element: (
-                        <div className="text-sm text-pk-content-tertiary flex items-center">
+                        <div className="text-sm text-pk-content-secondary flex items-center">
                             <Exclamation2 className="w-4 h-4 mr-2" />
                             <span>
                                 {usedProviders
@@ -390,7 +391,7 @@ export default function RepositoryFinder({
                 result.push({
                     id: "azure-devops",
                     element: (
-                        <div className="text-sm text-pk-content-tertiary flex items-center">
+                        <div className="text-sm text-pk-content-secondary flex items-center">
                             <Exclamation2 className="w-4 h-4 mr-2" />
                             <span>Azure DevOps doesn't support repository searching.</span>
                         </div>
@@ -453,18 +454,20 @@ const SuggestedRepositoryOption: FC<SuggestedRepositoryOptionProps> = ({ repo })
             aria-label={`${repo.configurationId ? "Project" : "Repo"}: ${repo.url}`}
         >
             <span className={"pr-2"}>
-                <RepositoryIcon className={`w-5 h-5 text-pk-content-tertiary`} />
+                <RepositoryIcon className={`w-5 h-5 text-pk-content-secondary`} />
             </span>
 
             {name && (
                 <>
                     <span className="text-sm whitespace-nowrap font-semibold">{name}</span>
-                    <MiddleDot className="px-0.5 text-pk-content-tertiary" />
+                    <MiddleDot className="px-0.5 text-pk-content-secondary" />
                 </>
             )}
 
             <span
-                className="text-sm whitespace-nowrap truncate overflow-ellipsis text-pk-content-secondary"
+                className={cn("text-sm whitespace-nowrap truncate overflow-ellipsis", {
+                    "text-pk-content-secondary": !!name,
+                })}
                 title={repoPath}
             >
                 {repoPath}
