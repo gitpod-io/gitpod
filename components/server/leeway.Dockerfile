@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM node:18.17.1-slim as builder
+FROM node:18.17.1-slim AS builder
 
 # Install Python, make, gcc and g++ for node-gyp
 RUN apt-get update && \

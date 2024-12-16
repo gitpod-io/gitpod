@@ -17,7 +17,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingTier } from "@gitpod/gitpod-protocol/lib/protocol";
 import { inject, injectable } from "inversify";
 import { BillingModes } from "./billing-mode";
-import { EntitlementServiceUBP, LazyOrganizationService } from "./entitlement-service-ubp";
+import { EntitlementServiceUBP, getRunningInstancesCount, LazyOrganizationService } from "./entitlement-service-ubp";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export interface MayStartWorkspaceResult {
@@ -123,7 +123,7 @@ export class EntitlementServiceImpl implements EntitlementService {
                     // we use || here because the default value is 0 and we want to use the default limit if the organization limit is not set
                     const maxParallelRunningWorkspaces =
                         organizationSettings.maxParallelRunningWorkspaces || MAX_PARALLEL_WORKSPACES_PAID;
-                    const current = (await runningInstances).filter((i) => i.status.phase !== "preparing").length;
+                    const current = await getRunningInstancesCount(runningInstances);
                     if (current >= maxParallelRunningWorkspaces) {
                         return {
                             hitParallelWorkspaceLimit: {

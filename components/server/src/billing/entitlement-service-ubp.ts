@@ -61,7 +61,7 @@ export class EntitlementServiceUBP implements EntitlementService {
                 ? Math.min(planAllowance, maxParallelRunningWorkspaces)
                 : planAllowance;
 
-            const current = (await runningInstances).filter((i) => i.status.phase !== "preparing").length;
+            const current = await getRunningInstancesCount(runningInstances);
             if (current >= max) {
                 return {
                     current,
@@ -143,3 +143,8 @@ export class EntitlementServiceUBP implements EntitlementService {
         return hasPaidPlan ? "paid" : "free";
     }
 }
+
+export const getRunningInstancesCount = async (instancesPromise: Promise<WorkspaceInstance[]>): Promise<number> => {
+    const instances = await instancesPromise;
+    return instances.filter((i) => i.status.phase !== "preparing").length;
+};
