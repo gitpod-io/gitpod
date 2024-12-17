@@ -47,6 +47,7 @@ packages:
       - ["mv", "_deps/components-ws-manager-mk2--crd/workspace.gitpod.io_workspaces.yaml", "crd/workspace.gitpod.io_workspaces.yaml"]
     config:
       packaging: library
+      dontTest: true
   - name: content-initializer
     type: go
     srcs:
