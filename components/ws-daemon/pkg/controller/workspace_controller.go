@@ -262,8 +262,6 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceStop")
 	defer tracing.FinishSpan(span, &err)
 
-	time.Sleep(300 * time.Second)
-
 	if ws.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected) {
 		// edge case only exercised for rejected workspace pods
 		if ws.IsConditionPresent(workspacev1.WorkspaceConditionStateWiped) {
@@ -400,6 +398,8 @@ func (wsc *WorkspaceController) doWorkspaceContentBackup(ctx context.Context, sp
 	disposeStart := time.Now()
 	var snapshotName string
 	var snapshotUrl string
+	time.Sleep(300 * time.Second)
+	glog.WithFields(ws.OWI()).WithField("workspace", req.NamespacedName).WithField("phase", ws.Status.Phase).Info("sleeping before backup...")
 	if ws.Spec.Type == workspacev1.WorkspaceTypeRegular {
 		snapshotName = storage.DefaultBackup
 	} else {
