@@ -398,7 +398,7 @@ func (wsc *WorkspaceController) doWorkspaceContentBackup(ctx context.Context, sp
 	disposeStart := time.Now()
 	var snapshotName string
 	var snapshotUrl string
-	time.Sleep(300 * time.Second)
+	time.Sleep(1200 * time.Second)
 	glog.WithFields(ws.OWI()).WithField("workspace", req.NamespacedName).WithField("phase", ws.Status.Phase).Info("sleeping before backup...")
 	if ws.Spec.Type == workspacev1.WorkspaceTypeRegular {
 		snapshotName = storage.DefaultBackup
