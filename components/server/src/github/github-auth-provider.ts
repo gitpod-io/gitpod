@@ -102,9 +102,9 @@ export class GitHubAuthProvider extends GenericAuthProvider {
             const publicAvatarURL = new URL(avatar_url);
             if (publicAvatarURL.host === "private-avatars.githubusercontent.com") {
                 // github has recently been rolling out private JWT-signed avatar URLs which expire after a short time
-                // we need to use the public avatar URL instead so that the avatar is displayed correctly and fits into our database (which is capped at 255 chars)
+                // we need to use the public avatar URL instead so that the avatar is displayed correctly and fits into our database column (which is capped at 255 chars)
                 publicAvatarURL.host = "avatars.githubusercontent.com";
-                publicAvatarURL.search = "";
+                publicAvatarURL.searchParams.delete("jwt");
             }
 
             // https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
