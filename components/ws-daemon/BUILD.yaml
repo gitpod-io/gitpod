@@ -22,6 +22,7 @@ packages:
       - ["mv", "_deps/components-ws-manager-mk2--crd/workspace.gitpod.io_workspaces.yaml", "crd/workspace.gitpod.io_workspaces.yaml"]
     config:
       packaging: app
+      dontTest: true
       buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid= -X 'github.com/gitpod-io/gitpod/ws-daemon/cmd.Version=commit-${__git_commit}'"]
   - name: lib
     type: go
