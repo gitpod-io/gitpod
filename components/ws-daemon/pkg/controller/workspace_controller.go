@@ -262,6 +262,8 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceStop")
 	defer tracing.FinishSpan(span, &err)
 
+	time.Sleep(300 * time.Second)
+
 	if ws.IsConditionTrue(workspacev1.WorkspaceConditionPodRejected) {
 		// edge case only exercised for rejected workspace pods
 		if ws.IsConditionPresent(workspacev1.WorkspaceConditionStateWiped) {
