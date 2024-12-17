@@ -233,6 +233,9 @@ export interface OrganizationSettings {
     timeoutSettings?: TimeoutSettings;
 
     roleRestrictions?: RoleRestrictions;
+
+    // max number of parallel running workspaces per user
+    maxParallelRunningWorkspaces?: number;
 }
 
 export type TimeoutSettings = {

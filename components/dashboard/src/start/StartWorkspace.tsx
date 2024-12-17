@@ -366,6 +366,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 // scenarios with distributed workspace bridges (control loops): We might receive the update, but the backend might not have the token, yet.
                 // So we have to ask again, and wait until we're actually successful (it returns immediately on the happy path)
                 await this.ensureWorkspaceAuth(workspace.status!.instanceId, true);
+                if (this.state.error && this.state.error?.code !== ErrorCodes.NOT_FOUND) {
+                    return;
+                }
                 this.redirectTo(workspace.status!.workspaceUrl);
             })().catch(console.error);
             return;

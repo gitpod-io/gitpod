@@ -83,7 +83,7 @@ const downloadUsageCSV = async ({
 }: Args): Promise<DownloadUsageCSVResponse> => {
     const start = dayjs(from?.toDate()).format("YYYYMMDD");
     const end = dayjs(to?.toDate()).format("YYYYMMDD");
-    const filename = `gitpod-usage-${organizationName}-${start}-${end}.csv`;
+    const filename = `gitpod-sessions-${organizationName}-${start}-${end}.csv`;
 
     const records = await getAllWorkspaceSessions({
         organizationId,

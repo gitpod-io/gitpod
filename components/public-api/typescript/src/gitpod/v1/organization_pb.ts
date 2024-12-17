@@ -287,6 +287,13 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
    */
   roleRestrictions: RoleRestrictionEntry[] = [];
 
+  /**
+   * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+   *
+   * @generated from field: int32 max_parallel_running_workspaces = 9;
+   */
+  maxParallelRunningWorkspaces = 0;
+
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -303,6 +310,7 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
     { no: 6, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 7, name: "timeout_settings", kind: "message", T: TimeoutSettings },
     { no: 8, name: "role_restrictions", kind: "message", T: RoleRestrictionEntry, repeated: true },
+    { no: 9, name: "max_parallel_running_workspaces", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {
@@ -548,7 +556,7 @@ export class TimeoutSettings extends Message<TimeoutSettings> {
  */
 export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizationSettingsRequest> {
   /**
-   * organization_id is the ID of the organization to update the settings for.
+   * organization_id is the ID of the organization to update the settings for
    *
    * @generated from field: string organization_id = 1;
    */
@@ -586,7 +594,7 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   restrictedEditorNames: string[] = [];
 
   /**
-   * Specifies whether restricted_workspace_classes should be updated.
+   * Specifies whether restricted_workspace_classes should be updated
    *
    * @generated from field: optional bool update_restricted_editor_names = 7;
    */
@@ -594,21 +602,21 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
 
   /**
    * pinned_editor_versions updates the pinned version for the corresponding
-   * editor.
+   * editor
    *
    * @generated from field: map<string, string> pinned_editor_versions = 8;
    */
   pinnedEditorVersions: { [key: string]: string } = {};
 
   /**
-   * Specifies whether pinned_editor_versions should be updated.
+   * Specifies whether pinned_editor_versions should be updated
    *
    * @generated from field: optional bool update_pinned_editor_versions = 9;
    */
   updatePinnedEditorVersions?: boolean;
 
   /**
-   * default_role is the default role for new members in the organization.
+   * default_role is the default role for new members in the organization
    *
    * @generated from field: optional string default_role = 10;
    */
@@ -627,11 +635,18 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   roleRestrictions: RoleRestrictionEntry[] = [];
 
   /**
-   * Specifies whether role_restrictions should be updated.
+   * update_role_restrictions specifies whether role_restrictions should be updated
    *
    * @generated from field: optional bool update_role_restrictions = 13;
    */
   updateRoleRestrictions?: boolean;
+
+  /**
+   * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+   *
+   * @generated from field: optional int32 max_parallel_running_workspaces = 15;
+   */
+  maxParallelRunningWorkspaces?: number;
 
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
@@ -653,6 +668,7 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
     { no: 11, name: "timeout_settings", kind: "message", T: TimeoutSettings, opt: true },
     { no: 12, name: "role_restrictions", kind: "message", T: RoleRestrictionEntry, repeated: true },
     { no: 13, name: "update_role_restrictions", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 15, name: "max_parallel_running_workspaces", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {
@@ -872,7 +888,7 @@ export class CreateOrganizationResponse extends Message<CreateOrganizationRespon
  */
 export class GetOrganizationRequest extends Message<GetOrganizationRequest> {
   /**
-   * organization_id is the unique identifier of the Organization to retreive.
+   * organization_id is the unique identifier of the Organization to retrieve.
    *
    * @generated from field: string organization_id = 1;
    */

@@ -54,7 +54,9 @@ spec:
         summary: Workspace backups failed recently in cluster {{ $labels.cluster }}
         description: This can happen when a single node has failed in the cloud provider
       expr: |
-        sum by (cluster) (increase(gitpod_ws_manager_mk2_workspace_backups_failure_total{cluster!~"ephemeral.*"}[1h])) <= 16
+        sum by (cluster) (increase(gitpod_ws_manager_mk2_workspace_backups_failure_total{cluster!~"ephemeral.*"}[1h])) > 0
+        AND
+        sum by (cluster) (increase(gitpod_ws_manager_mk2_workspace_backups_failure_total{cluster!~"ephemeral.*"}[1h])) < 16
     - alert: GitpodWsManagerMk2BackupFailureCritical
       labels:
         severity: critical
@@ -64,4 +66,4 @@ spec:
         summary: Workspace backups failed recently in cluster {{ $labels.cluster }}
         description: This can be an indicator of two or more nodes failing in a cloud provider
       expr: |
-        sum by (cluster) (increase(gitpod_ws_manager_mk2_workspace_backups_failure_total{cluster!~"ephemeral.*"}[1h])) > 16
+        sum by (cluster) (increase(gitpod_ws_manager_mk2_workspace_backups_failure_total{cluster!~"ephemeral.*"}[1h])) >= 16

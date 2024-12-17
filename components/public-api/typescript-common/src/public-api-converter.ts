@@ -170,7 +170,7 @@ import {
     WorkspaceSession_Owner,
     WorkspaceSession_WorkspaceContext,
     WorkspaceSession_WorkspaceContext_Repository,
-    WorkspaceSession_WorkspaceContext_RefType
+    WorkspaceSession_WorkspaceContext_RefType,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { BigIntToJson } from "@gitpod/gitpod-protocol/lib/util/stringify";
 import { getPrebuildLogPath } from "./prebuild-utils";
@@ -211,7 +211,9 @@ export class PublicAPIConverter {
         const { metrics } = arg.instance.status;
         result.metrics = new WorkspaceSession_Metrics({
             totalImageSize: metrics?.image?.totalSize ? BigInt(metrics.image.totalSize) : undefined,
-            workspaceImageSize: metrics?.image?.workspaceImageSize ? BigInt(metrics.image.workspaceImageSize) : undefined,
+            workspaceImageSize: metrics?.image?.workspaceImageSize
+                ? BigInt(metrics.image.workspaceImageSize)
+                : undefined,
         });
 
         result.id = arg.instance.id;
@@ -460,10 +462,12 @@ export class PublicAPIConverter {
 
     toWorkspaceSessionContext(arg: WorkspaceContext): WorkspaceSession_WorkspaceContext {
         const result = new WorkspaceSession_WorkspaceContext();
-        if (NavigatorContext.is(arg)) {
+        if (CommitContext.is(arg)) {
             result.revision = arg.revision;
             result.refType = this.toRefType(arg.refType);
-            result.path = arg.path;
+            if (NavigatorContext.is(arg)) {
+                result.path = arg.path;
+            }
             result.repository = new WorkspaceSession_WorkspaceContext_Repository({
                 cloneUrl: arg.repository.cloneUrl,
                 host: arg.repository.host,
@@ -1130,6 +1134,7 @@ export class PublicAPIConverter {
                 role: this.toOrgMemberRole(role as OrgMemberRole),
                 permissions: permissions.map((permission) => this.toOrganizationPermission(permission)),
             })),
+            maxParallelRunningWorkspaces: settings.maxParallelRunningWorkspaces ?? 0,
         });
     }
 

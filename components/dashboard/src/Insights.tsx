@@ -56,7 +56,7 @@ export const Insights = () => {
     return (
         <>
             <Header title="Insights" subtitle="Insights into workspace sessions in your organization" />
-            <div className="app-container pt-5">
+            <div className="app-container pt-5 pb-8">
                 <div
                     className={classNames(
                         "flex flex-col items-start space-y-3 justify-between",
@@ -142,7 +142,7 @@ export const Insights = () => {
                     </ItemsList>
                 </div>
 
-                <div className="mt-4 mb-8 flex flex-row justify-center">
+                <div className="mt-4 flex flex-row justify-center">
                     {hasNextPage ? (
                         <LoadingButton
                             variant="secondary"

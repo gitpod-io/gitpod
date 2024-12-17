@@ -13,6 +13,8 @@ import {
     WORKSPACE_LIFETIME_SHORT,
     User,
     BillingTier,
+    MAX_PARALLEL_WORKSPACES_PAID,
+    MAX_PARALLEL_WORKSPACES_FREE,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { inject, injectable } from "inversify";
@@ -21,9 +23,10 @@ import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage
 import { UsageService } from "../orgs/usage-service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { VerificationService } from "../auth/verification-service";
+import type { OrganizationService } from "../orgs/organization-service";
 
-const MAX_PARALLEL_WORKSPACES_FREE = 4;
-const MAX_PARALLEL_WORKSPACES_PAID = 16;
+export const LazyOrganizationService = Symbol("LazyOrganizationService");
+export type LazyOrganizationService = () => OrganizationService;
 
 /**
  * EntitlementService implementation for Usage-Based Pricing (UBP)
@@ -33,6 +36,7 @@ export class EntitlementServiceUBP implements EntitlementService {
     constructor(
         @inject(UsageService) private readonly usageService: UsageService,
         @inject(VerificationService) private readonly verificationService: VerificationService,
+        @inject(LazyOrganizationService) private readonly organizationService: LazyOrganizationService,
     ) {}
 
     async mayStartWorkspace(
@@ -48,8 +52,16 @@ export class EntitlementServiceUBP implements EntitlementService {
         }
 
         const hasHitParallelWorkspaceLimit = async (): Promise<HitParallelWorkspaceLimit | undefined> => {
-            const max = await this.getMaxParallelWorkspaces(user.id, organizationId);
-            const current = (await runningInstances).filter((i) => i.status.phase !== "preparing").length;
+            const { maxParallelRunningWorkspaces } = await this.organizationService().getSettings(
+                user.id,
+                organizationId,
+            );
+            const planAllowance = await this.getMaxParallelWorkspaces(user.id, organizationId);
+            const max = maxParallelRunningWorkspaces
+                ? Math.min(planAllowance, maxParallelRunningWorkspaces)
+                : planAllowance;
+
+            const current = await getRunningInstancesCount(runningInstances);
             if (current >= max) {
                 return {
                     current,
@@ -77,7 +89,7 @@ export class EntitlementServiceUBP implements EntitlementService {
         return undefined;
     }
 
-    private async getMaxParallelWorkspaces(userId: string, organizationId: string): Promise<number> {
+    async getMaxParallelWorkspaces(userId: string, organizationId: string): Promise<number> {
         if (await this.hasPaidSubscription(userId, organizationId)) {
             return MAX_PARALLEL_WORKSPACES_PAID;
         } else {
@@ -131,3 +143,8 @@ export class EntitlementServiceUBP implements EntitlementService {
         return hasPaidPlan ? "paid" : "free";
     }
 }
+
+export const getRunningInstancesCount = async (instancesPromise: Promise<WorkspaceInstance[]>): Promise<number> => {
+    const instances = await instancesPromise;
+    return instances.filter((i) => i.status.phase !== "preparing").length;
+};

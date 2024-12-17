@@ -893,10 +893,13 @@ export class WorkspaceService {
                 },
             );
         }
-        if (!!result.hitParallelWorkspaceLimit) {
+        if (result.hitParallelWorkspaceLimit) {
+            const { max } = result.hitParallelWorkspaceLimit;
             throw new ApplicationError(
                 ErrorCodes.TOO_MANY_RUNNING_WORKSPACES,
-                `You cannot run more than ${result.hitParallelWorkspaceLimit.max} workspaces at the same time. Please stop a workspace before starting another one.`,
+                `You cannot run more than ${max} workspace${
+                    max === 1 ? "" : "s"
+                } at the same time as per your organization settings. Please stop a workspace before starting another one.`,
             );
         }
     }

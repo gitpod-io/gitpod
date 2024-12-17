@@ -12,7 +12,7 @@ const PrebuildListPage = () => {
     useDocumentTitle("Prebuilds");
 
     return (
-        <div className="app-container mb-8">
+        <div className="app-container pb-8">
             <PageHeading title="Prebuilds" subtitle="Review prebuilds of your added repositories." />
             <PrebuildsList />
         </div>

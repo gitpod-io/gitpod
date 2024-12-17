@@ -18,7 +18,6 @@ type Props = TextInputProps & {
     topMargin?: boolean;
     containerClassName?: string;
 };
-
 export const TextInputField: FunctionComponent<Props> = memo(
     ({ label, id, hint, error, topMargin, containerClassName, ...props }) => {
         const maybeId = useId();
@@ -44,7 +43,6 @@ interface TextInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement
     onChange?: (newValue: string) => void;
     onBlur?: () => void;
 }
-
 export const TextInput: FunctionComponent<TextInputProps> = memo(({ className, onChange, onBlur, ...props }) => {
     const handleChange = useCallback(
         (e) => {
@@ -68,6 +66,39 @@ export const TextInput: FunctionComponent<TextInputProps> = memo(({ className, o
             )}
             onChange={handleChange}
             onBlur={handleBlur}
+            {...props}
+        />
+    );
+});
+
+type NumberInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "type"> & {
+    onChange?: (newValue: number) => void;
+    onBlur?: () => void;
+};
+export const NumberInput: FunctionComponent<NumberInputProps> = memo(({ className, onChange, onBlur, ...props }) => {
+    const handleChange = useCallback(
+        (e) => {
+            onChange && onChange(e.target.valueAsNumber);
+        },
+        [onChange],
+    );
+
+    const handleBlur = useCallback(() => onBlur && onBlur(), [onBlur]);
+
+    return (
+        <input
+            // 7px top/bottom padding ensures height matches buttons (36px)
+            className={cn(
+                "py-[7px] w-full max-w-lg rounded-lg",
+                "text-pk-content-primary",
+                "bg-pk-surface-primary",
+                "border-pk-border-base",
+                "text-sm",
+                className,
+            )}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            type="number"
             {...props}
         />
     );

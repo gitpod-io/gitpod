@@ -59,6 +59,7 @@ import { flattenPagedConfigurations } from "../data/git-providers/unified-reposi
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { useMemberRole } from "../data/organizations/members-query";
 import { OrganizationPermission } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
 
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
 
@@ -847,11 +848,16 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
 };
 
 export function LimitReachedParallelWorkspacesModal() {
+    const { data: installationConfig } = useInstallationConfiguration();
+    const isDedicated = !!installationConfig?.isDedicatedInstallation;
+
     return (
         <LimitReachedModal>
             <p className="mt-1 mb-2 text-base dark:text-gray-400">
-                You have reached the limit of parallel running workspaces for your account. Please, upgrade or stop one
-                of the running workspaces.
+                You have reached the limit of parallel running workspaces for your account.{" "}
+                {!isDedicated
+                    ? "Please, upgrade or stop one of your running workspaces."
+                    : "Please, stop one of your running workspaces or contact your organization owner to change the limit."}
             </p>
         </LimitReachedModal>
     );

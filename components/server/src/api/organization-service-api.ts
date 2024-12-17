@@ -45,6 +45,7 @@ import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_
 import { validate as uuidValidate } from "uuid";
 import { ctxUserId } from "../util/request-context";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { EntitlementService } from "../billing/entitlement-service";
 
 @injectable()
 export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationServiceInterface> {
@@ -53,6 +54,8 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         private readonly orgService: OrganizationService,
         @inject(PublicAPIConverter)
         private readonly apiConverter: PublicAPIConverter,
+        @inject(EntitlementService)
+        private readonly entitlementService: EntitlementService,
     ) {}
 
     async listOrganizationWorkspaceClasses(
@@ -308,6 +311,27 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
                 );
                 update.roleRestrictions[role] = permissions;
             }
+        }
+
+        if (typeof req.maxParallelRunningWorkspaces === "number") {
+            if (req.maxParallelRunningWorkspaces < 0) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "maxParallelRunningWorkspaces must be >= 0");
+            }
+            const maxAllowance = await this.entitlementService.getMaxParallelWorkspaces(
+                ctxUserId(),
+                req.organizationId,
+            );
+            if (maxAllowance && req.maxParallelRunningWorkspaces > maxAllowance) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    `maxParallelRunningWorkspaces must be <= ${maxAllowance}`,
+                );
+            }
+            if (!Number.isInteger(req.maxParallelRunningWorkspaces)) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "maxParallelRunningWorkspaces must be an integer");
+            }
+
+            update.maxParallelRunningWorkspaces = req.maxParallelRunningWorkspaces;
         }
 
         if (Object.keys(update).length === 0) {

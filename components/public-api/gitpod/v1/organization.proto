@@ -57,6 +57,8 @@ message OrganizationSettings {
   string default_role = 6;
   TimeoutSettings timeout_settings = 7;
   repeated RoleRestrictionEntry role_restrictions = 8;
+  // max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+  int32 max_parallel_running_workspaces = 9;
 }
 
 service OrganizationService {
@@ -140,7 +142,7 @@ message TimeoutSettings {
 }
 
 message UpdateOrganizationSettingsRequest {
-  // organization_id is the ID of the organization to update the settings for.
+  // organization_id is the ID of the organization to update the settings for
   string organization_id = 1;
 
   optional bool workspace_sharing_disabled = 3;
@@ -159,17 +161,17 @@ message UpdateOrganizationSettingsRequest {
   // true.
   repeated string restricted_editor_names = 6;
 
-  // Specifies whether restricted_workspace_classes should be updated.
+  // Specifies whether restricted_workspace_classes should be updated
   optional bool update_restricted_editor_names = 7;
 
   // pinned_editor_versions updates the pinned version for the corresponding
-  // editor.
+  // editor
   map<string, string> pinned_editor_versions = 8;
 
-  // Specifies whether pinned_editor_versions should be updated.
+  // Specifies whether pinned_editor_versions should be updated
   optional bool update_pinned_editor_versions = 9;
 
-  // default_role is the default role for new members in the organization.
+  // default_role is the default role for new members in the organization
   optional string default_role = 10;
 
   // timeout_settings are the settings for workspace timeouts
@@ -177,8 +179,11 @@ message UpdateOrganizationSettingsRequest {
 
   repeated RoleRestrictionEntry role_restrictions = 12;
 
-  // Specifies whether role_restrictions should be updated.
+  // update_role_restrictions specifies whether role_restrictions should be updated
   optional bool update_role_restrictions = 13;
+
+  // max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+  optional int32 max_parallel_running_workspaces = 15;
 }
 
 message UpdateOrganizationSettingsResponse {
@@ -207,7 +212,7 @@ message CreateOrganizationResponse {
 }
 
 message GetOrganizationRequest {
-  // organization_id is the unique identifier of the Organization to retreive.
+  // organization_id is the unique identifier of the Organization to retrieve.
   string organization_id = 1;
 }
 

@@ -3677,6 +3677,16 @@ java.lang.String defaultValue);
      */
     io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
         int index);
+
+    /**
+     * <pre>
+     * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+     * </pre>
+     *
+     * <code>int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+     * @return The maxParallelRunningWorkspaces.
+     */
+    int getMaxParallelRunningWorkspaces();
   }
   /**
    * Protobuf type {@code gitpod.v1.OrganizationSettings}
@@ -4044,6 +4054,21 @@ java.lang.String defaultValue) {
       return roleRestrictions_.get(index);
     }
 
+    public static final int MAX_PARALLEL_RUNNING_WORKSPACES_FIELD_NUMBER = 9;
+    private int maxParallelRunningWorkspaces_ = 0;
+    /**
+     * <pre>
+     * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+     * </pre>
+     *
+     * <code>int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+     * @return The maxParallelRunningWorkspaces.
+     */
+    @java.lang.Override
+    public int getMaxParallelRunningWorkspaces() {
+      return maxParallelRunningWorkspaces_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -4084,6 +4109,9 @@ java.lang.String defaultValue) {
       }
       for (int i = 0; i < roleRestrictions_.size(); i++) {
         output.writeMessage(8, roleRestrictions_.get(i));
+      }
+      if (maxParallelRunningWorkspaces_ != 0) {
+        output.writeInt32(9, maxParallelRunningWorkspaces_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -4138,6 +4166,10 @@ java.lang.String defaultValue) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(8, roleRestrictions_.get(i));
       }
+      if (maxParallelRunningWorkspaces_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(9, maxParallelRunningWorkspaces_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -4172,6 +4204,8 @@ java.lang.String defaultValue) {
       }
       if (!getRoleRestrictionsList()
           .equals(other.getRoleRestrictionsList())) return false;
+      if (getMaxParallelRunningWorkspaces()
+          != other.getMaxParallelRunningWorkspaces()) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -4210,6 +4244,8 @@ java.lang.String defaultValue) {
         hash = (37 * hash) + ROLE_RESTRICTIONS_FIELD_NUMBER;
         hash = (53 * hash) + getRoleRestrictionsList().hashCode();
       }
+      hash = (37 * hash) + MAX_PARALLEL_RUNNING_WORKSPACES_FIELD_NUMBER;
+      hash = (53 * hash) + getMaxParallelRunningWorkspaces();
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -4390,6 +4426,7 @@ java.lang.String defaultValue) {
           roleRestrictionsBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000080);
+        maxParallelRunningWorkspaces_ = 0;
         return this;
       }
 
@@ -4463,6 +4500,9 @@ java.lang.String defaultValue) {
               ? timeoutSettings_
               : timeoutSettingsBuilder_.build();
           to_bitField0_ |= 0x00000001;
+        }
+        if (((from_bitField0_ & 0x00000100) != 0)) {
+          result.maxParallelRunningWorkspaces_ = maxParallelRunningWorkspaces_;
         }
         result.bitField0_ |= to_bitField0_;
       }
@@ -4543,6 +4583,9 @@ java.lang.String defaultValue) {
               roleRestrictionsBuilder_.addAllMessages(other.roleRestrictions_);
             }
           }
+        }
+        if (other.getMaxParallelRunningWorkspaces() != 0) {
+          setMaxParallelRunningWorkspaces(other.getMaxParallelRunningWorkspaces());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -4626,6 +4669,11 @@ java.lang.String defaultValue) {
                 }
                 break;
               } // case 66
+              case 72: {
+                maxParallelRunningWorkspaces_ = input.readInt32();
+                bitField0_ |= 0x00000100;
+                break;
+              } // case 72
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -5527,6 +5575,50 @@ java.lang.String defaultValue) {
           roleRestrictions_ = null;
         }
         return roleRestrictionsBuilder_;
+      }
+
+      private int maxParallelRunningWorkspaces_ ;
+      /**
+       * <pre>
+       * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+       * </pre>
+       *
+       * <code>int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+       * @return The maxParallelRunningWorkspaces.
+       */
+      @java.lang.Override
+      public int getMaxParallelRunningWorkspaces() {
+        return maxParallelRunningWorkspaces_;
+      }
+      /**
+       * <pre>
+       * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+       * </pre>
+       *
+       * <code>int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+       * @param value The maxParallelRunningWorkspaces to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMaxParallelRunningWorkspaces(int value) {
+
+        maxParallelRunningWorkspaces_ = value;
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+       * </pre>
+       *
+       * <code>int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMaxParallelRunningWorkspaces() {
+        bitField0_ = (bitField0_ & ~0x00000100);
+        maxParallelRunningWorkspaces_ = 0;
+        onChanged();
+        return this;
       }
 
       // @@protoc_insertion_point(builder_scope:gitpod.v1.OrganizationSettings)
@@ -9452,7 +9544,7 @@ java.lang.String defaultValue) {
 
     /**
      * <pre>
-     * organization_id is the ID of the organization to update the settings for.
+     * organization_id is the ID of the organization to update the settings for
      * </pre>
      *
      * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -9461,7 +9553,7 @@ java.lang.String defaultValue) {
     java.lang.String getOrganizationId();
     /**
      * <pre>
-     * organization_id is the ID of the organization to update the settings for.
+     * organization_id is the ID of the organization to update the settings for
      * </pre>
      *
      * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -9614,7 +9706,7 @@ java.lang.String defaultValue) {
 
     /**
      * <pre>
-     * Specifies whether restricted_workspace_classes should be updated.
+     * Specifies whether restricted_workspace_classes should be updated
      * </pre>
      *
      * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
@@ -9623,7 +9715,7 @@ java.lang.String defaultValue) {
     boolean hasUpdateRestrictedEditorNames();
     /**
      * <pre>
-     * Specifies whether restricted_workspace_classes should be updated.
+     * Specifies whether restricted_workspace_classes should be updated
      * </pre>
      *
      * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
@@ -9634,7 +9726,7 @@ java.lang.String defaultValue) {
     /**
      * <pre>
      * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
+     * editor
      * </pre>
      *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -9643,7 +9735,7 @@ java.lang.String defaultValue) {
     /**
      * <pre>
      * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
+     * editor
      * </pre>
      *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -9659,7 +9751,7 @@ java.lang.String defaultValue) {
     /**
      * <pre>
      * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
+     * editor
      * </pre>
      *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -9669,7 +9761,7 @@ java.lang.String defaultValue) {
     /**
      * <pre>
      * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
+     * editor
      * </pre>
      *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -9682,7 +9774,7 @@ java.lang.String defaultValue);
     /**
      * <pre>
      * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
+     * editor
      * </pre>
      *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -9692,7 +9784,7 @@ java.lang.String defaultValue);
 
     /**
      * <pre>
-     * Specifies whether pinned_editor_versions should be updated.
+     * Specifies whether pinned_editor_versions should be updated
      * </pre>
      *
      * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
@@ -9701,7 +9793,7 @@ java.lang.String defaultValue);
     boolean hasUpdatePinnedEditorVersions();
     /**
      * <pre>
-     * Specifies whether pinned_editor_versions should be updated.
+     * Specifies whether pinned_editor_versions should be updated
      * </pre>
      *
      * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
@@ -9711,7 +9803,7 @@ java.lang.String defaultValue);
 
     /**
      * <pre>
-     * default_role is the default role for new members in the organization.
+     * default_role is the default role for new members in the organization
      * </pre>
      *
      * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -9720,7 +9812,7 @@ java.lang.String defaultValue);
     boolean hasDefaultRole();
     /**
      * <pre>
-     * default_role is the default role for new members in the organization.
+     * default_role is the default role for new members in the organization
      * </pre>
      *
      * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -9729,7 +9821,7 @@ java.lang.String defaultValue);
     java.lang.String getDefaultRole();
     /**
      * <pre>
-     * default_role is the default role for new members in the organization.
+     * default_role is the default role for new members in the organization
      * </pre>
      *
      * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -9791,7 +9883,7 @@ java.lang.String defaultValue);
 
     /**
      * <pre>
-     * Specifies whether role_restrictions should be updated.
+     * update_role_restrictions specifies whether role_restrictions should be updated
      * </pre>
      *
      * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
@@ -9800,13 +9892,32 @@ java.lang.String defaultValue);
     boolean hasUpdateRoleRestrictions();
     /**
      * <pre>
-     * Specifies whether role_restrictions should be updated.
+     * update_role_restrictions specifies whether role_restrictions should be updated
      * </pre>
      *
      * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
      * @return The updateRoleRestrictions.
      */
     boolean getUpdateRoleRestrictions();
+
+    /**
+     * <pre>
+     * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+     * </pre>
+     *
+     * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
+     * @return Whether the maxParallelRunningWorkspaces field is set.
+     */
+    boolean hasMaxParallelRunningWorkspaces();
+    /**
+     * <pre>
+     * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+     * </pre>
+     *
+     * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
+     * @return The maxParallelRunningWorkspaces.
+     */
+    int getMaxParallelRunningWorkspaces();
   }
   /**
    * Protobuf type {@code gitpod.v1.UpdateOrganizationSettingsRequest}
@@ -9871,7 +9982,7 @@ java.lang.String defaultValue);
     private volatile java.lang.Object organizationId_ = "";
     /**
      * <pre>
-     * organization_id is the ID of the organization to update the settings for.
+     * organization_id is the ID of the organization to update the settings for
      * </pre>
      *
      * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -9892,7 +10003,7 @@ java.lang.String defaultValue);
     }
     /**
      * <pre>
-     * organization_id is the ID of the organization to update the settings for.
+     * organization_id is the ID of the organization to update the settings for
      * </pre>
      *
      * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -10121,7 +10232,7 @@ java.lang.String defaultValue);
     private boolean updateRestrictedEditorNames_ = false;
     /**
      * <pre>
-     * Specifies whether restricted_workspace_classes should be updated.
+     * Specifies whether restricted_workspace_classes should be updated
      * </pre>
      *
      * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
@@ -10133,7 +10244,7 @@ java.lang.String defaultValue);
     }
     /**
      * <pre>
-     * Specifies whether restricted_workspace_classes should be updated.
+     * Specifies whether restricted_workspace_classes should be updated
      * </pre>
      *
      * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
@@ -10173,7 +10284,7 @@ java.lang.String defaultValue);
     /**
      * <pre>
      * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
+     * editor
      * </pre>
      *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -10195,7 +10306,7 @@ java.lang.String defaultValue);
     /**
      * <pre>
      * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
+     * editor
      * </pre>
      *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -10207,7 +10318,7 @@ java.lang.String defaultValue);
     /**
      * <pre>
      * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
+     * editor
      * </pre>
      *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -10226,7 +10337,7 @@ java.lang.String defaultValue) {
     /**
      * <pre>
      * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
+     * editor
      * </pre>
      *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -10247,7 +10358,7 @@ java.lang.String defaultValue) {
     private boolean updatePinnedEditorVersions_ = false;
     /**
      * <pre>
-     * Specifies whether pinned_editor_versions should be updated.
+     * Specifies whether pinned_editor_versions should be updated
      * </pre>
      *
      * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
@@ -10259,7 +10370,7 @@ java.lang.String defaultValue) {
     }
     /**
      * <pre>
-     * Specifies whether pinned_editor_versions should be updated.
+     * Specifies whether pinned_editor_versions should be updated
      * </pre>
      *
      * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
@@ -10275,7 +10386,7 @@ java.lang.String defaultValue) {
     private volatile java.lang.Object defaultRole_ = "";
     /**
      * <pre>
-     * default_role is the default role for new members in the organization.
+     * default_role is the default role for new members in the organization
      * </pre>
      *
      * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -10287,7 +10398,7 @@ java.lang.String defaultValue) {
     }
     /**
      * <pre>
-     * default_role is the default role for new members in the organization.
+     * default_role is the default role for new members in the organization
      * </pre>
      *
      * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -10308,7 +10419,7 @@ java.lang.String defaultValue) {
     }
     /**
      * <pre>
-     * default_role is the default role for new members in the organization.
+     * default_role is the default role for new members in the organization
      * </pre>
      *
      * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -10412,7 +10523,7 @@ java.lang.String defaultValue) {
     private boolean updateRoleRestrictions_ = false;
     /**
      * <pre>
-     * Specifies whether role_restrictions should be updated.
+     * update_role_restrictions specifies whether role_restrictions should be updated
      * </pre>
      *
      * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
@@ -10424,7 +10535,7 @@ java.lang.String defaultValue) {
     }
     /**
      * <pre>
-     * Specifies whether role_restrictions should be updated.
+     * update_role_restrictions specifies whether role_restrictions should be updated
      * </pre>
      *
      * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
@@ -10433,6 +10544,33 @@ java.lang.String defaultValue) {
     @java.lang.Override
     public boolean getUpdateRoleRestrictions() {
       return updateRoleRestrictions_;
+    }
+
+    public static final int MAX_PARALLEL_RUNNING_WORKSPACES_FIELD_NUMBER = 15;
+    private int maxParallelRunningWorkspaces_ = 0;
+    /**
+     * <pre>
+     * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+     * </pre>
+     *
+     * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
+     * @return Whether the maxParallelRunningWorkspaces field is set.
+     */
+    @java.lang.Override
+    public boolean hasMaxParallelRunningWorkspaces() {
+      return ((bitField0_ & 0x00000080) != 0);
+    }
+    /**
+     * <pre>
+     * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+     * </pre>
+     *
+     * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
+     * @return The maxParallelRunningWorkspaces.
+     */
+    @java.lang.Override
+    public int getMaxParallelRunningWorkspaces() {
+      return maxParallelRunningWorkspaces_;
     }
 
     private byte memoizedIsInitialized = -1;
@@ -10487,6 +10625,9 @@ java.lang.String defaultValue) {
       }
       if (((bitField0_ & 0x00000040) != 0)) {
         output.writeBool(13, updateRoleRestrictions_);
+      }
+      if (((bitField0_ & 0x00000080) != 0)) {
+        output.writeInt32(15, maxParallelRunningWorkspaces_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -10556,6 +10697,10 @@ java.lang.String defaultValue) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(13, updateRoleRestrictions_);
       }
+      if (((bitField0_ & 0x00000080) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(15, maxParallelRunningWorkspaces_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -10615,6 +10760,11 @@ java.lang.String defaultValue) {
       if (hasUpdateRoleRestrictions()) {
         if (getUpdateRoleRestrictions()
             != other.getUpdateRoleRestrictions()) return false;
+      }
+      if (hasMaxParallelRunningWorkspaces() != other.hasMaxParallelRunningWorkspaces()) return false;
+      if (hasMaxParallelRunningWorkspaces()) {
+        if (getMaxParallelRunningWorkspaces()
+            != other.getMaxParallelRunningWorkspaces()) return false;
       }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
@@ -10676,6 +10826,10 @@ java.lang.String defaultValue) {
         hash = (37 * hash) + UPDATE_ROLE_RESTRICTIONS_FIELD_NUMBER;
         hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
             getUpdateRoleRestrictions());
+      }
+      if (hasMaxParallelRunningWorkspaces()) {
+        hash = (37 * hash) + MAX_PARALLEL_RUNNING_WORKSPACES_FIELD_NUMBER;
+        hash = (53 * hash) + getMaxParallelRunningWorkspaces();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -10861,6 +11015,7 @@ java.lang.String defaultValue) {
         }
         bitField0_ = (bitField0_ & ~0x00000400);
         updateRoleRestrictions_ = false;
+        maxParallelRunningWorkspaces_ = 0;
         return this;
       }
 
@@ -10952,6 +11107,10 @@ java.lang.String defaultValue) {
         if (((from_bitField0_ & 0x00000800) != 0)) {
           result.updateRoleRestrictions_ = updateRoleRestrictions_;
           to_bitField0_ |= 0x00000040;
+        }
+        if (((from_bitField0_ & 0x00001000) != 0)) {
+          result.maxParallelRunningWorkspaces_ = maxParallelRunningWorkspaces_;
+          to_bitField0_ |= 0x00000080;
         }
         result.bitField0_ |= to_bitField0_;
       }
@@ -11046,6 +11205,9 @@ java.lang.String defaultValue) {
         }
         if (other.hasUpdateRoleRestrictions()) {
           setUpdateRoleRestrictions(other.getUpdateRoleRestrictions());
+        }
+        if (other.hasMaxParallelRunningWorkspaces()) {
+          setMaxParallelRunningWorkspaces(other.getMaxParallelRunningWorkspaces());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -11149,6 +11311,11 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000800;
                 break;
               } // case 104
+              case 120: {
+                maxParallelRunningWorkspaces_ = input.readInt32();
+                bitField0_ |= 0x00001000;
+                break;
+              } // case 120
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -11169,7 +11336,7 @@ java.lang.String defaultValue) {
       private java.lang.Object organizationId_ = "";
       /**
        * <pre>
-       * organization_id is the ID of the organization to update the settings for.
+       * organization_id is the ID of the organization to update the settings for
        * </pre>
        *
        * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -11189,7 +11356,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * organization_id is the ID of the organization to update the settings for.
+       * organization_id is the ID of the organization to update the settings for
        * </pre>
        *
        * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -11210,7 +11377,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * organization_id is the ID of the organization to update the settings for.
+       * organization_id is the ID of the organization to update the settings for
        * </pre>
        *
        * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -11227,7 +11394,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * organization_id is the ID of the organization to update the settings for.
+       * organization_id is the ID of the organization to update the settings for
        * </pre>
        *
        * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -11241,7 +11408,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * organization_id is the ID of the organization to update the settings for.
+       * organization_id is the ID of the organization to update the settings for
        * </pre>
        *
        * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -11743,7 +11910,7 @@ java.lang.String defaultValue) {
       private boolean updateRestrictedEditorNames_ ;
       /**
        * <pre>
-       * Specifies whether restricted_workspace_classes should be updated.
+       * Specifies whether restricted_workspace_classes should be updated
        * </pre>
        *
        * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
@@ -11755,7 +11922,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Specifies whether restricted_workspace_classes should be updated.
+       * Specifies whether restricted_workspace_classes should be updated
        * </pre>
        *
        * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
@@ -11767,7 +11934,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Specifies whether restricted_workspace_classes should be updated.
+       * Specifies whether restricted_workspace_classes should be updated
        * </pre>
        *
        * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
@@ -11783,7 +11950,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Specifies whether restricted_workspace_classes should be updated.
+       * Specifies whether restricted_workspace_classes should be updated
        * </pre>
        *
        * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
@@ -11825,7 +11992,7 @@ java.lang.String defaultValue) {
       /**
        * <pre>
        * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
+       * editor
        * </pre>
        *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -11847,7 +12014,7 @@ java.lang.String defaultValue) {
       /**
        * <pre>
        * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
+       * editor
        * </pre>
        *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -11859,7 +12026,7 @@ java.lang.String defaultValue) {
       /**
        * <pre>
        * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
+       * editor
        * </pre>
        *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -11878,7 +12045,7 @@ java.lang.String defaultValue) {
       /**
        * <pre>
        * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
+       * editor
        * </pre>
        *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -11903,7 +12070,7 @@ java.lang.String defaultValue) {
       /**
        * <pre>
        * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
+       * editor
        * </pre>
        *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -11927,7 +12094,7 @@ java.lang.String defaultValue) {
       /**
        * <pre>
        * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
+       * editor
        * </pre>
        *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -11945,7 +12112,7 @@ java.lang.String defaultValue) {
       /**
        * <pre>
        * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
+       * editor
        * </pre>
        *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
@@ -11961,7 +12128,7 @@ java.lang.String defaultValue) {
       private boolean updatePinnedEditorVersions_ ;
       /**
        * <pre>
-       * Specifies whether pinned_editor_versions should be updated.
+       * Specifies whether pinned_editor_versions should be updated
        * </pre>
        *
        * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
@@ -11973,7 +12140,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Specifies whether pinned_editor_versions should be updated.
+       * Specifies whether pinned_editor_versions should be updated
        * </pre>
        *
        * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
@@ -11985,7 +12152,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Specifies whether pinned_editor_versions should be updated.
+       * Specifies whether pinned_editor_versions should be updated
        * </pre>
        *
        * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
@@ -12001,7 +12168,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Specifies whether pinned_editor_versions should be updated.
+       * Specifies whether pinned_editor_versions should be updated
        * </pre>
        *
        * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
@@ -12017,7 +12184,7 @@ java.lang.String defaultValue) {
       private java.lang.Object defaultRole_ = "";
       /**
        * <pre>
-       * default_role is the default role for new members in the organization.
+       * default_role is the default role for new members in the organization
        * </pre>
        *
        * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -12028,7 +12195,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * default_role is the default role for new members in the organization.
+       * default_role is the default role for new members in the organization
        * </pre>
        *
        * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -12048,7 +12215,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * default_role is the default role for new members in the organization.
+       * default_role is the default role for new members in the organization
        * </pre>
        *
        * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -12069,7 +12236,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * default_role is the default role for new members in the organization.
+       * default_role is the default role for new members in the organization
        * </pre>
        *
        * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -12086,7 +12253,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * default_role is the default role for new members in the organization.
+       * default_role is the default role for new members in the organization
        * </pre>
        *
        * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -12100,7 +12267,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * default_role is the default role for new members in the organization.
+       * default_role is the default role for new members in the organization
        * </pre>
        *
        * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
@@ -12517,7 +12684,7 @@ java.lang.String defaultValue) {
       private boolean updateRoleRestrictions_ ;
       /**
        * <pre>
-       * Specifies whether role_restrictions should be updated.
+       * update_role_restrictions specifies whether role_restrictions should be updated
        * </pre>
        *
        * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
@@ -12529,7 +12696,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Specifies whether role_restrictions should be updated.
+       * update_role_restrictions specifies whether role_restrictions should be updated
        * </pre>
        *
        * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
@@ -12541,7 +12708,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Specifies whether role_restrictions should be updated.
+       * update_role_restrictions specifies whether role_restrictions should be updated
        * </pre>
        *
        * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
@@ -12557,7 +12724,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * Specifies whether role_restrictions should be updated.
+       * update_role_restrictions specifies whether role_restrictions should be updated
        * </pre>
        *
        * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
@@ -12566,6 +12733,62 @@ java.lang.String defaultValue) {
       public Builder clearUpdateRoleRestrictions() {
         bitField0_ = (bitField0_ & ~0x00000800);
         updateRoleRestrictions_ = false;
+        onChanged();
+        return this;
+      }
+
+      private int maxParallelRunningWorkspaces_ ;
+      /**
+       * <pre>
+       * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+       * </pre>
+       *
+       * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
+       * @return Whether the maxParallelRunningWorkspaces field is set.
+       */
+      @java.lang.Override
+      public boolean hasMaxParallelRunningWorkspaces() {
+        return ((bitField0_ & 0x00001000) != 0);
+      }
+      /**
+       * <pre>
+       * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+       * </pre>
+       *
+       * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
+       * @return The maxParallelRunningWorkspaces.
+       */
+      @java.lang.Override
+      public int getMaxParallelRunningWorkspaces() {
+        return maxParallelRunningWorkspaces_;
+      }
+      /**
+       * <pre>
+       * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+       * </pre>
+       *
+       * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
+       * @param value The maxParallelRunningWorkspaces to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMaxParallelRunningWorkspaces(int value) {
+
+        maxParallelRunningWorkspaces_ = value;
+        bitField0_ |= 0x00001000;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+       * </pre>
+       *
+       * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMaxParallelRunningWorkspaces() {
+        bitField0_ = (bitField0_ & ~0x00001000);
+        maxParallelRunningWorkspaces_ = 0;
         onChanged();
         return this;
       }
@@ -15609,7 +15832,7 @@ java.lang.String defaultValue) {
 
     /**
      * <pre>
-     * organization_id is the unique identifier of the Organization to retreive.
+     * organization_id is the unique identifier of the Organization to retrieve.
      * </pre>
      *
      * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -15618,7 +15841,7 @@ java.lang.String defaultValue) {
     java.lang.String getOrganizationId();
     /**
      * <pre>
-     * organization_id is the unique identifier of the Organization to retreive.
+     * organization_id is the unique identifier of the Organization to retrieve.
      * </pre>
      *
      * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -15670,7 +15893,7 @@ java.lang.String defaultValue) {
     private volatile java.lang.Object organizationId_ = "";
     /**
      * <pre>
-     * organization_id is the unique identifier of the Organization to retreive.
+     * organization_id is the unique identifier of the Organization to retrieve.
      * </pre>
      *
      * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -15691,7 +15914,7 @@ java.lang.String defaultValue) {
     }
     /**
      * <pre>
-     * organization_id is the unique identifier of the Organization to retreive.
+     * organization_id is the unique identifier of the Organization to retrieve.
      * </pre>
      *
      * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -16009,7 +16232,7 @@ java.lang.String defaultValue) {
       private java.lang.Object organizationId_ = "";
       /**
        * <pre>
-       * organization_id is the unique identifier of the Organization to retreive.
+       * organization_id is the unique identifier of the Organization to retrieve.
        * </pre>
        *
        * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -16029,7 +16252,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * organization_id is the unique identifier of the Organization to retreive.
+       * organization_id is the unique identifier of the Organization to retrieve.
        * </pre>
        *
        * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -16050,7 +16273,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * organization_id is the unique identifier of the Organization to retreive.
+       * organization_id is the unique identifier of the Organization to retrieve.
        * </pre>
        *
        * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -16067,7 +16290,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * organization_id is the unique identifier of the Organization to retreive.
+       * organization_id is the unique identifier of the Organization to retrieve.
        * </pre>
        *
        * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -16081,7 +16304,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * organization_id is the unique identifier of the Organization to retreive.
+       * organization_id is the unique identifier of the Organization to retrieve.
        * </pre>
        *
        * <code>string organization_id = 1 [json_name = "organizationId"];</code>
@@ -27644,7 +27867,7 @@ java.lang.String defaultValue) {
       "leRestrictionEntry\022/\n\004role\030\001 \001(\0162\033.gitpo" +
       "d.v1.OrganizationRoleR\004role\022C\n\013permissio" +
       "ns\030\002 \003(\0162!.gitpod.v1.OrganizationPermiss" +
-      "ionR\013permissions\"\362\004\n\024OrganizationSetting" +
+      "ionR\013permissions\"\271\005\n\024OrganizationSetting" +
       "s\022<\n\032workspace_sharing_disabled\030\001 \001(\010R\030w" +
       "orkspaceSharingDisabled\0226\n\027default_works" +
       "pace_image\030\002 \001(\tR\025defaultWorkspaceImage\022" +
@@ -27658,157 +27881,162 @@ java.lang.String defaultValue) {
       "ngs\030\007 \001(\0132\032.gitpod.v1.TimeoutSettingsR\017t" +
       "imeoutSettings\022L\n\021role_restrictions\030\010 \003(" +
       "\0132\037.gitpod.v1.RoleRestrictionEntryR\020role" +
-      "Restrictions\032G\n\031PinnedEditorVersionsEntr" +
-      "y\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005valu" +
-      "e:\0028\001\"\220\001\n\'ListOrganizationWorkspaceClass" +
-      "esRequest\022<\n\npagination\030\001 \001(\0132\034.gitpod.v" +
-      "1.PaginationRequestR\npagination\022\'\n\017organ" +
-      "ization_id\030\002 \001(\tR\016organizationId\"\261\001\n(Lis" +
-      "tOrganizationWorkspaceClassesResponse\022=\n" +
-      "\npagination\030\001 \001(\0132\035.gitpod.v1.Pagination" +
-      "ResponseR\npagination\022F\n\021workspace_classe" +
-      "s\030\002 \003(\0132\031.gitpod.v1.WorkspaceClassR\020work" +
-      "spaceClasses\"f\n\031UpdateOrganizationReques" +
+      "Restrictions\022E\n\037max_parallel_running_wor" +
+      "kspaces\030\t \001(\005R\034maxParallelRunningWorkspa" +
+      "ces\032G\n\031PinnedEditorVersionsEntry\022\020\n\003key\030" +
+      "\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005value:\0028\001\"\220\001\n" +
+      "\'ListOrganizationWorkspaceClassesRequest" +
+      "\022<\n\npagination\030\001 \001(\0132\034.gitpod.v1.Paginat" +
+      "ionRequestR\npagination\022\'\n\017organization_i" +
+      "d\030\002 \001(\tR\016organizationId\"\261\001\n(ListOrganiza" +
+      "tionWorkspaceClassesResponse\022=\n\npaginati" +
+      "on\030\001 \001(\0132\035.gitpod.v1.PaginationResponseR" +
+      "\npagination\022F\n\021workspace_classes\030\002 \003(\0132\031" +
+      ".gitpod.v1.WorkspaceClassR\020workspaceClas" +
+      "ses\"f\n\031UpdateOrganizationRequest\022\'\n\017orga" +
+      "nization_id\030\001 \001(\tR\016organizationId\022\027\n\004nam" +
+      "e\030\002 \001(\tH\000R\004name\210\001\001B\007\n\005_name\"Y\n\032UpdateOrg" +
+      "anizationResponse\022;\n\014organization\030\001 \001(\0132" +
+      "\027.gitpod.v1.OrganizationR\014organization\"\252" +
+      "\001\n\017TimeoutSettings\022>\n\ninactivity\030\001 \001(\0132\031" +
+      ".google.protobuf.DurationH\000R\ninactivity\210" +
+      "\001\001\0221\n\022deny_user_timeouts\030\002 \001(\010H\001R\020denyUs" +
+      "erTimeouts\210\001\001B\r\n\013_inactivityB\025\n\023_deny_us" +
+      "er_timeouts\"\315\t\n!UpdateOrganizationSettin" +
+      "gsRequest\022\'\n\017organization_id\030\001 \001(\tR\016orga" +
+      "nizationId\022A\n\032workspace_sharing_disabled" +
+      "\030\003 \001(\010H\000R\030workspaceSharingDisabled\210\001\001\022;\n" +
+      "\027default_workspace_image\030\004 \001(\tH\001R\025defaul" +
+      "tWorkspaceImage\210\001\001\022:\n\031allowed_workspace_" +
+      "classes\030\005 \003(\tR\027allowedWorkspaceClasses\0226" +
+      "\n\027restricted_editor_names\030\006 \003(\tR\025restric" +
+      "tedEditorNames\022H\n\036update_restricted_edit" +
+      "or_names\030\007 \001(\010H\002R\033updateRestrictedEditor" +
+      "Names\210\001\001\022|\n\026pinned_editor_versions\030\010 \003(\013" +
+      "2F.gitpod.v1.UpdateOrganizationSettingsR" +
+      "equest.PinnedEditorVersionsEntryR\024pinned" +
+      "EditorVersions\022F\n\035update_pinned_editor_v" +
+      "ersions\030\t \001(\010H\003R\032updatePinnedEditorVersi" +
+      "ons\210\001\001\022&\n\014default_role\030\n \001(\tH\004R\013defaultR" +
+      "ole\210\001\001\022J\n\020timeout_settings\030\013 \001(\0132\032.gitpo" +
+      "d.v1.TimeoutSettingsH\005R\017timeoutSettings\210" +
+      "\001\001\022L\n\021role_restrictions\030\014 \003(\0132\037.gitpod.v" +
+      "1.RoleRestrictionEntryR\020roleRestrictions" +
+      "\022=\n\030update_role_restrictions\030\r \001(\010H\006R\026up" +
+      "dateRoleRestrictions\210\001\001\022J\n\037max_parallel_" +
+      "running_workspaces\030\017 \001(\005H\007R\034maxParallelR" +
+      "unningWorkspaces\210\001\001\032G\n\031PinnedEditorVersi" +
+      "onsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(" +
+      "\tR\005value:\0028\001B\035\n\033_workspace_sharing_disab" +
+      "ledB\032\n\030_default_workspace_imageB!\n\037_upda" +
+      "te_restricted_editor_namesB \n\036_update_pi" +
+      "nned_editor_versionsB\017\n\r_default_roleB\023\n" +
+      "\021_timeout_settingsB\033\n\031_update_role_restr" +
+      "ictionsB\"\n _max_parallel_running_workspa" +
+      "ces\"a\n\"UpdateOrganizationSettingsRespons" +
+      "e\022;\n\010settings\030\001 \001(\0132\037.gitpod.v1.Organiza" +
+      "tionSettingsR\010settings\"I\n\036GetOrganizatio" +
+      "nSettingsRequest\022\'\n\017organization_id\030\001 \001(" +
+      "\tR\016organizationId\"^\n\037GetOrganizationSett" +
+      "ingsResponse\022;\n\010settings\030\001 \001(\0132\037.gitpod." +
+      "v1.OrganizationSettingsR\010settings\"/\n\031Cre" +
+      "ateOrganizationRequest\022\022\n\004name\030\001 \001(\tR\004na" +
+      "me\"Y\n\032CreateOrganizationResponse\022;\n\014orga" +
+      "nization\030\001 \001(\0132\027.gitpod.v1.OrganizationR" +
+      "\014organization\"A\n\026GetOrganizationRequest\022" +
+      "\'\n\017organization_id\030\001 \001(\tR\016organizationId" +
+      "\"V\n\027GetOrganizationResponse\022;\n\014organizat" +
+      "ion\030\001 \001(\0132\027.gitpod.v1.OrganizationR\014orga" +
+      "nization\"\332\001\n\030ListOrganizationsRequest\022<\n" +
+      "\npagination\030\001 \001(\0132\034.gitpod.v1.Pagination" +
+      "RequestR\npagination\022?\n\005scope\030\002 \001(\0162).git" +
+      "pod.v1.ListOrganizationsRequest.ScopeR\005s" +
+      "cope\"?\n\005Scope\022\025\n\021SCOPE_UNSPECIFIED\020\000\022\020\n\014" +
+      "SCOPE_MEMBER\020\001\022\r\n\tSCOPE_ALL\020\002\"\231\001\n\031ListOr" +
+      "ganizationsResponse\022=\n\rorganizations\030\001 \003" +
+      "(\0132\027.gitpod.v1.OrganizationR\rorganizatio" +
+      "ns\022=\n\npagination\030\002 \001(\0132\035.gitpod.v1.Pagin" +
+      "ationResponseR\npagination\"D\n\031DeleteOrgan" +
+      "izationRequest\022\'\n\017organization_id\030\001 \001(\tR" +
+      "\016organizationId\"\034\n\032DeleteOrganizationRes" +
+      "ponse\"K\n GetOrganizationInvitationReques" +
       "t\022\'\n\017organization_id\030\001 \001(\tR\016organization" +
-      "Id\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001B\007\n\005_name\"Y\n\032" +
-      "UpdateOrganizationResponse\022;\n\014organizati" +
-      "on\030\001 \001(\0132\027.gitpod.v1.OrganizationR\014organ" +
-      "ization\"\252\001\n\017TimeoutSettings\022>\n\ninactivit" +
-      "y\030\001 \001(\0132\031.google.protobuf.DurationH\000R\nin" +
-      "activity\210\001\001\0221\n\022deny_user_timeouts\030\002 \001(\010H" +
-      "\001R\020denyUserTimeouts\210\001\001B\r\n\013_inactivityB\025\n" +
-      "\023_deny_user_timeouts\"\335\010\n!UpdateOrganizat" +
-      "ionSettingsRequest\022\'\n\017organization_id\030\001 " +
-      "\001(\tR\016organizationId\022A\n\032workspace_sharing" +
-      "_disabled\030\003 \001(\010H\000R\030workspaceSharingDisab" +
-      "led\210\001\001\022;\n\027default_workspace_image\030\004 \001(\tH" +
-      "\001R\025defaultWorkspaceImage\210\001\001\022:\n\031allowed_w" +
-      "orkspace_classes\030\005 \003(\tR\027allowedWorkspace" +
-      "Classes\0226\n\027restricted_editor_names\030\006 \003(\t" +
-      "R\025restrictedEditorNames\022H\n\036update_restri" +
-      "cted_editor_names\030\007 \001(\010H\002R\033updateRestric" +
-      "tedEditorNames\210\001\001\022|\n\026pinned_editor_versi" +
-      "ons\030\010 \003(\0132F.gitpod.v1.UpdateOrganization" +
-      "SettingsRequest.PinnedEditorVersionsEntr" +
-      "yR\024pinnedEditorVersions\022F\n\035update_pinned" +
-      "_editor_versions\030\t \001(\010H\003R\032updatePinnedEd" +
-      "itorVersions\210\001\001\022&\n\014default_role\030\n \001(\tH\004R" +
-      "\013defaultRole\210\001\001\022J\n\020timeout_settings\030\013 \001(" +
-      "\0132\032.gitpod.v1.TimeoutSettingsH\005R\017timeout" +
-      "Settings\210\001\001\022L\n\021role_restrictions\030\014 \003(\0132\037" +
-      ".gitpod.v1.RoleRestrictionEntryR\020roleRes" +
-      "trictions\022=\n\030update_role_restrictions\030\r " +
-      "\001(\010H\006R\026updateRoleRestrictions\210\001\001\032G\n\031Pinn" +
-      "edEditorVersionsEntry\022\020\n\003key\030\001 \001(\tR\003key\022" +
-      "\024\n\005value\030\002 \001(\tR\005value:\0028\001B\035\n\033_workspace_" +
-      "sharing_disabledB\032\n\030_default_workspace_i" +
-      "mageB!\n\037_update_restricted_editor_namesB" +
-      " \n\036_update_pinned_editor_versionsB\017\n\r_de" +
-      "fault_roleB\023\n\021_timeout_settingsB\033\n\031_upda" +
-      "te_role_restrictions\"a\n\"UpdateOrganizati" +
-      "onSettingsResponse\022;\n\010settings\030\001 \001(\0132\037.g" +
-      "itpod.v1.OrganizationSettingsR\010settings\"" +
-      "I\n\036GetOrganizationSettingsRequest\022\'\n\017org" +
-      "anization_id\030\001 \001(\tR\016organizationId\"^\n\037Ge" +
-      "tOrganizationSettingsResponse\022;\n\010setting" +
-      "s\030\001 \001(\0132\037.gitpod.v1.OrganizationSettings" +
-      "R\010settings\"/\n\031CreateOrganizationRequest\022" +
-      "\022\n\004name\030\001 \001(\tR\004name\"Y\n\032CreateOrganizatio" +
-      "nResponse\022;\n\014organization\030\001 \001(\0132\027.gitpod" +
-      ".v1.OrganizationR\014organization\"A\n\026GetOrg" +
-      "anizationRequest\022\'\n\017organization_id\030\001 \001(" +
-      "\tR\016organizationId\"V\n\027GetOrganizationResp" +
-      "onse\022;\n\014organization\030\001 \001(\0132\027.gitpod.v1.O" +
-      "rganizationR\014organization\"\332\001\n\030ListOrgani" +
-      "zationsRequest\022<\n\npagination\030\001 \001(\0132\034.git" +
-      "pod.v1.PaginationRequestR\npagination\022?\n\005" +
-      "scope\030\002 \001(\0162).gitpod.v1.ListOrganization" +
-      "sRequest.ScopeR\005scope\"?\n\005Scope\022\025\n\021SCOPE_" +
-      "UNSPECIFIED\020\000\022\020\n\014SCOPE_MEMBER\020\001\022\r\n\tSCOPE" +
-      "_ALL\020\002\"\231\001\n\031ListOrganizationsResponse\022=\n\r" +
-      "organizations\030\001 \003(\0132\027.gitpod.v1.Organiza" +
-      "tionR\rorganizations\022=\n\npagination\030\002 \001(\0132" +
-      "\035.gitpod.v1.PaginationResponseR\npaginati" +
-      "on\"D\n\031DeleteOrganizationRequest\022\'\n\017organ" +
-      "ization_id\030\001 \001(\tR\016organizationId\"\034\n\032Dele" +
-      "teOrganizationResponse\"K\n GetOrganizatio" +
-      "nInvitationRequest\022\'\n\017organization_id\030\001 " +
-      "\001(\tR\016organizationId\"H\n!GetOrganizationIn" +
-      "vitationResponse\022#\n\rinvitation_id\030\001 \001(\tR" +
-      "\014invitationId\">\n\027JoinOrganizationRequest" +
-      "\022#\n\rinvitation_id\030\001 \001(\tR\014invitationId\"C\n" +
-      "\030JoinOrganizationResponse\022\'\n\017organizatio" +
-      "n_id\030\001 \001(\tR\016organizationId\"M\n\"ResetOrgan" +
-      "izationInvitationRequest\022\'\n\017organization" +
-      "_id\030\001 \001(\tR\016organizationId\"J\n#ResetOrgani" +
-      "zationInvitationResponse\022#\n\rinvitation_i" +
-      "d\030\001 \001(\tR\014invitationId\"\207\001\n\036ListOrganizati" +
-      "onMembersRequest\022\'\n\017organization_id\030\001 \001(" +
-      "\tR\016organizationId\022<\n\npagination\030\002 \001(\0132\034." +
-      "gitpod.v1.PaginationRequestR\npagination\"" +
-      "\231\001\n\037ListOrganizationMembersResponse\0227\n\007m" +
-      "embers\030\001 \003(\0132\035.gitpod.v1.OrganizationMem" +
-      "berR\007members\022=\n\npagination\030\002 \001(\0132\035.gitpo" +
-      "d.v1.PaginationResponseR\npagination\"\242\001\n\037" +
-      "UpdateOrganizationMemberRequest\022\'\n\017organ" +
-      "ization_id\030\001 \001(\tR\016organizationId\022\027\n\007user" +
-      "_id\030\002 \001(\tR\006userId\0224\n\004role\030\003 \001(\0162\033.gitpod" +
-      ".v1.OrganizationRoleH\000R\004role\210\001\001B\007\n\005_role" +
-      "\"Y\n UpdateOrganizationMemberResponse\0225\n\006" +
-      "member\030\001 \001(\0132\035.gitpod.v1.OrganizationMem" +
-      "berR\006member\"c\n\037DeleteOrganizationMemberR" +
-      "equest\022\'\n\017organization_id\030\001 \001(\tR\016organiz" +
-      "ationId\022\027\n\007user_id\030\002 \001(\tR\006userId\"\"\n Dele" +
-      "teOrganizationMemberResponse*\224\001\n\020Organiz" +
-      "ationRole\022!\n\035ORGANIZATION_ROLE_UNSPECIFI" +
-      "ED\020\000\022\033\n\027ORGANIZATION_ROLE_OWNER\020\001\022\034\n\030ORG" +
-      "ANIZATION_ROLE_MEMBER\020\002\022\"\n\036ORGANIZATION_" +
-      "ROLE_COLLABORATOR\020\003*t\n\026OrganizationPermi" +
-      "ssion\022\'\n#ORGANIZATION_PERMISSION_UNSPECI" +
-      "FIED\020\000\0221\n-ORGANIZATION_PERMISSION_START_" +
-      "ARBITRARY_REPOS\020\0012\276\014\n\023OrganizationServic" +
-      "e\022c\n\022CreateOrganization\022$.gitpod.v1.Crea" +
-      "teOrganizationRequest\032%.gitpod.v1.Create" +
-      "OrganizationResponse\"\000\022Z\n\017GetOrganizatio" +
-      "n\022!.gitpod.v1.GetOrganizationRequest\032\".g" +
-      "itpod.v1.GetOrganizationResponse\"\000\022c\n\022Up" +
-      "dateOrganization\022$.gitpod.v1.UpdateOrgan" +
-      "izationRequest\032%.gitpod.v1.UpdateOrganiz" +
-      "ationResponse\"\000\022`\n\021ListOrganizations\022#.g" +
-      "itpod.v1.ListOrganizationsRequest\032$.gitp" +
-      "od.v1.ListOrganizationsResponse\"\000\022c\n\022Del" +
-      "eteOrganization\022$.gitpod.v1.DeleteOrgani" +
-      "zationRequest\032%.gitpod.v1.DeleteOrganiza" +
-      "tionResponse\"\000\022x\n\031GetOrganizationInvitat" +
-      "ion\022+.gitpod.v1.GetOrganizationInvitatio" +
-      "nRequest\032,.gitpod.v1.GetOrganizationInvi" +
-      "tationResponse\"\000\022]\n\020JoinOrganization\022\".g" +
-      "itpod.v1.JoinOrganizationRequest\032#.gitpo" +
-      "d.v1.JoinOrganizationResponse\"\000\022~\n\033Reset" +
-      "OrganizationInvitation\022-.gitpod.v1.Reset" +
-      "OrganizationInvitationRequest\032..gitpod.v" +
-      "1.ResetOrganizationInvitationResponse\"\000\022" +
-      "r\n\027ListOrganizationMembers\022).gitpod.v1.L" +
-      "istOrganizationMembersRequest\032*.gitpod.v" +
-      "1.ListOrganizationMembersResponse\"\000\022u\n\030U" +
-      "pdateOrganizationMember\022*.gitpod.v1.Upda" +
-      "teOrganizationMemberRequest\032+.gitpod.v1." +
-      "UpdateOrganizationMemberResponse\"\000\022u\n\030De" +
-      "leteOrganizationMember\022*.gitpod.v1.Delet" +
-      "eOrganizationMemberRequest\032+.gitpod.v1.D" +
-      "eleteOrganizationMemberResponse\"\000\022r\n\027Get" +
-      "OrganizationSettings\022).gitpod.v1.GetOrga" +
-      "nizationSettingsRequest\032*.gitpod.v1.GetO" +
-      "rganizationSettingsResponse\"\000\022{\n\032UpdateO" +
-      "rganizationSettings\022,.gitpod.v1.UpdateOr" +
-      "ganizationSettingsRequest\032-.gitpod.v1.Up" +
-      "dateOrganizationSettingsResponse\"\000\022\215\001\n L" +
-      "istOrganizationWorkspaceClasses\0222.gitpod" +
-      ".v1.ListOrganizationWorkspaceClassesRequ" +
-      "est\0323.gitpod.v1.ListOrganizationWorkspac" +
-      "eClassesResponse\"\000BQ\n\026io.gitpod.publicap" +
-      "i.v1Z7github.com/gitpod-io/gitpod/compon" +
-      "ents/public-api/go/v1b\006proto3"
+      "Id\"H\n!GetOrganizationInvitationResponse\022" +
+      "#\n\rinvitation_id\030\001 \001(\tR\014invitationId\">\n\027" +
+      "JoinOrganizationRequest\022#\n\rinvitation_id" +
+      "\030\001 \001(\tR\014invitationId\"C\n\030JoinOrganization" +
+      "Response\022\'\n\017organization_id\030\001 \001(\tR\016organ" +
+      "izationId\"M\n\"ResetOrganizationInvitation" +
+      "Request\022\'\n\017organization_id\030\001 \001(\tR\016organi" +
+      "zationId\"J\n#ResetOrganizationInvitationR" +
+      "esponse\022#\n\rinvitation_id\030\001 \001(\tR\014invitati" +
+      "onId\"\207\001\n\036ListOrganizationMembersRequest\022" +
+      "\'\n\017organization_id\030\001 \001(\tR\016organizationId" +
+      "\022<\n\npagination\030\002 \001(\0132\034.gitpod.v1.Paginat" +
+      "ionRequestR\npagination\"\231\001\n\037ListOrganizat" +
+      "ionMembersResponse\0227\n\007members\030\001 \003(\0132\035.gi" +
+      "tpod.v1.OrganizationMemberR\007members\022=\n\np" +
+      "agination\030\002 \001(\0132\035.gitpod.v1.PaginationRe" +
+      "sponseR\npagination\"\242\001\n\037UpdateOrganizatio" +
+      "nMemberRequest\022\'\n\017organization_id\030\001 \001(\tR" +
+      "\016organizationId\022\027\n\007user_id\030\002 \001(\tR\006userId" +
+      "\0224\n\004role\030\003 \001(\0162\033.gitpod.v1.OrganizationR" +
+      "oleH\000R\004role\210\001\001B\007\n\005_role\"Y\n UpdateOrganiz" +
+      "ationMemberResponse\0225\n\006member\030\001 \001(\0132\035.gi" +
+      "tpod.v1.OrganizationMemberR\006member\"c\n\037De" +
+      "leteOrganizationMemberRequest\022\'\n\017organiz" +
+      "ation_id\030\001 \001(\tR\016organizationId\022\027\n\007user_i" +
+      "d\030\002 \001(\tR\006userId\"\"\n DeleteOrganizationMem" +
+      "berResponse*\224\001\n\020OrganizationRole\022!\n\035ORGA" +
+      "NIZATION_ROLE_UNSPECIFIED\020\000\022\033\n\027ORGANIZAT" +
+      "ION_ROLE_OWNER\020\001\022\034\n\030ORGANIZATION_ROLE_ME" +
+      "MBER\020\002\022\"\n\036ORGANIZATION_ROLE_COLLABORATOR" +
+      "\020\003*t\n\026OrganizationPermission\022\'\n#ORGANIZA" +
+      "TION_PERMISSION_UNSPECIFIED\020\000\0221\n-ORGANIZ" +
+      "ATION_PERMISSION_START_ARBITRARY_REPOS\020\001" +
+      "2\276\014\n\023OrganizationService\022c\n\022CreateOrgani" +
+      "zation\022$.gitpod.v1.CreateOrganizationReq" +
+      "uest\032%.gitpod.v1.CreateOrganizationRespo" +
+      "nse\"\000\022Z\n\017GetOrganization\022!.gitpod.v1.Get" +
+      "OrganizationRequest\032\".gitpod.v1.GetOrgan" +
+      "izationResponse\"\000\022c\n\022UpdateOrganization\022" +
+      "$.gitpod.v1.UpdateOrganizationRequest\032%." +
+      "gitpod.v1.UpdateOrganizationResponse\"\000\022`" +
+      "\n\021ListOrganizations\022#.gitpod.v1.ListOrga" +
+      "nizationsRequest\032$.gitpod.v1.ListOrganiz" +
+      "ationsResponse\"\000\022c\n\022DeleteOrganization\022$" +
+      ".gitpod.v1.DeleteOrganizationRequest\032%.g" +
+      "itpod.v1.DeleteOrganizationResponse\"\000\022x\n" +
+      "\031GetOrganizationInvitation\022+.gitpod.v1.G" +
+      "etOrganizationInvitationRequest\032,.gitpod" +
+      ".v1.GetOrganizationInvitationResponse\"\000\022" +
+      "]\n\020JoinOrganization\022\".gitpod.v1.JoinOrga" +
+      "nizationRequest\032#.gitpod.v1.JoinOrganiza" +
+      "tionResponse\"\000\022~\n\033ResetOrganizationInvit" +
+      "ation\022-.gitpod.v1.ResetOrganizationInvit" +
+      "ationRequest\032..gitpod.v1.ResetOrganizati" +
+      "onInvitationResponse\"\000\022r\n\027ListOrganizati" +
+      "onMembers\022).gitpod.v1.ListOrganizationMe" +
+      "mbersRequest\032*.gitpod.v1.ListOrganizatio" +
+      "nMembersResponse\"\000\022u\n\030UpdateOrganization" +
+      "Member\022*.gitpod.v1.UpdateOrganizationMem" +
+      "berRequest\032+.gitpod.v1.UpdateOrganizatio" +
+      "nMemberResponse\"\000\022u\n\030DeleteOrganizationM" +
+      "ember\022*.gitpod.v1.DeleteOrganizationMemb" +
+      "erRequest\032+.gitpod.v1.DeleteOrganization" +
+      "MemberResponse\"\000\022r\n\027GetOrganizationSetti" +
+      "ngs\022).gitpod.v1.GetOrganizationSettingsR" +
+      "equest\032*.gitpod.v1.GetOrganizationSettin" +
+      "gsResponse\"\000\022{\n\032UpdateOrganizationSettin" +
+      "gs\022,.gitpod.v1.UpdateOrganizationSetting" +
+      "sRequest\032-.gitpod.v1.UpdateOrganizationS" +
+      "ettingsResponse\"\000\022\215\001\n ListOrganizationWo" +
+      "rkspaceClasses\0222.gitpod.v1.ListOrganizat" +
+      "ionWorkspaceClassesRequest\0323.gitpod.v1.L" +
+      "istOrganizationWorkspaceClassesResponse\"" +
+      "\000BQ\n\026io.gitpod.publicapi.v1Z7github.com/" +
+      "gitpod-io/gitpod/components/public-api/g" +
+      "o/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -27841,7 +28069,7 @@ java.lang.String defaultValue) {
     internal_static_gitpod_v1_OrganizationSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_OrganizationSettings_descriptor,
-        new java.lang.String[] { "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "PinnedEditorVersions", "DefaultRole", "TimeoutSettings", "RoleRestrictions", });
+        new java.lang.String[] { "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "PinnedEditorVersions", "DefaultRole", "TimeoutSettings", "RoleRestrictions", "MaxParallelRunningWorkspaces", });
     internal_static_gitpod_v1_OrganizationSettings_PinnedEditorVersionsEntry_descriptor =
       internal_static_gitpod_v1_OrganizationSettings_descriptor.getNestedTypes().get(0);
     internal_static_gitpod_v1_OrganizationSettings_PinnedEditorVersionsEntry_fieldAccessorTable = new
@@ -27883,7 +28111,7 @@ java.lang.String defaultValue) {
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor,
-        new java.lang.String[] { "OrganizationId", "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "UpdateRestrictedEditorNames", "PinnedEditorVersions", "UpdatePinnedEditorVersions", "DefaultRole", "TimeoutSettings", "RoleRestrictions", "UpdateRoleRestrictions", });
+        new java.lang.String[] { "OrganizationId", "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "UpdateRestrictedEditorNames", "PinnedEditorVersions", "UpdatePinnedEditorVersions", "DefaultRole", "TimeoutSettings", "RoleRestrictions", "UpdateRoleRestrictions", "MaxParallelRunningWorkspaces", });
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_descriptor =
       internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor.getNestedTypes().get(0);
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_fieldAccessorTable = new
