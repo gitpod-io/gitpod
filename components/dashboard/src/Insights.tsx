@@ -15,7 +15,6 @@ import { Item, ItemField, ItemsList } from "./components/ItemsList";
 import { useWorkspaceSessions } from "./data/insights/list-workspace-sessions-query";
 import { WorkspaceSessionGroup } from "./insights/WorkspaceSessionGroup";
 import { gitpodHostUrl } from "./service/service";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
 import dayjs from "dayjs";
 import { Timestamp } from "@bufbuild/protobuf";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
@@ -26,16 +25,11 @@ import { useToast } from "./components/toasts/Toasts";
 import { useTemporaryState } from "./hooks/use-temporary-value";
 import { DownloadIcon } from "lucide-react";
 import { Button } from "@podkit/buttons/Button";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@podkit/dropdown/DropDown";
+import { useInstallationConfiguration } from "./data/installation/default-workspace-image-query";
 
 export const Insights = () => {
-    const [prebuildsFilter, setPrebuildsFilter] = useState<"week" | "month" | "year">("week");
-    const [upperBound, lowerBound] = useMemo(() => {
-        const from = dayjs().subtract(1, prebuildsFilter).startOf("day");
-
-        const fromTimestamp = Timestamp.fromDate(from.toDate());
-        const toTimestamp = Timestamp.fromDate(new Date());
-        return [fromTimestamp, toTimestamp];
-    }, [prebuildsFilter]);
+    const toDate = useMemo(() => Timestamp.fromDate(new Date()), []);
     const {
         data,
         error: errorMessage,
@@ -44,9 +38,11 @@ export const Insights = () => {
         hasNextPage,
         fetchNextPage,
     } = useWorkspaceSessions({
-        from: upperBound,
-        to: lowerBound,
+        from: Timestamp.fromDate(new Date(0)),
+        to: toDate,
     });
+    const { data: installationConfig } = useInstallationConfiguration();
+    const isDedicatedInstallation = !!installationConfig?.isDedicatedInstallation;
 
     const hasMoreThanOnePage = (data?.pages.length ?? 0) > 1;
     const sessions = useMemo(() => data?.pages.flatMap((p) => p) ?? [], [data]);
@@ -59,21 +55,11 @@ export const Insights = () => {
             <div className="app-container pt-5 pb-8">
                 <div
                     className={classNames(
-                        "flex flex-col items-start space-y-3 justify-between",
+                        "flex flex-col items-start space-y-3 justify-end",
                         "md:flex-row md:items-center md:space-x-4 md:space-y-0",
                     )}
                 >
-                    <Select value={prebuildsFilter} onValueChange={(v) => setPrebuildsFilter(v as any)}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select time range" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="week">Last 7 days</SelectItem>
-                            <SelectItem value="month">Last 30 days</SelectItem>
-                            <SelectItem value="year">Last 365 days</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <DownloadUsage from={upperBound} to={lowerBound} />
+                    <DownloadUsage to={toDate} />
                 </div>
 
                 <div
@@ -108,7 +94,7 @@ export const Insights = () => {
 
                         {isLoading && (
                             <div className="flex items-center justify-center w-full space-x-2 text-pk-content-primary text-sm pt-16 pb-40">
-                                <LoadingState />
+                                <LoadingState delay={false} />
                                 <span>Loading usage...</span>
                             </div>
                         )}
@@ -135,7 +121,7 @@ export const Insights = () => {
                                         {" "}
                                         workspaces
                                     </a>{" "}
-                                    in the last 30 days or checked your other organizations?
+                                    recently{!isDedicatedInstallation && " or checked your other organizations"}?
                                 </Subheading>
                             </div>
                         )}
@@ -164,39 +150,51 @@ export const Insights = () => {
 };
 
 type DownloadUsageProps = {
-    from: Timestamp;
     to: Timestamp;
 };
-export const DownloadUsage = ({ from, to }: DownloadUsageProps) => {
+export const DownloadUsage = ({ to }: DownloadUsageProps) => {
     const { data: org } = useCurrentOrg();
     const { toast } = useToast();
     // When we start the download, we disable the button for a short time
     const [downloadDisabled, setDownloadDisabled] = useTemporaryState(false, 1000);
 
-    const handleDownload = useCallback(async () => {
-        if (!org) {
-            return;
-        }
+    const handleDownload = useCallback(
+        async ({ daysInPast }: { daysInPast: number }) => {
+            if (!org) {
+                return;
+            }
+            const from = Timestamp.fromDate(dayjs().subtract(daysInPast, "day").toDate());
 
-        setDownloadDisabled(true);
-        toast(
-            <DownloadInsightsToast
-                organizationName={org?.slug ?? org?.id}
-                organizationId={org.id}
-                from={from}
-                to={to}
-            />,
-            {
-                autoHide: false,
-            },
-        );
-    }, [org, setDownloadDisabled, toast, from, to]);
+            setDownloadDisabled(true);
+            toast(
+                <DownloadInsightsToast
+                    organizationName={org?.slug ?? org?.id}
+                    organizationId={org.id}
+                    from={from}
+                    to={to}
+                />,
+                {
+                    autoHide: false,
+                },
+            );
+        },
+        [org, setDownloadDisabled, to, toast],
+    );
 
     return (
-        <Button variant="secondary" onClick={handleDownload} className="gap-1" disabled={downloadDisabled}>
-            <DownloadIcon strokeWidth={3} className="w-4" />
-            <span>Export as CSV</span>
-        </Button>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="secondary" className="gap-1" disabled={downloadDisabled}>
+                    <DownloadIcon strokeWidth={3} className="w-4" />
+                    <span>Export as CSV</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleDownload({ daysInPast: 7 })}>Last 7 days</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownload({ daysInPast: 30 })}>Last 30 days</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownload({ daysInPast: 365 })}>Last 365 days</DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 };
 
