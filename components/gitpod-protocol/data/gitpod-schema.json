@@ -266,6 +266,15 @@
                         "type": "string"
                     }
                 },
+                "projects": {
+                    "type": "array",
+                    "description": "List of additional projects that the JetBrains editor would open",
+                    "additionalProperties": false,
+                    "items": {
+                        "type": "string",
+                        "description": "Project absolute path"
+                    }
+                },
                 "intellij": {
                     "$ref": "#/definitions/jetbrainsProduct",
                     "description": "Configure IntelliJ integration"
