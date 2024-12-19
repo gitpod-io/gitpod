@@ -107,6 +107,10 @@ export interface StartWorkspaceState {
      * Set to prevent multiple redirects to the same URL when the User Agent ignores our wish to open links in the same tab (by setting window.location.href).
      */
     redirected?: boolean;
+    /**
+     * Determines whether `redirected` has been `true` for long enough to display our "new tab" info banner without racing with same-tab redirection in regular setups
+     */
+    showRedirectMessage?: boolean;
 }
 
 // TODO: use Function Components
@@ -474,6 +478,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
 
         this.setState({ redirected: true });
+        setTimeout(() => {
+            this.setState({ showRedirectMessage: true });
+        }, 2000);
     }
 
     private openDesktopLink(link: string) {
@@ -767,7 +774,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 workspaceId={this.props.workspaceId}
             >
                 {statusMessage}
-                {this.state.redirected && (
+                {this.state.showRedirectMessage && (
                     <>
                         <Alert type="info" className="mt-4 w-112">
                             We redirected you to your workspace, but your browser probably opened it in another tab.
