@@ -188,7 +188,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         this.toDispose.dispose();
     }
 
-    componentDidUpdate(prevPros: StartWorkspaceProps, prevState: StartWorkspaceState) {
+    componentDidUpdate(_prevProps: StartWorkspaceProps, prevState: StartWorkspaceState) {
         const newPhase = this.state?.workspace?.status?.phase?.name;
         const oldPhase = prevState.workspace?.status?.phase?.name;
         const type = this.state.workspace?.spec?.type === WorkspaceSpec_WorkspaceType.PREBUILD ? "prebuild" : "regular";
@@ -757,6 +757,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 );
                 break;
         }
+
         return (
             <StartPage
                 phase={phase}
