@@ -49,10 +49,17 @@ export const matchesInstanceIdOrLegacyWorkspaceIdExactly = function (maybeId: st
  * @param maybeWorkspaceId
  * @returns
  */
-export const matchesNewWorkspaceIdExactly = function (maybeWorkspaceId?: string): boolean {
+export const matchesNewWorkspaceIdExactly = function (maybeWorkspaceId: string): boolean {
+    return REGEX_WORKSPACE_ID_EXACT.test(maybeWorkspaceId);
+};
+
+/**
+ * Matches both new and legacy workspace ids
+ */
+export const isWorkspaceId = function (maybeWorkspaceId?: string): boolean {
     if (!maybeWorkspaceId) {
         return false;
     }
 
-    return REGEX_WORKSPACE_ID_EXACT.test(maybeWorkspaceId);
+    return matchesNewWorkspaceIdExactly(maybeWorkspaceId) || REGEX_WORKSPACE_ID_LEGACY_EXACT.test(maybeWorkspaceId);
 };
