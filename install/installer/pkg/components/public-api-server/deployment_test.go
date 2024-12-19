@@ -65,6 +65,16 @@ func TestDeployment_ServerArguments(t *testing.T) {
 			},
 		},
 		{
+			Name: "ca-certificates",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "gitpod-ca-bundle",
+					},
+				},
+			},
+		},
+		{
 			Name: "stripe-secret",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
