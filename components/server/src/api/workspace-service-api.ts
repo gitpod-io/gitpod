@@ -59,7 +59,7 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { ContextService } from "../workspace/context-service";
 import { UserService } from "../user/user-service";
 import { ContextParser } from "../workspace/context-parser-service";
-import { matchesNewWorkspaceIdExactly as isWorkspaceId } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
+import { isWorkspaceId } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 
 @injectable()
