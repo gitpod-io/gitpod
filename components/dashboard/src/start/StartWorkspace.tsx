@@ -36,6 +36,7 @@ import {
 import { PartialMessage } from "@bufbuild/protobuf";
 import { trackEvent } from "../Analytics";
 import { fromWorkspaceName } from "../workspaces/RenameWorkspaceModal";
+import { LinkButton } from "@podkit/buttons/LinkButton";
 
 const sessionId = v4();
 
@@ -102,6 +103,10 @@ export interface StartWorkspaceState {
     ideOptions?: IDEOptions;
     isSSHModalVisible?: boolean;
     ownerToken?: string;
+    /**
+     * Set to prevent multiple redirects to the same URL when the User Agent ignores our wish to open links in the same tab (by setting window.location.href).
+     */
+    redirected?: boolean;
 }
 
 // TODO: use Function Components
@@ -458,11 +463,17 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
 
     redirectTo(url: string) {
+        if (this.state.redirected) {
+            console.info("Prevented another redirect", { url });
+            return;
+        }
         if (this.props.runsInIFrame) {
             this.ideFrontendService?.relocate(url);
         } else {
             window.location.href = url;
         }
+
+        this.setState({ redirected: true });
     }
 
     private openDesktopLink(link: string) {
@@ -503,7 +514,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 return <ImageBuildView workspaceId={this.state.workspace.id} />;
 
             // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
-            // some space within the cluster. If for example the cluster needs to scale up to accomodate the
+            // some space within the cluster. If for example the cluster needs to scale up to accommodate the
             // workspace, the workspace will be in Pending state until that happened.
             case WorkspacePhase_Phase.PENDING:
                 phase = StartPhase.Preparing;
@@ -755,6 +766,30 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 workspaceId={this.props.workspaceId}
             >
                 {statusMessage}
+                {this.state.redirected && (
+                    <>
+                        <Alert type="info" className="mt-4 w-112">
+                            We redirected you to your workspace, but your browser probably opened it in another tab.
+                        </Alert>
+
+                        <div className="mt-4 justify-center flex space-x-2">
+                            <LinkButton href={gitpodHostUrl.asWorkspacePage().toString()} target="_self" isExternalUrl>
+                                Go to Dashboard
+                            </LinkButton>
+                            {this.state.workspace?.status?.workspaceUrl &&
+                                this.state.workspace.status.phase?.name === WorkspacePhase_Phase.RUNNING && (
+                                    <LinkButton
+                                        variant={"secondary"}
+                                        href={this.state.workspace.status.workspaceUrl}
+                                        target="_self"
+                                        isExternalUrl
+                                    >
+                                        Re-open Workspace
+                                    </LinkButton>
+                                )}
+                        </div>
+                    </>
+                )}
             </StartPage>
         );
     }
