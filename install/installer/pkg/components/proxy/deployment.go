@@ -52,7 +52,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				SecretName: ctx.Config.Certificate.Name,
 			},
 		},
-	}}
+	},
+		common.CAVolume(),
+	}
 
 	volumeMounts := []corev1.VolumeMount{{
 		Name:      "vhosts",
@@ -60,7 +62,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}, {
 		Name:      "config-certificates",
 		MountPath: "/etc/caddy/certificates",
-	}}
+	},
+		common.CAVolumeMount()}
 
 	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
 		volumes = append(volumes, corev1.Volume{
