@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 import { User, Identity, Token, IdentityLookup } from "@gitpod/gitpod-protocol";
-import { EmailDomainFilterDB, MaybeUser, UserDB } from "@gitpod/gitpod-db/lib";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, EmailDomainFilterDB, MaybeUser, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
@@ -214,7 +214,10 @@ export class UserAuthentication {
         const isMultiOrgEnabled = await getExperimentsClientForBackend().getValueAsync("enable_multi_org", false, {
             gitpodHost: this.config.hostUrl.url.host,
         });
-        return isAllowedToCreateOrganization(user, isDedicated, isMultiOrgEnabled);
+        return (
+            isAllowedToCreateOrganization(user, isDedicated, isMultiOrgEnabled) ||
+            (isDedicated && user.id === BUILTIN_INSTLLATION_ADMIN_USER_ID)
+        );
     }
 
     async isBlocked(params: CheckIsBlockedParams): Promise<boolean> {
