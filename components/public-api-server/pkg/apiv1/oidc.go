@@ -493,7 +493,7 @@ func assertIssuerIsReachable(ctx context.Context, issuer *url.URL) error {
 		},
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodHead, issuer.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, issuer.String()+"/.well-known/openid-configuration", nil)
 	if err != nil {
 		return err
 	}
