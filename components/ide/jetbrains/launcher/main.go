@@ -602,6 +602,14 @@ func launch(launchCtx *LaunchContext) {
 		log.WithError(err).Error("failed to install gitpod-remote plugin")
 	}
 
+	go func(launchCtx *LaunchContext, additonalProjects []string) {
+		// TODO: wait until backend is healthy
+		time.Sleep(5 * time.Second)
+		for _, project := range additonalProjects {
+			go appendAdditonalProject(launchCtx, project)
+		}
+	}(launchCtx, gitpodConfig.Jetbrains.Projects)
+
 	// run backend
 	run(launchCtx)
 }
@@ -638,6 +646,31 @@ func run(launchCtx *LaunchContext) {
 	}
 	log.Info("IDE stopped, exiting")
 	os.Exit(cmd.ProcessState.ExitCode())
+}
+
+func appendAdditonalProject(launchCtx *LaunchContext, projectLocation string) {
+	var args []string
+	if launchCtx.warmup {
+		args = append(args, "warmup")
+	} else if launchCtx.preferToolbox {
+		args = append(args, "serverMode")
+	} else {
+		args = append(args, "run")
+	}
+	args = append(args, projectLocation)
+
+	cmd := remoteDevServerCmd(args, launchCtx)
+	// Enable host status endpoint
+	cmd.Env = append(cmd.Env, "CWM_HOST_STATUS_OVER_HTTP_TOKEN=gitpod")
+
+	if err := cmd.Start(); err != nil {
+		log.WithError(err).Error("failed to start")
+	}
+
+	err := cmd.Wait()
+	if err != nil {
+		log.Warn("faild to start additional project", log.WithField("project", projectLocation), log.WithError(err))
+	}
 }
 
 // resolveUserEnvs emulats the interactive login shell to ensure that all user defined shell scripts are loaded
@@ -1113,6 +1146,7 @@ func installPlugins(config *gitpod.GitpodConfig, launchCtx *LaunchContext) error
 
 	var args []string
 	args = append(args, "installPlugins")
+	// TODO(hw): Do we need project path here?
 	args = append(args, launchCtx.projectContextDir)
 	args = append(args, plugins...)
 	cmd := remoteDevServerCmd(args, launchCtx)
