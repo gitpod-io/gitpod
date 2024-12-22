@@ -1,0 +1,30 @@
+packages:
+  - name: plugin-stable
+    type: generic
+    deps:
+      - components/supervisor-api/java:lib
+      - components/public-api/java:lib
+    srcs:
+      - "**/*.kt"
+      - "**/*.kts"
+      - src/main/resources/*
+      - gradle.properties
+      - gradlew
+      - gradle/*
+      - build.sh
+    env:
+      - JB_QUALIFIER=stable
+      - SDKMAN_DIR=/home/gitpod/.sdkman
+    config:
+      commands:
+        - - "bash"
+          - "-c"
+          - >
+            echo java=21.0.3.fx-zulu > .sdkmanrc
+            && source "$SDKMAN_DIR/bin/sdkman-init.sh"
+            && sdk env install
+            && ./build.sh "0.0.1-${version}"
+            && mv ./build/distributions/io.gitpod.toolbox.gateway.zip .toolbox.zip
+            && rm -rf *
+            && rm -rf .gradle .kotlin .sdkmanrc
+            && mv .toolbox.zip toolbox.zip

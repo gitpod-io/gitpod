@@ -1,0 +1,33 @@
+[versions]
+toolbox-plugin-api = "0.2"
+kotlin = "2.0.10"
+coroutines = "1.7.3"
+serialization = "1.5.0"
+okhttp = "4.10.0"
+slf4j = "2.0.3"
+dependency-license-report = "2.5"
+marketplace-client = "2.0.38"
+gradle-wrapper = "0.14.0"
+
+[libraries]
+toolbox-core-api = { module = "com.jetbrains.toolbox:core-api", version.ref = "toolbox-plugin-api" }
+toolbox-ui-api = { module = "com.jetbrains.toolbox:ui-api", version.ref = "toolbox-plugin-api" }
+toolbox-remote-dev-api = { module = "com.jetbrains.toolbox:remote-dev-api", version.ref = "toolbox-plugin-api" }
+coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "serialization" }
+serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+serialization-json-okio = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json-okio", version.ref = "serialization" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+
+marketplace-client = { module = "org.jetbrains.intellij:plugin-repository-rest-client", version.ref = "marketplace-client" }
+
+[bundles]
+serialization = [ "serialization-core", "serialization-json" ]
+toolbox-plugin-api = [ "toolbox-core-api", "toolbox-ui-api", "toolbox-remote-dev-api" ]
+
+[plugins]
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+dependency-license-report = { id = "com.github.jk1.dependency-license-report", version.ref = "dependency-license-report" }
+gradle-wrapper = { id = "me.filippov.gradle.jvm.wrapper", version.ref = "gradle-wrapper" }
