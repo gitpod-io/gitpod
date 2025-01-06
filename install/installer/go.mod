@@ -135,7 +135,7 @@ require (
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000 // indirect
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000 // indirect
 	github.com/gitpod-io/gitpod/usage-api v0.0.0-00010101000000-000000000000 // indirect
-	github.com/gitpod-io/golang-crypto v0.0.0-20231122075959-de838e9cb174 // indirect
+	github.com/gitpod-io/golang-crypto v0.0.0-20250106140126-78f5e04b38b9 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-gorp/gorp/v3 v3.0.5 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect

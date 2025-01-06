@@ -1315,8 +1315,8 @@ github.com/fvbommel/sortorder v1.1.0/go.mod h1:uk88iVf1ovNn1iLfgUVU2F9o5eO30ui72
 github.com/fxamacker/cbor/v2 v2.4.0/go.mod h1:TA1xS00nchWmaBnEIxPSE5oHLuJBAVvqrtAnWBwBCVo=
 github.com/garyburd/redigo v0.0.0-20150301180006-535138d7bcd7/go.mod h1:NR3MbYisc3/PwhQ00EMzDiPmrwpPxAn5GI05/YaO1SY=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
-github.com/gitpod-io/golang-crypto v0.0.0-20231122075959-de838e9cb174 h1:OoCsCV3wxfN5FvbuhwuUgz6rZvsyfPxX3jZ2fKA+9H8=
-github.com/gitpod-io/golang-crypto v0.0.0-20231122075959-de838e9cb174/go.mod h1:+RoU4suPnVpAnzmlQZx/MZEIaZTT14LnHddujMkIVSk=
+github.com/gitpod-io/golang-crypto v0.0.0-20250106140126-78f5e04b38b9 h1:VWz6zIj4S9aD+OiqQwn65jC//JDVHKFPlOlL/5cv4Po=
+github.com/gitpod-io/golang-crypto v0.0.0-20250106140126-78f5e04b38b9/go.mod h1:kSOu3l2SuXOf9SuBx2czttVOi1w3o/VupgPZGuVbyF8=
 github.com/go-asn1-ber/asn1-ber v1.3.1/go.mod h1:hEBeB/ic+5LoWskz+yKT7vGhhPYkProFKoKdwZRWMe0=
 github.com/go-errors/errors v1.4.2 h1:J6MZopCL4uSllY1OfXM374weqZFFItUbrImctkmUxIA=
 github.com/go-errors/errors v1.4.2/go.mod h1:sIVyrIiJhuEF+Pj9Ebtd6P/rEYROXFi3BopGUQ5a5Og=
