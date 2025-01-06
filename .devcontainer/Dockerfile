@@ -188,7 +188,7 @@ RUN curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip" -o aws
     ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update && \
     rm -rf awscliv2.zip ./aws
 
-ENV GO_VERSION=1.22.2
+ENV GO_VERSION=1.23.3
 ENV GOPATH=/root/go-packages
 ENV GOROOT=/root/go
 ENV PATH=$GOROOT/bin:$GOPATH/bin:$PATH
