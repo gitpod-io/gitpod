@@ -590,6 +590,22 @@ export class WorkspaceService {
                 );
                 return;
             }
+
+            log.info(
+                { userId, workspaceId, instanceId: instance?.id },
+                "[updateDeletionEligibilityTime] Updating deletion eligibility time for regular workspace",
+                {
+                    hasGitChanges,
+                    timestamps: new TrustedValue({
+                        deletionEligibilityTime: deletionEligibilityTime.toISOString(),
+                        instanceStoppingTime: instance?.stoppingTime,
+                        instanceStartedTime: instance?.startedTime,
+                        instanceCreationTime: instance?.creationTime,
+                        workspaceCreationTime: workspace.creationTime,
+                        lastActive,
+                    }),
+                },
+            );
             await this.db.updatePartial(workspaceId, {
                 deletionEligibilityTime: deletionEligibilityTime.toISOString(),
             });
