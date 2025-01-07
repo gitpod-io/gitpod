@@ -14,10 +14,11 @@ const (
 	RegistryImage = "chainguard/redis"
 
 	ContainerName = "redis"
-	ImageDigest   = "sha256:85ac79734b47c59fe5fc9ca923c321991b792ef9cf759f7f5b7cddffb3eda6db"
+	ImageDigest   = "sha256:2ca5da94e19341085fda0c4bf610689ba1f0bea4e009cb9dad605a1c6195e5d3"
 
-	ExporterRegistryImage = "chainguard/prometheus-redis-exporter"
-	ExporterImageDigest   = "sha256:d3ddb25bf7bec9bb898aa4712413182e2699bef5ad7a6cf1dfcd02bc84cf8951"
+	ExporterRegistryRepo  = "quay.io"
+	ExporterRegistryImage = "oliver006/redis_exporter"
+	ExporterImageDigest   = "sha256:120f7ec77293459ccfdad66bb1db75ab72e8bfeab99f58b1cc2564cadcd7a9e7"
 
 	ExporterContainerName = "exporter"
 	ExporterPortName      = "exporter"
