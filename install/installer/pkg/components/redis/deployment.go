@@ -104,7 +104,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							{
 								Name:            ExporterContainerName,
-								Image:           ctx.ImageDigest(common.ThirdPartyContainerRepo(ctx.Config.Repository, RegistryRepo), ExporterRegistryImage, ExporterImageDigest),
+								Image:           ctx.ImageDigest(common.ThirdPartyContainerRepo(ctx.Config.Repository, ExporterRegistryRepo), ExporterRegistryImage, ExporterImageDigest),
 								ImagePullPolicy: corev1.PullIfNotPresent,
 								Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 									[]v1.EnvVar{
