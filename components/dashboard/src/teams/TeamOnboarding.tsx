@@ -5,8 +5,7 @@
  */
 
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import { useCallback, useEffect, useState } from "react";
-import Alert from "../components/Alert";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Heading2, Heading3, Subheading } from "../components/typography/headings";
 import { useIsOwner } from "../data/organizations/members-query";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
@@ -15,10 +14,8 @@ import { useUpdateOrgSettingsMutation } from "../data/organizations/update-org-s
 import { OrgSettingsPage } from "./OrgSettingsPage";
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
 import { useDocumentTitle } from "../hooks/use-document-title";
-import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useToast } from "../components/toasts/Toasts";
 import type { PlainMessage } from "@bufbuild/protobuf";
-import { Link } from "react-router-dom";
 import { InputField } from "../components/forms/InputField";
 import { TextInput } from "../components/forms/TextInputField";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
@@ -33,8 +30,6 @@ export default function TeamOnboardingPage() {
     const updateTeamSettings = useUpdateOrgSettingsMutation();
 
     const [internalLink, setInternalLink] = useState<string | undefined>(undefined);
-
-    const billingMode = useOrgBillingMode();
 
     const handleUpdateTeamSettings = useCallback(
         async (newSettings: Partial<PlainMessage<OrganizationSettings>>, options?: { throwMutateError?: boolean }) => {
@@ -61,18 +56,20 @@ export default function TeamOnboardingPage() {
         [updateTeamSettings, org?.id, isOwner, settings, toast],
     );
 
-    const handleUpdateInternalLink = useCallback(async () => {
-        await handleUpdateTeamSettings({ onboardingSettings: { internalLink } });
-    }, [handleUpdateTeamSettings, internalLink]);
+    const handleUpdateInternalLink = useCallback(
+        async (e: FormEvent) => {
+            e.preventDefault();
+
+            await handleUpdateTeamSettings({ onboardingSettings: { internalLink } });
+        },
+        [handleUpdateTeamSettings, internalLink],
+    );
 
     useEffect(() => {
-        // if (settings) {
-        //     setInternalLink(settings.internalLink);
-        // }
-    }, [settings?.timeoutSettings]);
-
-    const isPaidOrDedicated =
-        billingMode.data?.mode === "none" || (billingMode.data?.mode === "usage-based" && billingMode.data?.paid);
+        if (settings) {
+            setInternalLink(settings.onboardingSettings?.internalLink);
+        }
+    }, [settings]);
 
     return (
         <>
@@ -86,38 +83,21 @@ export default function TeamOnboardingPage() {
                     </div>
                     <ConfigurationSettingsField>
                         <Heading3>Internal dashboard</Heading3>
-                        {!isPaidOrDedicated && (
-                            <Alert type="info" className="my-3">
-                                Setting Workspace timeouts is only available for organizations on a paid plan. Visit{" "}
-                                <Link to={"/billing"} className="gp-link">
-                                    Billing
-                                </Link>{" "}
-                                to upgrade your plan.
-                            </Alert>
-                        )}
+                        <Subheading>
+                            The link to your internal dashboard. This link will be shown to your organization members
+                            during the onboarding process. You can disable showing a link by leaving this field empty.
+                        </Subheading>
                         <form onSubmit={handleUpdateInternalLink}>
-                            <InputField
-                                label="Default workspace timeout"
-                                error={undefined}
-                                hint={
-                                    <span>
-                                        Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
-                                        <span className="font-semibold">2h</span>
-                                    </span>
-                                }
-                            >
+                            <InputField label="Internal dashboard link" error={undefined} className="mb-4">
                                 <TextInput
                                     value={internalLink}
                                     type="url"
+                                    placeholder="https://en.wikipedia.org/wiki/Eurosurveillance"
                                     onChange={setInternalLink}
-                                    disabled={updateTeamSettings.isLoading || !isOwner || !isPaidOrDedicated}
+                                    disabled={updateTeamSettings.isLoading || !isOwner}
                                 />
                             </InputField>
-                            <LoadingButton
-                                type="submit"
-                                loading={updateTeamSettings.isLoading}
-                                disabled={!isOwner || !isPaidOrDedicated}
-                            >
+                            <LoadingButton type="submit" loading={updateTeamSettings.isLoading} disabled={!isOwner}>
                                 Save
                             </LoadingButton>
                         </form>

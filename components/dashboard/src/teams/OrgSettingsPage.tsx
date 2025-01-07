@@ -87,6 +87,10 @@ function getOrgSettingsMenu(params: {
             title: "Policies",
             link: [`/settings/policy`],
         },
+        {
+            title: "Onboarding",
+            link: [`/settings/onboarding`],
+        },
     ];
     if (isGitpodIo()) {
         result.push(

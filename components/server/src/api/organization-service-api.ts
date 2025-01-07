@@ -334,6 +334,10 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             update.maxParallelRunningWorkspaces = req.maxParallelRunningWorkspaces;
         }
 
+        if (req.onboardingSettings) {
+            update.onboardingSettings = req.onboardingSettings;
+        }
+
         if (Object.keys(update).length === 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");
         }

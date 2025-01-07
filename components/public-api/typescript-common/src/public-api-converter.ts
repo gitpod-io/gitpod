@@ -1135,6 +1135,9 @@ export class PublicAPIConverter {
                 permissions: permissions.map((permission) => this.toOrganizationPermission(permission)),
             })),
             maxParallelRunningWorkspaces: settings.maxParallelRunningWorkspaces ?? 0,
+            onboardingSettings: {
+                internalLink: settings?.onboardingSettings?.internalLink ?? undefined,
+            }
         });
     }
 

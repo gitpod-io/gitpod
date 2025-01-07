@@ -25,6 +25,7 @@ type UpdateOrganizationSettingsArgs = Partial<
         | "timeoutSettings"
         | "roleRestrictions"
         | "maxParallelRunningWorkspaces"
+        | "onboardingSettings"
     >
 >;
 
@@ -45,6 +46,7 @@ export const useUpdateOrgSettingsMutation = () => {
             timeoutSettings,
             roleRestrictions,
             maxParallelRunningWorkspaces,
+            onboardingSettings,
         }) => {
             const settings = await organizationClient.updateOrganizationSettings({
                 organizationId: teamId,
@@ -60,6 +62,7 @@ export const useUpdateOrgSettingsMutation = () => {
                 roleRestrictions,
                 updateRoleRestrictions: !!roleRestrictions,
                 maxParallelRunningWorkspaces,
+                onboardingSettings,
             });
             return settings.settings!;
         },
