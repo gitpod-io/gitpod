@@ -375,6 +375,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
                 "timeoutSettings",
                 "roleRestrictions",
                 "maxParallelRunningWorkspaces",
+                "onboardingSettings",
             ],
         });
     }

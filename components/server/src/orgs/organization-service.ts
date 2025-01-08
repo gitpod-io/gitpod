@@ -35,6 +35,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { UsageService } from "./usage-service";
 import { CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
 import { CreateUserParams, UserAuthentication } from "../user/user-authentication";
+import isURL from "validator/lib/isURL";
 
 @injectable()
 export class OrganizationService {
@@ -549,6 +550,17 @@ export class OrganizationService {
             }
         }
 
+        if (settings.onboardingSettings?.internalLink) {
+            if (
+                !isURL(settings.onboardingSettings.internalLink ?? "", {
+                    require_protocol: true,
+                    host_blacklist: ["localhost", "127.0.0.1", "::1"],
+                })
+            ) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid internal link");
+            }
+        }
+
         return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
     }
 
@@ -583,6 +595,9 @@ export class OrganizationService {
         }
         if (settings.maxParallelRunningWorkspaces) {
             result.maxParallelRunningWorkspaces = settings.maxParallelRunningWorkspaces;
+        }
+        if (settings.onboardingSettings) {
+            result.onboardingSettings = settings.onboardingSettings;
         }
 
         return result;

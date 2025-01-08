@@ -5,7 +5,6 @@
  */
 
 import { isGitpodIo } from "../utils";
-import React from "react";
 import { Heading2, Heading3, Subheading } from "../components/typography/headings";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";

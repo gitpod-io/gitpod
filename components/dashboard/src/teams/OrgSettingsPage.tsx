@@ -15,7 +15,7 @@ import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useIsOwner } from "../data/organizations/members-query";
-import { isGitpodIo } from "../utils";
+import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
 
 export interface OrgSettingsPageProps {
     children: React.ReactNode;
@@ -27,6 +27,9 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
     const orgBillingMode = useOrgBillingMode();
     const oidcServiceEnabled = useFeatureFlag("oidcServiceEnabled");
     const orgGitAuthProviders = useFeatureFlag("orgGitAuthProviders");
+    const isOnboardingEnabled = useFeatureFlag("enterprise_onboarding_enabled");
+    const { data: installationConfig } = useInstallationConfiguration();
+    const isDedicatedInstallation = !!installationConfig?.isDedicatedInstallation;
 
     const menu = useMemo(
         () =>
@@ -36,8 +39,18 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
                 ssoEnabled: oidcServiceEnabled,
                 orgGitAuthProviders,
                 isOwner,
+                isDedicatedInstallation,
+                showOnboarding: isOnboardingEnabled && isDedicatedInstallation,
             }),
-        [org.data, orgBillingMode.data, oidcServiceEnabled, orgGitAuthProviders, isOwner],
+        [
+            org.data,
+            orgBillingMode.data,
+            oidcServiceEnabled,
+            orgGitAuthProviders,
+            isOwner,
+            isDedicatedInstallation,
+            isOnboardingEnabled,
+        ],
     );
 
     const title = "Organization Settings";
@@ -76,8 +89,10 @@ function getOrgSettingsMenu(params: {
     ssoEnabled?: boolean;
     orgGitAuthProviders: boolean;
     isOwner?: boolean;
+    showOnboarding?: boolean;
+    isDedicatedInstallation?: boolean;
 }) {
-    const { billingMode, ssoEnabled, orgGitAuthProviders, isOwner } = params;
+    const { billingMode, ssoEnabled, orgGitAuthProviders, isOwner, showOnboarding, isDedicatedInstallation } = params;
     const result = [
         {
             title: "General",
@@ -88,7 +103,7 @@ function getOrgSettingsMenu(params: {
             link: [`/settings/policy`],
         },
     ];
-    if (isGitpodIo()) {
+    if (!isDedicatedInstallation) {
         result.push(
             {
                 title: "Networking",
@@ -99,6 +114,12 @@ function getOrgSettingsMenu(params: {
                 link: [`/settings/auth`],
             },
         );
+    }
+    if (showOnboarding) {
+        result.push({
+            title: "Onboarding",
+            link: [`/settings/onboarding`],
+        });
     }
     if (isOwner && ssoEnabled) {
         result.push({

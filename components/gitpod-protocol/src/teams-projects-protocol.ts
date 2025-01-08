@@ -236,6 +236,9 @@ export interface OrganizationSettings {
 
     // max number of parallel running workspaces per user
     maxParallelRunningWorkspaces?: number;
+
+    // onboarding settings for the organization
+    onboardingSettings?: OnboardingSettings;
 }
 
 export type TimeoutSettings = {
@@ -258,6 +261,13 @@ export namespace TeamMemberRole {
     export function isValid(role: unknown): role is TeamMemberRole {
         return VALID_ORG_MEMBER_ROLES.includes(role as TeamMemberRole);
     }
+}
+
+export interface OnboardingSettings {
+    /**
+     * the link to an internal onboarding page for the organization, possibly featuring a custom onboarding guide and other resources
+     */
+    internalLink?: string;
 }
 
 export type TeamMemberInfo = OrgMemberInfo;
