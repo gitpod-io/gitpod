@@ -29,6 +29,7 @@ type Props = {
     autoFocus?: boolean;
     disableFocusLock?: boolean;
     className?: string;
+    containerClassName?: string;
     disabled?: boolean;
     onClose: () => void;
     onSubmit?: () => void | Promise<void>;
@@ -44,6 +45,7 @@ export const Modal: FC<Props> = ({
     autoFocus = false,
     disableFocusLock = false,
     className,
+    containerClassName,
     disabled = false,
     onClose,
     onSubmit,
@@ -87,6 +89,7 @@ export const Modal: FC<Props> = ({
                         "pointer-events-none relative",
                         "h-dvh w-auto", // small screens
                         "min-[576px]:mx-auto min-[576px]:mt-7 min-[576px]:h-[calc(100%-3.5rem)] min-[576px]:max-w-[500px]", // large screens
+                        containerClassName,
                     )}
                 >
                     <FocusOn

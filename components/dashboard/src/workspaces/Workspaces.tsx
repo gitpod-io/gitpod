@@ -20,11 +20,21 @@ import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v
 import { Button } from "@podkit/buttons/Button";
 import { VideoCarousel } from "./VideoCarousel";
 import { BlogBanners } from "./BlogBanners";
-import { BookOpen, Code } from "lucide-react";
+import { Book, BookOpen, Building, Code, GraduationCap } from "lucide-react";
 import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
 import { isGitpodIo } from "../utils";
 import PersonalizedContent from "./PersonalizedContent";
 import { useListenToWorkspacesWSMessages as useListenToWorkspacesStatusUpdates } from "../data/workspaces/listen-to-workspace-ws-messages";
+import { Subheading } from "@podkit/typography/Headings";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { Link } from "react-router-dom";
+import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
+import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "../components/Modal";
+import { VideoSection } from "../onboarding/VideoSection";
+import { trackVideoClick } from "../Analytics";
+import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
+import { useUserLoader } from "../hooks/use-user-loader";
+import { cn } from "@podkit/lib/cn";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -35,6 +45,11 @@ const WorkspacesPage: FunctionComponent = () => {
     const { data, isLoading } = useListWorkspacesQuery({ limit });
     const deleteInactiveWorkspaces = useDeleteInactiveWorkspacesMutation();
     useListenToWorkspacesStatusUpdates();
+
+    const { data: org } = useCurrentOrg();
+    const { data: orgSettings } = useOrgSettingsQuery();
+
+    const { user } = useUserLoader();
 
     const { toast } = useToast();
 
@@ -53,6 +68,25 @@ const WorkspacesPage: FunctionComponent = () => {
             inactiveWorkspaces,
         };
     }, [data, limit]);
+
+    const handlePlay = () => {
+        trackVideoClick("create-new-workspace");
+    };
+
+    const { data: suggestedRepos } = useSuggestedRepositories({ excludeConfigurations: false });
+
+    const recentRepos = useMemo(() => {
+        return (
+            suggestedRepos
+                ?.filter((repo) => {
+                    const autostartMatch = user?.workspaceAutostartOptions.find((option) => {
+                        return option.cloneUrl.includes(repo.url);
+                    });
+                    return autostartMatch;
+                })
+                .slice(0, 3) ?? []
+        );
+    }, [suggestedRepos, user]);
 
     const { filteredActiveWorkspaces, filteredInactiveWorkspaces } = useMemo(() => {
         const filteredActiveWorkspaces = activeWorkspaces.filter(
@@ -90,9 +124,96 @@ const WorkspacesPage: FunctionComponent = () => {
         } catch (e) {}
     }, [deleteInactiveWorkspaces, inactiveWorkspaces, toast]);
 
+    const [isVideoModalVisible, setVideoModalVisible] = useState(false);
+    const handleVideoModalClose = useCallback(() => {
+        setVideoModalVisible(false);
+    }, []);
+
     return (
         <>
-            <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
+            <Header
+                title="Workspaces"
+                subtitle="Manage, start and stop your personal development environments in the cloud."
+            />
+
+            <Subheading className="font-semibold text-pk-content-primary mt-4 mb-2 lg:px-28 px-4">
+                Getting started
+            </Subheading>
+
+            <div className="flex flex-wrap gap-5 lg:px-28 px-4">
+                <Card onClick={() => setVideoModalVisible(true)}>
+                    <GraduationCap className="flex-shrink-0" size={24} />
+                    <div>
+                        <CardTitle>Learn how Gitpod works</CardTitle>
+                        <CardDescription>
+                            We’ve put together resources for you to get the most our of Gitpod.
+                        </CardDescription>
+                    </div>
+                </Card>
+                {orgSettings?.onboardingSettings?.internalLink ? (
+                    <Card href={orgSettings.onboardingSettings.internalLink} isLinkExternal>
+                        <Building className="flex-shrink-0" size={24} />
+                        <div>
+                            <CardTitle>Learn more about Gitpod at {org?.name}</CardTitle>
+                            <CardDescription>
+                                Read through the internal Gitpod landing page of your organization.
+                            </CardDescription>
+                        </div>
+                    </Card>
+                ) : (
+                    <Card href={"/new?showExamples=true"}>
+                        <Code className="flex-shrink-0" size={24} />
+                        <div>
+                            <CardTitle>Open a sample repository</CardTitle>
+                            <CardDescription>Explore a sample repository to quickly experience Gitpod.</CardDescription>
+                        </div>
+                    </Card>
+                )}
+                <Card href="https://www.gitpod.io/docs/introduction" isLinkExternal>
+                    <Book className="flex-shrink-0" size={24} />
+                    <div>
+                        <CardTitle>Visit the docs</CardTitle>
+                        <CardDescription>We have extensive documentation to help if you get stuck.</CardDescription>
+                    </div>
+                </Card>
+            </div>
+
+            <Subheading className="font-semibold text-pk-content-primary pt-8 mb-2 lg:px-28 px-4">Suggested</Subheading>
+
+            <div className="flex flex-wrap gap-5 lg:px-28 px-4">
+                {recentRepos.map((repo) => (
+                    <Card key={repo.url} href={`/new#${repo.url}`} className="border-[#D79A45] border">
+                        <div>
+                            <CardTitle>{repo.configurationName || repo.repoName}</CardTitle>
+                            <CardDescription>{repo.url}</CardDescription>
+                        </div>
+                    </Card>
+                ))}
+            </div>
+
+            <Modal
+                visible={isVideoModalVisible}
+                onClose={handleVideoModalClose}
+                containerClassName="min-[576px]:max-w-[600px]"
+            >
+                <ModalHeader>Demo video</ModalHeader>
+                <ModalBody>
+                    <div className="flex flex-row items-center justify-center">
+                        <VideoSection
+                            metadataVideoTitle="Gitpod demo"
+                            playbackId="m01BUvCkTz7HzQKFoIcQmK00Rx5laLLoMViWBstetmvLs"
+                            poster="https://i.ytimg.com/vi_webp/1ZBN-b2cIB8/maxresdefault.webp"
+                            playerProps={{ onPlay: handlePlay, defaultHiddenCaptions: true }}
+                            className="w-[535px] rounded-xl"
+                        />
+                    </div>
+                </ModalBody>
+                <ModalBaseFooter>
+                    <Button variant="secondary" onClick={handleVideoModalClose}>
+                        Close
+                    </Button>
+                </ModalBaseFooter>
+            </Modal>
 
             {deleteModalVisible && (
                 <ConfirmationModal
@@ -237,6 +358,52 @@ const WorkspacesPage: FunctionComponent = () => {
 
 export default WorkspacesPage;
 
+const CardTitle = ({ children }: { children: React.ReactNode }) => {
+    return <span className="text-lg font-semibold text-pk-content-primary">{children}</span>;
+};
+const CardDescription = ({ children }: { children: React.ReactNode }) => {
+    return <p className="text-pk-content-secondary">{children}</p>;
+};
+type CardProps = {
+    children: React.ReactNode;
+    href?: string;
+    isLinkExternal?: boolean;
+    className?: string;
+    onClick?: () => void;
+};
+const Card = ({ children, href, isLinkExternal, className: classNameFromProps, onClick }: CardProps) => {
+    const className = cn(
+        "bg-pk-surface-secondary flex gap-3 py-4 px-5 flex-grow basis-[300px] sm:basis-[45%] lg:basis-[30%] rounded-xl max-w-[400px] text-left",
+        classNameFromProps,
+    );
+
+    if (href && isLinkExternal) {
+        return (
+            <a href={href} className={className} target="_blank" rel="noreferrer">
+                {children}
+            </a>
+        );
+    }
+
+    if (href) {
+        return (
+            <Link to={href} className={className}>
+                {children}
+            </Link>
+        );
+    }
+
+    if (onClick) {
+        return (
+            <button className={className} onClick={onClick}>
+                {children}
+            </button>
+        );
+    }
+
+    return <div className={className}>{children}</div>;
+};
+
 const sortWorkspaces = (a: Workspace, b: Workspace) => {
     const result = workspaceActiveDate(b).localeCompare(workspaceActiveDate(a));
     if (result === 0) {
@@ -247,7 +414,7 @@ const sortWorkspaces = (a: Workspace, b: Workspace) => {
 };
 
 /**
- * Given a WorkspaceInfo, return a ISO string of the last related activitiy
+ * Given a WorkspaceInfo, return a ISO string of the last related activity
  */
 function workspaceActiveDate(info: Workspace): string {
     return info.status!.phase!.lastTransitionTime!.toDate().toISOString();
