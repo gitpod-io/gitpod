@@ -554,7 +554,7 @@ export class OrganizationService {
             if (
                 !isURL(settings.onboardingSettings.internalLink ?? "", {
                     require_protocol: true,
-                    host_blacklist: ["localhost", "127.0.0.1"],
+                    host_blacklist: ["localhost", "127.0.0.1", "::1"],
                 })
             ) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid internal link");
