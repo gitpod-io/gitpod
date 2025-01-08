@@ -92,7 +92,7 @@ export default function TeamOnboardingPage() {
                                 <TextInput
                                     value={internalLink}
                                     type="url"
-                                    placeholder="https://en.wikipedia.org/wiki/Eurosurveillance"
+                                    placeholder="https://en.wikipedia.org/wiki/Heisenbug"
                                     onChange={setInternalLink}
                                     disabled={updateTeamSettings.isLoading || !isOwner}
                                 />
