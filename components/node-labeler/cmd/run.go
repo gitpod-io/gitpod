@@ -47,6 +47,7 @@ const (
 
 	registryFacade = "registry-facade"
 	wsDaemon       = "ws-daemon"
+	workspace      = "workspace"
 )
 
 var defaultRequeueTime = time.Second * 10
@@ -78,7 +79,7 @@ var runCmd = &cobra.Command{
 			LeaderElectionID: "node-labeler.gitpod.io",
 		})
 		if err != nil {
-			log.WithError(err).Fatal("unable to start node-labeber")
+			log.WithError(err).Fatal("unable to start node-labeler")
 		}
 
 		client, err := client.New(ctrl.GetConfigOrDie(), client.Options{})
@@ -123,10 +124,10 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("unable to set up ready check")
 		}
 
-		log.Info("starting node-labeber")
+		log.Info("starting node-labeler")
 		err = mgr.Start(ctrl.SetupSignalHandler())
 		if err != nil {
-			log.WithError(err).Fatal("problem running node-labeber")
+			log.WithError(err).Fatal("problem running node-labeler")
 		}
 
 		log.Info("Received SIGINT - shutting down")
