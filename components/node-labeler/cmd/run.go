@@ -47,7 +47,6 @@ const (
 
 	registryFacade = "registry-facade"
 	wsDaemon       = "ws-daemon"
-	workspace      = "workspace"
 )
 
 var defaultRequeueTime = time.Second * 10
