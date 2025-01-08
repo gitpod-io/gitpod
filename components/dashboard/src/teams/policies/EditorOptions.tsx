@@ -8,10 +8,10 @@ import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organizat
 import { Button } from "@podkit/buttons/Button";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { IdeOptionsModifyModalProps, IdeOptions, IdeOptionsModifyModal } from "../components/IdeOptions";
-import { Heading3, Subheading } from "../components/typography/headings";
-import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
-import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
+import { IdeOptionsModifyModalProps, IdeOptions, IdeOptionsModifyModal } from "../../components/IdeOptions";
+import { Heading3, Subheading } from "../../components/typography/headings";
+import { useAllowedWorkspaceEditorsMemo } from "../../data/ide-options/ide-options-query";
+import { ConfigurationSettingsField } from "../../repositories/detail/ConfigurationSettingsField";
 
 type Props = {
     settings: OrganizationSettings | undefined;
