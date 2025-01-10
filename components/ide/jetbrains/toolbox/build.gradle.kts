@@ -83,10 +83,10 @@ tasks.shadowJar {
         "com.jetbrains.toolbox.gateway",
         "com.jetbrains",
         "org.jetbrains",
-        "com.squareup.okhttp3",
-        "org.slf4j",
+//        "com.squareup.okhttp3",
+//        "org.slf4j",
         "org.jetbrains.intellij",
-        "com.squareup.okio",
+//        "com.squareup.okio",
         "kotlin."
     )
 

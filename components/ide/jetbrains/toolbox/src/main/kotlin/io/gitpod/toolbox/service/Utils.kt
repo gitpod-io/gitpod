@@ -6,6 +6,7 @@ package io.gitpod.toolbox.service
 
 import com.jetbrains.toolbox.api.core.PluginSettingsStore
 import com.jetbrains.toolbox.api.core.ServiceLocator
+import com.jetbrains.toolbox.api.core.diagnostics.Logger
 import com.jetbrains.toolbox.api.core.os.LocalDesktopManager
 import com.jetbrains.toolbox.api.remoteDev.connection.ClientHelper
 import com.jetbrains.toolbox.api.remoteDev.connection.ToolboxProxySettings
@@ -37,6 +38,7 @@ object Utils {
     lateinit var environmentStateColorPalette: EnvironmentStateColorPalette private set
     lateinit var localDesktopManager: LocalDesktopManager private set
     lateinit var environmentUiPageManager: EnvironmentUiPageManager private set
+    lateinit var logger: Logger private set
 
 
     fun initialize(serviceLocator: ServiceLocator) {
@@ -51,11 +53,12 @@ object Utils {
         environmentUiPageManager = serviceLocator.getService(EnvironmentUiPageManager::class.java)
         settingStore = serviceLocator.getService(PluginSettingsStore::class.java)
         sshConnectionValidator = serviceLocator.getService(SshConnectionValidator::class.java)
-        httpClient = serviceLocator.getService(OkHttpClient::class.java)
+        httpClient = OkHttpClient()
         clientHelper = serviceLocator.getService(ClientHelper::class.java)
         observablePropertiesFactory = serviceLocator.getService(ObservablePropertiesFactory::class.java)
         proxySettings = serviceLocator.getService(ToolboxProxySettings::class.java)
         gitpodSettings = GitpodSettings()
+        logger = serviceLocator.getService(Logger::class.java)
     }
 
     fun openUrl(url: String) {

@@ -5,7 +5,7 @@
 package io.gitpod.toolbox.gateway
 
 import io.gitpod.toolbox.service.ConnectParams
-import io.gitpod.toolbox.utils.GitpodLogger
+import io.gitpod.toolbox.service.Utils
 import java.net.URI
 import java.util.concurrent.Future
 
@@ -24,7 +24,7 @@ abstract class AbstractUriHandler<T> : UriHandler<T> {
         handle(data)
         true
     } catch (e: Exception) {
-        GitpodLogger.warn(e, "cannot parse URI")
+        Utils.logger.warn(e, "cannot parse URI")
         false
     }
 }
@@ -51,12 +51,11 @@ class GitpodOpenInToolboxUriHandler(val handler: (Pair<String, ConnectParams>) -
         }
 
         try {
-            URI.create(host)
+            URI.create("https://$host")
         } catch (e: IllegalArgumentException) {
             throw IllegalArgumentException("invalid host: $host")
         }
-        GitpodLogger.debug("parsed URI: $host, $workspaceId, $debugWorkspace")
-        val gitpodHost = "https://$host"
-        return Pair(gitpodHost, ConnectParams(workspaceId, gitpodHost, debugWorkspace))
+        Utils.logger.debug("parsed URI: $host, $workspaceId, $debugWorkspace")
+        return Pair(host, ConnectParams(workspaceId, host, debugWorkspace))
     }
 }

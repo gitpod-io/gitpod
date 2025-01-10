@@ -19,7 +19,6 @@ import io.gitpod.toolbox.auth.GitpodAuthManager
 import io.gitpod.toolbox.service.ConnectParams
 import io.gitpod.toolbox.service.GitpodPublicApiManager
 import io.gitpod.toolbox.service.Utils
-import io.gitpod.toolbox.utils.GitpodLogger
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -28,7 +27,6 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
 
 class GitpodRemoteEnvironment(
-    private val authManager: GitpodAuthManager,
     private val connectParams: ConnectParams,
     private val publicApi: GitpodPublicApiManager, observablePropertiesFactory: ObservablePropertiesFactory?,
 ) : AbstractRemoteProviderEnvironment(observablePropertiesFactory), DisposableHandle {
@@ -53,10 +51,10 @@ class GitpodRemoteEnvironment(
         }
 
         Utils.coroutineScope.launch {
-            GitpodLogger.debug("watching workspace ${connectParams.workspaceId}")
+            Utils.logger.debug("watching workspace ${connectParams.workspaceId}")
             watchWorkspaceJob = publicApi.watchWorkspaceStatus(connectParams.workspaceId) { _, status ->
                 lastPhase = status.phase
-                GitpodLogger.debug("${connectParams.workspaceId} status updated: $lastPhase")
+                Utils.logger.debug("${connectParams.workspaceId} status updated: $lastPhase")
                 lastWSEnvState.tryEmit(WorkspaceEnvState(status.phase))
                 Utils.coroutineScope.launch {
                     envContentsView.updateEnvironmentMeta(status)

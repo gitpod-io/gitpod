@@ -17,7 +17,6 @@ import io.gitpod.toolbox.components.EmptyUiPageWithTitle
 import io.gitpod.toolbox.components.GitpodIcon
 import io.gitpod.toolbox.components.SimpleButton
 import io.gitpod.toolbox.service.*
-import io.gitpod.toolbox.utils.GitpodLogger
 import kotlinx.coroutines.launch
 import java.net.URI
 import java.util.concurrent.CompletableFuture
@@ -49,19 +48,18 @@ class GitpodRemoteProvider(
 
     private suspend fun setEnvironmentVisibility(connectParams: ConnectParams) {
         val workspaceId = connectParams.workspaceId
-        GitpodLogger.debug("setEnvironmentVisibility $workspaceId, $connectParams")
+        Utils.logger.debug("setEnvironmentVisibility $workspaceId, $connectParams")
         val obj = environmentMap[connectParams.uniqueID]
         var (workspace) = obj ?: Pair(null, null)
         if (obj == null) {
             workspace = publicApi.getWorkspace(workspaceId)
             val env = GitpodRemoteEnvironment(
-                authManger,
                 connectParams,
                 publicApi,
                 Utils.observablePropertiesFactory
             )
             environmentMap[connectParams.uniqueID] = Pair(workspace, env)
-            consumer.consumeEnvironments(environmentMap.values.map { it.second })
+            consumer.consumeEnvironments(environmentMap.values.map { it.second }, false)
         }
         val joinLinkInfo = publicApi.fetchJoinLink2Info(workspaceId, workspace!!.getIDEUrl())
         // TODO(hw): verify if it's working
@@ -77,13 +75,12 @@ class GitpodRemoteProvider(
         Utils.coroutineScope.launch {
             val workspaces = publicApi.listWorkspaces()
             if (workspaces.isEmpty()) {
-                consumer.consumeEnvironments(emptyList())
+                consumer.consumeEnvironments(emptyList(), false)
                 return@launch
             }
             consumer.consumeEnvironments(workspaces.map {
                 val connectParams = it.getConnectParams()
                 val env = environmentMap[connectParams.uniqueID]?.second ?: GitpodRemoteEnvironment(
-                    authManger,
                     connectParams,
                     publicApi,
                     Utils.observablePropertiesFactory
@@ -94,14 +91,14 @@ class GitpodRemoteProvider(
                     pendingConnectParams = null
                 }
                 env
-            })
+            }, false)
         }
     }
 
     private fun startup() {
         val account = authManger.getCurrentAccount() ?: return
         publicApi.setup()
-        GitpodLogger.info("startup with ${account.getHost()} ${account.id}")
+        Utils.logger.info("startup with ${account.getHost()} ${account.id}")
         showWorkspacesList()
     }
 
@@ -169,7 +166,7 @@ class GitpodRemoteProvider(
         }
         when (uri.path) {
             else -> {
-                GitpodLogger.warn("Unknown request: $uri")
+                Utils.logger.warn("Unknown request: $uri")
             }
         }
     }

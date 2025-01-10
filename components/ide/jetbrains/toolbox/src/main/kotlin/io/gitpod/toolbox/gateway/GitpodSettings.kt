@@ -5,7 +5,6 @@
 package io.gitpod.toolbox.gateway
 
 import io.gitpod.toolbox.service.Utils
-import io.gitpod.toolbox.utils.GitpodLogger
 
 class GitpodSettings {
     private val settingsChangedListeners: MutableList<(String, String) -> Unit> = mutableListOf()
@@ -13,7 +12,7 @@ class GitpodSettings {
     private fun getStoreKey(key: SettingKey) = "GITPOD_SETTINGS:${key.name}"
 
     private fun updateSetting(key: SettingKey, value: String) {
-        GitpodLogger.debug("updateSetting ${key.name}=$value")
+        Utils.logger.debug("updateSetting ${key.name}=$value")
         Utils.settingStore[getStoreKey(key)] = value
         settingsChangedListeners.forEach { it(key.name, value) }
     }

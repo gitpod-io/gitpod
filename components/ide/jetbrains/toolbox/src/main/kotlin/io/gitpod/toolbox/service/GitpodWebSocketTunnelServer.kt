@@ -4,7 +4,6 @@
 
 package io.gitpod.toolbox.service
 
-import io.gitpod.toolbox.utils.GitpodLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -31,7 +30,7 @@ class GitpodWebSocketTunnelServer(private val provider: ConnectionInfoProvider) 
 
     fun start(): () -> Unit {
         val job = Utils.coroutineScope.launch(Dispatchers.IO) {
-            GitpodLogger.info("$logPrefix listening on port $port")
+            Utils.logger.info("$logPrefix listening on port $port")
             try {
                 while (isActive) {
                     try {
@@ -43,16 +42,16 @@ class GitpodWebSocketTunnelServer(private val provider: ConnectionInfoProvider) 
                         }
                     } catch (t: Throwable) {
                         if (isActive) {
-                            GitpodLogger.error(t, "$logPrefix failed to accept")
+                            Utils.logger.error(t, "$logPrefix failed to accept")
                         }
                     }
                 }
             } catch (t: Throwable) {
                 if (isActive) {
-                    GitpodLogger.error(t, "$logPrefix failed to listen")
+                    Utils.logger.error(t, "$logPrefix failed to listen")
                 }
             } finally {
-                GitpodLogger.info("$logPrefix stopped")
+                Utils.logger.info("$logPrefix stopped")
             }
         }
         return {
@@ -72,7 +71,7 @@ class GitpodWebSocketTunnelServer(private val provider: ConnectionInfoProvider) 
             // Forward data from WebSocket to TCP client
             socketClient.onMessageCallback = { data ->
                 outputStream.write(data)
-                GitpodLogger.trace("$logPrefix received ${data.size} bytes")
+                Utils.logger.trace("$logPrefix received ${data.size} bytes")
             }
 
             connectToWebSocket(socketClient, url, ownerToken)
@@ -84,13 +83,13 @@ class GitpodWebSocketTunnelServer(private val provider: ConnectionInfoProvider) 
             while (inputStream.read(buffer).also { read = it } != -1) {
                 // Forward data from TCP to WebSocket
                 socketClient.sendData(buffer.copyOfRange(0, read))
-                GitpodLogger.trace("$logPrefix sent $read bytes")
+                Utils.logger.trace("$logPrefix sent $read bytes")
             }
         } catch (t: Throwable) {
             if (t is SocketException && t.message?.contains("Socket closed") == true) {
                 return
             }
-            GitpodLogger.error(t, "$logPrefix failed to pipe")
+            Utils.logger.error(t, "$logPrefix failed to pipe")
         } finally {
             clients.remove(socketClient)
             socketClient.close()
@@ -108,7 +107,7 @@ class GitpodWebSocketTunnelServer(private val provider: ConnectionInfoProvider) 
             }
             val proxyAddress = proxy.address()
             if (proxyAddress !is InetSocketAddress) {
-                GitpodLogger.warn("$logPrefix unexpected proxy: $proxy")
+                Utils.logger.warn("$logPrefix unexpected proxy: $proxy")
                 continue
             }
             val hostName = proxyAddress.hostString
@@ -161,15 +160,15 @@ class GitpodWebSocketTunnelClient(private val logPrefix: String, private val tcp
     }
 
     override fun onClose(session: Session, closeReason: CloseReason) {
-        GitpodLogger.info("$logPrefix closed ($closeReason)")
+        Utils.logger.info("$logPrefix closed ($closeReason)")
         this.doClose()
     }
 
     override fun onError(session: Session?, thr: Throwable?) {
         if (thr != null) {
-            GitpodLogger.error(thr, "$logPrefix failed")
+            Utils.logger.error(thr, "$logPrefix failed")
         } else {
-            GitpodLogger.error("$logPrefix failed")
+            Utils.logger.error("$logPrefix failed")
         }
         this.doClose()
     }
@@ -178,12 +177,12 @@ class GitpodWebSocketTunnelClient(private val logPrefix: String, private val tcp
         try {
             tcpSocket.close()
         } catch (t: Throwable) {
-            GitpodLogger.error(t, "$logPrefix failed to close socket")
+            Utils.logger.error(t, "$logPrefix failed to close socket")
         }
         try {
             container?.stop()
         } catch (t: Throwable) {
-            GitpodLogger.error(t, "$logPrefix failed to stop container")
+            Utils.logger.error(t, "$logPrefix failed to stop container")
         }
     }
 
@@ -195,12 +194,12 @@ class GitpodWebSocketTunnelClient(private val logPrefix: String, private val tcp
         try {
             webSocketSession.close()
         } catch (t: Throwable) {
-            GitpodLogger.error(t, "$logPrefix failed to close")
+            Utils.logger.error(t, "$logPrefix failed to close")
         }
         try {
             container?.stop()
         } catch (t: Throwable) {
-            GitpodLogger.error(t, "$logPrefix failed to stop container")
+            Utils.logger.error(t, "$logPrefix failed to stop container")
         }
     }
 

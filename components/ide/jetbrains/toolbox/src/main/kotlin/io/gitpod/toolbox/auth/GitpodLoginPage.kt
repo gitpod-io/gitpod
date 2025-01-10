@@ -14,16 +14,13 @@ import io.gitpod.toolbox.components.AbstractUiPage
 import io.gitpod.toolbox.components.GitpodIcon
 import io.gitpod.toolbox.components.SimpleButton
 import io.gitpod.toolbox.service.Utils
+import java.net.URI
+import java.net.URL
 
 class GitpodLoginPage(private val authManager: GitpodAuthManager) : AbstractUiPage() {
-    private val hostField = TextField("Host", "https://exp-migration.preview.gitpod-dev.com", null) {
-        if (it.isBlank()) {
-            ValidationResult.Invalid("Host should not be empty")
-        }
-        if (!it.startsWith("https://")) {
-            ValidationResult.Invalid("Host should start with https://")
-        }
-        ValidationResult.Valid
+    private val hostField = TextField("Host", "exp-migration.preview.gitpod-dev.com", null) {
+        val (result) = isValidHost(it)
+        result
     }
 
     override fun getFields(): MutableList<UiField> {
@@ -33,7 +30,12 @@ class GitpodLoginPage(private val authManager: GitpodAuthManager) : AbstractUiPa
 
     override fun getActionButtons(): List<ActionDescription> {
         return listOf(SimpleButton("Login") action@{
-            val host = getFieldValue<String>(hostField) ?: return@action
+            val hostString = getFieldValue<String>(hostField) ?: return@action
+            val (result, host) = isValidHost(hostString)
+            if (result != ValidationResult.Valid) {
+                Utils.toolboxUi.showErrorInfoPopup(IllegalArgumentException(result.errorMessage ?: "Invalid host value"))
+                return@action
+            }
             val url = authManager.getOAuthLoginUrl(host)
             Utils.openUrl(url)
         })
@@ -45,5 +47,21 @@ class GitpodLoginPage(private val authManager: GitpodAuthManager) : AbstractUiPa
 
     override fun getSvgIcon(): SvgIcon {
         return GitpodIcon()
+    }
+
+    private fun isValidHost(it: String): Pair<ValidationResult, String> {
+        if (it.isBlank()) {
+            return ValidationResult.Invalid("Host cannot be empty") to ""
+        }
+        val host = try {
+            if (!it.startsWith("https://")) {
+                URI.create("https://$it").host
+            } else {
+                URI.create(it).host
+            }
+        } catch (e: Exception) {
+            return ValidationResult.Invalid("Invalid host value $e") to it
+        }
+        return ValidationResult.Valid to host
     }
 }
