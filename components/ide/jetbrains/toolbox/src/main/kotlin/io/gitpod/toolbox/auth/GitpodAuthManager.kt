@@ -10,10 +10,8 @@ import com.jetbrains.toolbox.api.core.auth.*
 import io.gitpod.publicapi.experimental.v1.UserServiceClient
 import io.gitpod.toolbox.service.GitpodPublicApiManager
 import io.gitpod.toolbox.service.Utils
-import io.gitpod.toolbox.utils.GitpodLogger
 import kotlinx.coroutines.future.future
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -48,22 +46,22 @@ class GitpodAuthManager {
             GitpodAccount::class.java,
             { it.encode() },
             { GitpodAccount.decode(it) },
-            { oauthToken, authCfg -> getAuthenticatedUser(authCfg.baseUrl, oauthToken) },
+            { oauthToken, authCfg -> getAuthenticatedUser(URI.create(authCfg.baseUrl).host, oauthToken) },
             { oauthToken, gpAccount -> getAuthenticatedUser(gpAccount.getHost(), oauthToken) },
             { gpLoginCfg ->
                 val authParams = mapOf(
                     "response_type" to "code",
                     "client_id" to "toolbox-gateway-gitpod-plugin",
-                    "scope" to authScopesJetBrainsToolbox.joinToString(" "),
+                    "scope" to authScopesJetBrainsToolbox.joinToString("%20"),
                 )
                 val tokenParams =
                     mapOf("grant_type" to "authorization_code", "client_id" to "toolbox-gateway-gitpod-plugin")
                 AuthConfiguration(
                     authParams,
                     tokenParams,
-                    gpLoginCfg.host,
-                    gpLoginCfg.host + "/api/oauth/authorize",
-                    gpLoginCfg.host + "/api/oauth/token",
+                    gpLoginCfg.hostUrl,
+                    gpLoginCfg.hostUrl + "/api/oauth/authorize",
+                    gpLoginCfg.hostUrl + "/api/oauth/token",
                     "code_challenge",
                     "S256",
                     "code_verifier",
@@ -76,13 +74,13 @@ class GitpodAuthManager {
         manager.addEventListener {
             when (it.type) {
                 AuthEvent.Type.LOGIN -> {
-                    GitpodLogger.info(" user logged in ${it.accountId}")
+                    Utils.logger.info(" user logged in ${it.accountId}")
                     resetCurrentAccount(it.accountId)
                     loginListeners.forEach { it() }
                 }
 
                 AuthEvent.Type.LOGOUT -> {
-                    GitpodLogger.info("user logged out ${it.accountId}")
+                    Utils.logger.info("user logged out ${it.accountId}")
                     resetCurrentAccount(it.accountId)
                     logoutListeners.forEach { it() }
                 }
@@ -92,7 +90,7 @@ class GitpodAuthManager {
 
     private fun resetCurrentAccount(accountId: String) {
         val account = manager.accountsWithStatus.find { it.account.id == accountId }?.account ?: return
-        GitpodLogger.debug("reset settings for ${account.getHost()}")
+        Utils.logger.debug("reset settings for ${account.getHost()}")
         Utils.gitpodSettings.resetSettings(account.getHost())
     }
 
@@ -132,8 +130,8 @@ class GitpodAuthManager {
     }
 
     fun getOAuthLoginUrl(gitpodHost: String): String {
-        GitpodLogger.info("get oauth url of $gitpodHost")
-        return manager.initiateLogin(GitpodLoginConfiguration(gitpodHost))
+        Utils.logger.info("get oauth url of https://$gitpodHost")
+        return manager.initiateLogin(GitpodLoginConfiguration("https://$gitpodHost"))
     }
 
     fun tryHandle(uri: URI): Boolean {
@@ -156,7 +154,7 @@ class GitpodAuthManager {
     private fun getAuthenticatedUser(gitpodHost: String, oAuthToken: OAuthToken): Future<GitpodAccount> {
         return Utils.coroutineScope.future {
             val bearerToken = getBearerToken(oAuthToken)
-            val client = GitpodPublicApiManager.createClient(URI(gitpodHost).host, bearerToken)
+            val client = GitpodPublicApiManager.createClient(gitpodHost, bearerToken)
             val user = GitpodPublicApiManager.tryGetAuthenticatedUser(UserServiceClient(client))
             GitpodAccount(bearerToken, user.id, user.name, gitpodHost, authScopesJetBrainsToolbox)
         }
@@ -178,7 +176,7 @@ class GitpodAuthManager {
 
 }
 
-class GitpodLoginConfiguration(val host: String)
+class GitpodLoginConfiguration(val hostUrl: String)
 
 @Serializable
 class GitpodAccount : Account {
@@ -192,7 +190,7 @@ class GitpodAccount : Account {
         this.credentials = credentials
         this.id = id
         this.name = name
-        this.host = URI(host).host
+        this.host = host
         this.scopes = scopes
     }
 
@@ -207,14 +205,9 @@ class GitpodAccount : Account {
     }
 
     suspend fun isValidate(): Boolean {
-        // TODO(hw): Align host formatting everywhere
-        val host = if (host.startsWith("http")) {
-            host
-        } else {
-            "https://$host"
-        }
-        val client = GitpodPublicApiManager.createClient(URI(host).host, credentials)
-        GitpodLogger.debug("validating account $host")
+        val hostUrl = "https://$host"
+        val client = GitpodPublicApiManager.createClient(URI(hostUrl).host, credentials)
+        Utils.logger.debug("validating account $hostUrl")
         try {
             GitpodPublicApiManager.tryGetAuthenticatedUser(UserServiceClient(client))
             // TODO: Verify scopes
@@ -225,7 +218,7 @@ class GitpodAccount : Account {
                     "jsonrpc2: connection is closed"
                 ))
             ) {
-                GitpodLogger.error("account $host is not valid")
+                Utils.logger.error("account $hostUrl is not valid")
                 return false
             }
             return true

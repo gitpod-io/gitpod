@@ -13,7 +13,6 @@ import com.connectrpc.protocols.NetworkProtocol
 import io.gitpod.publicapi.experimental.v1.*
 import io.gitpod.toolbox.auth.GitpodAccount
 import io.gitpod.toolbox.auth.GitpodAuthManager
-import io.gitpod.toolbox.utils.GitpodLogger
 import io.gitpod.toolbox.utils.await
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -42,7 +41,7 @@ class GitpodPublicApiManager(private val authManger: GitpodAuthManager) {
     fun setup() {
         val account = authManger.getCurrentAccount() ?: return
         this.account = account
-        GitpodLogger.info("setup papi client for ${account.getHost()}")
+        Utils.logger.info("setup papi client for ${account.getHost()}")
         val client = createClient(account.getHost(), account.getCredentials())
         workspaceApi = WorkspacesServiceClient(client)
         organizationApi = TeamsServiceClient(client)
@@ -112,7 +111,7 @@ class GitpodPublicApiManager(private val authManger: GitpodAuthManager) {
     private fun <T> handleResp(method: String, resp: ResponseMessage<T>): T {
         val data = resp.success { it.message }
         val error = resp.failure {
-            GitpodLogger.error("failed to call papi.${method} $it")
+            Utils.logger.error("failed to call papi.${method} $it")
             it.cause
         }
         return data ?: throw error!!
@@ -143,7 +142,7 @@ class GitpodPublicApiManager(private val authManger: GitpodAuthManager) {
             val resp = userApi.getAuthenticatedUser(UserOuterClass.GetAuthenticatedUserRequest.newBuilder().build())
             val user = resp.success { it.message.user }
             val err = resp.failure {
-                GitpodLogger.error("failed to call papi.getAuthenticatedUser $it")
+                Utils.logger.error("failed to call papi.getAuthenticatedUser $it")
                 it.cause
             }
             return user ?: throw err!!
