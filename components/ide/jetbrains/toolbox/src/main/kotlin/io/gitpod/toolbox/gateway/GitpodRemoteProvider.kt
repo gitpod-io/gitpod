@@ -59,7 +59,7 @@ class GitpodRemoteProvider(
                 Utils.observablePropertiesFactory
             )
             environmentMap[connectParams.uniqueID] = Pair(workspace, env)
-            consumer.consumeEnvironments(environmentMap.values.map { it.second }, false)
+            consumer.consumeEnvironments(environmentMap.values.map { it.second }, true)
         }
         val joinLinkInfo = publicApi.fetchJoinLink2Info(workspaceId, workspace!!.getIDEUrl())
         // TODO(hw): verify if it's working
@@ -75,7 +75,7 @@ class GitpodRemoteProvider(
         Utils.coroutineScope.launch {
             val workspaces = publicApi.listWorkspaces()
             if (workspaces.isEmpty()) {
-                consumer.consumeEnvironments(emptyList(), false)
+                consumer.consumeEnvironments(emptyList(), true)
                 return@launch
             }
             consumer.consumeEnvironments(workspaces.map {
@@ -91,7 +91,7 @@ class GitpodRemoteProvider(
                     pendingConnectParams = null
                 }
                 env
-            }, false)
+            }, true)
         }
     }
 
