@@ -2,7 +2,14 @@
 
 Provides a way to connect to Gitpod Classic workspaces within the JetBrains Toolbox App.
 
-## How to Develop
+## How to Develop with Gitpod Flex
+
+- Start an environment on [Gitpod Flex](https://app.gitpod.io) with current repository
+- Connect to the environment via **JetBrains Gateway** (because we want to restart Toolbox) SSH feature (user: gitpod_devcontainer)
+- [optional] Copy ./flex-sync.sh locally and chmod +x, the script is written for macOS, please adjust it if you're using other OS
+- Exec `./flex-sync.sh <env_host>`
+
+## How to Develop locally
 
 ### Requires
 - Java 21
