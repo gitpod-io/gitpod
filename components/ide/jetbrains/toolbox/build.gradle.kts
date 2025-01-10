@@ -146,6 +146,24 @@ val restartToolbox by tasks.creating {
     }
 }
 
+val buildPluginFlex by tasks.creating(Sync::class.java) {
+    group = "01.Gitpod"
+
+    dependsOn(tasks.named("shadowJar"))
+    from(tasks.named("shadowJar").get().outputs.files)
+
+    val targetDir = Path.of("./build/flex") / pluginId
+
+    from("src/main/resources") {
+        include("extension.json")
+        include("dependencies.json")
+        include("icon.svg")
+        include("icon-gray.svg")
+    }
+
+    into(targetDir)
+}
+
 val copyPlugin by tasks.creating(Sync::class.java) {
     group = "01.Gitpod"
 
