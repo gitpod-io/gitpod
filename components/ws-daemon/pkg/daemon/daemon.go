@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"golang.org/x/xerrors"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -22,7 +21,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -227,26 +225,6 @@ func NewDaemon(config Config) (*Daemon, error) {
 	}
 	err = wsctrl.SetupWithManager(mgr)
 	if err != nil {
-		return nil, err
-	}
-
-	// the pod count reconciler needs an index on spec.nodeName to be able to list pods by node
-	if err := mgr.GetFieldIndexer().IndexField(
-		context.Background(),
-		&corev1.Pod{},
-		"spec.nodeName",
-		func(o client.Object) []string {
-			pod := o.(*corev1.Pod)
-			return []string{pod.Spec.NodeName}
-		}); err != nil {
-		return nil, err
-	}
-
-	pcc, err := controller.NewPodCountController(mgr.GetClient(), nodename)
-	if err != nil {
-		return nil, err
-	}
-	if err := pcc.SetupWithManager(mgr); err != nil {
 		return nil, err
 	}
 

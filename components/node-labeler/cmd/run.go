@@ -19,6 +19,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -31,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -81,13 +84,13 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("unable to start node-labeler")
 		}
 
-		client, err := client.New(ctrl.GetConfigOrDie(), client.Options{})
+		kClient, err := client.New(ctrl.GetConfigOrDie(), client.Options{})
 		if err != nil {
 			log.WithError(err).Fatal("unable to create client")
 		}
 
 		r := &PodReconciler{
-			client,
+			kClient,
 		}
 
 		componentPredicate, err := predicate.LabelSelectorPredicate(metav1.LabelSelector{
@@ -108,6 +111,27 @@ var runCmd = &cobra.Command{
 			Complete(r)
 		if err != nil {
 			log.WithError(err).Fatal("unable to bind controller watch event handler")
+		}
+
+		// the pod count reconciler needs an index on spec.nodeName to be able to list pods by node
+		if err := mgr.GetFieldIndexer().IndexField(
+			context.Background(),
+			&corev1.Pod{},
+			"spec.nodeName",
+			func(o client.Object) []string {
+				pod := o.(*corev1.Pod)
+				return []string{pod.Spec.NodeName}
+			}); err != nil {
+			log.WithError(err).Fatal("unable to create index for pod nodeName")
+		}
+
+		pc, err := NewPodCountController(mgr.GetClient())
+		if err != nil {
+			log.WithError(err).Fatal("unable to create pod count controller")
+		}
+		err = pc.SetupWithManager(mgr)
+		if err != nil {
+			log.WithError(err).Fatal("unable to bind pod count controller")
 		}
 
 		metrics.Registry.MustRegister(NodeLabelerCounterVec)
@@ -135,6 +159,7 @@ var runCmd = &cobra.Command{
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+
 	rootCmd.AddCommand(runCmd)
 }
 
@@ -247,6 +272,127 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 	NodeLabelerCounterVec.WithLabelValues(component).Inc()
 
 	return reconcile.Result{}, nil
+}
+
+type PodCountController struct {
+	client.Client
+}
+
+// NewPodCountController creates a controller that tracks workspace pod counts and updates node annotations
+func NewPodCountController(client client.Client) (*PodCountController, error) {
+	return &PodCountController{
+		Client: client,
+	}, nil
+}
+
+func (pc *PodCountController) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		Named("pod-count").
+		For(&corev1.Pod{}).
+		WithEventFilter(workspacePodFilter()).
+		Complete(pc)
+}
+
+func workspacePodFilter() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			pod := e.Object.(*corev1.Pod)
+			return pod.Labels["component"] == "workspace"
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return false
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			pod := e.Object.(*corev1.Pod)
+			return pod.Labels["component"] == "workspace"
+		},
+	}
+}
+
+func (pc *PodCountController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log.WithField("request", req.NamespacedName.String()).Info("PodCountController reconciling")
+
+	var pod corev1.Pod
+	if err := pc.Get(ctx, req.NamespacedName, &pod); err != nil {
+		if !errors.IsNotFound(err) {
+			log.WithError(err).WithField("pod", req.NamespacedName).Error("unable to fetch Pod")
+			return ctrl.Result{}, err
+		}
+
+		log.WithField("pod", req.NamespacedName).Info("Pod not found, assuming it was deleted, reconciling all nodes")
+
+		// Pod was deleted, reconcile all nodes
+		return pc.reconcileAllNodes(ctx)
+	}
+
+	if pod.Spec.NodeName == "" {
+		log.WithField("pod", req.NamespacedName).Info("Pod has no node, requesting reconciliation")
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+
+	return pc.reconcileNode(ctx, pod.Spec.NodeName)
+}
+
+func (pc *PodCountController) reconcileAllNodes(ctx context.Context) (ctrl.Result, error) {
+	var nodes corev1.NodeList
+	if err := pc.List(ctx, &nodes); err != nil {
+		log.WithError(err).Error("failed to list nodes")
+		return ctrl.Result{}, err
+	}
+
+	for _, node := range nodes.Items {
+		if _, err := pc.reconcileNode(ctx, node.Name); err != nil {
+			log.WithError(err).WithField("node", node.Name).Error("failed to reconcile node")
+			// Continue with other nodes even if one fails
+			continue
+		}
+		log.WithField("node", node.Name).Info("reconciled node")
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (pc *PodCountController) reconcileNode(ctx context.Context, nodeName string) (ctrl.Result, error) {
+	var podList corev1.PodList
+	err := pc.List(ctx, &podList, &client.ListOptions{
+		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": nodeName}),
+		LabelSelector: labels.SelectorFromSet(labels.Set{"component": "workspace"}),
+	})
+	if err != nil {
+		log.WithError(err).WithField("nodeName", nodeName).Error("failed to list pods")
+		return ctrl.Result{}, fmt.Errorf("failed to list pods: %w", err)
+	}
+
+	workspaceCount := len(podList.Items)
+	log.WithField("nodeName", nodeName).WithField("workspaceCount", workspaceCount).Info("reconciling node")
+
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		var node corev1.Node
+		err := pc.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
+		if err != nil {
+			return fmt.Errorf("obtaining node %s: %w", nodeName, err)
+		}
+
+		if node.Annotations == nil {
+			node.Annotations = make(map[string]string)
+		}
+
+		if workspaceCount > 0 {
+			node.Annotations["cluster-autoscaler.kubernetes.io/scale-down-disabled"] = "true"
+			log.WithField("nodeName", nodeName).Info("disabling scale-down for node")
+		} else {
+			delete(node.Annotations, "cluster-autoscaler.kubernetes.io/scale-down-disabled")
+			log.WithField("nodeName", nodeName).Info("enabling scale-down for node")
+		}
+
+		return pc.Update(ctx, &node)
+	})
+	if err != nil {
+		log.WithError(err).WithField("nodeName", nodeName).Error("failed to update node")
+		return ctrl.Result{}, fmt.Errorf("failed to update node: %w", err)
+	}
+
+	return ctrl.Result{}, nil
 }
 
 func updateLabel(label string, add bool, nodeName string, client client.Client) error {

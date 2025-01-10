@@ -77,17 +77,27 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 	ctx, cancel = context.WithCancel(context.Background())
 
+	By("Setting up workspace controller")
 	workspaceCtrl, err = NewWorkspaceController(k8sClient, record.NewFakeRecorder(100), NodeName, secretsNamespace, 5, nil, ctrl_metrics.Registry, nil)
 	Expect(err).NotTo(HaveOccurred())
-
 	Expect(workspaceCtrl.SetupWithManager(k8sManager)).To(Succeed())
+
 	_ = createNamespace(secretsNamespace)
 
+	By("Starting the manager")
 	go func() {
 		defer GinkgoRecover()
 		err = k8sManager.Start(ctx)
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
+
+	By("Waiting for controllers to be ready")
+	DeferCleanup(cancel)
+
+	// Wait for controllers to be ready
+	Eventually(func() bool {
+		return k8sManager.GetCache().WaitForCacheSync(ctx)
+	}, time.Second*10, time.Millisecond*100).Should(BeTrue())
 })
 
 func createNamespace(name string) *corev1.Namespace {

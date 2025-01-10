@@ -26,8 +26,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/record"
@@ -81,41 +79,6 @@ func NewWorkspaceController(c client.Client, recorder record.EventRecorder, node
 		recorder:                recorder,
 		runtime:                 runtime,
 	}, nil
-}
-
-type PodCountController struct {
-	client.Client
-	NodeName string
-}
-
-// NewPodCountController creates a controller that tracks workspace pod counts and updates node annotations
-func NewPodCountController(client client.Client, nodeName string) (*PodCountController, error) {
-	return &PodCountController{
-		Client:   client,
-		NodeName: nodeName,
-	}, nil
-}
-
-func (pc *PodCountController) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		Named("pod-count").
-		For(&workspacev1.Workspace{}).
-		WithEventFilter(podEventFilter(pc.NodeName)).
-		Complete(pc)
-}
-
-func podEventFilter(nodeName string) predicate.Predicate {
-	return predicate.Funcs{
-		CreateFunc: func(e event.CreateEvent) bool {
-			return workspaceFilter(e.Object, nodeName)
-		},
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			return workspaceFilter(e.ObjectNew, nodeName)
-		},
-		DeleteFunc: func(e event.DeleteEvent) bool {
-			return workspaceFilter(e.Object, nodeName)
-		},
-	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -178,45 +141,6 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping {
 		result, err = wsc.handleWorkspaceStop(ctx, &workspace, req)
 		return result, err
-	}
-
-	return ctrl.Result{}, nil
-}
-
-func (pc *PodCountController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var podList corev1.PodList
-	err := pc.List(ctx, &podList, &client.ListOptions{
-		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": pc.NodeName}),
-		LabelSelector: labels.SelectorFromSet(labels.Set{"component": "workspace"}),
-	})
-	if err != nil {
-		glog.WithError(err).WithField("nodeName", pc.NodeName).Error("failed to list pods")
-		return ctrl.Result{}, err
-	}
-	workspaceCount := len(podList.Items)
-
-	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		var node corev1.Node
-		err := pc.Get(ctx, types.NamespacedName{Name: pc.NodeName}, &node)
-		if err != nil {
-			return fmt.Errorf("obtaining node %s: %w", pc.NodeName, err)
-		}
-
-		if node.Annotations == nil {
-			node.Annotations = make(map[string]string)
-		}
-
-		if workspaceCount > 0 {
-			node.Annotations["cluster-autoscaler.kubernetes.io/scale-down-disabled"] = "true"
-		} else {
-			delete(node.Annotations, "cluster-autoscaler.kubernetes.io/scale-down-disabled")
-		}
-
-		return pc.Update(ctx, &node)
-	})
-	if err != nil {
-		glog.WithError(err).WithField("nodeName", pc.NodeName).Error("[failed to update node")
-		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil

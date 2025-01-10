@@ -31,7 +31,10 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 					Verbs: []string{
 						"get",
+						"list",
+						"watch",
 						"update",
+						"patch",
 					},
 				},
 				{
