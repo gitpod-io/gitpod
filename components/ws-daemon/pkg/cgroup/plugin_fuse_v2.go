@@ -8,14 +8,13 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/opencontainers/runc/libcontainer/cgroups/ebpf"
-	"github.com/opencontainers/runc/libcontainer/cgroups/ebpf/devicefilter"
-	"github.com/opencontainers/runc/libcontainer/devices"
-	"github.com/opencontainers/runc/libcontainer/specconv"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/libcontainer/devicefilter"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/libcontainer/devices"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/libcontainer/specconv"
 )
 
 var (
@@ -47,7 +46,7 @@ func (c *FuseDeviceEnablerV2) Apply(ctx context.Context, opts *PluginOptions) er
 		return xerrors.Errorf("failed to generate device filter: %w", err)
 	}
 
-	_, err = ebpf.LoadAttachCgroupDeviceFilter(insts, license, cgroupFD)
+	_, err = devicefilter.LoadAttachCgroupDeviceFilter(insts, license, cgroupFD)
 	if err != nil {
 		return xerrors.Errorf("failed to attach cgroup device filter: %w", err)
 	}
