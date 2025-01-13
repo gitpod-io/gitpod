@@ -144,10 +144,6 @@ func newWorkspace(name, namespace string, phase workspacev1.WorkspacePhase) *wor
 	Expect(err).ToNot(HaveOccurred())
 
 	return &workspacev1.Workspace{
-		Status: workspacev1.WorkspaceStatus{
-			Phase:      phase,
-			Conditions: []metav1.Condition{},
-		},
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "workspace.gitpod.io/v1",
 			Kind:       "Workspace",
