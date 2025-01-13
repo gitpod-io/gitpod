@@ -49,7 +49,7 @@ class GitpodRemoteProvider(
     private suspend fun setEnvironmentVisibility(connectParams: ConnectParams) {
         val workspaceId = connectParams.workspaceId
         Utils.logger.debug("setEnvironmentVisibility $workspaceId, $connectParams")
-        val obj = environmentMap[connectParams.uniqueID]
+        var obj = environmentMap[connectParams.uniqueID]
         var (workspace) = obj ?: Pair(null, null)
         if (obj == null) {
             workspace = publicApi.getWorkspace(workspaceId)
@@ -60,15 +60,20 @@ class GitpodRemoteProvider(
             )
             environmentMap[connectParams.uniqueID] = Pair(workspace, env)
             consumer.consumeEnvironments(environmentMap.values.map { it.second }, true)
+            obj = environmentMap[connectParams.uniqueID]
         }
-        val joinLinkInfo = publicApi.fetchJoinLink2Info(workspaceId, workspace!!.getIDEUrl())
-        // TODO(hw): verify if it's working
-        Utils.clientHelper.prepareClient(joinLinkInfo.ideVersion)
-        Utils.clientHelper.setAutoConnectOnEnvironmentReady(
-            connectParams.uniqueID,
-            joinLinkInfo.ideVersion,
-            joinLinkInfo.projectPath
-        )
+        if (obj != null) {
+            val joinLinkInfo = publicApi.fetchJoinLink2Info(workspaceId, workspace!!.getIDEUrl())
+            // TODO(hw): verify if it's working
+            Utils.clientHelper.prepareClient(joinLinkInfo.ideVersion)
+            Utils.clientHelper.setAutoConnectOnEnvironmentReady(
+                connectParams.uniqueID,
+                joinLinkInfo.ideVersion,
+                joinLinkInfo.projectPath
+            )
+            obj.second.disconnect()
+            obj.second.connect()
+        }
     }
 
     private fun showWorkspacesList() {

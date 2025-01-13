@@ -5,6 +5,8 @@
 package io.gitpod.toolbox.gateway
 
 import com.jetbrains.toolbox.api.remoteDev.AbstractRemoteProviderEnvironment
+import com.jetbrains.toolbox.api.remoteDev.AfterDisconnectHook
+import com.jetbrains.toolbox.api.remoteDev.BeforeConnectionHook
 import com.jetbrains.toolbox.api.remoteDev.EnvironmentVisibilityState
 import com.jetbrains.toolbox.api.remoteDev.environments.EnvironmentContentsView
 import com.jetbrains.toolbox.api.remoteDev.states.CustomRemoteEnvironmentState
@@ -16,6 +18,7 @@ import com.jetbrains.toolbox.api.ui.observables.ObservableList
 import com.jetbrains.toolbox.api.ui.observables.ObservablePropertiesFactory
 import io.gitpod.publicapi.experimental.v1.Workspaces.WorkspaceInstanceStatus
 import io.gitpod.toolbox.auth.GitpodAuthManager
+import io.gitpod.toolbox.components.SimpleButton
 import io.gitpod.toolbox.service.ConnectParams
 import io.gitpod.toolbox.service.GitpodPublicApiManager
 import io.gitpod.toolbox.service.Utils
@@ -24,7 +27,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import java.net.URI
 import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 class GitpodRemoteEnvironment(
     private val connectParams: ConnectParams,
@@ -44,6 +49,14 @@ class GitpodRemoteEnvironment(
             lastWSEnvState.collect { lastState ->
                 val state = lastState.getState()
                 val actions = mutableListOf<ActionDescription>()
+                if (lastState.phase == WorkspaceInstanceStatus.Phase.PHASE_STOPPED) {
+                    actions.add(SimpleButton("Restart") {
+                        if (publicApi.gitpodHost.isNullOrBlank()) {
+                            return@SimpleButton
+                        }
+                        Utils.localDesktopManager.openUrl(URI("https://${publicApi.gitpodHost}/start#${connectParams.workspaceId}").toURL())
+                    })
+                }
                 actionList.clear()
                 actionList.addAll(actions)
                 listenerSet.forEach { it.consume(state) }
@@ -88,6 +101,34 @@ class GitpodRemoteEnvironment(
 
     override fun dispose() {
         watchWorkspaceJob?.cancel()
+    }
+
+    override fun getAfterDisconnectHooks(): MutableList<AfterDisconnectHook> {
+        return mutableListOf(object: AfterDisconnectHook {
+            override fun afterDisconnect() {
+                Utils.logger.info("=============afterDisconnect")
+            }
+        })
+    }
+
+    override fun getBeforeConnectionHooks(): MutableList<BeforeConnectionHook> {
+        return mutableListOf(object: BeforeConnectionHook {
+            override fun beforeConnection() {
+                Utils.logger.info("=============beforeConnection")
+            }
+        })
+    }
+
+    fun connect() {
+        connectionRequestListenerSet.forEach {
+            it.accept(true)
+        }
+    }
+
+    fun disconnect() {
+        connectionRequestListenerSet.forEach {
+            it.accept(false)
+        }
     }
 }
 
