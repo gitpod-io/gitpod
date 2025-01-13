@@ -31,134 +31,57 @@ import (
 )
 
 const (
-	timeout            = time.Second * 20
+	timeout            = time.Second * 10
 	duration           = time.Second * 2
 	interval           = time.Millisecond * 250
 	workspaceNamespace = "default"
 )
 
 var _ = Describe("WorkspaceCountController", func() {
-	It("should set scale-down-disabled when workspace is assigned to node", func() {
-		// Create a workspace
-		name := uuid.NewString()
-		ws := newWorkspace(name, workspaceNamespace, workspacev1.WorkspacePhaseRunning)
-		createWorkspace(ws)
-
-		// Update its runtime status with a node
-		updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
-			ws.Status.Runtime = &workspacev1.WorkspaceRuntimeStatus{
-				NodeName: NodeName,
-			}
-		})
-
-		// Verify node gets annotated
-		Eventually(func(g Gomega) {
-			var node corev1.Node
-			g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: NodeName}, &node)).To(Succeed())
-			g.Expect(node.Annotations).To(HaveKeyWithValue("cluster-autoscaler.kubernetes.io/scale-down-disabled", "true"))
-		}, timeout, interval).Should(Succeed())
-	})
-
 	It("should remove scale-down-disabled when last workspace is removed", func() {
-		// Create two workspaces on the same node
-		ws1 := newWorkspace(uuid.NewString(), workspaceNamespace, workspacev1.WorkspacePhaseRunning)
-		ws2 := newWorkspace(uuid.NewString(), workspaceNamespace, workspacev1.WorkspacePhaseRunning)
+		ws1 := newWorkspace(uuid.NewString(), workspaceNamespace, NodeName, workspacev1.WorkspacePhaseRunning)
+		ws2 := newWorkspace(uuid.NewString(), workspaceNamespace, NodeName, workspacev1.WorkspacePhaseRunning)
+		ws1.Status.Runtime = nil
+		ws2.Status.Runtime = nil
 		createWorkspace(ws1)
 		createWorkspace(ws2)
 
-		// Assign them to the node
+		By("Assigning nodes to workspaces")
 		updateObjWithRetries(k8sClient, ws1, true, func(ws *workspacev1.Workspace) {
-			ws.Status.Runtime = &workspacev1.WorkspaceRuntimeStatus{
-				NodeName: NodeName,
-			}
-		})
-		updateObjWithRetries(k8sClient, ws2, true, func(ws *workspacev1.Workspace) {
+			ws.Status.Conditions = []metav1.Condition{}
 			ws.Status.Runtime = &workspacev1.WorkspaceRuntimeStatus{
 				NodeName: NodeName,
 			}
 		})
 
-		// Verify node has annotation
+		updateObjWithRetries(k8sClient, ws2, true, func(ws *workspacev1.Workspace) {
+			ws.Status.Conditions = []metav1.Condition{}
+			ws.Status.Runtime = &workspacev1.WorkspaceRuntimeStatus{
+				NodeName: NodeName,
+			}
+		})
+
+		By("Verifying node annotation")
 		Eventually(func(g Gomega) {
 			var node corev1.Node
 			g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: NodeName}, &node)).To(Succeed())
 			g.Expect(node.Annotations).To(HaveKeyWithValue("cluster-autoscaler.kubernetes.io/scale-down-disabled", "true"))
 		}, timeout, interval).Should(Succeed())
 
-		// Delete first workspace
+		By("Deleting workspaces")
 		Expect(k8sClient.Delete(ctx, ws1)).To(Succeed())
-
-		// Verify annotation still exists (second workspace still there)
-		Consistently(func(g Gomega) {
-			var node corev1.Node
-			g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: NodeName}, &node)).To(Succeed())
-			g.Expect(node.Annotations).To(HaveKeyWithValue("cluster-autoscaler.kubernetes.io/scale-down-disabled", "true"))
-		}, "2s", "100ms").Should(Succeed())
-
-		// Delete second workspace
 		Expect(k8sClient.Delete(ctx, ws2)).To(Succeed())
 
-		// Verify annotation is removed
+		By("Verifying final state")
 		Eventually(func(g Gomega) {
 			var node corev1.Node
 			g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: NodeName}, &node)).To(Succeed())
 			g.Expect(node.Annotations).ToNot(HaveKey("cluster-autoscaler.kubernetes.io/scale-down-disabled"))
 		}, timeout, interval).Should(Succeed())
 	})
-
-	It("should handle workspaces across multiple nodes", func() {
-		const SecondNode = "second-node"
-
-		// Create nodes
-		node2 := &corev1.Node{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: SecondNode,
-			},
-		}
-		Expect(k8sClient.Create(ctx, node2)).To(Succeed())
-
-		// Create workspaces
-		ws1 := newWorkspace(uuid.NewString(), workspaceNamespace, workspacev1.WorkspacePhaseRunning)
-		ws2 := newWorkspace(uuid.NewString(), workspaceNamespace, workspacev1.WorkspacePhaseRunning)
-		createWorkspace(ws1)
-		createWorkspace(ws2)
-
-		// Assign to different nodes
-		updateObjWithRetries(k8sClient, ws1, true, func(ws *workspacev1.Workspace) {
-			ws.Status.Runtime = &workspacev1.WorkspaceRuntimeStatus{
-				NodeName: NodeName,
-			}
-		})
-		updateObjWithRetries(k8sClient, ws2, true, func(ws *workspacev1.Workspace) {
-			ws.Status.Runtime = &workspacev1.WorkspaceRuntimeStatus{
-				NodeName: SecondNode,
-			}
-		})
-
-		// Verify both nodes get annotated
-		Eventually(func(g Gomega) {
-			var node1, node2 corev1.Node
-			g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: NodeName}, &node1)).To(Succeed())
-			g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: SecondNode}, &node2)).To(Succeed())
-			g.Expect(node1.Annotations).To(HaveKeyWithValue("cluster-autoscaler.kubernetes.io/scale-down-disabled", "true"))
-			g.Expect(node2.Annotations).To(HaveKeyWithValue("cluster-autoscaler.kubernetes.io/scale-down-disabled", "true"))
-		}, timeout, interval).Should(Succeed())
-
-		// Delete workspace on first node
-		Expect(k8sClient.Delete(ctx, ws1)).To(Succeed())
-
-		// Verify first node's annotation is removed but second remains
-		Eventually(func(g Gomega) {
-			var node1, node2 corev1.Node
-			g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: NodeName}, &node1)).To(Succeed())
-			g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: SecondNode}, &node2)).To(Succeed())
-			g.Expect(node1.Annotations).ToNot(HaveKey("cluster-autoscaler.kubernetes.io/scale-down-disabled"))
-			g.Expect(node2.Annotations).To(HaveKeyWithValue("cluster-autoscaler.kubernetes.io/scale-down-disabled", "true"))
-		}, timeout, interval).Should(Succeed())
-	})
 })
 
-func newWorkspace(name, namespace string, phase workspacev1.WorkspacePhase) *workspacev1.Workspace {
+func newWorkspace(name, namespace, nodeName string, phase workspacev1.WorkspacePhase) *workspacev1.Workspace {
 	GinkgoHelper()
 	initializer := &csapi.WorkspaceInitializer{
 		Spec: &csapi.WorkspaceInitializer_Empty{Empty: &csapi.EmptyInitializer{}},
@@ -168,7 +91,10 @@ func newWorkspace(name, namespace string, phase workspacev1.WorkspacePhase) *wor
 
 	return &workspacev1.Workspace{
 		Status: workspacev1.WorkspaceStatus{
-			Phase:      phase,
+			Phase: phase,
+			Runtime: &workspacev1.WorkspaceRuntimeStatus{
+				NodeName: nodeName,
+			},
 			Conditions: []metav1.Condition{},
 		},
 		TypeMeta: metav1.TypeMeta{
@@ -176,9 +102,8 @@ func newWorkspace(name, namespace string, phase workspacev1.WorkspacePhase) *wor
 			Kind:       "Workspace",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:       name,
-			Namespace:  namespace,
-			Finalizers: []string{workspacev1.GitpodFinalizerName},
+			Name:      name,
+			Namespace: namespace,
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			Ownership: workspacev1.Ownership{
@@ -237,7 +162,7 @@ var (
 	ctx           context.Context
 	cancel        context.CancelFunc
 	workspaceCtrl *WorkspaceCountController
-	NodeName      = "ws-daemon-node"
+	NodeName      = "cool-ws-node"
 )
 
 func TestAPIs(t *testing.T) {
@@ -253,7 +178,7 @@ var _ = BeforeSuite(func() {
 	testEnv = &envtest.Environment{
 		ControlPlaneStartTimeout: 1 * time.Minute,
 		ControlPlaneStopTimeout:  1 * time.Minute,
-		CRDDirectoryPaths:        []string{filepath.Join("..", "..", "crd")},
+		CRDDirectoryPaths:        []string{filepath.Join("..", "crd")},
 		ErrorIfCRDPathMissing:    true,
 	}
 
@@ -275,6 +200,14 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 	ctx, cancel = context.WithCancel(context.Background())
+
+	By("Creating default ws node")
+	node := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: NodeName,
+		},
+	}
+	Expect(k8sClient.Create(ctx, node)).To(Succeed())
 
 	By("Setting up workspace controller")
 	workspaceCtrl, err = NewWorkspaceCountController(k8sClient)

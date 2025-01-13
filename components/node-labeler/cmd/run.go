@@ -370,7 +370,6 @@ func (wc *WorkspaceCountController) reconcileAllNodes(ctx context.Context) (ctrl
 		return ctrl.Result{}, err
 	}
 
-	// Update each node's annotation based on its count
 	for _, node := range nodes.Items {
 		count := workspaceCounts[node.Name]
 		if err := wc.updateNodeAnnotation(ctx, node.Name, count); err != nil {
