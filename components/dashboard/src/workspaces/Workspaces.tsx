@@ -35,6 +35,7 @@ import { trackVideoClick } from "../Analytics";
 import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
 import { useUserLoader } from "../hooks/use-user-loader";
 import { cn } from "@podkit/lib/cn";
+import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -72,6 +73,9 @@ const WorkspacesPage: FunctionComponent = () => {
     const handlePlay = () => {
         trackVideoClick("create-new-workspace");
     };
+
+    const { data: installationConfig } = useInstallationConfiguration();
+    const isDedicatedInstallation = !!installationConfig?.isDedicatedInstallation;
 
     const { data: suggestedRepos } = useSuggestedRepositories({ excludeConfigurations: false });
 
@@ -136,84 +140,98 @@ const WorkspacesPage: FunctionComponent = () => {
                 subtitle="Manage, start and stop your personal development environments in the cloud."
             />
 
-            <Subheading className="font-semibold text-pk-content-primary mt-4 mb-2 lg:px-28 px-4">
-                Getting started
-            </Subheading>
+            {isDedicatedInstallation && (
+                <>
+                    <Subheading className="font-semibold text-pk-content-primary mt-4 mb-2 lg:px-28 px-4">
+                        Getting started
+                    </Subheading>
 
-            <div className="flex flex-wrap gap-5 lg:px-28 px-4">
-                <Card onClick={() => setVideoModalVisible(true)}>
-                    <GraduationCap className="flex-shrink-0" size={24} />
-                    <div>
-                        <CardTitle>Learn how Gitpod works</CardTitle>
-                        <CardDescription>
-                            We’ve put together resources for you to get the most our of Gitpod.
-                        </CardDescription>
+                    <div className="flex flex-wrap gap-5 lg:px-28 px-4">
+                        <Card onClick={() => setVideoModalVisible(true)}>
+                            <GraduationCap className="flex-shrink-0" size={24} />
+                            <div>
+                                <CardTitle>Learn how Gitpod works</CardTitle>
+                                <CardDescription>
+                                    We’ve put together resources for you to get the most our of Gitpod.
+                                </CardDescription>
+                            </div>
+                        </Card>
+                        {orgSettings?.onboardingSettings?.internalLink ? (
+                            <Card href={orgSettings.onboardingSettings.internalLink} isLinkExternal>
+                                <Building className="flex-shrink-0" size={24} />
+                                <div>
+                                    <CardTitle>Learn more about Gitpod at {org?.name}</CardTitle>
+                                    <CardDescription>
+                                        Read through the internal Gitpod landing page of your organization.
+                                    </CardDescription>
+                                </div>
+                            </Card>
+                        ) : (
+                            <Card href={"/new?showExamples=true"}>
+                                <Code className="flex-shrink-0" size={24} />
+                                <div>
+                                    <CardTitle>Open a sample repository</CardTitle>
+                                    <CardDescription>
+                                        Explore a sample repository to quickly experience Gitpod.
+                                    </CardDescription>
+                                </div>
+                            </Card>
+                        )}
+                        <Card href="https://www.gitpod.io/docs/introduction" isLinkExternal>
+                            <Book className="flex-shrink-0" size={24} />
+                            <div>
+                                <CardTitle>Visit the docs</CardTitle>
+                                <CardDescription>
+                                    We have extensive documentation to help if you get stuck.
+                                </CardDescription>
+                            </div>
+                        </Card>
                     </div>
-                </Card>
-                {orgSettings?.onboardingSettings?.internalLink ? (
-                    <Card href={orgSettings.onboardingSettings.internalLink} isLinkExternal>
-                        <Building className="flex-shrink-0" size={24} />
-                        <div>
-                            <CardTitle>Learn more about Gitpod at {org?.name}</CardTitle>
-                            <CardDescription>
-                                Read through the internal Gitpod landing page of your organization.
-                            </CardDescription>
-                        </div>
-                    </Card>
-                ) : (
-                    <Card href={"/new?showExamples=true"}>
-                        <Code className="flex-shrink-0" size={24} />
-                        <div>
-                            <CardTitle>Open a sample repository</CardTitle>
-                            <CardDescription>Explore a sample repository to quickly experience Gitpod.</CardDescription>
-                        </div>
-                    </Card>
-                )}
-                <Card href="https://www.gitpod.io/docs/introduction" isLinkExternal>
-                    <Book className="flex-shrink-0" size={24} />
-                    <div>
-                        <CardTitle>Visit the docs</CardTitle>
-                        <CardDescription>We have extensive documentation to help if you get stuck.</CardDescription>
-                    </div>
-                </Card>
-            </div>
 
-            <Subheading className="font-semibold text-pk-content-primary pt-8 mb-2 lg:px-28 px-4">Suggested</Subheading>
+                    {recentRepos.length > 0 && (
+                        <>
+                            <Subheading className="font-semibold text-pk-content-primary pt-8 mb-2 lg:px-28 px-4">
+                                Suggested
+                            </Subheading>
 
-            <div className="flex flex-wrap gap-5 lg:px-28 px-4">
-                {recentRepos.map((repo) => (
-                    <Card key={repo.url} href={`/new#${repo.url}`} className="border-[#D79A45] border">
-                        <div>
-                            <CardTitle>{repo.configurationName || repo.repoName}</CardTitle>
-                            <CardDescription>{repo.url}</CardDescription>
-                        </div>
-                    </Card>
-                ))}
-            </div>
+                            <div className="flex flex-wrap gap-5 lg:px-28 px-4">
+                                {recentRepos.map((repo) => (
+                                    <Card key={repo.url} href={`/new#${repo.url}`} className="border-[#D79A45] border">
+                                        <div>
+                                            <CardTitle>{repo.configurationName || repo.repoName}</CardTitle>
+                                            <CardDescription>{repo.url}</CardDescription>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        </>
+                    )}
 
-            <Modal
-                visible={isVideoModalVisible}
-                onClose={handleVideoModalClose}
-                containerClassName="min-[576px]:max-w-[600px]"
-            >
-                <ModalHeader>Demo video</ModalHeader>
-                <ModalBody>
-                    <div className="flex flex-row items-center justify-center">
-                        <VideoSection
-                            metadataVideoTitle="Gitpod demo"
-                            playbackId="m01BUvCkTz7HzQKFoIcQmK00Rx5laLLoMViWBstetmvLs"
-                            poster="https://i.ytimg.com/vi_webp/1ZBN-b2cIB8/maxresdefault.webp"
-                            playerProps={{ onPlay: handlePlay, defaultHiddenCaptions: true }}
-                            className="w-[535px] rounded-xl"
-                        />
-                    </div>
-                </ModalBody>
-                <ModalBaseFooter>
-                    <Button variant="secondary" onClick={handleVideoModalClose}>
-                        Close
-                    </Button>
-                </ModalBaseFooter>
-            </Modal>
+                    <Modal
+                        visible={isVideoModalVisible}
+                        onClose={handleVideoModalClose}
+                        containerClassName="min-[576px]:max-w-[600px]"
+                    >
+                        <ModalHeader>Demo video</ModalHeader>
+                        <ModalBody>
+                            <div className="flex flex-row items-center justify-center">
+                                <VideoSection
+                                    metadataVideoTitle="Gitpod demo"
+                                    playbackId="m01BUvCkTz7HzQKFoIcQmK00Rx5laLLoMViWBstetmvLs"
+                                    poster="https://i.ytimg.com/vi_webp/1ZBN-b2cIB8/maxresdefault.webp"
+                                    playerProps={{ onPlay: handlePlay, defaultHiddenCaptions: true }}
+                                    className="w-[535px] rounded-xl"
+                                />
+                            </div>
+                        </ModalBody>
+                        <ModalBaseFooter>
+                            <Button variant="secondary" onClick={handleVideoModalClose}>
+                                Close
+                            </Button>
+                        </ModalBaseFooter>
+                    </Modal>
+                </>
+            )}
 
             {deleteModalVisible && (
                 <ConfirmationModal
