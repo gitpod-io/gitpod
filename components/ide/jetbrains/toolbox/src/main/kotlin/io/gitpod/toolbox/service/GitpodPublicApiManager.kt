@@ -28,6 +28,7 @@ class GitpodPublicApiManager(private val authManger: GitpodAuthManager) {
     private var organizationApi: TeamsServiceClientInterface? = null
     private var userApi: UserServiceClientInterface? = null
     private var account: GitpodAccount? = null
+    var gitpodHost: String? = null
 
     init {
         authManger.addLogoutListener {
@@ -46,6 +47,7 @@ class GitpodPublicApiManager(private val authManger: GitpodAuthManager) {
         workspaceApi = WorkspacesServiceClient(client)
         organizationApi = TeamsServiceClient(client)
         userApi = UserServiceClient(client)
+        gitpodHost = account.getHost()
     }
 
     fun watchWorkspaceStatus(workspaceId: String, consumer: (String, Workspaces.WorkspaceInstanceStatus) -> Unit): Job {
