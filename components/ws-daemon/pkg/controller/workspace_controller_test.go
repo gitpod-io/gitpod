@@ -135,61 +135,6 @@ var _ = Describe("WorkspaceController", func() {
 	})
 })
 
-// var _ = Describe("PodCountController", func() {
-// 	It("should count a workspace on a node", func() {
-// 		// Create a node
-// 		node := &corev1.Node{
-// 			ObjectMeta: metav1.ObjectMeta{
-// 				Name:        NodeName,
-// 				Annotations: make(map[string]string),
-// 			},
-// 		}
-// 		Expect(k8sClient.Create(ctx, node)).To(Succeed())
-
-// 		// Create a workspace with its pod
-// 		name := uuid.NewString()
-// 		ws := newWorkspace(name, workspaceNamespace, workspacev1.WorkspacePhaseRunning)
-// 		createWorkspaceWithPod(ws)
-
-// 		By("Workspace and pod created")
-
-// 		// Update workspace with runtime status
-// 		updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
-// 			ws.Status.Runtime = &workspacev1.WorkspaceRuntimeStatus{
-// 				NodeName: NodeName,
-// 			}
-// 			ws.Status.Conditions = []metav1.Condition{}
-// 		})
-
-// 		By("Runtime status updated")
-
-// 		// Check node annotations
-// 		Eventually(func(g Gomega) {
-// 			var updatedNode corev1.Node
-// 			err := k8sClient.Get(ctx, types.NamespacedName{Name: NodeName}, &updatedNode)
-// 			g.Expect(err).NotTo(HaveOccurred())
-
-// 			By(fmt.Sprintf("Current node annotations: %v", updatedNode.Annotations))
-// 			g.Expect(updatedNode.Annotations).To(HaveKeyWithValue("cluster-autoscaler.kubernetes.io/scale-down-disabled", "true"))
-
-// 			Expect(k8sClient.Delete(ctx, ws)).To(Succeed())
-// 			pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: ws.Name, Namespace: ws.Namespace}}
-// 			Expect(k8sClient.Delete(ctx, pod)).To(Succeed())
-
-// 			By("Workspace and pod deleted")
-
-// 			Eventually(func(g Gomega) {
-// 				var node corev1.Node
-// 				err := k8sClient.Get(ctx, types.NamespacedName{Name: NodeName}, &node)
-// 				g.Expect(err).NotTo(HaveOccurred())
-// 				g.Expect(node.Annotations).ToNot(HaveKey("cluster-autoscaler.kubernetes.io/scale-down-disabled"))
-// 			}, timeout, interval).Should(Succeed())
-// 		}, timeout, interval).Should(Succeed())
-
-// 		By("Node annotation verified")
-// 	})
-// })
-
 func newWorkspace(name, namespace string, phase workspacev1.WorkspacePhase) *workspacev1.Workspace {
 	GinkgoHelper()
 	initializer := &csapi.WorkspaceInitializer{
@@ -241,34 +186,6 @@ func createWorkspace(ws *workspacev1.Workspace) {
 	By("creating workspace")
 	Expect(k8sClient.Create(ctx, ws)).To(Succeed())
 }
-
-// func createWorkspaceWithPod(ws *workspacev1.Workspace) {
-// 	GinkgoHelper()
-// 	By("creating workspace")
-// 	Expect(k8sClient.Create(ctx, ws)).To(Succeed())
-
-// 	By("creating associated pod")
-// 	pod := &corev1.Pod{
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Name:      ws.Name, // Use same name as workspace
-// 			Namespace: ws.Namespace,
-// 			Labels: map[string]string{
-// 				"component":              "workspace",
-// 				"workspace.gitpod.io/id": ws.Spec.Ownership.WorkspaceID,
-// 			},
-// 		},
-// 		Spec: corev1.PodSpec{
-// 			NodeName: NodeName,
-// 			Containers: []corev1.Container{
-// 				{
-// 					Name:  "workspace",
-// 					Image: *ws.Spec.Image.Workspace.Ref,
-// 				},
-// 			},
-// 		},
-// 	}
-// 	Expect(k8sClient.Create(ctx, pod)).To(Succeed())
-// }
 
 func createSecret(name, namespace string) *corev1.Secret {
 	GinkgoHelper()

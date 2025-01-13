@@ -48,6 +48,16 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"watch",
 					},
 				},
+				// permissions required for the WorkspaceCountController
+				{
+					APIGroups: []string{"workspace.gitpod.io"},
+					Resources: []string{"workspaces"},
+					Verbs: []string{
+						"get",
+						"list",
+						"watch",
+					},
+				},
 				// ConfigMap, Leases, and Events access is required for leader-election.
 				{
 					APIGroups: []string{""},

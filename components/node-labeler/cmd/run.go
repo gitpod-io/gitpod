@@ -15,12 +15,11 @@ import (
 	"time"
 
 	"github.com/bombsimon/logrusr/v2"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -113,25 +112,13 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("unable to bind controller watch event handler")
 		}
 
-		// the pod count reconciler needs an index on spec.nodeName to be able to list pods by node
-		if err := mgr.GetFieldIndexer().IndexField(
-			context.Background(),
-			&corev1.Pod{},
-			"spec.nodeName",
-			func(o client.Object) []string {
-				pod := o.(*corev1.Pod)
-				return []string{pod.Spec.NodeName}
-			}); err != nil {
-			log.WithError(err).Fatal("unable to create index for pod nodeName")
-		}
-
-		pc, err := NewPodCountController(mgr.GetClient())
+		wc, err := NewWorkspaceCountController(mgr.GetClient())
 		if err != nil {
-			log.WithError(err).Fatal("unable to create pod count controller")
+			log.WithError(err).Fatal("unable to create workspace count controller")
 		}
-		err = pc.SetupWithManager(mgr)
+		err = wc.SetupWithManager(mgr)
 		if err != nil {
-			log.WithError(err).Fatal("unable to bind pod count controller")
+			log.WithError(err).Fatal("unable to bind workspace count controller")
 		}
 
 		metrics.Registry.MustRegister(NodeLabelerCounterVec)
@@ -159,6 +146,7 @@ var runCmd = &cobra.Command{
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(workspacev1.AddToScheme(scheme))
 
 	rootCmd.AddCommand(runCmd)
 }
@@ -274,101 +262,119 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 	return reconcile.Result{}, nil
 }
 
-type PodCountController struct {
+type WorkspaceCountController struct {
 	client.Client
 }
 
-// NewPodCountController creates a controller that tracks workspace pod counts and updates node annotations
-func NewPodCountController(client client.Client) (*PodCountController, error) {
-	return &PodCountController{
+func NewWorkspaceCountController(client client.Client) (*WorkspaceCountController, error) {
+	return &WorkspaceCountController{
 		Client: client,
 	}, nil
 }
 
-func (pc *PodCountController) SetupWithManager(mgr ctrl.Manager) error {
+func (wc *WorkspaceCountController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		Named("pod-count").
-		For(&corev1.Pod{}).
-		WithEventFilter(workspacePodFilter()).
-		Complete(pc)
+		Named("workspace-count").
+		For(&workspacev1.Workspace{}).
+		WithEventFilter(workspaceFilter()).
+		Complete(wc)
 }
 
-func workspacePodFilter() predicate.Predicate {
+func workspaceFilter() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
-			pod := e.Object.(*corev1.Pod)
-			return pod.Labels["component"] == "workspace"
+			ws := e.Object.(*workspacev1.Workspace)
+			return ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != ""
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			return false
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-			pod := e.Object.(*corev1.Pod)
-			return pod.Labels["component"] == "workspace"
+			ws := e.Object.(*workspacev1.Workspace)
+			return ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != ""
 		},
 	}
 }
 
-func (pc *PodCountController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log.WithField("request", req.NamespacedName.String()).Info("PodCountController reconciling")
+func (wc *WorkspaceCountController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log.WithField("request", req.NamespacedName.String()).Info("WorkspaceCountController reconciling")
 
-	var pod corev1.Pod
-	if err := pc.Get(ctx, req.NamespacedName, &pod); err != nil {
+	var ws workspacev1.Workspace
+	if err := wc.Get(ctx, req.NamespacedName, &ws); err != nil {
 		if !errors.IsNotFound(err) {
-			log.WithError(err).WithField("pod", req.NamespacedName).Error("unable to fetch Pod")
+			log.WithError(err).WithField("workspace", req.NamespacedName).Error("unable to fetch Workspace")
+			return ctrl.Result{}, err
+		}
+		// If workspace not found, do a full reconciliation
+		log.WithField("workspace", req.NamespacedName).Info("Workspace not found, reconciling all nodes")
+		return wc.reconcileAllNodes(ctx)
+	}
+
+	if ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != "" {
+		var workspaceList workspacev1.WorkspaceList
+		if err := wc.List(ctx, &workspaceList); err != nil {
+			log.WithError(err).Error("failed to list workspaces")
 			return ctrl.Result{}, err
 		}
 
-		log.WithField("pod", req.NamespacedName).Info("Pod not found, assuming it was deleted, reconciling all nodes")
-
-		// Pod was deleted, reconcile all nodes
-		return pc.reconcileAllNodes(ctx)
-	}
-
-	if pod.Spec.NodeName == "" {
-		log.WithField("pod", req.NamespacedName).Info("Pod has no node, requesting reconciliation")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
-	}
-
-	return pc.reconcileNode(ctx, pod.Spec.NodeName)
-}
-
-func (pc *PodCountController) reconcileAllNodes(ctx context.Context) (ctrl.Result, error) {
-	var nodes corev1.NodeList
-	if err := pc.List(ctx, &nodes); err != nil {
-		log.WithError(err).Error("failed to list nodes")
-		return ctrl.Result{}, err
-	}
-
-	for _, node := range nodes.Items {
-		if _, err := pc.reconcileNode(ctx, node.Name); err != nil {
-			log.WithError(err).WithField("node", node.Name).Error("failed to reconcile node")
-			// Continue with other nodes even if one fails
-			continue
+		count := 0
+		nodeName := ws.Status.Runtime.NodeName
+		for _, ws := range workspaceList.Items {
+			if ws.Status.Runtime != nil &&
+				ws.Status.Runtime.NodeName == nodeName &&
+				ws.DeletionTimestamp.IsZero() {
+				count++
+			}
 		}
-		log.WithField("node", node.Name).Info("reconciled node")
+
+		if err := wc.updateNodeAnnotation(ctx, nodeName, count); err != nil {
+			return ctrl.Result{}, err
+		}
+		log.WithField("node", nodeName).WithField("count", count).Info("updated node annotation")
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func (pc *PodCountController) reconcileNode(ctx context.Context, nodeName string) (ctrl.Result, error) {
-	var podList corev1.PodList
-	err := pc.List(ctx, &podList, &client.ListOptions{
-		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": nodeName}),
-		LabelSelector: labels.SelectorFromSet(labels.Set{"component": "workspace"}),
-	})
-	if err != nil {
-		log.WithError(err).WithField("nodeName", nodeName).Error("failed to list pods")
-		return ctrl.Result{}, fmt.Errorf("failed to list pods: %w", err)
+func (wc *WorkspaceCountController) reconcileAllNodes(ctx context.Context) (ctrl.Result, error) {
+	var workspaceList workspacev1.WorkspaceList
+	if err := wc.List(ctx, &workspaceList); err != nil {
+		log.WithError(err).Error("failed to list workspaces")
+		return ctrl.Result{}, err
 	}
 
-	workspaceCount := len(podList.Items)
-	log.WithField("nodeName", nodeName).WithField("workspaceCount", workspaceCount).Info("reconciling node")
+	workspaceCounts := make(map[string]int)
+	for _, ws := range workspaceList.Items {
+		if ws.Status.Runtime != nil &&
+			ws.Status.Runtime.NodeName != "" &&
+			ws.DeletionTimestamp.IsZero() {
+			workspaceCounts[ws.Status.Runtime.NodeName]++
+		}
+	}
 
-	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+	var nodes corev1.NodeList
+	if err := wc.List(ctx, &nodes); err != nil {
+		log.WithError(err).Error("failed to list nodes")
+		return ctrl.Result{}, err
+	}
+
+	// Update each node's annotation based on its count
+	for _, node := range nodes.Items {
+		count := workspaceCounts[node.Name]
+		if err := wc.updateNodeAnnotation(ctx, node.Name, count); err != nil {
+			log.WithError(err).WithField("node", node.Name).Error("failed to update node")
+			continue
+		}
+		log.WithField("node", node.Name).WithField("count", count).Info("updated node annotation")
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (wc *WorkspaceCountController) updateNodeAnnotation(ctx context.Context, nodeName string, count int) error {
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		var node corev1.Node
-		err := pc.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
+		err := wc.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
 		if err != nil {
 			return fmt.Errorf("obtaining node %s: %w", nodeName, err)
 		}
@@ -377,7 +383,7 @@ func (pc *PodCountController) reconcileNode(ctx context.Context, nodeName string
 			node.Annotations = make(map[string]string)
 		}
 
-		if workspaceCount > 0 {
+		if count > 0 {
 			node.Annotations["cluster-autoscaler.kubernetes.io/scale-down-disabled"] = "true"
 			log.WithField("nodeName", nodeName).Info("disabling scale-down for node")
 		} else {
@@ -385,14 +391,8 @@ func (pc *PodCountController) reconcileNode(ctx context.Context, nodeName string
 			log.WithField("nodeName", nodeName).Info("enabling scale-down for node")
 		}
 
-		return pc.Update(ctx, &node)
+		return wc.Update(ctx, &node)
 	})
-	if err != nil {
-		log.WithError(err).WithField("nodeName", nodeName).Error("failed to update node")
-		return ctrl.Result{}, fmt.Errorf("failed to update node: %w", err)
-	}
-
-	return ctrl.Result{}, nil
 }
 
 func updateLabel(label string, add bool, nodeName string, client client.Client) error {
