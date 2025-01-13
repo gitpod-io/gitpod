@@ -284,9 +284,21 @@ func workspaceFilter() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			ws := e.Object.(*workspacev1.Workspace)
+			if ws.Status.Runtime == nil {
+				log.WithField("workspace", ws.Name).Info("workspace not ready yet")
+				return false
+			}
+
 			return ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != ""
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
+			wsOld := e.ObjectOld.(*workspacev1.Workspace)
+			ws := e.ObjectNew.(*workspacev1.Workspace)
+			if wsOld.Status.Runtime == nil && ws.Status.Runtime != nil {
+				return true
+			}
+
+			// if we've seen runtime info before, there's no need to reconcile again
 			return false
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
