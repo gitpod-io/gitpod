@@ -28,7 +28,7 @@ import { TextInput } from "../components/forms/TextInputField";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { MaxParallelWorkspaces } from "./policies/MaxParallelWorkspaces";
 import { WorkspaceClassesEnterpriseCallout } from "./policies/WorkspaceClassesEnterpriseCallout";
-import { EditorOptions } from "./EditorOptions";
+import { EditorOptions } from "./policies/EditorOptions";
 import { RolePermissionsRestrictions } from "./policies/RoleRestrictions";
 import { OrgWorkspaceClassesOptions } from "./policies/OrgWorkspaceClassesOptions";
 

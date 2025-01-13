@@ -72,38 +72,34 @@ export default function TeamOnboardingPage() {
     }, [settings]);
 
     return (
-        <>
-            <OrgSettingsPage>
-                <div className="space-y-8">
-                    <div>
-                        <Heading2>Policies</Heading2>
-                        <Subheading>
-                            Restrict workspace classes, editors and sharing across your organization.
-                        </Subheading>
-                    </div>
-                    <ConfigurationSettingsField>
-                        <Heading3>Internal dashboard</Heading3>
-                        <Subheading>
-                            The link to your internal dashboard. This link will be shown to your organization members
-                            during the onboarding process. You can disable showing a link by leaving this field empty.
-                        </Subheading>
-                        <form onSubmit={handleUpdateInternalLink}>
-                            <InputField label="Internal dashboard link" error={undefined} className="mb-4">
-                                <TextInput
-                                    value={internalLink}
-                                    type="url"
-                                    placeholder="https://en.wikipedia.org/wiki/Eurosurveillance"
-                                    onChange={setInternalLink}
-                                    disabled={updateTeamSettings.isLoading || !isOwner}
-                                />
-                            </InputField>
-                            <LoadingButton type="submit" loading={updateTeamSettings.isLoading} disabled={!isOwner}>
-                                Save
-                            </LoadingButton>
-                        </form>
-                    </ConfigurationSettingsField>
+        <OrgSettingsPage>
+            <div className="space-y-8">
+                <div>
+                    <Heading2>Policies</Heading2>
+                    <Subheading>Restrict workspace classes, editors and sharing across your organization.</Subheading>
                 </div>
-            </OrgSettingsPage>
-        </>
+                <ConfigurationSettingsField>
+                    <Heading3>Internal dashboard</Heading3>
+                    <Subheading>
+                        The link to your internal dashboard. This link will be shown to your organization members during
+                        the onboarding process. You can disable showing a link by leaving this field empty.
+                    </Subheading>
+                    <form onSubmit={handleUpdateInternalLink}>
+                        <InputField label="Internal dashboard link" error={undefined} className="mb-4">
+                            <TextInput
+                                value={internalLink}
+                                type="url"
+                                placeholder="https://en.wikipedia.org/wiki/Heisenbug"
+                                onChange={setInternalLink}
+                                disabled={updateTeamSettings.isLoading || !isOwner}
+                            />
+                        </InputField>
+                        <LoadingButton type="submit" loading={updateTeamSettings.isLoading} disabled={!isOwner}>
+                            Save
+                        </LoadingButton>
+                    </form>
+                </ConfigurationSettingsField>
+            </div>
+        </OrgSettingsPage>
     );
 }
