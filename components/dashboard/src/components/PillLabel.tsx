@@ -4,6 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { cn } from "@podkit/lib/cn";
+
 export type PillType = "info" | "warn" | "success" | "neutral";
 
 const PillClsMap: Record<PillType, string> = {
@@ -27,6 +29,6 @@ const PillClsMap: Record<PillType, string> = {
  */
 export default function PillLabel(props: { children?: React.ReactNode; type?: PillType; className?: string }) {
     const type = props.type || "info";
-    const style = `px-3 py-0.5 text-xs uppercase rounded-xl font-semibold ${PillClsMap[type]} ${props.className}`;
-    return <span className={style}>{props.children}</span>;
+    const className = cn(`px-3 py-0.5 text-xs uppercase rounded-xl font-semibold ${PillClsMap[type]}`, props.className);
+    return <span className={className}>{props.children}</span>;
 }
