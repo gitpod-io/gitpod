@@ -35,7 +35,24 @@ const (
 	duration           = time.Second * 2
 	interval           = time.Millisecond * 250
 	workspaceNamespace = "default"
+	secretsNamespace   = "workspace-secrets"
 )
+
+var (
+	k8sClient     client.Client
+	testEnv       *envtest.Environment
+	mock_ctrl     *gomock.Controller
+	ctx           context.Context
+	cancel        context.CancelFunc
+	workspaceCtrl *WorkspaceCountController
+	NodeName      = "cool-ws-node"
+)
+
+func TestAPIs(t *testing.T) {
+	mock_ctrl = gomock.NewController(t)
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Controller Suite")
+}
 
 var _ = Describe("WorkspaceCountController", func() {
 	It("should remove scale-down-disabled when last workspace is removed", func() {
@@ -79,6 +96,76 @@ var _ = Describe("WorkspaceCountController", func() {
 			g.Expect(node.Annotations).ToNot(HaveKey("cluster-autoscaler.kubernetes.io/scale-down-disabled"))
 		}, timeout, interval).Should(Succeed())
 	})
+})
+
+var _ = BeforeSuite(func() {
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+
+	By("bootstrapping test environment")
+	testEnv = &envtest.Environment{
+		ControlPlaneStartTimeout: 1 * time.Minute,
+		ControlPlaneStopTimeout:  1 * time.Minute,
+		CRDDirectoryPaths:        []string{filepath.Join("..", "crd")},
+		ErrorIfCRDPathMissing:    true,
+	}
+
+	cfg, err := testEnv.Start()
+	Expect(err).NotTo(HaveOccurred())
+	Expect(cfg).NotTo(BeNil())
+
+	err = workspacev1.AddToScheme(clientgoscheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	//+kubebuilder:scaffold:scheme
+
+	k8sClient, err = client.New(cfg, client.Options{Scheme: clientgoscheme.Scheme})
+	Expect(err).NotTo(HaveOccurred())
+	Expect(k8sClient).NotTo(BeNil())
+
+	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: clientgoscheme.Scheme,
+	})
+	Expect(err).ToNot(HaveOccurred())
+	ctx, cancel = context.WithCancel(context.Background())
+
+	By("Creating default ws node")
+	node := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: NodeName,
+		},
+	}
+	Expect(k8sClient.Create(ctx, node)).To(Succeed())
+
+	By("Setting up workspace controller")
+	workspaceCtrl, err = NewWorkspaceCountController(k8sClient)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(workspaceCtrl.SetupWithManager(k8sManager)).To(Succeed())
+
+	_ = createNamespace(secretsNamespace)
+
+	By("Starting the manager")
+	go func() {
+		defer GinkgoRecover()
+		err = k8sManager.Start(ctx)
+		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
+	}()
+
+	By("Waiting for controllers to be ready")
+	DeferCleanup(cancel)
+
+	// Wait for controllers to be ready
+	Eventually(func() bool {
+		return k8sManager.GetCache().WaitForCacheSync(ctx)
+	}, time.Second*10, time.Millisecond*100).Should(BeTrue())
+})
+
+var _ = AfterSuite(func() {
+	if cancel != nil {
+		cancel()
+	}
+	By("tearing down the test environment")
+	err := testEnv.Stop()
+	Expect(err).NotTo(HaveOccurred())
 })
 
 func newWorkspace(name, namespace, nodeName string, phase workspacev1.WorkspacePhase) *workspacev1.Workspace {
@@ -153,85 +240,6 @@ func updateObjWithRetries[O client.Object](c client.Client, obj O, updateStatus 
 	}, timeout, interval).Should(Succeed())
 }
 
-const secretsNamespace = "workspace-secrets"
-
-var (
-	k8sClient     client.Client
-	testEnv       *envtest.Environment
-	mock_ctrl     *gomock.Controller
-	ctx           context.Context
-	cancel        context.CancelFunc
-	workspaceCtrl *WorkspaceCountController
-	NodeName      = "cool-ws-node"
-)
-
-func TestAPIs(t *testing.T) {
-	mock_ctrl = gomock.NewController(t)
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Controller Suite")
-}
-
-var _ = BeforeSuite(func() {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-
-	By("bootstrapping test environment")
-	testEnv = &envtest.Environment{
-		ControlPlaneStartTimeout: 1 * time.Minute,
-		ControlPlaneStopTimeout:  1 * time.Minute,
-		CRDDirectoryPaths:        []string{filepath.Join("..", "crd")},
-		ErrorIfCRDPathMissing:    true,
-	}
-
-	cfg, err := testEnv.Start()
-	Expect(err).NotTo(HaveOccurred())
-	Expect(cfg).NotTo(BeNil())
-
-	err = workspacev1.AddToScheme(clientgoscheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	//+kubebuilder:scaffold:scheme
-
-	k8sClient, err = client.New(cfg, client.Options{Scheme: clientgoscheme.Scheme})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(k8sClient).NotTo(BeNil())
-
-	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: clientgoscheme.Scheme,
-	})
-	Expect(err).ToNot(HaveOccurred())
-	ctx, cancel = context.WithCancel(context.Background())
-
-	By("Creating default ws node")
-	node := &corev1.Node{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: NodeName,
-		},
-	}
-	Expect(k8sClient.Create(ctx, node)).To(Succeed())
-
-	By("Setting up workspace controller")
-	workspaceCtrl, err = NewWorkspaceCountController(k8sClient)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(workspaceCtrl.SetupWithManager(k8sManager)).To(Succeed())
-
-	_ = createNamespace(secretsNamespace)
-
-	By("Starting the manager")
-	go func() {
-		defer GinkgoRecover()
-		err = k8sManager.Start(ctx)
-		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
-	}()
-
-	By("Waiting for controllers to be ready")
-	DeferCleanup(cancel)
-
-	// Wait for controllers to be ready
-	Eventually(func() bool {
-		return k8sManager.GetCache().WaitForCacheSync(ctx)
-	}, time.Second*10, time.Millisecond*100).Should(BeTrue())
-})
-
 func createNamespace(name string) *corev1.Namespace {
 	GinkgoHelper()
 
@@ -244,12 +252,3 @@ func createNamespace(name string) *corev1.Namespace {
 	Expect(k8sClient.Create(ctx, namespace)).To(Succeed())
 	return namespace
 }
-
-var _ = AfterSuite(func() {
-	if cancel != nil {
-		cancel()
-	}
-	By("tearing down the test environment")
-	err := testEnv.Stop()
-	Expect(err).NotTo(HaveOccurred())
-})
