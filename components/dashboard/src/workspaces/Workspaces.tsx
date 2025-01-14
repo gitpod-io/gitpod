@@ -22,7 +22,6 @@ import { VideoCarousel } from "./VideoCarousel";
 import { BlogBanners } from "./BlogBanners";
 import { Book, BookOpen, Building, Code, GraduationCap } from "lucide-react";
 import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
-import { isGitpodIo } from "../utils";
 import PersonalizedContent from "./PersonalizedContent";
 import { useListenToWorkspacesWSMessages as useListenToWorkspacesStatusUpdates } from "../data/workspaces/listen-to-workspace-ws-messages";
 import { Subheading } from "@podkit/typography/Headings";
@@ -211,7 +210,11 @@ const WorkspacesPage: FunctionComponent = () => {
             {!isLoading &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || searchTerm ? (
                     <>
-                        <div className={isGitpodIo() ? "!pl-0 app-container flex flex-1 flex-row" : "app-container"}>
+                        <div
+                            className={
+                                !isDedicatedInstallation ? "!pl-0 app-container flex flex-1 flex-row" : "app-container"
+                            }
+                        >
                             <div>
                                 <WorkspacesSearchBar
                                     limit={limit}
@@ -219,7 +222,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                     onLimitUpdated={setLimit}
                                     onSearchTermUpdated={setSearchTerm}
                                 />
-                                <ItemsList className={isGitpodIo() ? "app-container xl:!pr-4 pb-40" : ""}>
+                                <ItemsList className={!isDedicatedInstallation ? "app-container xl:!pr-4 pb-40" : ""}>
                                     <div className="border-t border-gray-200 dark:border-gray-800"></div>
                                     {filteredActiveWorkspaces.map((info) => {
                                         return <WorkspaceEntry key={info.id} info={info} />;
@@ -284,7 +287,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                 </ItemsList>
                             </div>
                             {/* Show Educational if user is in gitpodIo */}
-                            {isGitpodIo() && (
+                            {!isDedicatedInstallation && (
                                 <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 pl-6 pt-5 pb-4 space-y-8">
                                     <VideoCarousel />
                                     <div className="flex flex-col gap-2">
