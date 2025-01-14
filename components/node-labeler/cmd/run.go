@@ -68,6 +68,9 @@ var runCmd = &cobra.Command{
 				DefaultNamespaces: map[string]cache.Config{
 					namespace: {},
 				},
+				ByObject: map[client.Object]cache.ByObject{
+					&workspacev1.Workspace{}: {},
+				},
 				// default sync period is 10h.
 				// in case node-labeler is restarted and not change happens, we could waste (at least) 20m in a node
 				// that never will run workspaces and the additional nodes cluster-autoscaler adds to compensate
