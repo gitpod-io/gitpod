@@ -294,11 +294,11 @@ func workspaceFilter() predicate.Predicate {
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			wsOld := e.ObjectOld.(*workspacev1.Workspace)
 			ws := e.ObjectNew.(*workspacev1.Workspace)
-			if wsOld.Status.Runtime == nil && ws.Status.Runtime != nil {
+			// if we haven't seen runtime info before and now it's there, let's reconcile
+			if wsOld.Status.Runtime == nil && ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != "" {
 				return true
 			}
 
-			// if we've seen runtime info before, there's no need to reconcile again
 			return false
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
@@ -333,13 +333,13 @@ func (wc *WorkspaceCountController) Reconcile(ctx context.Context, req ctrl.Requ
 		nodeName := ws.Status.Runtime.NodeName
 		for _, ws := range workspaceList.Items {
 			if ws.Status.Runtime != nil &&
-				ws.Status.Runtime.NodeName == nodeName &&
-				ws.DeletionTimestamp.IsZero() {
+				ws.Status.Runtime.NodeName == nodeName {
 				count++
 			}
 		}
 
 		if err := wc.updateNodeAnnotation(ctx, nodeName, count); err != nil {
+			log.WithError(err).WithField("node", nodeName).Error("failed to update node")
 			return ctrl.Result{}, err
 		}
 		log.WithField("node", nodeName).WithField("count", count).Info("updated node annotation")
@@ -358,8 +358,7 @@ func (wc *WorkspaceCountController) reconcileAllNodes(ctx context.Context) (ctrl
 	workspaceCounts := make(map[string]int)
 	for _, ws := range workspaceList.Items {
 		if ws.Status.Runtime != nil &&
-			ws.Status.Runtime.NodeName != "" &&
-			ws.DeletionTimestamp.IsZero() {
+			ws.Status.Runtime.NodeName != "" {
 			workspaceCounts[ws.Status.Runtime.NodeName]++
 		}
 	}
@@ -384,6 +383,9 @@ func (wc *WorkspaceCountController) reconcileAllNodes(ctx context.Context) (ctrl
 
 func (wc *WorkspaceCountController) updateNodeAnnotation(ctx context.Context, nodeName string, count int) error {
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
 		var node corev1.Node
 		err := wc.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
 		if err != nil {
