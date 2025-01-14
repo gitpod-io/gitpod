@@ -26,6 +26,7 @@ import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import Alert from "../components/Alert";
 import { GETTING_STARTED_DISMISSAL_KEY } from "../workspaces/Workspaces";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
@@ -44,6 +45,8 @@ export default function Preferences() {
     );
     const [timeoutUpdating, setTimeoutUpdating] = useState(false);
     const [creationError, setCreationError] = useState<Error>();
+
+    const isEnterpriseOnboardingEnabled = useFeatureFlag("enterprise_onboarding_enabled");
 
     const saveDotfileRepo = useCallback(
         async (e) => {
@@ -161,11 +164,15 @@ export default function Preferences() {
                     Reset Options
                 </Button>
 
-                <Heading3 className="mt-12">Organization onboarding</Heading3>
-                <Subheading>If you dismissed the onboarding process, you can restart it here.</Subheading>
-                <Button className="mt-4" variant="secondary" onClick={restartOrgOnboarding}>
-                    Restart Onboarding
-                </Button>
+                {isEnterpriseOnboardingEnabled && (
+                    <>
+                        <Heading3 className="mt-12">Organization onboarding</Heading3>
+                        <Subheading>If you dismissed the onboarding process, you can restart it here.</Subheading>
+                        <Button className="mt-4" variant="secondary" onClick={restartOrgOnboarding}>
+                            Restart Onboarding
+                        </Button>
+                    </>
+                )}
 
                 <ThemeSelector className="mt-12" />
 

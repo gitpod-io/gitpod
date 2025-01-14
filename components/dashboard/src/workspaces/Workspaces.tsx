@@ -36,6 +36,7 @@ import { useInstallationConfiguration } from "../data/installation/default-works
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { useUserLoader } from "../hooks/use-user-loader";
 import Tooltip from "../components/Tooltip";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export const GETTING_STARTED_DISMISSAL_KEY = "workspace-list-getting-started";
 
@@ -79,6 +80,8 @@ const WorkspacesPage: FunctionComponent = () => {
 
     const { data: installationConfig } = useInstallationConfiguration();
     const isDedicatedInstallation = !!installationConfig?.isDedicatedInstallation;
+
+    const isEnterpriseOnboardingEnabled = useFeatureFlag("enterprise_onboarding_enabled");
 
     const { filteredActiveWorkspaces, filteredInactiveWorkspaces } = useMemo(() => {
         const filteredActiveWorkspaces = activeWorkspaces.filter(
@@ -151,7 +154,8 @@ const WorkspacesPage: FunctionComponent = () => {
                 subtitle="Manage, start and stop your personal development environments in the cloud."
             />
 
-            {isDedicatedInstallation &&
+            {isEnterpriseOnboardingEnabled &&
+                isDedicatedInstallation &&
                 showGettingStarted &&
                 !user?.profile?.coachmarksDismissals[GETTING_STARTED_DISMISSAL_KEY] && (
                     <>
