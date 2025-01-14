@@ -33,6 +33,11 @@ import { VideoSection } from "../onboarding/VideoSection";
 import { trackVideoClick } from "../Analytics";
 import { cn } from "@podkit/lib/cn";
 import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
+import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+import { useUserLoader } from "../hooks/use-user-loader";
+import Tooltip from "../components/Tooltip";
+
+export const GETTING_STARTED_DISMISSAL_KEY = "workspace-list-getting-started";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -46,6 +51,9 @@ const WorkspacesPage: FunctionComponent = () => {
 
     const { data: org } = useCurrentOrg();
     const { data: orgSettings } = useOrgSettingsQuery();
+
+    const { user } = useUserLoader();
+    const { mutate: mutateUser } = useUpdateCurrentUserMutation();
 
     const { toast } = useToast();
 
@@ -108,6 +116,29 @@ const WorkspacesPage: FunctionComponent = () => {
         } catch (e) {}
     }, [deleteInactiveWorkspaces, inactiveWorkspaces, toast]);
 
+    const [showGettingStarted, setShowGettingStarted] = useState(true);
+    const dismissGettingStarted = useCallback(() => {
+        setShowGettingStarted(false);
+
+        mutateUser(
+            {
+                additionalData: {
+                    profile: {
+                        coachmarksDismissals: {
+                            [GETTING_STARTED_DISMISSAL_KEY]: new Date().toISOString(),
+                        },
+                    },
+                },
+            },
+            {
+                onError: (e) => {
+                    toast("Failed to dismiss getting started");
+                    setShowGettingStarted(true);
+                },
+            },
+        );
+    }, [mutateUser, toast]);
+
     const [isVideoModalVisible, setVideoModalVisible] = useState(false);
     const handleVideoModalClose = useCallback(() => {
         setVideoModalVisible(false);
@@ -120,81 +151,88 @@ const WorkspacesPage: FunctionComponent = () => {
                 subtitle="Manage, start and stop your personal development environments in the cloud."
             />
 
-            {isDedicatedInstallation && (
-                <>
-                    <Subheading className="font-semibold text-pk-content-primary mt-4 mb-2 lg:px-28 px-4">
-                        Getting started
-                    </Subheading>
+            {isDedicatedInstallation &&
+                showGettingStarted &&
+                !user?.profile?.coachmarksDismissals[GETTING_STARTED_DISMISSAL_KEY] && (
+                    <>
+                        <div className="app-container flex flex-row items-center justify-between mt-4 mb-2">
+                            <Subheading className="font-semibold text-pk-content-primary">Getting started</Subheading>
+                            <Tooltip content={`Hide "Getting started" - can be restored in your user preferences`}>
+                                <Button variant={"ghost"} onClick={dismissGettingStarted}>
+                                    Hide
+                                </Button>
+                            </Tooltip>
+                        </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:px-28 px-4">
-                        <Card onClick={() => setVideoModalVisible(true)}>
-                            <GraduationCap className="flex-shrink-0" size={24} />
-                            <div className="min-w-0">
-                                <CardTitle>Learn how Gitpod works</CardTitle>
-                                <CardDescription>
-                                    We've put together resources for you to get the most our of Gitpod.
-                                </CardDescription>
-                            </div>
-                        </Card>
-
-                        {orgSettings?.onboardingSettings?.internalLink ? (
-                            <Card href={orgSettings.onboardingSettings.internalLink} isLinkExternal>
-                                <Building className="flex-shrink-0" size={24} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:px-28 px-4">
+                            <Card onClick={() => setVideoModalVisible(true)}>
+                                <GraduationCap className="flex-shrink-0" size={24} />
                                 <div className="min-w-0">
-                                    <CardTitle>Learn more about Gitpod at {org?.name}</CardTitle>
+                                    <CardTitle>Learn how Gitpod works</CardTitle>
                                     <CardDescription>
-                                        Read through the internal Gitpod landing page of your organization.
+                                        We've put together resources for you to get the most our of Gitpod.
                                     </CardDescription>
                                 </div>
                             </Card>
-                        ) : (
-                            <Card href={"/new?showExamples=true"}>
-                                <Code className="flex-shrink-0" size={24} />
+
+                            {orgSettings?.onboardingSettings?.internalLink ? (
+                                <Card href={orgSettings.onboardingSettings.internalLink} isLinkExternal>
+                                    <Building className="flex-shrink-0" size={24} />
+                                    <div className="min-w-0">
+                                        <CardTitle>Learn more about Gitpod at {org?.name}</CardTitle>
+                                        <CardDescription>
+                                            Read through the internal Gitpod landing page of your organization.
+                                        </CardDescription>
+                                    </div>
+                                </Card>
+                            ) : (
+                                <Card href={"/new?showExamples=true"}>
+                                    <Code className="flex-shrink-0" size={24} />
+                                    <div className="min-w-0">
+                                        <CardTitle>Open a sample repository</CardTitle>
+                                        <CardDescription>
+                                            Explore a sample repository to quickly experience Gitpod.
+                                        </CardDescription>
+                                    </div>
+                                </Card>
+                            )}
+
+                            <Card href="https://www.gitpod.io/docs/introduction" isLinkExternal>
+                                <Book className="flex-shrink-0" size={24} />
                                 <div className="min-w-0">
-                                    <CardTitle>Open a sample repository</CardTitle>
+                                    <CardTitle>Visit the docs</CardTitle>
                                     <CardDescription>
-                                        Explore a sample repository to quickly experience Gitpod.
+                                        We have extensive documentation to help if you get stuck.
                                     </CardDescription>
                                 </div>
                             </Card>
-                        )}
+                        </div>
 
-                        <Card href="https://www.gitpod.io/docs/introduction" isLinkExternal>
-                            <Book className="flex-shrink-0" size={24} />
-                            <div className="min-w-0">
-                                <CardTitle>Visit the docs</CardTitle>
-                                <CardDescription>
-                                    We have extensive documentation to help if you get stuck.
-                                </CardDescription>
-                            </div>
-                        </Card>
-                    </div>
-
-                    <Modal
-                        visible={isVideoModalVisible}
-                        onClose={handleVideoModalClose}
-                        containerClassName="min-[576px]:max-w-[600px]"
-                    >
-                        <ModalHeader>Demo video</ModalHeader>
-                        <ModalBody>
-                            <div className="flex flex-row items-center justify-center">
-                                <VideoSection
-                                    metadataVideoTitle="Gitpod demo"
-                                    playbackId="m01BUvCkTz7HzQKFoIcQmK00Rx5laLLoMViWBstetmvLs"
-                                    poster="https://i.ytimg.com/vi_webp/1ZBN-b2cIB8/maxresdefault.webp"
-                                    playerProps={{ onPlay: handlePlay, defaultHiddenCaptions: true }}
-                                    className="w-[535px] rounded-xl"
-                                />
-                            </div>
-                        </ModalBody>
-                        <ModalBaseFooter>
-                            <Button variant="secondary" onClick={handleVideoModalClose}>
-                                Close
-                            </Button>
-                        </ModalBaseFooter>
-                    </Modal>
-                </>
-            )}
+                        <Modal
+                            visible={isVideoModalVisible}
+                            onClose={handleVideoModalClose}
+                            containerClassName="min-[576px]:max-w-[600px]"
+                        >
+                            <ModalHeader>Demo video</ModalHeader>
+                            <ModalBody>
+                                <div className="flex flex-row items-center justify-center">
+                                    <VideoSection
+                                        metadataVideoTitle="Gitpod demo"
+                                        playbackId="m01BUvCkTz7HzQKFoIcQmK00Rx5laLLoMViWBstetmvLs"
+                                        poster="https://i.ytimg.com/vi_webp/1ZBN-b2cIB8/maxresdefault.webp"
+                                        playerProps={{ onPlay: handlePlay, defaultHiddenCaptions: true }}
+                                        className="w-[535px] rounded-xl"
+                                    />
+                                </div>
+                            </ModalBody>
+                            <ModalBaseFooter>
+                                <Button variant="secondary" onClick={handleVideoModalClose}>
+                                    Close
+                                </Button>
+                            </ModalBaseFooter>
+                        </Modal>
+                    </>
+                )}
 
             {deleteModalVisible && (
                 <ConfirmationModal

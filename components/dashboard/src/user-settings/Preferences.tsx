@@ -25,6 +25,7 @@ import { converter, userClient } from "../service/public-api";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import Alert from "../components/Alert";
+import { GETTING_STARTED_DISMISSAL_KEY } from "../workspaces/Workspaces";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
@@ -114,6 +115,30 @@ export default function Preferences() {
         toast("Workspace options have been cleared.");
     }, [updateUser, setUser, toast, user]);
 
+    const restartOrgOnboarding = useCallback(async () => {
+        const updatedUser = await updateUser.mutateAsync(
+            {
+                additionalData: {
+                    profile: {
+                        coachmarksDismissals: {
+                            [GETTING_STARTED_DISMISSAL_KEY]: "",
+                        },
+                    },
+                },
+            },
+            {
+                onError: (e) => {
+                    toast("Failed to reset onboarding.");
+                },
+            },
+        );
+
+        if (updatedUser) {
+            setUser(updatedUser);
+            toast("Onboarding has been restarted.");
+        }
+    }, [updateUser, toast, setUser]);
+
     return (
         <div>
             <PageWithSettingsSubMenu>
@@ -134,6 +159,12 @@ export default function Preferences() {
                 <Subheading>Clear last used options for creating workspaces.</Subheading>
                 <Button className="mt-4" variant="secondary" onClick={clearCreateWorkspaceOptions}>
                     Reset Options
+                </Button>
+
+                <Heading3 className="mt-12">Organization onboarding</Heading3>
+                <Subheading>If you dismissed the onboarding process, you can restart it here.</Subheading>
+                <Button className="mt-4" variant="secondary" onClick={restartOrgOnboarding}>
+                    Restart Onboarding
                 </Button>
 
                 <ThemeSelector className="mt-12" />
@@ -157,7 +188,7 @@ export default function Preferences() {
                             <LoadingButton
                                 type="submit"
                                 loading={updateDotfileRepo.isLoading}
-                                disabled={updateDotfileRepo.isLoading || (dotfileRepo === user?.dotfileRepo ?? "")}
+                                disabled={updateDotfileRepo.isLoading || dotfileRepo === user?.dotfileRepo}
                             >
                                 Save
                             </LoadingButton>
@@ -201,9 +232,7 @@ export default function Preferences() {
                                         loading={timeoutUpdating}
                                         disabled={
                                             workspaceTimeout ===
-                                                converter.toDurationString(
-                                                    user?.workspaceTimeoutSettings?.inactivity,
-                                                ) ?? ""
+                                            converter.toDurationString(user?.workspaceTimeoutSettings?.inactivity)
                                         }
                                     >
                                         Save
