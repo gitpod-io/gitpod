@@ -32,11 +32,8 @@ import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "../components/Modal";
 import { VideoSection } from "../onboarding/VideoSection";
 import { trackVideoClick } from "../Analytics";
-import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
-import { useUserLoader } from "../hooks/use-user-loader";
 import { cn } from "@podkit/lib/cn";
 import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
-import PillLabel from "../components/PillLabel";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -50,8 +47,6 @@ const WorkspacesPage: FunctionComponent = () => {
 
     const { data: org } = useCurrentOrg();
     const { data: orgSettings } = useOrgSettingsQuery();
-
-    const { user } = useUserLoader();
 
     const { toast } = useToast();
 
@@ -77,21 +72,6 @@ const WorkspacesPage: FunctionComponent = () => {
 
     const { data: installationConfig } = useInstallationConfiguration();
     const isDedicatedInstallation = !!installationConfig?.isDedicatedInstallation;
-
-    const { data: suggestedRepos } = useSuggestedRepositories({ excludeConfigurations: false });
-
-    const recentRepos = useMemo(() => {
-        return (
-            suggestedRepos
-                ?.filter((repo) => {
-                    const autostartMatch = user?.workspaceAutostartOptions.find((option) => {
-                        return option.cloneUrl.includes(repo.url);
-                    });
-                    return autostartMatch;
-                })
-                .slice(0, 3) ?? []
-        );
-    }, [suggestedRepos, user]);
 
     const { filteredActiveWorkspaces, filteredInactiveWorkspaces } = useMemo(() => {
         const filteredActiveWorkspaces = activeWorkspaces.filter(
@@ -190,46 +170,6 @@ const WorkspacesPage: FunctionComponent = () => {
                             </div>
                         </Card>
                     </div>
-
-                    {recentRepos.length > 0 && (
-                        <>
-                            <Subheading className="font-semibold text-pk-content-primary pt-8 mb-2 lg:px-28 px-4">
-                                Suggested
-                            </Subheading>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:px-28 px-4">
-                                {[
-                                    ...recentRepos,
-                                    // todo: add org-selected repos
-                                ]
-                                    .slice(0, 3)
-                                    .map((repo) => (
-                                        <Card
-                                            key={repo.url}
-                                            href={`/new#${repo.url}`}
-                                            className="border-[#D79A45] border hover:bg-pk-surface-tertiary transition-colors w-full"
-                                        >
-                                            <div className="min-w-0 w-full space-y-1.5">
-                                                <CardTitle className="flex flex-row items-center gap-2 w-full">
-                                                    <span className="truncate block min-w-0 text-base">
-                                                        {repo.configurationName || repo.repoName}
-                                                    </span>
-                                                    <PillLabel
-                                                        className="capitalize bg-kumquat-light shrink-0 text-sm"
-                                                        type="warn"
-                                                    >
-                                                        Recommended
-                                                    </PillLabel>
-                                                </CardTitle>
-                                                <CardDescription className="truncate text-sm opacity-75">
-                                                    {repo.url}
-                                                </CardDescription>
-                                            </div>
-                                        </Card>
-                                    ))}
-                            </div>
-                        </>
-                    )}
 
                     <Modal
                         visible={isVideoModalVisible}
