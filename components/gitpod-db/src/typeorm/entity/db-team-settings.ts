@@ -51,6 +51,9 @@ export class DBOrgSettings implements OrganizationSettings {
     @Column("json", { nullable: true })
     onboardingSettings?: OnboardingSettings | undefined;
 
+    @Column({ type: "boolean", default: false })
+    annotateGitCommits?: boolean | undefined;
+
     @Column()
     deleted: boolean;
 }

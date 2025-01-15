@@ -599,6 +599,9 @@ export class OrganizationService {
         if (settings.onboardingSettings) {
             result.onboardingSettings = settings.onboardingSettings;
         }
+        if (settings.annotateCommits) {
+            result.annotateCommits = settings.annotateCommits;
+        }
 
         return result;
     }

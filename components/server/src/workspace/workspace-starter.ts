@@ -1582,6 +1582,7 @@ export class WorkspaceStarter {
         sysEnvvars.push(isSetJavaXmx);
         sysEnvvars.push(isSetJavaProcessorCount);
         sysEnvvars.push(disableJetBrainsLocalPortForwarding);
+        sysEnvvars.push(newEnvVar("GITPOD_COMMIT_ANNOTATION_ENABLED", "true"));
         const spec = new StartWorkspaceSpec();
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
