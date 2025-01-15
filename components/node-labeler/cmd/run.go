@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bombsimon/logrusr/v2"
@@ -287,8 +288,9 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 
 type NodeScaledownAnnotationController struct {
 	client.Client
-	nodesToReconcile chan string
-	stopChan         chan struct{}
+	nodesToReconcile  chan string
+	stopChan          chan struct{}
+	nodeReconcileLock sync.Map
 }
 
 func NewNodeScaledownAnnotationController(client client.Client) (*NodeScaledownAnnotationController, error) {
@@ -427,6 +429,12 @@ func (wc *NodeScaledownAnnotationController) reconcileAllNodes(ctx context.Conte
 
 // reconcileNode counts the workspaces running on a node and updates the autoscaler annotation accordingly
 func (c *NodeScaledownAnnotationController) reconcileNode(ctx context.Context, nodeName string) error {
+	mutexInterface, _ := c.nodeReconcileLock.LoadOrStore(nodeName, &sync.Mutex{})
+	mutex := mutexInterface.(*sync.Mutex)
+
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	timer := prometheus.NewTimer(NodeScaledownAnnotationReconcileDuration.WithLabelValues("node"))
 	defer timer.ObserveDuration()
 
