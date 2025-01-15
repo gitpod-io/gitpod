@@ -160,9 +160,7 @@
             "**/.git": true
         },
         "go.lintTool": "golangci-lint",
-        "gopls": {
-            "allowModfileModifications": true
-        },
+        "go.lintFlags": ["--disable", "govet,errcheck,staticcheck", "-e", "\"declared and not used\"", "--allow-parallel-runners", "--timeout", "15m"],
         "prettier.configPath": "/workspace/gitpod/.prettierrc.json"
     }
 }

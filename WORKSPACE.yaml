@@ -44,4 +44,5 @@ defaultVariant:
       - "**/node_modules/**"
   config:
     go:
-      lintCommand: ["sh", "-c", "golangci-lint run --disable govet,errcheck,typecheck,staticcheck,structcheck -e '.*declared but not used.*' --allow-parallel-runners --timeout 15m"]
+      #lintCommand: ["sh", "-c", "golangci-lint run --config $LEEWAY_WORKSPACE_ROOT/dev/.golangci.yaml"]
+      lintCommand: ["sh", "-c", "golangci-lint run --disable govet,errcheck,staticcheck -e 'declared and not used' -e 'imported and not used' --allow-parallel-runners --timeout 15m"]

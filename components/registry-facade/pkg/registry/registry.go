@@ -27,8 +27,8 @@ import (
 
 	"github.com/containerd/containerd/content/local"
 	"github.com/containerd/containerd/remotes"
+	"github.com/distribution/reference"
 	"github.com/docker/distribution"
-	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/errcode"
 	distv2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/golang/protobuf/jsonpb"
