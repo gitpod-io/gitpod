@@ -314,7 +314,7 @@ func (wc *WorkspaceCountController) periodicReconciliation() {
 	for {
 		select {
 		case <-ticker.C:
-			log.Info("Starting periodic full reconciliation")
+			log.Info("starting periodic full reconciliation")
 			ctx := context.Background()
 			if _, err := wc.reconcileAllNodes(ctx); err != nil {
 				log.WithError(err).Error("periodic reconciliation failed")
@@ -366,12 +366,11 @@ func (wc *WorkspaceCountController) workspaceFilter() predicate.Predicate {
 func (wc *WorkspaceCountController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log.WithField("request", req.NamespacedName.String()).Info("WorkspaceCountController reconciling")
 
-	// Process any queued nodes first
+	// Process any queued nodes first, logging errors (not returning)
 	select {
 	case nodeName := <-wc.nodesToReconcile:
 		if err := wc.reconcileNode(ctx, nodeName); err != nil {
 			log.WithError(err).WithField("node", nodeName).Error("failed to reconcile node from queue")
-			return ctrl.Result{}, err
 		}
 	default:
 		// No nodes in queue, continue with regular reconciliation

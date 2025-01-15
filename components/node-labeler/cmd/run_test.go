@@ -136,8 +136,20 @@ var _ = BeforeSuite(func() {
 	}
 	Expect(k8sClient.Create(ctx, node)).To(Succeed())
 
+	err = k8sManager.GetFieldIndexer().IndexField(context.Background(),
+		&workspacev1.Workspace{},
+		"status.runtime.nodeName",
+		func(o client.Object) []string {
+			ws := o.(*workspacev1.Workspace)
+			if ws.Status.Runtime == nil {
+				return nil
+			}
+			return []string{ws.Status.Runtime.NodeName}
+		})
+	Expect(err).ToNot(HaveOccurred())
+
 	By("Setting up workspace controller")
-	workspaceCtrl, err = NewWorkspaceCountController(k8sClient)
+	workspaceCtrl, err = NewWorkspaceCountController(k8sManager.GetClient())
 	Expect(err).NotTo(HaveOccurred())
 	Expect(workspaceCtrl.SetupWithManager(k8sManager)).To(Succeed())
 
