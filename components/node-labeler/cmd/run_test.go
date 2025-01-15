@@ -39,13 +39,13 @@ const (
 )
 
 var (
-	k8sClient     client.Client
-	testEnv       *envtest.Environment
-	mock_ctrl     *gomock.Controller
-	ctx           context.Context
-	cancel        context.CancelFunc
-	workspaceCtrl *WorkspaceCountController
-	NodeName      = "cool-ws-node"
+	k8sClient         client.Client
+	testEnv           *envtest.Environment
+	mock_ctrl         *gomock.Controller
+	ctx               context.Context
+	cancel            context.CancelFunc
+	nodeScaledownCtrl *NodeScaledownAnnotationController
+	NodeName          = "cool-ws-node"
 )
 
 func TestAPIs(t *testing.T) {
@@ -54,7 +54,7 @@ func TestAPIs(t *testing.T) {
 	RunSpecs(t, "Controller Suite")
 }
 
-var _ = Describe("WorkspaceCountController", func() {
+var _ = Describe("NodeScaledownAnnotationController", func() {
 	It("should remove scale-down-disabled when last workspace is removed", func() {
 		ws1 := newWorkspace(uuid.NewString(), workspaceNamespace, NodeName, workspacev1.WorkspacePhaseRunning)
 		ws2 := newWorkspace(uuid.NewString(), workspaceNamespace, NodeName, workspacev1.WorkspacePhaseRunning)
@@ -148,10 +148,10 @@ var _ = BeforeSuite(func() {
 		})
 	Expect(err).ToNot(HaveOccurred())
 
-	By("Setting up workspace controller")
-	workspaceCtrl, err = NewWorkspaceCountController(k8sManager.GetClient())
+	By("Setting up controllers")
+	nodeScaledownCtrl, err = NewNodeScaledownAnnotationController(k8sManager.GetClient())
 	Expect(err).NotTo(HaveOccurred())
-	Expect(workspaceCtrl.SetupWithManager(k8sManager)).To(Succeed())
+	Expect(nodeScaledownCtrl.SetupWithManager(k8sManager)).To(Succeed())
 
 	_ = createNamespace(secretsNamespace)
 

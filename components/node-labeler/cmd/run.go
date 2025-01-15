@@ -124,21 +124,21 @@ var runCmd = &cobra.Command{
 			return
 		}
 
-		wc, err := NewWorkspaceCountController(mgr.GetClient())
+		nsac, err := NewNodeScaledownAnnotationController(mgr.GetClient())
 		if err != nil {
-			log.WithError(err).Fatal("unable to create workspace count controller")
+			log.WithError(err).Fatal("unable to create node scaledown annotation controller")
 		}
-		err = wc.SetupWithManager(mgr)
+		err = nsac.SetupWithManager(mgr)
 		if err != nil {
-			log.WithError(err).Fatal("unable to bind workspace count controller")
+			log.WithError(err).Fatal("unable to bind node scaledown annotation controller")
 		}
 
 		err = mgr.Add(manager.RunnableFunc(func(context.Context) error {
-			wc.Stop()
+			nsac.Stop()
 			return nil
 		}))
 		if err != nil {
-			log.WithError(err).Fatal("couldn't properly clean up WorkspaceCountController")
+			log.WithError(err).Fatal("couldn't properly clean up node scaledown annotation controller")
 		}
 
 		metrics.Registry.MustRegister(NodeLabelerCounterVec)
@@ -282,32 +282,32 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 	return reconcile.Result{}, nil
 }
 
-type WorkspaceCountController struct {
+type NodeScaledownAnnotationController struct {
 	client.Client
 	nodesToReconcile chan string
 	stopChan         chan struct{}
 }
 
-func NewWorkspaceCountController(client client.Client) (*WorkspaceCountController, error) {
-	return &WorkspaceCountController{
+func NewNodeScaledownAnnotationController(client client.Client) (*NodeScaledownAnnotationController, error) {
+	return &NodeScaledownAnnotationController{
 		Client:           client,
 		nodesToReconcile: make(chan string, 1000),
 		stopChan:         make(chan struct{}),
 	}, nil
 }
 
-func (wc *WorkspaceCountController) SetupWithManager(mgr ctrl.Manager) error {
+func (c *NodeScaledownAnnotationController) SetupWithManager(mgr ctrl.Manager) error {
 	// Start the periodic reconciliation goroutine
-	go wc.periodicReconciliation()
+	go c.periodicReconciliation()
 
 	return ctrl.NewControllerManagedBy(mgr).
-		Named("workspace-count").
+		Named("node-scaledown-annotation-controller").
 		For(&workspacev1.Workspace{}).
-		WithEventFilter(wc.workspaceFilter()).
-		Complete(wc)
+		WithEventFilter(c.workspaceFilter()).
+		Complete(c)
 }
 
-func (wc *WorkspaceCountController) periodicReconciliation() {
+func (c *NodeScaledownAnnotationController) periodicReconciliation() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
@@ -316,16 +316,16 @@ func (wc *WorkspaceCountController) periodicReconciliation() {
 		case <-ticker.C:
 			log.Info("starting periodic full reconciliation")
 			ctx := context.Background()
-			if _, err := wc.reconcileAllNodes(ctx); err != nil {
+			if _, err := c.reconcileAllNodes(ctx); err != nil {
 				log.WithError(err).Error("periodic reconciliation failed")
 			}
-		case <-wc.stopChan:
+		case <-c.stopChan:
 			return
 		}
 	}
 }
 
-func (wc *WorkspaceCountController) workspaceFilter() predicate.Predicate {
+func (c *NodeScaledownAnnotationController) workspaceFilter() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			ws := e.Object.(*workspacev1.Workspace)
@@ -351,7 +351,7 @@ func (wc *WorkspaceCountController) workspaceFilter() predicate.Predicate {
 			if ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != "" {
 				// Queue the node for reconciliation
 				select {
-				case wc.nodesToReconcile <- ws.Status.Runtime.NodeName:
+				case c.nodesToReconcile <- ws.Status.Runtime.NodeName:
 					log.WithField("node", ws.Status.Runtime.NodeName).Info("queued node for reconciliation from delete")
 				default:
 					log.WithField("node", ws.Status.Runtime.NodeName).Warn("reconciliation queue full")
@@ -363,13 +363,13 @@ func (wc *WorkspaceCountController) workspaceFilter() predicate.Predicate {
 	}
 }
 
-func (wc *WorkspaceCountController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (c *NodeScaledownAnnotationController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log.WithField("request", req.NamespacedName.String()).Info("WorkspaceCountController reconciling")
 
 	// Process any queued nodes first, logging errors (not returning)
 	select {
-	case nodeName := <-wc.nodesToReconcile:
-		if err := wc.reconcileNode(ctx, nodeName); err != nil {
+	case nodeName := <-c.nodesToReconcile:
+		if err := c.reconcileNode(ctx, nodeName); err != nil {
 			log.WithError(err).WithField("node", nodeName).Error("failed to reconcile node from queue")
 		}
 	default:
@@ -377,7 +377,7 @@ func (wc *WorkspaceCountController) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	var ws workspacev1.Workspace
-	if err := wc.Get(ctx, req.NamespacedName, &ws); err != nil {
+	if err := c.Get(ctx, req.NamespacedName, &ws); err != nil {
 		if !errors.IsNotFound(err) {
 			log.WithError(err).WithField("workspace", req.NamespacedName).Error("unable to fetch Workspace")
 			return ctrl.Result{}, err
@@ -386,7 +386,7 @@ func (wc *WorkspaceCountController) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	if ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != "" {
-		if err := wc.reconcileNode(ctx, ws.Status.Runtime.NodeName); err != nil {
+		if err := c.reconcileNode(ctx, ws.Status.Runtime.NodeName); err != nil {
 			log.WithError(err).WithField("node", ws.Status.Runtime.NodeName).Error("failed to reconcile node")
 			return ctrl.Result{}, err
 		}
@@ -396,12 +396,12 @@ func (wc *WorkspaceCountController) Reconcile(ctx context.Context, req ctrl.Requ
 }
 
 // Cleanup method to be called when shutting down the controller
-func (wc *WorkspaceCountController) Stop() {
+func (wc *NodeScaledownAnnotationController) Stop() {
 	close(wc.stopChan)
 }
 
 // reconcileAllNodes lists all nodes and reconciles each one
-func (wc *WorkspaceCountController) reconcileAllNodes(ctx context.Context) (ctrl.Result, error) {
+func (wc *NodeScaledownAnnotationController) reconcileAllNodes(ctx context.Context) (ctrl.Result, error) {
 	var nodes corev1.NodeList
 	if err := wc.List(ctx, &nodes); err != nil {
 		log.WithError(err).Error("failed to list nodes")
@@ -419,9 +419,9 @@ func (wc *WorkspaceCountController) reconcileAllNodes(ctx context.Context) (ctrl
 }
 
 // reconcileNode counts the workspaces running on a node and updates the autoscaler annotation accordingly
-func (wc *WorkspaceCountController) reconcileNode(ctx context.Context, nodeName string) error {
+func (c *NodeScaledownAnnotationController) reconcileNode(ctx context.Context, nodeName string) error {
 	var workspaceList workspacev1.WorkspaceList
-	if err := wc.List(ctx, &workspaceList, client.MatchingFields{
+	if err := c.List(ctx, &workspaceList, client.MatchingFields{
 		"status.runtime.nodeName": nodeName,
 	}); err != nil {
 		return fmt.Errorf("failed to list workspaces: %w", err)
@@ -429,16 +429,16 @@ func (wc *WorkspaceCountController) reconcileNode(ctx context.Context, nodeName 
 	log.WithField("node", nodeName).WithField("count", len(workspaceList.Items)).Info("acting on workspaces")
 	count := len(workspaceList.Items)
 
-	return wc.updateNodeAnnotation(ctx, nodeName, count)
+	return c.updateNodeAnnotation(ctx, nodeName, count)
 }
 
-func (wc *WorkspaceCountController) updateNodeAnnotation(ctx context.Context, nodeName string, count int) error {
+func (c *NodeScaledownAnnotationController) updateNodeAnnotation(ctx context.Context, nodeName string, count int) error {
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
 		var node corev1.Node
-		err := wc.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
+		err := c.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
 		if err != nil {
 			return fmt.Errorf("obtaining node %s: %w", nodeName, err)
 		}
@@ -455,7 +455,7 @@ func (wc *WorkspaceCountController) updateNodeAnnotation(ctx context.Context, no
 			log.WithField("nodeName", nodeName).Info("enabling scale-down for node")
 		}
 
-		return wc.Update(ctx, &node)
+		return c.Update(ctx, &node)
 	})
 }
 
