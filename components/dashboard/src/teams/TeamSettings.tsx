@@ -12,7 +12,6 @@ import { InputWithCopy } from "../components/InputWithCopy";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { InputField } from "../components/forms/InputField";
 import { TextInputField } from "../components/forms/TextInputField";
-import { Heading2, Heading3, Subheading } from "../components/typography/headings";
 import { useIsOwner } from "../data/organizations/members-query";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
@@ -32,6 +31,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { PlainMessage } from "@bufbuild/protobuf";
 import { useToast } from "../components/toasts/Toasts";
+import { SwitchInputField } from "@podkit/switch/Switch";
+import { Heading2, Heading3, Subheading } from "@podkit/typography/Headings";
 
 export default function TeamSettingsPage() {
     useDocumentTitle("Organization Settings - General");
@@ -122,6 +123,17 @@ export default function TeamSettingsPage() {
         [updateTeamSettings, org?.id, isOwner, settings, toast],
     );
 
+    const handleUpdateAnnotatedCommits = useCallback(
+        async (value: boolean) => {
+            try {
+                await handleUpdateTeamSettings({ annotateGitCommits: value });
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        [handleUpdateTeamSettings],
+    );
+
     return (
         <>
             <OrgSettingsPage>
@@ -205,6 +217,31 @@ export default function TeamSettingsPage() {
                             installationDefaultWorkspaceImage={installationDefaultImage}
                             onClick={() => setShowImageEditModal(true)}
                         />
+                    </ConfigurationSettingsField>
+
+                    <ConfigurationSettingsField>
+                        <Heading3>Insights</Heading3>
+                        <Subheading className="mb-4">
+                            Configure insights into usage of Gitpod in your organization.
+                        </Subheading>
+
+                        <InputField
+                            label="Annotate git commits"
+                            hint={
+                                <>
+                                    Add a <code>Tool:</code> field to all git commit messages created from workspaces in
+                                    your organization to associate them with the Gitpod instance.
+                                </>
+                            }
+                        >
+                            <SwitchInputField
+                                id="prebuild-full-clone-enabled"
+                                checked={settings?.annotateGitCommits || false}
+                                disabled={!isOwner || isLoading}
+                                onCheckedChange={handleUpdateAnnotatedCommits}
+                                label=""
+                            />
+                        </InputField>
                     </ConfigurationSettingsField>
 
                     {showImageEditModal && (
