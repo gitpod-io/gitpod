@@ -810,12 +810,20 @@ func configureGit(cfg *Config) {
 		{"alias.lg", "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"},
 		{"credential.helper", "/usr/bin/gp credential-helper"},
 		{"safe.directory", "*"},
+		{"core.hooksPath", "/etc/git/hooks"},
 	}
 	if cfg.GitUsername != "" {
 		settings = append(settings, []string{"user.name", cfg.GitUsername})
 	}
 	if cfg.GitEmail != "" {
 		settings = append(settings, []string{"user.email", cfg.GitEmail})
+	}
+
+	if cfg.CommitAnnotationEnabled {
+		err := setupGitMessageHook()
+		if err != nil {
+			log.WithError(err).Error("cannot setup git message hook")
+		}
 	}
 
 	for _, s := range settings {
@@ -828,6 +836,24 @@ func configureGit(cfg *Config) {
 			log.WithError(err).WithField("args", s).Warn("git config error")
 		}
 	}
+}
+
+const hookContent = `#!/bin/sh
+exec /usr/bin/gp git-commit-message-helper --file "$1"
+`
+
+func setupGitMessageHook() error {
+	hookPath := "/etc/git/hooks"
+	if err := os.MkdirAll(hookPath, 0755); err != nil {
+		return err
+	}
+
+	hookFile := filepath.Join(hookPath, "prepare-commit-msg")
+	if err := os.WriteFile(hookFile, []byte(hookContent), 0755); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func hasMetadataAccess() bool {
