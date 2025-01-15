@@ -34,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -130,6 +131,14 @@ var runCmd = &cobra.Command{
 		err = wc.SetupWithManager(mgr)
 		if err != nil {
 			log.WithError(err).Fatal("unable to bind workspace count controller")
+		}
+
+		err = mgr.Add(manager.RunnableFunc(func(context.Context) error {
+			wc.Stop()
+			return nil
+		}))
+		if err != nil {
+			log.WithError(err).Fatal("couldn't properly clean up WorkspaceCountController")
 		}
 
 		metrics.Registry.MustRegister(NodeLabelerCounterVec)
