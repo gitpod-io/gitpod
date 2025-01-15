@@ -48,20 +48,20 @@ func TestStandaloneRefResolverResolve(t *testing.T) {
 			Name: "basic resolve",
 			Ref:  "docker.io/library/alpine:latest",
 			ResolveResponse: ResolveResponse{
-				MF: &ociv1.Manifest{Config: ociv1.Descriptor{Size: 1}},
+				MF: &ociv1.Manifest{Config: ociv1.Descriptor{MediaType: ociv1.MediaTypeImageManifest, Size: 1}},
 			},
 			Expectation: Expectation{
-				Ref: "docker.io/library/alpine@sha256:25d33b2d291ce47c3e4059589766ed98fadab639577efe5e9c89e4a4b50888fc",
+				Ref: "docker.io/library/alpine@sha256:839b30716e23e3ac46ed28d6f9fc0f77e3e7121a9b4b2833e8fb6ec4ec89b3bd",
 			},
 		},
 		{
 			Name: "with-port",
 			Ref:  "some-internal-registry.customer.com:5000/gitpod/base-image:latest",
 			ResolveResponse: ResolveResponse{
-				MF: &ociv1.Manifest{Config: ociv1.Descriptor{Size: 1}},
+				MF: &ociv1.Manifest{Config: ociv1.Descriptor{MediaType: ociv1.MediaTypeImageManifest, Size: 1}},
 			},
 			Expectation: Expectation{
-				Ref: "some-internal-registry.customer.com:5000/gitpod/base-image@sha256:25d33b2d291ce47c3e4059589766ed98fadab639577efe5e9c89e4a4b50888fc",
+				Ref: "some-internal-registry.customer.com:5000/gitpod/base-image@sha256:839b30716e23e3ac46ed28d6f9fc0f77e3e7121a9b4b2833e8fb6ec4ec89b3bd",
 			},
 		},
 		{
