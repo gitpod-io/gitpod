@@ -1562,6 +1562,12 @@ export class WorkspaceStarter {
             sysEnvvars.push(ev);
         }
 
+        const organizationSettings = await this.orgService.getSettings(user.id, workspace.organizationId);
+        organizationSettings.annotateGitCommits;
+        sysEnvvars.push(
+            newEnvVar("GITPOD_COMMIT_ANNOTATION_ENABLED", organizationSettings.annotateGitCommits ? "true" : "false"),
+        );
+
         const orgIdEnv = new EnvironmentVariable();
         orgIdEnv.setName("GITPOD_DEFAULT_WORKSPACE_IMAGE");
         orgIdEnv.setValue(await this.configProvider.getDefaultImage(workspace.organizationId));
@@ -1582,7 +1588,6 @@ export class WorkspaceStarter {
         sysEnvvars.push(isSetJavaXmx);
         sysEnvvars.push(isSetJavaProcessorCount);
         sysEnvvars.push(disableJetBrainsLocalPortForwarding);
-        sysEnvvars.push(newEnvVar("GITPOD_COMMIT_ANNOTATION_ENABLED", "true"));
         const spec = new StartWorkspaceSpec();
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
@@ -1609,7 +1614,6 @@ export class WorkspaceStarter {
             spec.setTimeout(defaultTimeout);
             spec.setMaximumLifetime(workspaceLifetime);
             if (allowSetTimeout) {
-                const organizationSettings = await this.orgService.getSettings(user.id, workspace.organizationId);
                 if (organizationSettings.timeoutSettings?.inactivity) {
                     try {
                         const timeout = WorkspaceTimeoutDuration.validate(

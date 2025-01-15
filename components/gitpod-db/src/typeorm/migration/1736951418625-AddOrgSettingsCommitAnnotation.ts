@@ -8,7 +8,7 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 import { columnExists } from "./helper/helper";
 
 const table = "d_b_org_settings";
-const newColumn = "annotateCommits";
+const newColumn = "annotateGitCommits";
 
 export class AddOrgSettingsCommitAnnotation1736951418625 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
