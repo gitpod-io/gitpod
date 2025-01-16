@@ -132,7 +132,6 @@ const WorkspacesPage: FunctionComponent = () => {
     const toggleGettingStarted = useCallback(
         (show: boolean) => {
             setShowGettingStarted(show);
-            console.log("toggleGettingStarted", show);
 
             mutateUser(
                 {
