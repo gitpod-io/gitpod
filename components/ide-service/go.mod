@@ -4,8 +4,8 @@ go 1.22
 
 require (
 	github.com/containerd/containerd v1.6.36
+	github.com/distribution/reference v0.5.0
 	github.com/docker/cli v25.0.1+incompatible
-	github.com/docker/distribution v2.8.3+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ide-service-api v0.0.0-00010101000000-000000000000
@@ -29,7 +29,6 @@ require (
 	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/frankban/quicktest v1.11.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
