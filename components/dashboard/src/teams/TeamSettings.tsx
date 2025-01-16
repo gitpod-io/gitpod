@@ -230,12 +230,13 @@ export default function TeamSettingsPage() {
                             hint={
                                 <>
                                     Add a <code>Tool:</code> field to all git commit messages created from workspaces in
-                                    your organization to associate them with the Gitpod instance.
+                                    your organization to associate them with this Gitpod instance.
                                 </>
                             }
+                            id="annotate-git-commits"
                         >
                             <SwitchInputField
-                                id="prebuild-full-clone-enabled"
+                                id="annotate-git-commits"
                                 checked={settings?.annotateGitCommits || false}
                                 disabled={!isOwner || isLoading}
                                 onCheckedChange={handleUpdateAnnotatedCommits}
