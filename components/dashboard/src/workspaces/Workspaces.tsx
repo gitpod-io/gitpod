@@ -37,6 +37,8 @@ import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutati
 import { useUserLoader } from "../hooks/use-user-loader";
 import Tooltip from "../components/Tooltip";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
+import PillLabel from "../components/PillLabel";
 
 export const GETTING_STARTED_DISMISSAL_KEY = "workspace-list-getting-started";
 
@@ -129,6 +131,21 @@ const WorkspacesPage: FunctionComponent = () => {
         }
     }, [user?.profile?.coachmarksDismissals]);
 
+    const { data: suggestedRepos } = useSuggestedRepositories({ excludeConfigurations: false });
+
+    const recentRepos = useMemo(() => {
+        return (
+            suggestedRepos
+                ?.filter((repo) => {
+                    const autostartMatch = user?.workspaceAutostartOptions.find((option) => {
+                        return option.cloneUrl.includes(repo.url);
+                    });
+                    return autostartMatch;
+                })
+                .slice(0, 3) ?? []
+        );
+    }, [suggestedRepos, user]);
+
     const toggleGettingStarted = useCallback(
         (show: boolean) => {
             setShowGettingStarted(show);
@@ -169,29 +186,29 @@ const WorkspacesPage: FunctionComponent = () => {
 
             {isEnterpriseOnboardingEnabled && isDedicatedInstallation && (
                 <>
-                    <div className="app-container flex flex-row items-center justify-between mt-4 mb-2">
-                        <div className="flex flex-row items-center gap-2">
-                            <Tooltip content="Toggle helpful resources for getting started with Gitpod">
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => toggleGettingStarted(!showGettingStarted)}
-                                    className="p-2"
-                                >
+                    <div className="app-container flex flex-row items-center justify-end mt-4 mb-2">
+                        <Tooltip content="Toggle helpful resources for getting started with Gitpod">
+                            <Button
+                                variant="ghost"
+                                onClick={() => toggleGettingStarted(!showGettingStarted)}
+                                className="p-2"
+                            >
+                                <div className="flex flex-row justify-end items-center gap-2">
+                                    <Subheading className="text-pk-content-primary">Getting started</Subheading>
+
                                     <ChevronRight
                                         className={`text-gray-400 dark:text-gray-500 transform transition-transform duration-100 ${
                                             showGettingStarted ? "rotate-90" : ""
                                         }`}
-                                        size={24}
+                                        size={20}
                                     />
-                                </Button>
-                            </Tooltip>
-
-                            <Subheading className="font-semibold text-pk-content-primary">Getting started</Subheading>
-                        </div>
+                                </div>
+                            </Button>
+                        </Tooltip>
                     </div>
 
                     {showGettingStarted && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:px-28 px-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:px-28 px-4 pb-4">
                             <Card onClick={() => setVideoModalVisible(true)}>
                                 <GraduationCap className="flex-shrink-0" size={24} />
                                 <div className="min-w-0">
@@ -234,6 +251,61 @@ const WorkspacesPage: FunctionComponent = () => {
                                 </div>
                             </Card>
                         </div>
+                    )}
+
+                    {(recentRepos.length || 1) > 0 && (
+                        <>
+                            <Subheading className="font-semibold text-pk-content-primary mb-2 app-container">
+                                Suggested
+                            </Subheading>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:px-28 px-4">
+                                {[
+                                    ...recentRepos,
+                                    // todo: add org-selected repos
+                                    {
+                                        url: "https://github.com/filiptronicek/test",
+                                        configurationName: "Test",
+                                        repoName: "test",
+                                    },
+                                    {
+                                        url: "https://github.com/filiptronicek/test",
+                                        configurationName: "Test",
+                                        repoName: "test",
+                                    },
+                                    {
+                                        url: "https://github.com/filiptronicek/test",
+                                        configurationName: "Test",
+                                        repoName: "test",
+                                    },
+                                ]
+                                    .slice(0, 3)
+                                    .map((repo) => (
+                                        <Card
+                                            key={repo.url}
+                                            href={`/new#${repo.url}`}
+                                            className="border-[#D79A45] border hover:bg-pk-surface-tertiary transition-colors w-full"
+                                        >
+                                            <div className="min-w-0 w-full space-y-1.5">
+                                                <CardTitle className="flex flex-row items-center gap-2 w-full">
+                                                    <span className="truncate block min-w-0 text-base">
+                                                        {repo.configurationName || repo.repoName}
+                                                    </span>
+                                                    <PillLabel
+                                                        className="capitalize bg-kumquat-light shrink-0 text-sm"
+                                                        type="warn"
+                                                    >
+                                                        Recommended
+                                                    </PillLabel>
+                                                </CardTitle>
+                                                <CardDescription className="truncate text-sm opacity-75">
+                                                    {repo.url}
+                                                </CardDescription>
+                                            </div>
+                                        </Card>
+                                    ))}
+                            </div>
+                        </>
                     )}
 
                     <Modal
