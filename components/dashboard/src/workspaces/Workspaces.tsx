@@ -175,11 +175,10 @@ const WorkspacesPage: FunctionComponent = () => {
                                 onClick={() => toggleGettingStarted(!showGettingStarted)}
                                 className="p-2"
                             >
-                                <div className="flex flex-row justify-end items-center gap-2">
+                                <div className="flex flex-row items-center gap-2">
                                     <Subheading className="text-pk-content-primary">Getting started</Subheading>
-
                                     <ChevronRight
-                                        className={`text-gray-400 dark:text-gray-500 transform transition-transform duration-100 ${
+                                        className={`transform transition-transform duration-100 ${
                                             showGettingStarted ? "rotate-90" : ""
                                         }`}
                                         size={20}
