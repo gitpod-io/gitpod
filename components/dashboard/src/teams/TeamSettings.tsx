@@ -33,6 +33,7 @@ import { PlainMessage } from "@bufbuild/protobuf";
 import { useToast } from "../components/toasts/Toasts";
 import { SwitchInputField } from "@podkit/switch/Switch";
 import { Heading2, Heading3, Subheading } from "@podkit/typography/Headings";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export default function TeamSettingsPage() {
     useDocumentTitle("Organization Settings - General");
@@ -48,6 +49,7 @@ export default function TeamSettingsPage() {
     const [updated, setUpdated] = useState(false);
 
     const updateOrg = useUpdateOrgMutation();
+    const isCommitAnnotationEnabled = useFeatureFlag("commit_annotation_setting_enabled");
 
     const close = () => setModal(false);
 
@@ -219,31 +221,33 @@ export default function TeamSettingsPage() {
                         />
                     </ConfigurationSettingsField>
 
-                    <ConfigurationSettingsField>
-                        <Heading3>Insights</Heading3>
-                        <Subheading className="mb-4">
-                            Configure insights into usage of Gitpod in your organization.
-                        </Subheading>
+                    {isCommitAnnotationEnabled && (
+                        <ConfigurationSettingsField>
+                            <Heading3>Insights</Heading3>
+                            <Subheading className="mb-4">
+                                Configure insights into usage of Gitpod in your organization.
+                            </Subheading>
 
-                        <InputField
-                            label="Annotate git commits"
-                            hint={
-                                <>
-                                    Add a <code>Tool:</code> field to all git commit messages created from workspaces in
-                                    your organization to associate them with this Gitpod instance.
-                                </>
-                            }
-                            id="annotate-git-commits"
-                        >
-                            <SwitchInputField
+                            <InputField
+                                label="Annotate git commits"
+                                hint={
+                                    <>
+                                        Add a <code>Tool:</code> field to all git commit messages created from
+                                        workspaces in your organization to associate them with this Gitpod instance.
+                                    </>
+                                }
                                 id="annotate-git-commits"
-                                checked={settings?.annotateGitCommits || false}
-                                disabled={!isOwner || isLoading}
-                                onCheckedChange={handleUpdateAnnotatedCommits}
-                                label=""
-                            />
-                        </InputField>
-                    </ConfigurationSettingsField>
+                            >
+                                <SwitchInputField
+                                    id="annotate-git-commits"
+                                    checked={settings?.annotateGitCommits || false}
+                                    disabled={!isOwner || isLoading}
+                                    onCheckedChange={handleUpdateAnnotatedCommits}
+                                    label=""
+                                />
+                            </InputField>
+                        </ConfigurationSettingsField>
+                    )}
 
                     {showImageEditModal && (
                         <OrgDefaultWorkspaceImageModal
