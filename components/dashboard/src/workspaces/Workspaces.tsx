@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FunctionComponent, useCallback, useMemo, useState } from "react";
+import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
 import Header from "../components/Header";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { ItemsList } from "../components/ItemsList";
@@ -20,7 +20,7 @@ import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v
 import { Button } from "@podkit/buttons/Button";
 import { VideoCarousel } from "./VideoCarousel";
 import { BlogBanners } from "./BlogBanners";
-import { Book, BookOpen, Building, Code, GraduationCap } from "lucide-react";
+import { Book, BookOpen, Building, ChevronRight, Code, GraduationCap } from "lucide-react";
 import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
 import PersonalizedContent from "./PersonalizedContent";
 import { useListenToWorkspacesWSMessages as useListenToWorkspacesStatusUpdates } from "../data/workspaces/listen-to-workspace-ws-messages";
@@ -119,28 +119,41 @@ const WorkspacesPage: FunctionComponent = () => {
         } catch (e) {}
     }, [deleteInactiveWorkspaces, inactiveWorkspaces, toast]);
 
-    const [showGettingStarted, setShowGettingStarted] = useState(true);
-    const dismissGettingStarted = useCallback(() => {
-        setShowGettingStarted(false);
+    // initialize a state so that we can be optimistic and reactive, but also use an effect to sync the state with the user's actual profile
+    const [showGettingStarted, setShowGettingStarted] = useState<boolean | undefined>(undefined);
+    useEffect(() => {
+        if (!user?.profile?.coachmarksDismissals[GETTING_STARTED_DISMISSAL_KEY]) {
+            setShowGettingStarted(true);
+        } else {
+            setShowGettingStarted(false);
+        }
+    }, [user?.profile?.coachmarksDismissals]);
 
-        mutateUser(
-            {
-                additionalData: {
-                    profile: {
-                        coachmarksDismissals: {
-                            [GETTING_STARTED_DISMISSAL_KEY]: new Date().toISOString(),
+    const toggleGettingStarted = useCallback(
+        (show: boolean) => {
+            setShowGettingStarted(show);
+            console.log("toggleGettingStarted", show);
+
+            mutateUser(
+                {
+                    additionalData: {
+                        profile: {
+                            coachmarksDismissals: {
+                                [GETTING_STARTED_DISMISSAL_KEY]: !show ? new Date().toISOString() : "",
+                            },
                         },
                     },
                 },
-            },
-            {
-                onError: (e) => {
-                    toast("Failed to dismiss getting started");
-                    setShowGettingStarted(true);
+                {
+                    onError: (e) => {
+                        toast("Failed to dismiss getting started");
+                        setShowGettingStarted(true);
+                    },
                 },
-            },
-        );
-    }, [mutateUser, toast]);
+            );
+        },
+        [mutateUser, toast],
+    );
 
     const [isVideoModalVisible, setVideoModalVisible] = useState(false);
     const handleVideoModalClose = useCallback(() => {
@@ -154,20 +167,30 @@ const WorkspacesPage: FunctionComponent = () => {
                 subtitle="Manage, start and stop your personal development environments in the cloud."
             />
 
-            {isEnterpriseOnboardingEnabled &&
-                isDedicatedInstallation &&
-                showGettingStarted &&
-                !user?.profile?.coachmarksDismissals[GETTING_STARTED_DISMISSAL_KEY] && (
-                    <>
-                        <div className="app-container flex flex-row items-center justify-between mt-4 mb-2">
-                            <Subheading className="font-semibold text-pk-content-primary">Getting started</Subheading>
-                            <Tooltip content={`Hide "Getting started" - can be restored in your user preferences`}>
-                                <Button variant={"ghost"} onClick={dismissGettingStarted}>
-                                    Hide
+            {isEnterpriseOnboardingEnabled && isDedicatedInstallation && (
+                <>
+                    <div className="app-container flex flex-row items-center justify-between mt-4 mb-2">
+                        <div className="flex flex-row items-center gap-2">
+                            <Tooltip content="Toggle helpful resources for getting started with Gitpod">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => toggleGettingStarted(!showGettingStarted)}
+                                    className="p-2"
+                                >
+                                    <ChevronRight
+                                        className={`text-gray-400 dark:text-gray-500 transform transition-transform duration-100 ${
+                                            showGettingStarted ? "rotate-90" : ""
+                                        }`}
+                                        size={24}
+                                    />
                                 </Button>
                             </Tooltip>
-                        </div>
 
+                            <Subheading className="font-semibold text-pk-content-primary">Getting started</Subheading>
+                        </div>
+                    </div>
+
+                    {showGettingStarted && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:px-28 px-4">
                             <Card onClick={() => setVideoModalVisible(true)}>
                                 <GraduationCap className="flex-shrink-0" size={24} />
@@ -211,32 +234,33 @@ const WorkspacesPage: FunctionComponent = () => {
                                 </div>
                             </Card>
                         </div>
+                    )}
 
-                        <Modal
-                            visible={isVideoModalVisible}
-                            onClose={handleVideoModalClose}
-                            containerClassName="min-[576px]:max-w-[600px]"
-                        >
-                            <ModalHeader>Demo video</ModalHeader>
-                            <ModalBody>
-                                <div className="flex flex-row items-center justify-center">
-                                    <VideoSection
-                                        metadataVideoTitle="Gitpod demo"
-                                        playbackId="m01BUvCkTz7HzQKFoIcQmK00Rx5laLLoMViWBstetmvLs"
-                                        poster="https://i.ytimg.com/vi_webp/1ZBN-b2cIB8/maxresdefault.webp"
-                                        playerProps={{ onPlay: handlePlay, defaultHiddenCaptions: true }}
-                                        className="w-[535px] rounded-xl"
-                                    />
-                                </div>
-                            </ModalBody>
-                            <ModalBaseFooter>
-                                <Button variant="secondary" onClick={handleVideoModalClose}>
-                                    Close
-                                </Button>
-                            </ModalBaseFooter>
-                        </Modal>
-                    </>
-                )}
+                    <Modal
+                        visible={isVideoModalVisible}
+                        onClose={handleVideoModalClose}
+                        containerClassName="min-[576px]:max-w-[600px]"
+                    >
+                        <ModalHeader>Demo video</ModalHeader>
+                        <ModalBody>
+                            <div className="flex flex-row items-center justify-center">
+                                <VideoSection
+                                    metadataVideoTitle="Gitpod demo"
+                                    playbackId="m01BUvCkTz7HzQKFoIcQmK00Rx5laLLoMViWBstetmvLs"
+                                    poster="https://i.ytimg.com/vi_webp/1ZBN-b2cIB8/maxresdefault.webp"
+                                    playerProps={{ onPlay: handlePlay, defaultHiddenCaptions: true }}
+                                    className="w-[535px] rounded-xl"
+                                />
+                            </div>
+                        </ModalBody>
+                        <ModalBaseFooter>
+                            <Button variant="secondary" onClick={handleVideoModalClose}>
+                                Close
+                            </Button>
+                        </ModalBaseFooter>
+                    </Modal>
+                </>
+            )}
 
             {deleteModalVisible && (
                 <ConfirmationModal

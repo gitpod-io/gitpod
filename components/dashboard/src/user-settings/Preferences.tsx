@@ -25,8 +25,6 @@ import { converter, userClient } from "../service/public-api";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import Alert from "../components/Alert";
-import { GETTING_STARTED_DISMISSAL_KEY } from "../workspaces/Workspaces";
-import { useFeatureFlag } from "../data/featureflag-query";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
@@ -45,8 +43,6 @@ export default function Preferences() {
     );
     const [timeoutUpdating, setTimeoutUpdating] = useState(false);
     const [creationError, setCreationError] = useState<Error>();
-
-    const isEnterpriseOnboardingEnabled = useFeatureFlag("enterprise_onboarding_enabled");
 
     const saveDotfileRepo = useCallback(
         async (e) => {
@@ -118,30 +114,6 @@ export default function Preferences() {
         toast("Workspace options have been cleared.");
     }, [updateUser, setUser, toast, user]);
 
-    const restartOrgOnboarding = useCallback(async () => {
-        const updatedUser = await updateUser.mutateAsync(
-            {
-                additionalData: {
-                    profile: {
-                        coachmarksDismissals: {
-                            [GETTING_STARTED_DISMISSAL_KEY]: "",
-                        },
-                    },
-                },
-            },
-            {
-                onError: (e) => {
-                    toast("Failed to reset onboarding.");
-                },
-            },
-        );
-
-        if (updatedUser) {
-            setUser(updatedUser);
-            toast("Onboarding has been restarted.");
-        }
-    }, [updateUser, toast, setUser]);
-
     return (
         <div>
             <PageWithSettingsSubMenu>
@@ -163,16 +135,6 @@ export default function Preferences() {
                 <Button className="mt-4" variant="secondary" onClick={clearCreateWorkspaceOptions}>
                     Reset Options
                 </Button>
-
-                {isEnterpriseOnboardingEnabled && (
-                    <>
-                        <Heading3 className="mt-12">Organization onboarding</Heading3>
-                        <Subheading>If you dismissed the onboarding process, you can restart it here.</Subheading>
-                        <Button className="mt-4" variant="secondary" onClick={restartOrgOnboarding}>
-                            Restart Onboarding
-                        </Button>
-                    </>
-                )}
 
                 <ThemeSelector className="mt-12" />
 
