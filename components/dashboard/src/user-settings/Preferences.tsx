@@ -157,7 +157,7 @@ export default function Preferences() {
                             <LoadingButton
                                 type="submit"
                                 loading={updateDotfileRepo.isLoading}
-                                disabled={updateDotfileRepo.isLoading || (dotfileRepo === user?.dotfileRepo ?? "")}
+                                disabled={updateDotfileRepo.isLoading || dotfileRepo === user?.dotfileRepo}
                             >
                                 Save
                             </LoadingButton>
@@ -201,9 +201,7 @@ export default function Preferences() {
                                         loading={timeoutUpdating}
                                         disabled={
                                             workspaceTimeout ===
-                                                converter.toDurationString(
-                                                    user?.workspaceTimeoutSettings?.inactivity,
-                                                ) ?? ""
+                                            converter.toDurationString(user?.workspaceTimeoutSettings?.inactivity)
                                         }
                                     >
                                         Save

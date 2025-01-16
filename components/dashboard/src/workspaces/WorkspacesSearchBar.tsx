@@ -9,7 +9,7 @@ import { StartWorkspaceModalKeyBinding } from "../App";
 import DropDown from "../components/DropDown";
 import search from "../icons/search.svg";
 import { LinkButton } from "@podkit/buttons/LinkButton";
-import { isGitpodIo } from "../utils";
+import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
 
 type WorkspacesSearchBarProps = {
     searchTerm: string;
@@ -24,8 +24,11 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
     onSearchTermUpdated,
     onLimitUpdated,
 }) => {
+    const { data: installationConfig } = useInstallationConfiguration();
+    const isDedicatedInstallation = !!installationConfig?.isDedicatedInstallation;
+
     return (
-        <div className={isGitpodIo() ? "app-container xl:!pr-4 py-5 flex" : "py-5 flex"}>
+        <div className={!isDedicatedInstallation ? "app-container xl:!pr-4 py-5 flex" : "py-5 flex"}>
             <div className="flex relative h-10 my-auto">
                 <img src={search} title="Search" className="filter-grayscale absolute top-3 left-3" alt="search icon" />
                 <input
