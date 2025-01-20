@@ -692,6 +692,14 @@
         "allowPin": true,
         "versions": [
           {
+            "version": "2024.3.1.1",
+            "image": "{{.Repository}}/ide/rubymine:commit-4a5f02e1643ae38da465ec0bd0cc7d7aa5a0738f",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-4a5f02e1643ae38da465ec0bd0cc7d7aa5a0738f",
+              "{{.Repository}}/ide/jb-launcher:commit-76781bf32218c46d064e85ac8dd39e454218c8af"
+            ]
+          },
+          {
             "version": "2024.3",
             "image": "{{.Repository}}/ide/rubymine:commit-3a58ac914d4119398141faf90baee2632e7ea842",
             "imageLayers": [
@@ -800,6 +808,14 @@
         ],
         "allowPin": true,
         "versions": [
+          {
+            "version": "2024.3.1.1",
+            "image": "{{.Repository}}/ide/webstorm:commit-4a5f02e1643ae38da465ec0bd0cc7d7aa5a0738f",
+            "imageLayers": [
+              "{{.Repository}}/ide/jb-backend-plugin:commit-4a5f02e1643ae38da465ec0bd0cc7d7aa5a0738f",
+              "{{.Repository}}/ide/jb-launcher:commit-76781bf32218c46d064e85ac8dd39e454218c8af"
+            ]
+          },
           {
             "version": "2024.3",
             "image": "{{.Repository}}/ide/webstorm:commit-3a58ac914d4119398141faf90baee2632e7ea842",
