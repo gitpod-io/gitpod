@@ -337,7 +337,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             update.maxParallelRunningWorkspaces = req.maxParallelRunningWorkspaces;
         }
 
-        if (req.onboardingSettings) {
+        if (req.onboardingSettings && Object.keys(req.onboardingSettings).length > 0) {
             if (!this.config.isDedicatedInstallation) {
                 throw new ApplicationError(
                     ErrorCodes.BAD_REQUEST,
@@ -349,6 +349,9 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             }
 
             update.onboardingSettings = req.onboardingSettings;
+        }
+        if (req.annotateGitCommits !== undefined) {
+            update.annotateGitCommits = req.annotateGitCommits;
         }
 
         if (Object.keys(update).length === 0) {

@@ -338,6 +338,11 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
    */
   onboardingSettings?: OnboardingSettings;
 
+  /**
+   * @generated from field: bool annotate_git_commits = 11;
+   */
+  annotateGitCommits = false;
+
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -356,6 +361,7 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
     { no: 8, name: "role_restrictions", kind: "message", T: RoleRestrictionEntry, repeated: true },
     { no: 9, name: "max_parallel_running_workspaces", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 10, name: "onboarding_settings", kind: "message", T: OnboardingSettings },
+    { no: 11, name: "annotate_git_commits", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {
@@ -700,6 +706,13 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
    */
   onboardingSettings?: OnboardingSettings;
 
+  /**
+   * annotate_git_commits specifies whether to annotate git commits with the gitpod host
+   *
+   * @generated from field: optional bool annotate_git_commits = 17;
+   */
+  annotateGitCommits?: boolean;
+
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -722,6 +735,7 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
     { no: 13, name: "update_role_restrictions", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 15, name: "max_parallel_running_workspaces", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
     { no: 16, name: "onboarding_settings", kind: "message", T: OnboardingSettings, opt: true },
+    { no: 17, name: "annotate_git_commits", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {

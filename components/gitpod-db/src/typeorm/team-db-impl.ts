@@ -376,6 +376,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
                 "roleRestrictions",
                 "maxParallelRunningWorkspaces",
                 "onboardingSettings",
+                "annotateGitCommits",
             ],
         });
     }

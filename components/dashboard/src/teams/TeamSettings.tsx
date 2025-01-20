@@ -12,7 +12,6 @@ import { InputWithCopy } from "../components/InputWithCopy";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { InputField } from "../components/forms/InputField";
 import { TextInputField } from "../components/forms/TextInputField";
-import { Heading2, Heading3, Subheading } from "../components/typography/headings";
 import { useIsOwner } from "../data/organizations/members-query";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
@@ -32,6 +31,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { PlainMessage } from "@bufbuild/protobuf";
 import { useToast } from "../components/toasts/Toasts";
+import { SwitchInputField } from "@podkit/switch/Switch";
+import { Heading2, Heading3, Subheading } from "@podkit/typography/Headings";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export default function TeamSettingsPage() {
     useDocumentTitle("Organization Settings - General");
@@ -47,6 +49,7 @@ export default function TeamSettingsPage() {
     const [updated, setUpdated] = useState(false);
 
     const updateOrg = useUpdateOrgMutation();
+    const isCommitAnnotationEnabled = useFeatureFlag("commit_annotation_setting_enabled");
 
     const close = () => setModal(false);
 
@@ -120,6 +123,17 @@ export default function TeamSettingsPage() {
             }
         },
         [updateTeamSettings, org?.id, isOwner, settings, toast],
+    );
+
+    const handleUpdateAnnotatedCommits = useCallback(
+        async (value: boolean) => {
+            try {
+                await handleUpdateTeamSettings({ annotateGitCommits: value });
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        [handleUpdateTeamSettings],
     );
 
     return (
@@ -206,6 +220,34 @@ export default function TeamSettingsPage() {
                             onClick={() => setShowImageEditModal(true)}
                         />
                     </ConfigurationSettingsField>
+
+                    {isCommitAnnotationEnabled && (
+                        <ConfigurationSettingsField>
+                            <Heading3>Insights</Heading3>
+                            <Subheading className="mb-4">
+                                Configure insights into usage of Gitpod in your organization.
+                            </Subheading>
+
+                            <InputField
+                                label="Annotate git commits"
+                                hint={
+                                    <>
+                                        Add a <code>Tool:</code> field to all git commit messages created from
+                                        workspaces in your organization to associate them with this Gitpod instance.
+                                    </>
+                                }
+                                id="annotate-git-commits"
+                            >
+                                <SwitchInputField
+                                    id="annotate-git-commits"
+                                    checked={settings?.annotateGitCommits || false}
+                                    disabled={!isOwner || isLoading}
+                                    onCheckedChange={handleUpdateAnnotatedCommits}
+                                    label=""
+                                />
+                            </InputField>
+                        </ConfigurationSettingsField>
+                    )}
 
                     {showImageEditModal && (
                         <OrgDefaultWorkspaceImageModal

@@ -273,7 +273,7 @@ type WorkspaceConfig struct {
 	// is located. If there's no Git repo in this workspace, this will be empty.
 	RepoRoot string `env:"GITPOD_REPO_ROOT"`
 
-	// RepoRoots is the comma seprated list of locations in the filesystem where Git repositories
+	// RepoRoots is the comma separated list of locations in the filesystem where Git repositories
 	// are located. If there's no Git repo in this workspace, this will be empty.
 	RepoRoots string `env:"GITPOD_REPO_ROOTS"`
 
@@ -290,6 +290,9 @@ type WorkspaceConfig struct {
 	GitUsername string `env:"GITPOD_GIT_USER_NAME"`
 	// GitEmail makes supervisor configure the global user.email Git setting.
 	GitEmail string `env:"GITPOD_GIT_USER_EMAIL"`
+
+	// CommitAnnotationEnabled controls whether to annotate commits with the Gitpod instance host
+	CommitAnnotationEnabled bool `env:"GITPOD_COMMIT_ANNOTATION_ENABLED"`
 
 	// Tokens is a JSON encoded list of WorkspaceGitpodToken
 	Tokens string `env:"THEIA_SUPERVISOR_TOKENS"`
@@ -321,8 +324,8 @@ type WorkspaceConfig struct {
 	// WorkspaceClusterHost is a host under which this workspace is served, e.g. ws-eu11.gitpod.io
 	WorkspaceClusterHost string `env:"GITPOD_WORKSPACE_CLUSTER_HOST"`
 
-	// DotfileRepo is a user-configurable repository which contains their dotfiles to customise
-	// the in-workspace epxerience.
+	// DotfileRepo is a user-configurable repository which contains their dotfiles to customize
+	// the in-workspace experience.
 	DotfileRepo string `env:"SUPERVISOR_DOTFILE_REPO"`
 
 	// EnvvarOTS points to a URL from which environment variables for child processes can be downloaded from.
@@ -702,10 +705,6 @@ func loadWorkspaceConfigFromEnv() (*WorkspaceConfig, error) {
 	_, err := env.UnmarshalFromEnviron(&res)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot load workspace config: %w", err)
-	}
-	//TODO(sefftinge) remove me after deployment (backward compatibility)
-	if res.RepoRoots == "" {
-		res.RepoRoots = res.RepoRoot
 	}
 
 	return &res, nil
