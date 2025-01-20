@@ -32,7 +32,7 @@ var (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   ServiceName,
-	Short: "node-labeler is in charge of maintining the node labels that workspaces require to run in a node",
+	Short: "node-labeler is in charge of maintaining the node labels that workspaces require to run in a node",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, jsonLog, verbose)
 	},

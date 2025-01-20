@@ -31,7 +31,10 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 					Verbs: []string{
 						"get",
+						"list",
+						"watch",
 						"update",
+						"patch",
 					},
 				},
 				{
@@ -39,6 +42,16 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Resources: []string{
 						"pods",
 					},
+					Verbs: []string{
+						"get",
+						"list",
+						"watch",
+					},
+				},
+				// permissions required for the WorkspaceCountController
+				{
+					APIGroups: []string{"workspace.gitpod.io"},
+					Resources: []string{"workspaces"},
 					Verbs: []string{
 						"get",
 						"list",
