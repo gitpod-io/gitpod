@@ -36,7 +36,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, fmt.Errorf("%s: invalid container registry config", Component)
 	}
 
-	//nolint:typecheck
 	configHash, err := common.ObjectHash(configmap(ctx))
 	if err != nil {
 		return nil, err

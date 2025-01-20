@@ -490,7 +490,7 @@ func (wsc *WorkspaceController) dumpWorkspaceContainerInfo(ctx context.Context, 
 		"containerID": id,
 		"exitStatus":  task.ExitStatus,
 		"pid":         task.Pid,
-		"exitedAt":    task.ExitedAt.AsTime(),
+		"exitedAt":    task.ExitedAt.String(),
 		"status":      task.Status.String(),
 	}).Info("container task info")
 	return nil
