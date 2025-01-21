@@ -16,7 +16,6 @@ import (
 
 	"github.com/bombsimon/logrusr/v2"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -146,8 +145,6 @@ var runCmd = &cobra.Command{
 
 		metrics.Registry.MustRegister(NodeLabelerCounterVec)
 		metrics.Registry.MustRegister(NodeLabelerTimeHistVec)
-		metrics.Registry.MustRegister(NodeScaledownAnnotationReconcileDuration)
-		metrics.Registry.MustRegister(NodeScaledownAnnotationReconciliationQueueSize)
 
 		err = mgr.AddHealthzCheck("healthz", healthz.Ping)
 		if err != nil {
@@ -328,6 +325,7 @@ func (c *NodeScaledownAnnotationController) periodicReconciliation() {
 				log.WithError(err).Error("periodic reconciliation failed")
 			}
 		case <-c.stopChan:
+			log.Info("stopping periodic full reconciliation")
 			return
 		}
 	}
@@ -394,7 +392,6 @@ func (c *NodeScaledownAnnotationController) queueNodeForReconciliation(nodeName 
 	default:
 		log.WithField("node", nodeName).Warn("reconciliation queue full")
 	}
-	NodeScaledownAnnotationReconciliationQueueSize.Set(float64(len(c.nodesToReconcile)))
 }
 
 func (c *NodeScaledownAnnotationController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -422,9 +419,6 @@ func (wc *NodeScaledownAnnotationController) Stop() {
 }
 
 func (c *NodeScaledownAnnotationController) reconcileAllNodes(ctx context.Context) (ctrl.Result, error) {
-	timer := prometheus.NewTimer(NodeScaledownAnnotationReconcileDuration.WithLabelValues("all_nodes"))
-	defer timer.ObserveDuration()
-
 	var nodes corev1.NodeList
 	if err := c.List(ctx, &nodes); err != nil {
 		log.WithError(err).Error("failed to list nodes")
@@ -439,9 +433,6 @@ func (c *NodeScaledownAnnotationController) reconcileAllNodes(ctx context.Contex
 }
 
 func (c *NodeScaledownAnnotationController) reconcileNode(ctx context.Context, nodeName string) error {
-	timer := prometheus.NewTimer(NodeScaledownAnnotationReconcileDuration.WithLabelValues("node"))
-	defer timer.ObserveDuration()
-
 	var workspaceList workspacev1.WorkspaceList
 	if err := c.List(ctx, &workspaceList, client.MatchingFields{
 		"status.runtime.nodeName": nodeName,
