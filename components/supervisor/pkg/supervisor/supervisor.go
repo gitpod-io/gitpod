@@ -847,6 +847,10 @@ func setupGitMessageHook(path string) error {
 	}
 
 	fn := filepath.Join(path, "prepare-commit-msg")
+	// do not override existing hooks. Relevant for workspaces based off of prebuilds, which might already have a hook.
+	if _, err := os.Stat(fn); err == nil {
+		return nil
+	}
 	if err := os.WriteFile(fn, []byte(hookContent), 0755); err != nil {
 		return err
 	}
