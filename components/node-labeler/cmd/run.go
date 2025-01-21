@@ -489,8 +489,6 @@ func (c *NodeScaledownAnnotationController) updateNodeAnnotation(ctx context.Con
 			return c.Update(ctx, &node)
 		}
 
-		log.WithField("nodeName", nodeName).Info("skipped updating node annotation: no change needed")
-
 		return nil
 	})
 }
