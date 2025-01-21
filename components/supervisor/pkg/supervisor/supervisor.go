@@ -751,7 +751,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 			}
 
 			// write some feedback to the terminal
-			out.WriteString(fmt.Sprintf("# echo linking %s -> %s\n", path, homeFN))
+			_, _ = out.WriteString(fmt.Sprintf("# echo linking %s -> %s\n", path, homeFN))
 
 			return os.Symlink(path, homeFN)
 		})
@@ -810,7 +810,6 @@ func configureGit(cfg *Config) {
 		{"alias.lg", "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"},
 		{"credential.helper", "/usr/bin/gp credential-helper"},
 		{"safe.directory", "*"},
-		{"core.hooksPath", "/etc/git/hooks"},
 	}
 	if cfg.GitUsername != "" {
 		settings = append(settings, []string{"user.name", cfg.GitUsername})
@@ -820,7 +819,7 @@ func configureGit(cfg *Config) {
 	}
 
 	if cfg.CommitAnnotationEnabled {
-		err := setupGitMessageHook()
+		err := setupGitMessageHook(filepath.Join(cfg.RepoRoot, ".git", "hooks"))
 		if err != nil {
 			log.WithError(err).Error("cannot setup git message hook")
 		}
@@ -842,14 +841,13 @@ const hookContent = `#!/bin/sh
 exec /usr/bin/gp git-commit-message-helper --file "$1"
 `
 
-func setupGitMessageHook() error {
-	hookPath := "/etc/git/hooks"
-	if err := os.MkdirAll(hookPath, 0755); err != nil {
+func setupGitMessageHook(path string) error {
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return err
 	}
 
-	hookFile := filepath.Join(hookPath, "prepare-commit-msg")
-	if err := os.WriteFile(hookFile, []byte(hookContent), 0755); err != nil {
+	fn := filepath.Join(path, "prepare-commit-msg")
+	if err := os.WriteFile(fn, []byte(hookContent), 0755); err != nil {
 		return err
 	}
 
