@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/bombsimon/logrusr/v2"
@@ -135,7 +134,9 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("unable to bind node scaledown annotation controller")
 		}
 
-		err = mgr.Add(manager.RunnableFunc(func(context.Context) error {
+		err = mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
+			<-ctx.Done()
+			log.Info("Received shutdown signal - stopping NodeScaledownAnnotationController")
 			nsac.Stop()
 			return nil
 		}))
@@ -288,21 +289,22 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 
 type NodeScaledownAnnotationController struct {
 	client.Client
-	nodesToReconcile  chan string
-	stopChan          chan struct{}
-	nodeReconcileLock sync.Map
+	nodesToReconcile chan string
+	stopChan         chan struct{}
 }
 
 func NewNodeScaledownAnnotationController(client client.Client) (*NodeScaledownAnnotationController, error) {
-	return &NodeScaledownAnnotationController{
+	controller := &NodeScaledownAnnotationController{
 		Client:           client,
 		nodesToReconcile: make(chan string, 1000),
 		stopChan:         make(chan struct{}),
-	}, nil
+	}
+
+	return controller, nil
 }
 
 func (c *NodeScaledownAnnotationController) SetupWithManager(mgr ctrl.Manager) error {
-	// Start the periodic reconciliation goroutine
+	go c.reconciliationWorker()
 	go c.periodicReconciliation()
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -312,6 +314,7 @@ func (c *NodeScaledownAnnotationController) SetupWithManager(mgr ctrl.Manager) e
 		Complete(c)
 }
 
+// periodicReconciliation periodically reconciles all nodes in the cluster
 func (c *NodeScaledownAnnotationController) periodicReconciliation() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
@@ -325,6 +328,23 @@ func (c *NodeScaledownAnnotationController) periodicReconciliation() {
 				log.WithError(err).Error("periodic reconciliation failed")
 			}
 		case <-c.stopChan:
+			return
+		}
+	}
+}
+
+// reconciliationWorker consumes nodesToReconcile and reconciles each node
+func (c *NodeScaledownAnnotationController) reconciliationWorker() {
+	log.Info("reconciliation worker started")
+	for {
+		select {
+		case nodeName := <-c.nodesToReconcile:
+			ctx := context.Background()
+			if err := c.reconcileNode(ctx, nodeName); err != nil {
+				log.WithError(err).WithField("node", nodeName).Error("failed to reconcile node from queue")
+			}
+		case <-c.stopChan:
+			log.Info("reconciliation worker stopping")
 			return
 		}
 	}
@@ -344,8 +364,13 @@ func (c *NodeScaledownAnnotationController) workspaceFilter() predicate.Predicat
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			wsOld := e.ObjectOld.(*workspacev1.Workspace)
 			ws := e.ObjectNew.(*workspacev1.Workspace)
-			// if we haven't seen runtime info before and now it's there, let's reconcile
-			if wsOld.Status.Runtime == nil && ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != "" {
+			// if we haven't seen runtime info before and now it's there, let's reconcile.
+			// similarly, if the node name changed, we need to reconcile the old node as well.
+			if (wsOld.Status.Runtime == nil && ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != "") || // we just got runtime info
+				(wsOld.Status.Runtime != nil && ws.Status.Runtime != nil && wsOld.Status.Runtime.NodeName != ws.Status.Runtime.NodeName) { // node name changed
+				if wsOld.Status.Runtime != nil && wsOld.Status.Runtime.NodeName != "" {
+					c.queueNodeForReconciliation(wsOld.Status.Runtime.NodeName)
+				}
 				return true
 			}
 
@@ -354,14 +379,7 @@ func (c *NodeScaledownAnnotationController) workspaceFilter() predicate.Predicat
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			ws := e.Object.(*workspacev1.Workspace)
 			if ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != "" {
-				// Queue the node for reconciliation
-				select {
-				case c.nodesToReconcile <- ws.Status.Runtime.NodeName:
-					log.WithField("node", ws.Status.Runtime.NodeName).Info("queued node for reconciliation from delete")
-				default:
-					log.WithField("node", ws.Status.Runtime.NodeName).Warn("reconciliation queue full")
-				}
-				NodeScaledownAnnotationReconciliationQueueSize.Set(float64(len(c.nodesToReconcile)))
+				c.queueNodeForReconciliation(ws.Status.Runtime.NodeName)
 				return true
 			}
 			return false
@@ -369,18 +387,18 @@ func (c *NodeScaledownAnnotationController) workspaceFilter() predicate.Predicat
 	}
 }
 
+func (c *NodeScaledownAnnotationController) queueNodeForReconciliation(nodeName string) {
+	select {
+	case c.nodesToReconcile <- nodeName:
+		log.WithField("node", nodeName).Info("queued node for reconciliation")
+	default:
+		log.WithField("node", nodeName).Warn("reconciliation queue full")
+	}
+	NodeScaledownAnnotationReconciliationQueueSize.Set(float64(len(c.nodesToReconcile)))
+}
+
 func (c *NodeScaledownAnnotationController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log.WithField("request", req.NamespacedName.String()).Info("WorkspaceCountController reconciling")
-
-	// Process any queued nodes first, logging errors (not returning)
-	select {
-	case nodeName := <-c.nodesToReconcile:
-		if err := c.reconcileNode(ctx, nodeName); err != nil {
-			log.WithError(err).WithField("node", nodeName).Error("failed to reconcile node from queue")
-		}
-	default:
-		// No nodes in queue, continue with regular reconciliation
-	}
 
 	var ws workspacev1.Workspace
 	if err := c.Get(ctx, req.NamespacedName, &ws); err != nil {
@@ -392,10 +410,7 @@ func (c *NodeScaledownAnnotationController) Reconcile(ctx context.Context, req c
 	}
 
 	if ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != "" {
-		if err := c.reconcileNode(ctx, ws.Status.Runtime.NodeName); err != nil {
-			log.WithError(err).WithField("node", ws.Status.Runtime.NodeName).Error("failed to reconcile node")
-			return ctrl.Result{}, err
-		}
+		c.queueNodeForReconciliation(ws.Status.Runtime.NodeName)
 	}
 
 	return ctrl.Result{}, nil
@@ -406,35 +421,24 @@ func (wc *NodeScaledownAnnotationController) Stop() {
 	close(wc.stopChan)
 }
 
-// reconcileAllNodes lists all nodes and reconciles each one
-func (wc *NodeScaledownAnnotationController) reconcileAllNodes(ctx context.Context) (ctrl.Result, error) {
+func (c *NodeScaledownAnnotationController) reconcileAllNodes(ctx context.Context) (ctrl.Result, error) {
 	timer := prometheus.NewTimer(NodeScaledownAnnotationReconcileDuration.WithLabelValues("all_nodes"))
 	defer timer.ObserveDuration()
 
 	var nodes corev1.NodeList
-	if err := wc.List(ctx, &nodes); err != nil {
+	if err := c.List(ctx, &nodes); err != nil {
 		log.WithError(err).Error("failed to list nodes")
 		return ctrl.Result{}, err
 	}
 
 	for _, node := range nodes.Items {
-		if err := wc.reconcileNode(ctx, node.Name); err != nil {
-			log.WithError(err).WithField("node", node.Name).Error("failed to reconcile node")
-			continue
-		}
+		c.queueNodeForReconciliation(node.Name)
 	}
 
 	return ctrl.Result{}, nil
 }
 
-// reconcileNode counts the workspaces running on a node and updates the autoscaler annotation accordingly
 func (c *NodeScaledownAnnotationController) reconcileNode(ctx context.Context, nodeName string) error {
-	mutexInterface, _ := c.nodeReconcileLock.LoadOrStore(nodeName, &sync.Mutex{})
-	mutex := mutexInterface.(*sync.Mutex)
-
-	mutex.Lock()
-	defer mutex.Unlock()
-
 	timer := prometheus.NewTimer(NodeScaledownAnnotationReconcileDuration.WithLabelValues("node"))
 	defer timer.ObserveDuration()
 
@@ -444,6 +448,7 @@ func (c *NodeScaledownAnnotationController) reconcileNode(ctx context.Context, n
 	}); err != nil {
 		return fmt.Errorf("failed to list workspaces: %w", err)
 	}
+
 	log.WithField("node", nodeName).WithField("count", len(workspaceList.Items)).Info("acting on workspaces")
 	count := len(workspaceList.Items)
 
@@ -461,19 +466,32 @@ func (c *NodeScaledownAnnotationController) updateNodeAnnotation(ctx context.Con
 			return fmt.Errorf("obtaining node %s: %w", nodeName, err)
 		}
 
-		if node.Annotations == nil {
-			node.Annotations = make(map[string]string)
+		shouldDisableScaleDown := count > 0
+		currentlyDisabled := false
+		if val, exists := node.Annotations["cluster-autoscaler.kubernetes.io/scale-down-disabled"]; exists {
+			currentlyDisabled = val == "true"
 		}
 
-		if count > 0 {
-			node.Annotations["cluster-autoscaler.kubernetes.io/scale-down-disabled"] = "true"
-			log.WithField("nodeName", nodeName).Info("disabling scale-down for node")
-		} else {
-			delete(node.Annotations, "cluster-autoscaler.kubernetes.io/scale-down-disabled")
-			log.WithField("nodeName", nodeName).Info("enabling scale-down for node")
+		// Only update if the state needs to change
+		if shouldDisableScaleDown != currentlyDisabled {
+			if node.Annotations == nil {
+				node.Annotations = make(map[string]string)
+			}
+
+			if shouldDisableScaleDown {
+				node.Annotations["cluster-autoscaler.kubernetes.io/scale-down-disabled"] = "true"
+				log.WithField("nodeName", nodeName).Info("disabling scale-down for node")
+			} else {
+				delete(node.Annotations, "cluster-autoscaler.kubernetes.io/scale-down-disabled")
+				log.WithField("nodeName", nodeName).Info("enabling scale-down for node")
+			}
+
+			return c.Update(ctx, &node)
 		}
 
-		return c.Update(ctx, &node)
+		log.WithField("nodeName", nodeName).Info("skipped updating node annotation: no change needed")
+
+		return nil
 	})
 }
 
