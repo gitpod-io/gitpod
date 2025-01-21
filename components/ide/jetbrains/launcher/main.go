@@ -857,6 +857,16 @@ func updateVMOptions(
 	if err == nil && parsedCPUCount > 0 && parsedCPUCount <= 16 {
 		gitpodVMOptions = append(gitpodVMOptions, "-XX:ActiveProcessorCount="+cpuCount)
 	}
+
+	memory := os.Getenv("GITPOD_MEMORY")
+	parsedMemory, err := strconv.Atoi(memory)
+	if err == nil && parsedMemory > 0 {
+		xmx := (float64(parsedMemory) * 0.6)
+		if xmx > 2048 {
+			gitpodVMOptions = append(gitpodVMOptions, fmt.Sprintf("-Xmx%dm", int(xmx)))
+		}
+	}
+
 	vmoptions := deduplicateVMOption(ideaVMOptionsLines, gitpodVMOptions, filterFunc)
 
 	// user-defined vmoptions (EnvVar)
