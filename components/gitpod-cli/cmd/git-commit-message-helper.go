@@ -20,6 +20,25 @@ var gitCommitMessageHelperOpts struct {
 	CommitMessageFile string
 }
 
+func addGitpodTrailer(commitMsgFile string, hostName string) error {
+	trailerCmd := exec.Command("git", "interpret-trailers",
+		"--if-exists", "addIfDifferent",
+		"--trailer", fmt.Sprintf("Tool: gitpod/%s", hostName),
+		commitMsgFile)
+
+	output, err := trailerCmd.Output()
+	if err != nil {
+		return fmt.Errorf("error adding trailer: %w", err)
+	}
+
+	err = os.WriteFile(commitMsgFile, output, 0644)
+	if err != nil {
+		return fmt.Errorf("error writing commit message file: %w", err)
+	}
+
+	return nil
+}
+
 var gitCommitMessageHelper = &cobra.Command{
 	Use:    "git-commit-message-helper",
 	Short:  "Gitpod's Git commit message helper",
@@ -36,21 +55,9 @@ var gitCommitMessageHelper = &cobra.Command{
 			return nil // don't block commit
 		}
 
-		trailerCmd := exec.Command("git", "interpret-trailers",
-			"--if-exists", "addIfDifferent",
-			"--trailer", fmt.Sprintf("Tool: gitpod/%s", wsInfo.GitpodApi.Host),
-			gitCommitMessageHelperOpts.CommitMessageFile)
-
-		output, err := trailerCmd.Output()
-		if err != nil {
-			log.WithError(err).Fatal("error adding trailer")
+		if err := addGitpodTrailer(gitCommitMessageHelperOpts.CommitMessageFile, wsInfo.GitpodApi.Host); err != nil {
+			log.WithError(err).Fatal("failed to add gitpod trailer")
 			return nil // don't block commit
-		}
-
-		err = os.WriteFile(gitCommitMessageHelperOpts.CommitMessageFile, output, 0644)
-		if err != nil {
-			log.WithError(err).Fatal("error writing commit message file")
-			return err
 		}
 
 		return nil
