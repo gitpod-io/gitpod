@@ -233,7 +233,7 @@ export namespace NamedWorkspaceFeatureFlag {
     }
 }
 
-export type EnvVar = UserEnvVar | ProjectEnvVarWithValue | EnvVarWithValue;
+export type EnvVar = UserEnvVar | ProjectEnvVarWithValue | OrgEnvVarWithValue | EnvVarWithValue;
 
 export interface EnvVarWithValue {
     name: string;
@@ -242,12 +242,22 @@ export interface EnvVarWithValue {
 
 export interface ProjectEnvVarWithValue extends EnvVarWithValue {
     id?: string;
+    /** If a project-scoped env var is "censored", it is only visible in Prebuilds */
     censored: boolean;
 }
 
 export interface ProjectEnvVar extends Omit<ProjectEnvVarWithValue, "value"> {
     id: string;
     projectId: string;
+}
+
+export interface OrgEnvVarWithValue extends EnvVarWithValue {
+    id?: string;
+}
+
+export interface OrgEnvVar extends Omit<OrgEnvVarWithValue, "value"> {
+    id: string;
+    orgId: string;
 }
 
 export interface UserEnvVarValue extends EnvVarWithValue {

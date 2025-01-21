@@ -222,11 +222,11 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return envVars;
     }
 
-    public async getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined> {
+    public async getProjectEnvironmentVariableById(id: string): Promise<ProjectEnvVar | undefined> {
         const envVarRepo = await this.getProjectEnvVarRepo();
-        const envVarWithValue = await envVarRepo.findOne({ id: variableId, deleted: false });
+        const envVarWithValue = await envVarRepo.findOne({ id, deleted: false });
         if (!envVarWithValue) {
-            return;
+            return undefined;
         }
         const envVar = toProjectEnvVar(envVarWithValue);
         return envVar;

@@ -6,6 +6,8 @@
 
 import {
     OrganizationSettings,
+    OrgEnvVar,
+    OrgEnvVarWithValue,
     Team,
     TeamMemberInfo,
     TeamMemberRole,
@@ -25,19 +27,30 @@ import { DBOrgSettings } from "./entity/db-team-settings";
 import { DBUser } from "./entity/db-user";
 import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
+import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
+import { DBOrgEnvVar } from "./entity/db-org-env-var";
+import { filter } from "../utils";
 
 @injectable()
 export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
-    constructor(@inject(TypeORM) typeorm: TypeORM, @optional() transactionalEM?: EntityManager) {
+    constructor(
+        @inject(TypeORM) typeorm: TypeORM,
+        @inject(EncryptionService) private readonly encryptionService: EncryptionService,
+        @optional() transactionalEM?: EntityManager,
+    ) {
         super(typeorm, transactionalEM);
     }
 
     protected createTransactionalDB(transactionalEM: EntityManager): TeamDB {
-        return new TeamDBImpl(this.typeorm, transactionalEM);
+        return new TeamDBImpl(this.typeorm, this.encryptionService, transactionalEM);
     }
 
     private async getTeamRepo(): Promise<Repository<DBTeam>> {
         return (await this.getEntityManager()).getRepository<DBTeam>(DBTeam);
+    }
+
+    private async getOrgEnvVarRepo(): Promise<Repository<DBOrgEnvVar>> {
+        return (await this.getEntityManager()).getRepository<DBOrgEnvVar>(DBOrgEnvVar);
     }
 
     private async getMembershipRepo(): Promise<Repository<DBTeamMembership>> {
@@ -408,4 +421,83 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         );
         return result.length === 1;
     }
+
+    public async addOrgEnvironmentVariable(orgId: string, envVar: OrgEnvVarWithValue): Promise<OrgEnvVar> {
+        const envVarRepo = await this.getOrgEnvVarRepo();
+        const insertedEnvVar = await envVarRepo.save({
+            id: uuidv4(),
+            orgId,
+            name: envVar.name,
+            value: envVar.value,
+            creationTime: new Date().toISOString(),
+        });
+        return toOrgEnvVar(insertedEnvVar);
+    }
+
+    public async updateOrgEnvironmentVariable(
+        orgId: string,
+        envVar: Partial<OrgEnvVarWithValue>,
+    ): Promise<OrgEnvVar | undefined> {
+        if (!envVar.id) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "An environment variable with this ID could not be found");
+        }
+
+        return await this.transaction(async (_, ctx) => {
+            const envVarRepo = ctx.entityManager.getRepository<DBOrgEnvVar>(DBOrgEnvVar);
+
+            await envVarRepo.update(
+                { id: envVar.id, orgId },
+                filter(envVar, (_, v) => v !== null && v !== undefined),
+            );
+
+            const found = await envVarRepo.findOne({ id: envVar.id, orgId });
+            if (!found) {
+                return;
+            }
+            return toOrgEnvVar(found);
+        });
+    }
+
+    public async getOrgEnvironmentVariableById(id: string): Promise<OrgEnvVar | undefined> {
+        const envVarRepo = await this.getOrgEnvVarRepo();
+        const envVarWithValue = await envVarRepo.findOne({ id });
+        if (!envVarWithValue) {
+            return undefined;
+        }
+        const envVar = toOrgEnvVar(envVarWithValue);
+        return envVar;
+    }
+
+    public async findOrgEnvironmentVariableByName(orgId: string, name: string): Promise<OrgEnvVar | undefined> {
+        const envVarRepo = await this.getOrgEnvVarRepo();
+        return envVarRepo.findOne({ orgId, name });
+    }
+
+    public async getOrgEnvironmentVariables(orgId: string): Promise<OrgEnvVar[]> {
+        const envVarRepo = await this.getOrgEnvVarRepo();
+        const envVarsWithValue = await envVarRepo.find({ orgId });
+        const envVars = envVarsWithValue.map(toOrgEnvVar);
+        return envVars;
+    }
+
+    public async getOrgEnvironmentVariableValues(envVars: OrgEnvVar[]): Promise<OrgEnvVarWithValue[]> {
+        const envVarRepo = await this.getOrgEnvVarRepo();
+        const envVarsWithValues = await envVarRepo.findByIds(envVars);
+        return envVarsWithValues;
+    }
+
+    public async deleteOrgEnvironmentVariable(id: string): Promise<void> {
+        const envVarRepo = await this.getOrgEnvVarRepo();
+        await envVarRepo.delete({ id });
+    }
+}
+
+/**
+ * @param envVarWithValue
+ * @returns DBOrgEnvVar shape turned into an OrgEnvVar by dropping the "value" property
+ */
+function toOrgEnvVar(envVarWithValue: DBOrgEnvVar): OrgEnvVar {
+    const envVar = { ...envVarWithValue };
+    delete (envVar as any)["value"];
+    return envVar;
 }
