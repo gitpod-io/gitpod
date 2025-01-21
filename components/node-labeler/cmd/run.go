@@ -410,6 +410,7 @@ func (c *NodeScaledownAnnotationController) Reconcile(ctx context.Context, req c
 		c.queueNodeForReconciliation(ws.Status.Runtime.NodeName)
 	}
 
+	log.WithField("runtime", ws.Status.Runtime).Warn("reconciling object with no Runtime/NodeName, which wasn't filtered out by workspaceFilter")
 	return ctrl.Result{}, nil
 }
 
