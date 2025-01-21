@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
+	"os/exec"
 	"time"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
@@ -32,25 +32,22 @@ var gitCommitMessageHelper = &cobra.Command{
 
 		wsInfo, err := gitpod.GetWSInfo(ctx)
 		if err != nil {
-			return err
+			log.WithError(err).Fatal("error getting workspace info")
+			return nil // don't block commit
 		}
 
-		content, err := os.ReadFile(gitCommitMessageHelperOpts.CommitMessageFile)
+		trailerCmd := exec.Command("git", "interpret-trailers",
+			"--if-exists", "addIfDifferent",
+			"--trailer", fmt.Sprintf("Tool: gitpod/%s", wsInfo.GitpodApi.Host),
+			gitCommitMessageHelperOpts.CommitMessageFile)
+
+		output, err := trailerCmd.Output()
 		if err != nil {
-			log.WithError(err).Fatal("error reading commit message file")
-			return err
+			log.WithError(err).Fatal("error adding trailer")
+			return nil // don't block commit
 		}
 
-		toolAttribution := fmt.Sprintf("Tool: gitpod/%s", wsInfo.GitpodApi.Host)
-
-		msg := string(content)
-		if strings.Contains(msg, toolAttribution) {
-			return nil
-		}
-
-		newMsg := fmt.Sprintf("%s\n\n%s", msg, toolAttribution)
-
-		err = os.WriteFile(gitCommitMessageHelperOpts.CommitMessageFile, []byte(newMsg), 0644)
+		err = os.WriteFile(gitCommitMessageHelperOpts.CommitMessageFile, output, 0644)
 		if err != nil {
 			log.WithError(err).Fatal("error writing commit message file")
 			return err
