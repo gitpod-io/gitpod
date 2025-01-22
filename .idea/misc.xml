@@ -5,7 +5,8 @@
     <file type="web" url="file://$PROJECT_DIR$/components/gitpod-protocol/java" />
     <file type="web" url="file://$PROJECT_DIR$/components/ide/jetbrains/backend-plugin" />
     <file type="web" url="file://$PROJECT_DIR$/components/ide/jetbrains/gateway-plugin" />
+    <file type="web" url="file://$PROJECT_DIR$/components/public-api/java" />
     <file type="web" url="file://$PROJECT_DIR$/components/supervisor-api/java" />
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_18" project-jdk-name="zulu-21" project-jdk-type="JavaSDK" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_18" project-jdk-name="zulu-17" project-jdk-type="JavaSDK" />
 </project>
