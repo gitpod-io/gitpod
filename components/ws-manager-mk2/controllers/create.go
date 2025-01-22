@@ -612,7 +612,7 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create environment: %w", err)
 	}
-	memoryInMegabyte := res.Memory().Value() / (1000 * 1000)
+	memoryInMegabyte := res.Memory().Value() / (1024 * 1024)
 	result = append(result, corev1.EnvVar{Name: "GITPOD_MEMORY", Value: strconv.FormatInt(memoryInMegabyte, 10)})
 
 	cpuCount := res.Cpu().Value()
