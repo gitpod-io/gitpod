@@ -12,9 +12,6 @@ import io.gitpod.jetbrains.remote.icons.GitpodIcons
 import javax.swing.Icon
 
 class GitpodGatewayClientCustomizationProvider : GatewayClientCustomizationProvider {
-    // 1. call frequertly
-    // 2. can access gitpod instance?
-    // 3. instance change -> event ?
     override val icon: Icon = GitpodIcons.Logo
     override val title: String = System.getenv("JETBRAINS_GITPOD_WORKSPACE_HOST") ?: DefaultGatewayControlCenterProvider().getHostnameShort()
 
