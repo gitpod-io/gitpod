@@ -24,6 +24,14 @@ import {
     CreateConfigurationEnvironmentVariableResponse,
     DeleteConfigurationEnvironmentVariableRequest,
     DeleteConfigurationEnvironmentVariableResponse,
+    ListOrganizationEnvironmentVariablesRequest,
+    ListOrganizationEnvironmentVariablesResponse,
+    UpdateOrganizationEnvironmentVariableRequest,
+    UpdateOrganizationEnvironmentVariableResponse,
+    CreateOrganizationEnvironmentVariableRequest,
+    CreateOrganizationEnvironmentVariableResponse,
+    DeleteOrganizationEnvironmentVariableRequest,
+    DeleteOrganizationEnvironmentVariableResponse,
     ResolveWorkspaceEnvironmentVariablesResponse,
     ResolveWorkspaceEnvironmentVariablesRequest,
     EnvironmentVariable,
@@ -195,6 +203,75 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         await this.envVarService.deleteProjectEnvVar(ctxUserId(), req.environmentVariableId);
 
         const response = new DeleteConfigurationEnvironmentVariableResponse();
+        return response;
+    }
+
+    async listOrganizationEnvironmentVariables(
+        req: ListOrganizationEnvironmentVariablesRequest,
+        _: HandlerContext,
+    ): Promise<ListOrganizationEnvironmentVariablesResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+
+        const response = new ListOrganizationEnvironmentVariablesResponse();
+        const orgEnvVars = await this.envVarService.listOrgEnvVars(ctxUserId(), req.organizationId);
+        response.environmentVariables = orgEnvVars.map((i) => this.apiConverter.toOrganizationEnvironmentVariable(i));
+
+        return response;
+    }
+
+    async updateOrganizationEnvironmentVariable(
+        req: UpdateOrganizationEnvironmentVariableRequest,
+        _: HandlerContext,
+    ): Promise<UpdateOrganizationEnvironmentVariableResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+        if (!uuidValidate(req.environmentVariableId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "environmentVariableId is required");
+        }
+
+        const updatedOrgEnvVar = await this.envVarService.updateOrgEnvVar(ctxUserId(), req.organizationId, {
+            id: req.environmentVariableId,
+            name: req.name,
+            value: req.value,
+        });
+
+        const response = new UpdateOrganizationEnvironmentVariableResponse();
+        response.environmentVariable = this.apiConverter.toOrganizationEnvironmentVariable(updatedOrgEnvVar);
+        return response;
+    }
+
+    async createOrganizationEnvironmentVariable(
+        req: CreateOrganizationEnvironmentVariableRequest,
+        _: HandlerContext,
+    ): Promise<CreateOrganizationEnvironmentVariableResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+
+        const result = await this.envVarService.addOrgEnvVar(ctxUserId(), req.organizationId, {
+            name: req.name,
+            value: req.value,
+        });
+
+        const response = new CreateOrganizationEnvironmentVariableResponse();
+        response.environmentVariable = this.apiConverter.toOrganizationEnvironmentVariable(result);
+        return response;
+    }
+
+    async deleteOrganizationEnvironmentVariable(
+        req: DeleteOrganizationEnvironmentVariableRequest,
+        _: HandlerContext,
+    ): Promise<DeleteOrganizationEnvironmentVariableResponse> {
+        if (!uuidValidate(req.environmentVariableId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "environmentVariableId is required");
+        }
+
+        await this.envVarService.deleteOrgEnvVar(ctxUserId(), req.environmentVariableId);
+
+        const response = new DeleteOrganizationEnvironmentVariableResponse();
         return response;
     }
 

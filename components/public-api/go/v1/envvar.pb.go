@@ -1069,6 +1069,492 @@ func (*DeleteConfigurationEnvironmentVariableResponse) Descriptor() ([]byte, []i
 	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{17}
 }
 
+type OrganizationEnvironmentVariable struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id             string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name           string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	OrganizationId string `protobuf:"bytes,3,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+}
+
+func (x *OrganizationEnvironmentVariable) Reset() {
+	*x = OrganizationEnvironmentVariable{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[18]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *OrganizationEnvironmentVariable) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OrganizationEnvironmentVariable) ProtoMessage() {}
+
+func (x *OrganizationEnvironmentVariable) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[18]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OrganizationEnvironmentVariable.ProtoReflect.Descriptor instead.
+func (*OrganizationEnvironmentVariable) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *OrganizationEnvironmentVariable) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *OrganizationEnvironmentVariable) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *OrganizationEnvironmentVariable) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+type ListOrganizationEnvironmentVariablesRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	OrganizationId string             `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	Pagination     *PaginationRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (x *ListOrganizationEnvironmentVariablesRequest) Reset() {
+	*x = ListOrganizationEnvironmentVariablesRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListOrganizationEnvironmentVariablesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListOrganizationEnvironmentVariablesRequest) ProtoMessage() {}
+
+func (x *ListOrganizationEnvironmentVariablesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListOrganizationEnvironmentVariablesRequest.ProtoReflect.Descriptor instead.
+func (*ListOrganizationEnvironmentVariablesRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ListOrganizationEnvironmentVariablesRequest) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+func (x *ListOrganizationEnvironmentVariablesRequest) GetPagination() *PaginationRequest {
+	if x != nil {
+		return x.Pagination
+	}
+	return nil
+}
+
+type ListOrganizationEnvironmentVariablesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EnvironmentVariables []*OrganizationEnvironmentVariable `protobuf:"bytes,1,rep,name=environment_variables,json=environmentVariables,proto3" json:"environment_variables,omitempty"`
+	Pagination           *PaginationResponse                `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (x *ListOrganizationEnvironmentVariablesResponse) Reset() {
+	*x = ListOrganizationEnvironmentVariablesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListOrganizationEnvironmentVariablesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListOrganizationEnvironmentVariablesResponse) ProtoMessage() {}
+
+func (x *ListOrganizationEnvironmentVariablesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListOrganizationEnvironmentVariablesResponse.ProtoReflect.Descriptor instead.
+func (*ListOrganizationEnvironmentVariablesResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ListOrganizationEnvironmentVariablesResponse) GetEnvironmentVariables() []*OrganizationEnvironmentVariable {
+	if x != nil {
+		return x.EnvironmentVariables
+	}
+	return nil
+}
+
+func (x *ListOrganizationEnvironmentVariablesResponse) GetPagination() *PaginationResponse {
+	if x != nil {
+		return x.Pagination
+	}
+	return nil
+}
+
+type UpdateOrganizationEnvironmentVariableRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	OrganizationId        string  `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	EnvironmentVariableId string  `protobuf:"bytes,2,opt,name=environment_variable_id,json=environmentVariableId,proto3" json:"environment_variable_id,omitempty"`
+	Name                  *string `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	Value                 *string `protobuf:"bytes,4,opt,name=value,proto3,oneof" json:"value,omitempty"`
+}
+
+func (x *UpdateOrganizationEnvironmentVariableRequest) Reset() {
+	*x = UpdateOrganizationEnvironmentVariableRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[21]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UpdateOrganizationEnvironmentVariableRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateOrganizationEnvironmentVariableRequest) ProtoMessage() {}
+
+func (x *UpdateOrganizationEnvironmentVariableRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[21]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateOrganizationEnvironmentVariableRequest.ProtoReflect.Descriptor instead.
+func (*UpdateOrganizationEnvironmentVariableRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *UpdateOrganizationEnvironmentVariableRequest) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+func (x *UpdateOrganizationEnvironmentVariableRequest) GetEnvironmentVariableId() string {
+	if x != nil {
+		return x.EnvironmentVariableId
+	}
+	return ""
+}
+
+func (x *UpdateOrganizationEnvironmentVariableRequest) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *UpdateOrganizationEnvironmentVariableRequest) GetValue() string {
+	if x != nil && x.Value != nil {
+		return *x.Value
+	}
+	return ""
+}
+
+type UpdateOrganizationEnvironmentVariableResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EnvironmentVariable *OrganizationEnvironmentVariable `protobuf:"bytes,1,opt,name=environment_variable,json=environmentVariable,proto3" json:"environment_variable,omitempty"`
+}
+
+func (x *UpdateOrganizationEnvironmentVariableResponse) Reset() {
+	*x = UpdateOrganizationEnvironmentVariableResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[22]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UpdateOrganizationEnvironmentVariableResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateOrganizationEnvironmentVariableResponse) ProtoMessage() {}
+
+func (x *UpdateOrganizationEnvironmentVariableResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[22]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateOrganizationEnvironmentVariableResponse.ProtoReflect.Descriptor instead.
+func (*UpdateOrganizationEnvironmentVariableResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *UpdateOrganizationEnvironmentVariableResponse) GetEnvironmentVariable() *OrganizationEnvironmentVariable {
+	if x != nil {
+		return x.EnvironmentVariable
+	}
+	return nil
+}
+
+type CreateOrganizationEnvironmentVariableRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	OrganizationId string `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	Name           string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Value          string `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+}
+
+func (x *CreateOrganizationEnvironmentVariableRequest) Reset() {
+	*x = CreateOrganizationEnvironmentVariableRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[23]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateOrganizationEnvironmentVariableRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateOrganizationEnvironmentVariableRequest) ProtoMessage() {}
+
+func (x *CreateOrganizationEnvironmentVariableRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[23]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateOrganizationEnvironmentVariableRequest.ProtoReflect.Descriptor instead.
+func (*CreateOrganizationEnvironmentVariableRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *CreateOrganizationEnvironmentVariableRequest) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+func (x *CreateOrganizationEnvironmentVariableRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateOrganizationEnvironmentVariableRequest) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+type CreateOrganizationEnvironmentVariableResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EnvironmentVariable *OrganizationEnvironmentVariable `protobuf:"bytes,1,opt,name=environment_variable,json=environmentVariable,proto3" json:"environment_variable,omitempty"`
+}
+
+func (x *CreateOrganizationEnvironmentVariableResponse) Reset() {
+	*x = CreateOrganizationEnvironmentVariableResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateOrganizationEnvironmentVariableResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateOrganizationEnvironmentVariableResponse) ProtoMessage() {}
+
+func (x *CreateOrganizationEnvironmentVariableResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateOrganizationEnvironmentVariableResponse.ProtoReflect.Descriptor instead.
+func (*CreateOrganizationEnvironmentVariableResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *CreateOrganizationEnvironmentVariableResponse) GetEnvironmentVariable() *OrganizationEnvironmentVariable {
+	if x != nil {
+		return x.EnvironmentVariable
+	}
+	return nil
+}
+
+type DeleteOrganizationEnvironmentVariableRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EnvironmentVariableId string `protobuf:"bytes,1,opt,name=environment_variable_id,json=environmentVariableId,proto3" json:"environment_variable_id,omitempty"`
+}
+
+func (x *DeleteOrganizationEnvironmentVariableRequest) Reset() {
+	*x = DeleteOrganizationEnvironmentVariableRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[25]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteOrganizationEnvironmentVariableRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteOrganizationEnvironmentVariableRequest) ProtoMessage() {}
+
+func (x *DeleteOrganizationEnvironmentVariableRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[25]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteOrganizationEnvironmentVariableRequest.ProtoReflect.Descriptor instead.
+func (*DeleteOrganizationEnvironmentVariableRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *DeleteOrganizationEnvironmentVariableRequest) GetEnvironmentVariableId() string {
+	if x != nil {
+		return x.EnvironmentVariableId
+	}
+	return ""
+}
+
+type DeleteOrganizationEnvironmentVariableResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *DeleteOrganizationEnvironmentVariableResponse) Reset() {
+	*x = DeleteOrganizationEnvironmentVariableResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[26]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteOrganizationEnvironmentVariableResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteOrganizationEnvironmentVariableResponse) ProtoMessage() {}
+
+func (x *DeleteOrganizationEnvironmentVariableResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[26]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteOrganizationEnvironmentVariableResponse.ProtoReflect.Descriptor instead.
+func (*DeleteOrganizationEnvironmentVariableResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{26}
+}
+
 type ResolveWorkspaceEnvironmentVariablesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1080,7 +1566,7 @@ type ResolveWorkspaceEnvironmentVariablesRequest struct {
 func (x *ResolveWorkspaceEnvironmentVariablesRequest) Reset() {
 	*x = ResolveWorkspaceEnvironmentVariablesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_v1_envvar_proto_msgTypes[18]
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1093,7 +1579,7 @@ func (x *ResolveWorkspaceEnvironmentVariablesRequest) String() string {
 func (*ResolveWorkspaceEnvironmentVariablesRequest) ProtoMessage() {}
 
 func (x *ResolveWorkspaceEnvironmentVariablesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_v1_envvar_proto_msgTypes[18]
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1106,7 +1592,7 @@ func (x *ResolveWorkspaceEnvironmentVariablesRequest) ProtoReflect() protoreflec
 
 // Deprecated: Use ResolveWorkspaceEnvironmentVariablesRequest.ProtoReflect.Descriptor instead.
 func (*ResolveWorkspaceEnvironmentVariablesRequest) Descriptor() ([]byte, []int) {
-	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{18}
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ResolveWorkspaceEnvironmentVariablesRequest) GetWorkspaceId() string {
@@ -1127,7 +1613,7 @@ type ResolveWorkspaceEnvironmentVariablesResponse struct {
 func (x *ResolveWorkspaceEnvironmentVariablesResponse) Reset() {
 	*x = ResolveWorkspaceEnvironmentVariablesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_v1_envvar_proto_msgTypes[19]
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1140,7 +1626,7 @@ func (x *ResolveWorkspaceEnvironmentVariablesResponse) String() string {
 func (*ResolveWorkspaceEnvironmentVariablesResponse) ProtoMessage() {}
 
 func (x *ResolveWorkspaceEnvironmentVariablesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_v1_envvar_proto_msgTypes[19]
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1153,7 +1639,7 @@ func (x *ResolveWorkspaceEnvironmentVariablesResponse) ProtoReflect() protorefle
 
 // Deprecated: Use ResolveWorkspaceEnvironmentVariablesResponse.ProtoReflect.Descriptor instead.
 func (*ResolveWorkspaceEnvironmentVariablesResponse) Descriptor() ([]byte, []int) {
-	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{19}
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ResolveWorkspaceEnvironmentVariablesResponse) GetEnvironmentVariables() []*EnvironmentVariable {
@@ -1175,7 +1661,7 @@ type EnvironmentVariable struct {
 func (x *EnvironmentVariable) Reset() {
 	*x = EnvironmentVariable{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_v1_envvar_proto_msgTypes[20]
+		mi := &file_gitpod_v1_envvar_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1188,7 +1674,7 @@ func (x *EnvironmentVariable) String() string {
 func (*EnvironmentVariable) ProtoMessage() {}
 
 func (x *EnvironmentVariable) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_v1_envvar_proto_msgTypes[20]
+	mi := &file_gitpod_v1_envvar_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1201,7 +1687,7 @@ func (x *EnvironmentVariable) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnvironmentVariable.ProtoReflect.Descriptor instead.
 func (*EnvironmentVariable) Descriptor() ([]byte, []int) {
-	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{20}
+	return file_gitpod_v1_envvar_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *EnvironmentVariable) GetName() string {
@@ -1394,6 +1880,85 @@ var file_gitpod_v1_envvar_proto_rawDesc = []byte{
 	0x49, 0x64, 0x22, 0x30, 0x0a, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x43, 0x6f, 0x6e, 0x66,
 	0x69, 0x67, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
 	0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x6e, 0x0a, 0x1f, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56,
+	0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x27, 0x0a, 0x0f, 0x6f,
+	0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x49, 0x64, 0x22, 0x94, 0x01, 0x0a, 0x2b, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x72, 0x67,
+	0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x27, 0x0a, 0x0f, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x6f,
+	0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x3c, 0x0a,
+	0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61,
+	0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x52,
+	0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xce, 0x01, 0x0a, 0x2c,
+	0x4c, 0x69, 0x73, 0x74, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61,
+	0x62, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5f, 0x0a, 0x15,
+	0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x76, 0x61, 0x72, 0x69,
+	0x61, 0x62, 0x6c, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2a, 0x2e, 0x67, 0x69,
+	0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56,
+	0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x14, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x73, 0x12, 0x3d, 0x0a,
+	0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1d, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61,
+	0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xd6, 0x01, 0x0a,
+	0x2c, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61,
+	0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x27, 0x0a,
+	0x0f, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x36, 0x0a, 0x17, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f,
+	0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x76, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x5f, 0x69,
+	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x15, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x49, 0x64, 0x12, 0x17,
+	0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x04,
+	0x6e, 0x61, 0x6d, 0x65, 0x88, 0x01, 0x01, 0x12, 0x19, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
+	0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x48, 0x01, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x88,
+	0x01, 0x01, 0x42, 0x07, 0x0a, 0x05, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x42, 0x08, 0x0a, 0x06, 0x5f,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x8e, 0x01, 0x0a, 0x2d, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69,
+	0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5d, 0x0a, 0x14, 0x65, 0x6e, 0x76, 0x69, 0x72,
+	0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x76, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76,
+	0x31, 0x2e, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e,
+	0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c,
+	0x65, 0x52, 0x13, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61,
+	0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x22, 0x81, 0x01, 0x0a, 0x2c, 0x43, 0x72, 0x65, 0x61, 0x74,
+	0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76,
+	0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x27, 0x0a, 0x0f, 0x6f, 0x72, 0x67, 0x61, 0x6e,
+	0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x0e, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64,
+	0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
+	0x6e, 0x61, 0x6d, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x8e, 0x01, 0x0a, 0x2d, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69,
+	0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5d, 0x0a, 0x14,
+	0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x76, 0x61, 0x72, 0x69,
+	0x61, 0x62, 0x6c, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a, 0x2e, 0x67, 0x69, 0x74,
+	0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61,
+	0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x13, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d,
+	0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x22, 0x66, 0x0a, 0x2c, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69,
+	0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x36, 0x0a, 0x17, 0x65,
+	0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x76, 0x61, 0x72, 0x69, 0x61,
+	0x62, 0x6c, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x15, 0x65, 0x6e,
+	0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c,
+	0x65, 0x49, 0x64, 0x22, 0x2f, 0x0a, 0x2d, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x72, 0x67,
+	0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70,
 	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x50, 0x0a, 0x2b, 0x52, 0x65, 0x73, 0x6f, 0x6c, 0x76, 0x65, 0x57,
 	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d,
 	0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75,
@@ -1422,7 +1987,7 @@ var file_gitpod_v1_envvar_proto_rawDesc = []byte{
 	0x5f, 0x50, 0x52, 0x45, 0x42, 0x55, 0x49, 0x4c, 0x44, 0x10, 0x01, 0x12, 0x2d, 0x0a, 0x29, 0x45,
 	0x4e, 0x56, 0x49, 0x52, 0x4f, 0x4e, 0x4d, 0x45, 0x4e, 0x54, 0x5f, 0x56, 0x41, 0x52, 0x49, 0x41,
 	0x42, 0x4c, 0x45, 0x5f, 0x41, 0x44, 0x4d, 0x49, 0x53, 0x53, 0x49, 0x4f, 0x4e, 0x5f, 0x45, 0x56,
-	0x45, 0x52, 0x59, 0x57, 0x48, 0x45, 0x52, 0x45, 0x10, 0x02, 0x32, 0xd6, 0x0a, 0x0a, 0x1a, 0x45,
+	0x45, 0x52, 0x59, 0x57, 0x48, 0x45, 0x52, 0x45, 0x10, 0x02, 0x32, 0xcf, 0x0f, 0x0a, 0x1a, 0x45,
 	0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62,
 	0x6c, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x81, 0x01, 0x0a, 0x1c, 0x4c, 0x69,
 	0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e,
@@ -1498,22 +2063,62 @@ var file_gitpod_v1_envvar_proto_rawDesc = []byte{
 	0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x43, 0x6f, 0x6e,
 	0x66, 0x69, 0x67, 0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f,
 	0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x99, 0x01, 0x0a, 0x24, 0x52, 0x65, 0x73, 0x6f,
-	0x6c, 0x76, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x45, 0x6e, 0x76, 0x69,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x99, 0x01, 0x0a, 0x24, 0x4c, 0x69, 0x73, 0x74,
+	0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69,
 	0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x73,
-	0x12, 0x36, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x73,
-	0x6f, 0x6c, 0x76, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x45, 0x6e, 0x76,
+	0x12, 0x36, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73,
+	0x74, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76,
 	0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65,
 	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x37, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f,
-	0x64, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x6c, 0x76, 0x65, 0x57, 0x6f, 0x72, 0x6b,
-	0x73, 0x70, 0x61, 0x63, 0x65, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74,
+	0x64, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74,
 	0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0x00, 0x42, 0x51, 0x0a, 0x16, 0x69, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64,
-	0x2e, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x5a, 0x37, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64,
-	0x2d, 0x69, 0x6f, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2f, 0x63, 0x6f, 0x6d, 0x70, 0x6f,
-	0x6e, 0x65, 0x6e, 0x74, 0x73, 0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x61, 0x70, 0x69,
-	0x2f, 0x67, 0x6f, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x22, 0x00, 0x12, 0x9c, 0x01, 0x0a, 0x25, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4f, 0x72,
+	0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f,
+	0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x37, 0x2e,
+	0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69,
+	0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x38, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e,
+	0x76, 0x31, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74,
+	0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x00, 0x12, 0x9c, 0x01, 0x0a, 0x25, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x67,
+	0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x37, 0x2e, 0x67,
+	0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4f,
+	0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72,
+	0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x38, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76,
+	0x31, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56,
+	0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x00, 0x12, 0x9c, 0x01, 0x0a, 0x25, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61,
+	0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d,
+	0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x12, 0x37, 0x2e, 0x67, 0x69,
+	0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x72,
+	0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f,
+	0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x38, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31,
+	0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61,
+	0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
+	0x12, 0x99, 0x01, 0x0a, 0x24, 0x52, 0x65, 0x73, 0x6f, 0x6c, 0x76, 0x65, 0x57, 0x6f, 0x72, 0x6b,
+	0x73, 0x70, 0x61, 0x63, 0x65, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74,
+	0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x73, 0x12, 0x36, 0x2e, 0x67, 0x69, 0x74, 0x70,
+	0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x6c, 0x76, 0x65, 0x57, 0x6f, 0x72,
+	0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e,
+	0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x37, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65,
+	0x73, 0x6f, 0x6c, 0x76, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x45, 0x6e,
+	0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x56, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6c,
+	0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x51, 0x0a, 0x16,
+	0x69, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63,
+	0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x5a, 0x37, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2d, 0x69, 0x6f, 0x2f, 0x67, 0x69, 0x74,
+	0x70, 0x6f, 0x64, 0x2f, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x73, 0x2f, 0x70,
+	0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x6f, 0x2f, 0x76, 0x31, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1529,7 +2134,7 @@ func file_gitpod_v1_envvar_proto_rawDescGZIP() []byte {
 }
 
 var file_gitpod_v1_envvar_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_gitpod_v1_envvar_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_gitpod_v1_envvar_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_gitpod_v1_envvar_proto_goTypes = []interface{}{
 	(EnvironmentVariableAdmission)(0),                      // 0: gitpod.v1.EnvironmentVariableAdmission
 	(*UserEnvironmentVariable)(nil),                        // 1: gitpod.v1.UserEnvironmentVariable
@@ -1550,50 +2155,72 @@ var file_gitpod_v1_envvar_proto_goTypes = []interface{}{
 	(*CreateConfigurationEnvironmentVariableResponse)(nil), // 16: gitpod.v1.CreateConfigurationEnvironmentVariableResponse
 	(*DeleteConfigurationEnvironmentVariableRequest)(nil),  // 17: gitpod.v1.DeleteConfigurationEnvironmentVariableRequest
 	(*DeleteConfigurationEnvironmentVariableResponse)(nil), // 18: gitpod.v1.DeleteConfigurationEnvironmentVariableResponse
-	(*ResolveWorkspaceEnvironmentVariablesRequest)(nil),    // 19: gitpod.v1.ResolveWorkspaceEnvironmentVariablesRequest
-	(*ResolveWorkspaceEnvironmentVariablesResponse)(nil),   // 20: gitpod.v1.ResolveWorkspaceEnvironmentVariablesResponse
-	(*EnvironmentVariable)(nil),                            // 21: gitpod.v1.EnvironmentVariable
-	(*PaginationRequest)(nil),                              // 22: gitpod.v1.PaginationRequest
-	(*PaginationResponse)(nil),                             // 23: gitpod.v1.PaginationResponse
+	(*OrganizationEnvironmentVariable)(nil),                // 19: gitpod.v1.OrganizationEnvironmentVariable
+	(*ListOrganizationEnvironmentVariablesRequest)(nil),    // 20: gitpod.v1.ListOrganizationEnvironmentVariablesRequest
+	(*ListOrganizationEnvironmentVariablesResponse)(nil),   // 21: gitpod.v1.ListOrganizationEnvironmentVariablesResponse
+	(*UpdateOrganizationEnvironmentVariableRequest)(nil),   // 22: gitpod.v1.UpdateOrganizationEnvironmentVariableRequest
+	(*UpdateOrganizationEnvironmentVariableResponse)(nil),  // 23: gitpod.v1.UpdateOrganizationEnvironmentVariableResponse
+	(*CreateOrganizationEnvironmentVariableRequest)(nil),   // 24: gitpod.v1.CreateOrganizationEnvironmentVariableRequest
+	(*CreateOrganizationEnvironmentVariableResponse)(nil),  // 25: gitpod.v1.CreateOrganizationEnvironmentVariableResponse
+	(*DeleteOrganizationEnvironmentVariableRequest)(nil),   // 26: gitpod.v1.DeleteOrganizationEnvironmentVariableRequest
+	(*DeleteOrganizationEnvironmentVariableResponse)(nil),  // 27: gitpod.v1.DeleteOrganizationEnvironmentVariableResponse
+	(*ResolveWorkspaceEnvironmentVariablesRequest)(nil),    // 28: gitpod.v1.ResolveWorkspaceEnvironmentVariablesRequest
+	(*ResolveWorkspaceEnvironmentVariablesResponse)(nil),   // 29: gitpod.v1.ResolveWorkspaceEnvironmentVariablesResponse
+	(*EnvironmentVariable)(nil),                            // 30: gitpod.v1.EnvironmentVariable
+	(*PaginationRequest)(nil),                              // 31: gitpod.v1.PaginationRequest
+	(*PaginationResponse)(nil),                             // 32: gitpod.v1.PaginationResponse
 }
 var file_gitpod_v1_envvar_proto_depIdxs = []int32{
-	22, // 0: gitpod.v1.ListUserEnvironmentVariablesRequest.pagination:type_name -> gitpod.v1.PaginationRequest
+	31, // 0: gitpod.v1.ListUserEnvironmentVariablesRequest.pagination:type_name -> gitpod.v1.PaginationRequest
 	1,  // 1: gitpod.v1.ListUserEnvironmentVariablesResponse.environment_variables:type_name -> gitpod.v1.UserEnvironmentVariable
-	23, // 2: gitpod.v1.ListUserEnvironmentVariablesResponse.pagination:type_name -> gitpod.v1.PaginationResponse
+	32, // 2: gitpod.v1.ListUserEnvironmentVariablesResponse.pagination:type_name -> gitpod.v1.PaginationResponse
 	1,  // 3: gitpod.v1.UpdateUserEnvironmentVariableResponse.environment_variable:type_name -> gitpod.v1.UserEnvironmentVariable
 	1,  // 4: gitpod.v1.CreateUserEnvironmentVariableResponse.environment_variable:type_name -> gitpod.v1.UserEnvironmentVariable
 	0,  // 5: gitpod.v1.ConfigurationEnvironmentVariable.admission:type_name -> gitpod.v1.EnvironmentVariableAdmission
-	22, // 6: gitpod.v1.ListConfigurationEnvironmentVariablesRequest.pagination:type_name -> gitpod.v1.PaginationRequest
+	31, // 6: gitpod.v1.ListConfigurationEnvironmentVariablesRequest.pagination:type_name -> gitpod.v1.PaginationRequest
 	10, // 7: gitpod.v1.ListConfigurationEnvironmentVariablesResponse.environment_variables:type_name -> gitpod.v1.ConfigurationEnvironmentVariable
-	23, // 8: gitpod.v1.ListConfigurationEnvironmentVariablesResponse.pagination:type_name -> gitpod.v1.PaginationResponse
+	32, // 8: gitpod.v1.ListConfigurationEnvironmentVariablesResponse.pagination:type_name -> gitpod.v1.PaginationResponse
 	0,  // 9: gitpod.v1.UpdateConfigurationEnvironmentVariableRequest.admission:type_name -> gitpod.v1.EnvironmentVariableAdmission
 	10, // 10: gitpod.v1.UpdateConfigurationEnvironmentVariableResponse.environment_variable:type_name -> gitpod.v1.ConfigurationEnvironmentVariable
 	0,  // 11: gitpod.v1.CreateConfigurationEnvironmentVariableRequest.admission:type_name -> gitpod.v1.EnvironmentVariableAdmission
 	10, // 12: gitpod.v1.CreateConfigurationEnvironmentVariableResponse.environment_variable:type_name -> gitpod.v1.ConfigurationEnvironmentVariable
-	21, // 13: gitpod.v1.ResolveWorkspaceEnvironmentVariablesResponse.environment_variables:type_name -> gitpod.v1.EnvironmentVariable
-	2,  // 14: gitpod.v1.EnvironmentVariableService.ListUserEnvironmentVariables:input_type -> gitpod.v1.ListUserEnvironmentVariablesRequest
-	4,  // 15: gitpod.v1.EnvironmentVariableService.UpdateUserEnvironmentVariable:input_type -> gitpod.v1.UpdateUserEnvironmentVariableRequest
-	6,  // 16: gitpod.v1.EnvironmentVariableService.CreateUserEnvironmentVariable:input_type -> gitpod.v1.CreateUserEnvironmentVariableRequest
-	8,  // 17: gitpod.v1.EnvironmentVariableService.DeleteUserEnvironmentVariable:input_type -> gitpod.v1.DeleteUserEnvironmentVariableRequest
-	11, // 18: gitpod.v1.EnvironmentVariableService.ListConfigurationEnvironmentVariables:input_type -> gitpod.v1.ListConfigurationEnvironmentVariablesRequest
-	13, // 19: gitpod.v1.EnvironmentVariableService.UpdateConfigurationEnvironmentVariable:input_type -> gitpod.v1.UpdateConfigurationEnvironmentVariableRequest
-	15, // 20: gitpod.v1.EnvironmentVariableService.CreateConfigurationEnvironmentVariable:input_type -> gitpod.v1.CreateConfigurationEnvironmentVariableRequest
-	17, // 21: gitpod.v1.EnvironmentVariableService.DeleteConfigurationEnvironmentVariable:input_type -> gitpod.v1.DeleteConfigurationEnvironmentVariableRequest
-	19, // 22: gitpod.v1.EnvironmentVariableService.ResolveWorkspaceEnvironmentVariables:input_type -> gitpod.v1.ResolveWorkspaceEnvironmentVariablesRequest
-	3,  // 23: gitpod.v1.EnvironmentVariableService.ListUserEnvironmentVariables:output_type -> gitpod.v1.ListUserEnvironmentVariablesResponse
-	5,  // 24: gitpod.v1.EnvironmentVariableService.UpdateUserEnvironmentVariable:output_type -> gitpod.v1.UpdateUserEnvironmentVariableResponse
-	7,  // 25: gitpod.v1.EnvironmentVariableService.CreateUserEnvironmentVariable:output_type -> gitpod.v1.CreateUserEnvironmentVariableResponse
-	9,  // 26: gitpod.v1.EnvironmentVariableService.DeleteUserEnvironmentVariable:output_type -> gitpod.v1.DeleteUserEnvironmentVariableResponse
-	12, // 27: gitpod.v1.EnvironmentVariableService.ListConfigurationEnvironmentVariables:output_type -> gitpod.v1.ListConfigurationEnvironmentVariablesResponse
-	14, // 28: gitpod.v1.EnvironmentVariableService.UpdateConfigurationEnvironmentVariable:output_type -> gitpod.v1.UpdateConfigurationEnvironmentVariableResponse
-	16, // 29: gitpod.v1.EnvironmentVariableService.CreateConfigurationEnvironmentVariable:output_type -> gitpod.v1.CreateConfigurationEnvironmentVariableResponse
-	18, // 30: gitpod.v1.EnvironmentVariableService.DeleteConfigurationEnvironmentVariable:output_type -> gitpod.v1.DeleteConfigurationEnvironmentVariableResponse
-	20, // 31: gitpod.v1.EnvironmentVariableService.ResolveWorkspaceEnvironmentVariables:output_type -> gitpod.v1.ResolveWorkspaceEnvironmentVariablesResponse
-	23, // [23:32] is the sub-list for method output_type
-	14, // [14:23] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	31, // 13: gitpod.v1.ListOrganizationEnvironmentVariablesRequest.pagination:type_name -> gitpod.v1.PaginationRequest
+	19, // 14: gitpod.v1.ListOrganizationEnvironmentVariablesResponse.environment_variables:type_name -> gitpod.v1.OrganizationEnvironmentVariable
+	32, // 15: gitpod.v1.ListOrganizationEnvironmentVariablesResponse.pagination:type_name -> gitpod.v1.PaginationResponse
+	19, // 16: gitpod.v1.UpdateOrganizationEnvironmentVariableResponse.environment_variable:type_name -> gitpod.v1.OrganizationEnvironmentVariable
+	19, // 17: gitpod.v1.CreateOrganizationEnvironmentVariableResponse.environment_variable:type_name -> gitpod.v1.OrganizationEnvironmentVariable
+	30, // 18: gitpod.v1.ResolveWorkspaceEnvironmentVariablesResponse.environment_variables:type_name -> gitpod.v1.EnvironmentVariable
+	2,  // 19: gitpod.v1.EnvironmentVariableService.ListUserEnvironmentVariables:input_type -> gitpod.v1.ListUserEnvironmentVariablesRequest
+	4,  // 20: gitpod.v1.EnvironmentVariableService.UpdateUserEnvironmentVariable:input_type -> gitpod.v1.UpdateUserEnvironmentVariableRequest
+	6,  // 21: gitpod.v1.EnvironmentVariableService.CreateUserEnvironmentVariable:input_type -> gitpod.v1.CreateUserEnvironmentVariableRequest
+	8,  // 22: gitpod.v1.EnvironmentVariableService.DeleteUserEnvironmentVariable:input_type -> gitpod.v1.DeleteUserEnvironmentVariableRequest
+	11, // 23: gitpod.v1.EnvironmentVariableService.ListConfigurationEnvironmentVariables:input_type -> gitpod.v1.ListConfigurationEnvironmentVariablesRequest
+	13, // 24: gitpod.v1.EnvironmentVariableService.UpdateConfigurationEnvironmentVariable:input_type -> gitpod.v1.UpdateConfigurationEnvironmentVariableRequest
+	15, // 25: gitpod.v1.EnvironmentVariableService.CreateConfigurationEnvironmentVariable:input_type -> gitpod.v1.CreateConfigurationEnvironmentVariableRequest
+	17, // 26: gitpod.v1.EnvironmentVariableService.DeleteConfigurationEnvironmentVariable:input_type -> gitpod.v1.DeleteConfigurationEnvironmentVariableRequest
+	20, // 27: gitpod.v1.EnvironmentVariableService.ListOrganizationEnvironmentVariables:input_type -> gitpod.v1.ListOrganizationEnvironmentVariablesRequest
+	22, // 28: gitpod.v1.EnvironmentVariableService.UpdateOrganizationEnvironmentVariable:input_type -> gitpod.v1.UpdateOrganizationEnvironmentVariableRequest
+	24, // 29: gitpod.v1.EnvironmentVariableService.CreateOrganizationEnvironmentVariable:input_type -> gitpod.v1.CreateOrganizationEnvironmentVariableRequest
+	26, // 30: gitpod.v1.EnvironmentVariableService.DeleteOrganizationEnvironmentVariable:input_type -> gitpod.v1.DeleteOrganizationEnvironmentVariableRequest
+	28, // 31: gitpod.v1.EnvironmentVariableService.ResolveWorkspaceEnvironmentVariables:input_type -> gitpod.v1.ResolveWorkspaceEnvironmentVariablesRequest
+	3,  // 32: gitpod.v1.EnvironmentVariableService.ListUserEnvironmentVariables:output_type -> gitpod.v1.ListUserEnvironmentVariablesResponse
+	5,  // 33: gitpod.v1.EnvironmentVariableService.UpdateUserEnvironmentVariable:output_type -> gitpod.v1.UpdateUserEnvironmentVariableResponse
+	7,  // 34: gitpod.v1.EnvironmentVariableService.CreateUserEnvironmentVariable:output_type -> gitpod.v1.CreateUserEnvironmentVariableResponse
+	9,  // 35: gitpod.v1.EnvironmentVariableService.DeleteUserEnvironmentVariable:output_type -> gitpod.v1.DeleteUserEnvironmentVariableResponse
+	12, // 36: gitpod.v1.EnvironmentVariableService.ListConfigurationEnvironmentVariables:output_type -> gitpod.v1.ListConfigurationEnvironmentVariablesResponse
+	14, // 37: gitpod.v1.EnvironmentVariableService.UpdateConfigurationEnvironmentVariable:output_type -> gitpod.v1.UpdateConfigurationEnvironmentVariableResponse
+	16, // 38: gitpod.v1.EnvironmentVariableService.CreateConfigurationEnvironmentVariable:output_type -> gitpod.v1.CreateConfigurationEnvironmentVariableResponse
+	18, // 39: gitpod.v1.EnvironmentVariableService.DeleteConfigurationEnvironmentVariable:output_type -> gitpod.v1.DeleteConfigurationEnvironmentVariableResponse
+	21, // 40: gitpod.v1.EnvironmentVariableService.ListOrganizationEnvironmentVariables:output_type -> gitpod.v1.ListOrganizationEnvironmentVariablesResponse
+	23, // 41: gitpod.v1.EnvironmentVariableService.UpdateOrganizationEnvironmentVariable:output_type -> gitpod.v1.UpdateOrganizationEnvironmentVariableResponse
+	25, // 42: gitpod.v1.EnvironmentVariableService.CreateOrganizationEnvironmentVariable:output_type -> gitpod.v1.CreateOrganizationEnvironmentVariableResponse
+	27, // 43: gitpod.v1.EnvironmentVariableService.DeleteOrganizationEnvironmentVariable:output_type -> gitpod.v1.DeleteOrganizationEnvironmentVariableResponse
+	29, // 44: gitpod.v1.EnvironmentVariableService.ResolveWorkspaceEnvironmentVariables:output_type -> gitpod.v1.ResolveWorkspaceEnvironmentVariablesResponse
+	32, // [32:45] is the sub-list for method output_type
+	19, // [19:32] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_gitpod_v1_envvar_proto_init() }
@@ -1820,7 +2447,7 @@ func file_gitpod_v1_envvar_proto_init() {
 			}
 		}
 		file_gitpod_v1_envvar_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResolveWorkspaceEnvironmentVariablesRequest); i {
+			switch v := v.(*OrganizationEnvironmentVariable); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1832,7 +2459,7 @@ func file_gitpod_v1_envvar_proto_init() {
 			}
 		}
 		file_gitpod_v1_envvar_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResolveWorkspaceEnvironmentVariablesResponse); i {
+			switch v := v.(*ListOrganizationEnvironmentVariablesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1844,6 +2471,114 @@ func file_gitpod_v1_envvar_proto_init() {
 			}
 		}
 		file_gitpod_v1_envvar_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListOrganizationEnvironmentVariablesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_envvar_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UpdateOrganizationEnvironmentVariableRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_envvar_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UpdateOrganizationEnvironmentVariableResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_envvar_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateOrganizationEnvironmentVariableRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_envvar_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateOrganizationEnvironmentVariableResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_envvar_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteOrganizationEnvironmentVariableRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_envvar_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteOrganizationEnvironmentVariableResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_envvar_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ResolveWorkspaceEnvironmentVariablesRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_envvar_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ResolveWorkspaceEnvironmentVariablesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_envvar_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EnvironmentVariable); i {
 			case 0:
 				return &v.state
@@ -1858,13 +2593,14 @@ func file_gitpod_v1_envvar_proto_init() {
 	}
 	file_gitpod_v1_envvar_proto_msgTypes[3].OneofWrappers = []interface{}{}
 	file_gitpod_v1_envvar_proto_msgTypes[12].OneofWrappers = []interface{}{}
+	file_gitpod_v1_envvar_proto_msgTypes[21].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_gitpod_v1_envvar_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   21,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

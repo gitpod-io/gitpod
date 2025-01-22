@@ -40,6 +40,22 @@ service EnvironmentVariableService {
   // a configuration.
   rpc DeleteConfigurationEnvironmentVariable(DeleteConfigurationEnvironmentVariableRequest) returns (DeleteConfigurationEnvironmentVariableResponse) {}
 
+  // ListOrganizationEnvironmentVariables returns all environment variables in
+  // an organization.
+  rpc ListOrganizationEnvironmentVariables(ListOrganizationEnvironmentVariablesRequest) returns (ListOrganizationEnvironmentVariablesResponse) {}
+
+  // UpdateOrganizationEnvironmentVariable updates an environment variable in
+  // an organization.
+  rpc UpdateOrganizationEnvironmentVariable(UpdateOrganizationEnvironmentVariableRequest) returns (UpdateOrganizationEnvironmentVariableResponse) {}
+
+  // CreateOrganizationEnvironmentVariable creates a new environment variable
+  // in an organization.
+  rpc CreateOrganizationEnvironmentVariable(CreateOrganizationEnvironmentVariableRequest) returns (CreateOrganizationEnvironmentVariableResponse) {}
+
+  // DeleteOrganizationEnvironmentVariable deletes an environment variable in
+  // an organization.
+  rpc DeleteOrganizationEnvironmentVariable(DeleteOrganizationEnvironmentVariableRequest) returns (DeleteOrganizationEnvironmentVariableResponse) {}
+
   rpc ResolveWorkspaceEnvironmentVariables(ResolveWorkspaceEnvironmentVariablesRequest) returns (ResolveWorkspaceEnvironmentVariablesResponse) {}
 }
 
@@ -137,6 +153,49 @@ message DeleteConfigurationEnvironmentVariableRequest {
 }
 
 message DeleteConfigurationEnvironmentVariableResponse {}
+
+message OrganizationEnvironmentVariable {
+  string id = 1;
+  string name = 2;
+  string organization_id = 3;
+}
+
+message ListOrganizationEnvironmentVariablesRequest {
+  string organization_id = 1;
+  PaginationRequest pagination = 2;
+}
+
+message ListOrganizationEnvironmentVariablesResponse {
+  repeated OrganizationEnvironmentVariable environment_variables = 1;
+  PaginationResponse pagination = 2;
+}
+
+message UpdateOrganizationEnvironmentVariableRequest {
+  string organization_id = 1;
+  string environment_variable_id = 2;
+  optional string name = 3;
+  optional string value = 4;
+}
+
+message UpdateOrganizationEnvironmentVariableResponse {
+  OrganizationEnvironmentVariable environment_variable = 1;
+}
+
+message CreateOrganizationEnvironmentVariableRequest {
+  string organization_id = 1;
+  string name = 2;
+  string value = 3;
+}
+
+message CreateOrganizationEnvironmentVariableResponse {
+  OrganizationEnvironmentVariable environment_variable = 1;
+}
+
+message DeleteOrganizationEnvironmentVariableRequest {
+  string environment_variable_id = 1;
+}
+
+message DeleteOrganizationEnvironmentVariableResponse {}
 
 message ResolveWorkspaceEnvironmentVariablesRequest {
   string workspace_id = 1;
