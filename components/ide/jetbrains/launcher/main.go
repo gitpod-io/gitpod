@@ -42,7 +42,11 @@ import (
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
-const defaultBackendPort = "63342"
+const (
+	defaultBackendPort = "63342"
+	maxDefaultXmx      = 8 * 1024
+	minDefaultXmx      = 2 * 1024
+)
 
 var (
 	// ServiceName is the name we use for tracing/logging.
@@ -862,7 +866,10 @@ func updateVMOptions(
 	parsedMemory, err := strconv.Atoi(memory)
 	if err == nil && parsedMemory > 0 {
 		xmx := (float64(parsedMemory) * 0.6)
-		if xmx > 2048 {
+		if xmx > maxDefaultXmx { // 8G
+			xmx = maxDefaultXmx
+		}
+		if xmx > minDefaultXmx {
 			gitpodVMOptions = append(gitpodVMOptions, fmt.Sprintf("-Xmx%dm", int(xmx)))
 		}
 	}
