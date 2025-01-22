@@ -48,6 +48,7 @@ import {
     StartWorkspaceResult,
     TaskConfig,
     User,
+    UserEnvVar,
     WithPrebuild,
     WithReferrerContext,
     Workspace,
@@ -411,6 +412,7 @@ export class WorkspaceStarter {
 
                         const envVars = await this.envVarService.resolveEnvVariables(
                             user.id,
+                            workspace.organizationId,
                             workspace.projectId,
                             workspace.type,
                             workspace.context,
@@ -839,7 +841,7 @@ export class WorkspaceStarter {
 
     private async getAdditionalImageAuth(envVars: ResolvedEnvVars): Promise<Map<string, string>> {
         const res = new Map<string, string>();
-        const imageAuth = envVars.project.find((e) => e.name === "GITPOD_IMAGE_AUTH");
+        const imageAuth = envVars.project.find((e) => e.name === UserEnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME);
         if (!imageAuth) {
             return res;
         }

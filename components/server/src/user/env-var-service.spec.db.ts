@@ -4,11 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM } from "@gitpod/gitpod-db/lib";
+import { TypeORM } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
-    // EnvVarWithValue,
+    EnvVarWithValue,
     Organization,
+    OrgEnvVarWithValue,
     Project,
     User,
     UserEnvVarValue,
@@ -25,7 +26,7 @@ import { OrganizationService } from "../orgs/organization-service";
 import { UserService } from "./user-service";
 import { expectError } from "../test/expect-utils";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { EnvVarService } from "./env-var-service";
+import { EnvVarService, ResolvedEnvVars } from "./env-var-service";
 import { ProjectsService } from "../projects/projects-service";
 
 const expect = chai.expect;
@@ -78,12 +79,23 @@ const contextEnvVars = {
     envvars: [barContextEnvVar],
 } as WithEnvvarsContext;
 
+const gitpodImageAuthOrgEnvVar: OrgEnvVarWithValue = {
+    name: "GITPOD_IMAGE_AUTH",
+    value: "some-token",
+};
+
+const someOrgEnvVar: OrgEnvVarWithValue = {
+    name: "SOME_ENV_VAR",
+    value: "some",
+};
+
 describe("EnvVarService", async () => {
     let container: Container;
     let es: EnvVarService;
 
     let owner: User;
     let member: User;
+    let collaborator: User;
     let stranger: User;
     let org: Organization;
     let project: Project;
@@ -93,10 +105,18 @@ describe("EnvVarService", async () => {
         Experiments.configureTestingClient({});
 
         const userService = container.get<UserService>(UserService);
-        owner = await userService.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID, BUILTIN_INSTLLATION_ADMIN_USER_ID);
+        // create the owner (installation-level)
+        owner = await userService.createUser({
+            identity: {
+                authId: "owner",
+                authName: "ownername",
+                authProviderId: "github",
+                primaryEmail: "owner@yolo.com",
+            },
+        });
 
         const orgService = container.get<OrganizationService>(OrganizationService);
-        org = await orgService.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "myOrg");
+        org = await orgService.createOrganization(owner.id, "myOrg");
 
         member = await orgService.createOrgOwnedUser({
             organizationId: org.id,
@@ -107,6 +127,18 @@ describe("EnvVarService", async () => {
                 primaryEmail: "yolo@yolo.com",
             },
         });
+        await orgService.addOrUpdateMember(owner.id, org.id, member.id, "member");
+        collaborator = await orgService.createOrgOwnedUser({
+            organizationId: org.id,
+            identity: {
+                authId: "collab",
+                authName: "collaborator",
+                authProviderId: "github",
+                primaryEmail: "collab@yolo.com",
+            },
+        });
+        await orgService.addOrUpdateMember(owner.id, org.id, collaborator.id, "collaborator");
+
         stranger = await userService.createUser({
             identity: {
                 authId: "foo2",
@@ -264,6 +296,60 @@ describe("EnvVarService", async () => {
         await expectError(ErrorCodes.NOT_FOUND, es.listProjectEnvVars(stranger.id, project.id));
     });
 
+    it("should manage org-level environment variables permissions", async () => {
+        // Only owner can create org env vars
+        await es.addOrgEnvVar(owner.id, org.id, gitpodImageAuthOrgEnvVar);
+
+        // Member cannot create org env vars
+        await expectError(ErrorCodes.PERMISSION_DENIED, es.addOrgEnvVar(member.id, org.id, someOrgEnvVar));
+
+        // Collaborator cannot create org env vars
+        await expectError(ErrorCodes.PERMISSION_DENIED, es.addOrgEnvVar(collaborator.id, org.id, someOrgEnvVar));
+
+        // Stranger cannot create org env vars
+        await expectError(ErrorCodes.NOT_FOUND, es.addOrgEnvVar(stranger.id, org.id, someOrgEnvVar));
+    });
+
+    it("should restrict org env var names to GITPOD_IMAGE_AUTH", async () => {
+        // Owner can create GITPOD_IMAGE_AUTH
+        await es.addOrgEnvVar(owner.id, org.id, gitpodImageAuthOrgEnvVar);
+
+        // Owner cannot create other env var names
+        await expectError(ErrorCodes.BAD_REQUEST, es.addOrgEnvVar(owner.id, org.id, someOrgEnvVar));
+    });
+
+    it("should allow updating org env vars by owner", async () => {
+        const added = await es.addOrgEnvVar(owner.id, org.id, gitpodImageAuthOrgEnvVar);
+
+        await es.updateOrgEnvVar(owner.id, org.id, {
+            ...added,
+            value: "newtoken123",
+        });
+
+        const envVars = await es.listOrgEnvVars(owner.id, org.id);
+        expect(envVars.length).to.equal(1);
+        expect(envVars[0].name).to.equal("GITPOD_IMAGE_AUTH");
+    });
+
+    it("should control org env var read access", async () => {
+        await es.addOrgEnvVar(owner.id, org.id, gitpodImageAuthOrgEnvVar);
+
+        // Owner can read
+        const ownerVars = await es.listOrgEnvVars(owner.id, org.id);
+        expect(ownerVars.length).to.equal(1);
+
+        // Member can read
+        const memberVars = await es.listOrgEnvVars(member.id, org.id);
+        expect(memberVars.length).to.equal(1);
+
+        // Collaborator can read
+        const collabVars = await es.listOrgEnvVars(collaborator.id, org.id);
+        expect(collabVars.length).to.equal(1);
+
+        // Stranger cannot read
+        await expectError(ErrorCodes.NOT_FOUND, es.listOrgEnvVars(stranger.id, org.id));
+    });
+
     it("should resolve env variables 1 ", async () => {
         await es.addUserEnvVar(member.id, member.id, fooAnyUserEnvVar);
         await es.addUserEnvVar(member.id, member.id, barUserCommitEnvVar);
@@ -272,7 +358,7 @@ describe("EnvVarService", async () => {
         await es.addProjectEnvVar(owner.id, project.id, barProjectCensoredEnvVar);
         await es.addProjectEnvVar(owner.id, project.id, bazProjectEnvVar);
 
-        const envVars = await es.resolveEnvVariables(member.id, undefined, "regular", commitContext);
+        const envVars = await es.resolveEnvVariables(member.id, project.teamId, undefined, "regular", commitContext);
         envVars.workspace.forEach((e) => {
             delete (e as any).id;
             delete (e as any).userId;
@@ -290,7 +376,7 @@ describe("EnvVarService", async () => {
         await es.addProjectEnvVar(owner.id, project.id, barProjectCensoredEnvVar);
         await es.addProjectEnvVar(owner.id, project.id, bazProjectEnvVar);
 
-        const envVars = await es.resolveEnvVariables(member.id, undefined, "prebuild", commitContext);
+        const envVars = await es.resolveEnvVariables(member.id, project.teamId, undefined, "prebuild", commitContext);
         expect(envVars).to.deep.equal({
             project: [],
             workspace: [],
@@ -312,7 +398,14 @@ describe("EnvVarService", async () => {
             },
         };
 
-        const envVars = await es.resolveEnvVariables(member.id, project.id, "regular", commitContext, workspaceConfig);
+        const envVars = await es.resolveEnvVariables(
+            member.id,
+            project.teamId,
+            project.id,
+            "regular",
+            commitContext,
+            workspaceConfig,
+        );
         envVars.project.forEach((e) => {
             delete (e as any).id;
             delete (e as any).projectId;
@@ -340,6 +433,92 @@ describe("EnvVarService", async () => {
         ]);
     });
 
+    it("should resolve env variables regular project w/ org env vars", async () => {
+        await es.addOrgEnvVar(owner.id, org.id, gitpodImageAuthOrgEnvVar);
+
+        await es.addUserEnvVar(member.id, member.id, fooAnyUserEnvVar);
+        await es.addUserEnvVar(member.id, member.id, barUserCommitEnvVar);
+        await es.addUserEnvVar(member.id, member.id, barUserAnotherCommitEnvVar);
+
+        await es.addProjectEnvVar(owner.id, project.id, barProjectCensoredEnvVar);
+        await es.addProjectEnvVar(owner.id, project.id, bazProjectEnvVar);
+
+        const workspaceConfig: WorkspaceConfig = {
+            env: {
+                foobar: "yes please",
+                [fooAnyUserEnvVar.name]: "overridden_by_user_var",
+            },
+        };
+
+        const envVars = await es.resolveEnvVariables(
+            member.id,
+            project.teamId,
+            project.id,
+            "regular",
+            commitContext,
+            workspaceConfig,
+        );
+
+        envVars.project = cleanEnvVarShapes(envVars.project);
+        envVars.workspace = cleanEnvVarShapes(envVars.workspace);
+        expect(envVars.project).to.have.deep.members(
+            [barProjectCensoredEnvVar, bazProjectEnvVar].map((e) => ({
+                name: e.name,
+                censored: e.censored,
+            })),
+        );
+        expect(envVars.workspace).to.have.deep.members([
+            gitpodImageAuthOrgEnvVar,
+            fooAnyUserEnvVar,
+            barUserCommitEnvVar,
+            bazProjectEnvVar,
+            { name: "foobar", value: "yes please" },
+        ]);
+    });
+
+    it("user should have precedence over org, project over user", async () => {
+        function expectEnvVars(resolved: ResolvedEnvVars, expected: EnvVarWithValue[]) {
+            resolved.project = cleanEnvVarShapes(resolved.project, true);
+            resolved.workspace = cleanEnvVarShapes(resolved.workspace, true);
+            expect(resolved.workspace).to.have.deep.members(
+                expected.map((e) => ({
+                    name: e.name,
+                    value: e.value,
+                })),
+            );
+        }
+
+        await es.addOrgEnvVar(owner.id, org.id, gitpodImageAuthOrgEnvVar);
+        let envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "regular", commitContext);
+        expectEnvVars(envVars, [gitpodImageAuthOrgEnvVar]);
+
+        await es.addUserEnvVar(member.id, member.id, {
+            ...gitpodImageAuthOrgEnvVar,
+            value: "user",
+            repositoryPattern: "*/*",
+        });
+        envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "regular", commitContext);
+        expectEnvVars(envVars, [
+            {
+                ...gitpodImageAuthOrgEnvVar,
+                value: "user",
+            },
+        ]);
+
+        await es.addProjectEnvVar(member.id, project.id, {
+            ...gitpodImageAuthOrgEnvVar,
+            value: "project",
+            censored: false,
+        });
+        envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "regular", commitContext);
+        expectEnvVars(envVars, [
+            {
+                ...gitpodImageAuthOrgEnvVar,
+                value: "project",
+            },
+        ]);
+    });
+
     it("should resolve env variables prebuild with project", async () => {
         await es.addUserEnvVar(member.id, member.id, fooAnyUserEnvVar);
         await es.addUserEnvVar(member.id, member.id, barUserCommitEnvVar);
@@ -348,19 +527,9 @@ describe("EnvVarService", async () => {
         await es.addProjectEnvVar(owner.id, project.id, barProjectCensoredEnvVar);
         await es.addProjectEnvVar(owner.id, project.id, bazProjectEnvVar);
 
-        const envVars = await es.resolveEnvVariables(member.id, project.id, "prebuild", commitContext);
-        envVars.project.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
-        });
-        envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
-        });
+        const envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "prebuild", commitContext);
+        envVars.project = cleanEnvVarShapes(envVars.project);
+        envVars.workspace = cleanEnvVarShapes(envVars.workspace);
         expect(envVars.project).to.have.deep.members(
             [barProjectCensoredEnvVar, bazProjectEnvVar].map((e) => ({
                 name: e.name,
@@ -381,7 +550,7 @@ describe("EnvVarService", async () => {
 
         await es.addUserEnvVar(member.id, member.id, userEnvVars[0]);
 
-        const envVars = await es.resolveEnvVariables(member.id, project.id, "prebuild", commitContext);
+        const envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "prebuild", commitContext);
         expect(envVars).to.deep.equal({
             project: [],
             workspace: [],
@@ -396,15 +565,11 @@ describe("EnvVarService", async () => {
         await es.addProjectEnvVar(owner.id, project.id, barProjectCensoredEnvVar);
         await es.addProjectEnvVar(owner.id, project.id, bazProjectEnvVar);
 
-        const envVars = await es.resolveEnvVariables(member.id, undefined, "regular", {
+        const envVars = await es.resolveEnvVariables(member.id, project.teamId, undefined, "regular", {
             ...commitContext,
             ...contextEnvVars,
         });
-        envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).userId;
-            delete (e as any).deleted;
-        });
+        envVars.workspace = cleanEnvVarShapes(envVars.workspace);
         expect(envVars.project.length).to.be.equal(0);
         expect(envVars.workspace).to.have.deep.members([fooAnyUserEnvVar, barContextEnvVar]);
     });
@@ -417,24 +582,12 @@ describe("EnvVarService", async () => {
         await es.addProjectEnvVar(owner.id, project.id, barProjectCensoredEnvVar);
         await es.addProjectEnvVar(owner.id, project.id, bazProjectEnvVar);
 
-        const envVars = await es.resolveEnvVariables(member.id, project.id, "regular", {
+        const envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "regular", {
             ...commitContext,
             ...contextEnvVars,
         });
-        envVars.project.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).userId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
-        });
-        envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).userId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
-        });
+        envVars.project = cleanEnvVarShapes(envVars.project);
+        envVars.workspace = cleanEnvVarShapes(envVars.workspace);
         expect(envVars.project).to.have.deep.members(
             [barProjectCensoredEnvVar, bazProjectEnvVar].map((e) => ({
                 name: e.name,
@@ -478,12 +631,10 @@ describe("EnvVarService", async () => {
             }
             expectedVars.forEach((e) => delete (e as any).id);
 
-            const envVars = await es.resolveEnvVariables(member.id, project.id, "regular", { ...commitContext });
-            envVars.workspace.forEach((e) => {
-                delete (e as any).id;
-                delete (e as any).userId;
-                delete (e as any).deleted;
+            const envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "regular", {
+                ...commitContext,
             });
+            envVars.workspace = cleanEnvVarShapes(envVars.workspace);
             expect(envVars, `test case: ${i}`).to.deep.equal({
                 project: [],
                 workspace: expectedVars,
@@ -547,15 +698,27 @@ describe("EnvVarService", async () => {
             await es.addUserEnvVar(member.id, member.id, userEnvVars[j]);
         }
 
-        const envVars = await es.resolveEnvVariables(member.id, project.id, "regular", {
+        const envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "regular", {
             ...gitlabSubgroupCommitContext,
         });
-        envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).userId;
-            delete (e as any).deleted;
-        });
+        envVars.workspace = cleanEnvVarShapes(envVars.workspace);
         expect(envVars.project.length).to.be.equal(0);
         expect(envVars.workspace).to.have.deep.members(userEnvVars.filter((ev) => ev.value === "true"));
     });
 });
+
+function cleanEnvVarShapes<T extends object>(envVars: T[], dropAllProperties: boolean = false): T[] {
+    return envVars.map((ev) => {
+        delete (ev as any).id;
+        delete (ev as any).orgId;
+        delete (ev as any).projectId;
+        delete (ev as any).userId;
+        delete (ev as any).creationTime;
+        delete (ev as any).deleted;
+        if (dropAllProperties) {
+            delete (ev as any).repositoryPattern;
+            delete (ev as any).censored;
+        }
+        return ev;
+    });
+}

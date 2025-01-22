@@ -277,11 +277,12 @@ export namespace UserEnvVar {
     export const WILDCARD_DOUBLE_ASTERISK = "**";
     const WILDCARD_SHARP = "#"; // TODO(gpl) Where does this come from? Bc we have/had patterns as part of URLs somewhere, maybe...?
     const MIN_PATTERN_SEGMENTS = 2;
+    export const GITPOD_IMAGE_AUTH_ENV_VAR_NAME = "GITPOD_IMAGE_AUTH";
 
     /**
      * - GITPOD_IMAGE_AUTH is documented https://www.gitpod.io/docs/configure/workspaces/workspace-image#use-a-private-docker-image
      */
-    export const WhiteListFromReserved = ["GITPOD_IMAGE_AUTH"];
+    export const WhiteListFromReserved = [GITPOD_IMAGE_AUTH_ENV_VAR_NAME];
 
     function isWildcard(c: string): boolean {
         return c === WILDCARD_ASTERISK || c === WILDCARD_SHARP;

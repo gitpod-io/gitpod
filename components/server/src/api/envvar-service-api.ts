@@ -207,6 +207,7 @@ export class EnvironmentVariableServiceAPI implements ServiceImpl<typeof Environ
         const { workspace } = await this.workspaceService.getWorkspace(ctxUserId(), req.workspaceId);
         const envVars = await this.envVarService.resolveEnvVariables(
             workspace.ownerId,
+            workspace.organizationId,
             workspace.projectId,
             workspace.type,
             workspace.context,

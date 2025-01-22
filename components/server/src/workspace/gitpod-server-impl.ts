@@ -1221,6 +1221,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
         const envVars = await this.envVarService.resolveEnvVariables(
             workspace.ownerId,
+            workspace.organizationId,
             workspace.projectId,
             workspace.type,
             workspace.context,

@@ -75,6 +75,9 @@ schema: |-
       permission read_settings = member + owner + collaborator + installation->admin
       permission write_settings = owner + installation->admin
 
+      permission read_env_var = member + owner + collaborator + installation->admin
+      permission write_env_var = owner + installation->admin
+
       permission read_audit_logs = owner + installation->admin
 
       // Operations on Organization's Members
