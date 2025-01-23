@@ -34,7 +34,7 @@ import { PlainMessage } from "@bufbuild/protobuf";
 import { useToast } from "../components/toasts/Toasts";
 import { NamedOrganizationEnvvarItem } from "./variables/NamedOrganizationEnvvarItem";
 import { useListOrganizationEnvironmentVariables } from "../data/organizations/org-envvar-queries";
-import { UserEnvVar } from "@gitpod/gitpod-protocol";
+import { EnvVar } from "@gitpod/gitpod-protocol";
 
 export default function TeamSettingsPage() {
     useDocumentTitle("Organization Settings - General");
@@ -50,7 +50,7 @@ export default function TeamSettingsPage() {
     const [updated, setUpdated] = useState(false);
 
     const orgEnvVars = useListOrganizationEnvironmentVariables(org?.id || "");
-    const gitpodImageAuthEnvVar = orgEnvVars.data?.find((v) => v.name === UserEnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME);
+    const gitpodImageAuthEnvVar = orgEnvVars.data?.find((v) => v.name === EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME);
 
     const updateOrg = useUpdateOrgMutation();
 
@@ -227,9 +227,9 @@ export default function TeamSettingsPage() {
                             <Subheading>Configure Docker registry permissions for the whole organization.</Subheading>
 
                             <NamedOrganizationEnvvarItem
-                                key={`envvar-named-${UserEnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME}`}
+                                key={`envvar-named-${EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME}`}
                                 disabled={!isOwner}
-                                name={UserEnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME}
+                                name={EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME}
                                 organizationId={org.id}
                                 variable={gitpodImageAuthEnvVar}
                             />

@@ -359,13 +359,7 @@ describe("EnvVarService", async () => {
         await es.addProjectEnvVar(owner.id, project.id, bazProjectEnvVar);
 
         const envVars = await es.resolveEnvVariables(member.id, project.teamId, undefined, "regular", commitContext);
-        envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).userId;
-            delete (e as any).deleted;
-        });
-        expect(envVars.project.length).to.be.equal(0);
-        expect(envVars.workspace).to.have.deep.members([fooAnyUserEnvVar, barUserCommitEnvVar]);
+        expectEnvVars(envVars, [fooAnyUserEnvVar, barUserCommitEnvVar]);
     });
 
     it("should resolve env variables prebuild", async () => {
@@ -377,10 +371,7 @@ describe("EnvVarService", async () => {
         await es.addProjectEnvVar(owner.id, project.id, bazProjectEnvVar);
 
         const envVars = await es.resolveEnvVariables(member.id, project.teamId, undefined, "prebuild", commitContext);
-        expect(envVars).to.deep.equal({
-            project: [],
-            workspace: [],
-        });
+        expectEnvVars(envVars, []);
     });
 
     it("should resolve env variables regular project", async () => {
@@ -406,26 +397,8 @@ describe("EnvVarService", async () => {
             commitContext,
             workspaceConfig,
         );
-        envVars.project.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
-        });
-        envVars.workspace.forEach((e) => {
-            delete (e as any).id;
-            delete (e as any).projectId;
-            delete (e as any).userId;
-            delete (e as any).creationTime;
-            delete (e as any).deleted;
-        });
-        expect(envVars.project).to.have.deep.members(
-            [barProjectCensoredEnvVar, bazProjectEnvVar].map((e) => ({
-                name: e.name,
-                censored: e.censored,
-            })),
-        );
-        expect(envVars.workspace).to.have.deep.members([
+
+        expectEnvVars(envVars, [
             fooAnyUserEnvVar,
             barUserCommitEnvVar,
             bazProjectEnvVar,
@@ -459,15 +432,7 @@ describe("EnvVarService", async () => {
             workspaceConfig,
         );
 
-        envVars.project = cleanEnvVarShapes(envVars.project);
-        envVars.workspace = cleanEnvVarShapes(envVars.workspace);
-        expect(envVars.project).to.have.deep.members(
-            [barProjectCensoredEnvVar, bazProjectEnvVar].map((e) => ({
-                name: e.name,
-                censored: e.censored,
-            })),
-        );
-        expect(envVars.workspace).to.have.deep.members([
+        expectEnvVars(envVars, [
             gitpodImageAuthOrgEnvVar,
             fooAnyUserEnvVar,
             barUserCommitEnvVar,
@@ -477,17 +442,6 @@ describe("EnvVarService", async () => {
     });
 
     it("user should have precedence over org, project over user", async () => {
-        function expectEnvVars(resolved: ResolvedEnvVars, expected: EnvVarWithValue[]) {
-            resolved.project = cleanEnvVarShapes(resolved.project, true);
-            resolved.workspace = cleanEnvVarShapes(resolved.workspace, true);
-            expect(resolved.workspace).to.have.deep.members(
-                expected.map((e) => ({
-                    name: e.name,
-                    value: e.value,
-                })),
-            );
-        }
-
         await es.addOrgEnvVar(owner.id, org.id, gitpodImageAuthOrgEnvVar);
         let envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "regular", commitContext);
         expectEnvVars(envVars, [gitpodImageAuthOrgEnvVar]);
@@ -528,15 +482,7 @@ describe("EnvVarService", async () => {
         await es.addProjectEnvVar(owner.id, project.id, bazProjectEnvVar);
 
         const envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "prebuild", commitContext);
-        envVars.project = cleanEnvVarShapes(envVars.project);
-        envVars.workspace = cleanEnvVarShapes(envVars.workspace);
-        expect(envVars.project).to.have.deep.members(
-            [barProjectCensoredEnvVar, bazProjectEnvVar].map((e) => ({
-                name: e.name,
-                censored: e.censored,
-            })),
-        );
-        expect(envVars.workspace).to.have.deep.members([barProjectCensoredEnvVar, bazProjectEnvVar]);
+        expectEnvVars(envVars, [barProjectCensoredEnvVar, bazProjectEnvVar]);
     });
 
     it("should not match single segment ", async () => {
@@ -551,10 +497,7 @@ describe("EnvVarService", async () => {
         await es.addUserEnvVar(member.id, member.id, userEnvVars[0]);
 
         const envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "prebuild", commitContext);
-        expect(envVars).to.deep.equal({
-            project: [],
-            workspace: [],
-        });
+        expectEnvVars(envVars, []);
     });
 
     it("should resolve env variables from context ", async () => {
@@ -569,9 +512,8 @@ describe("EnvVarService", async () => {
             ...commitContext,
             ...contextEnvVars,
         });
-        envVars.workspace = cleanEnvVarShapes(envVars.workspace);
-        expect(envVars.project.length).to.be.equal(0);
-        expect(envVars.workspace).to.have.deep.members([fooAnyUserEnvVar, barContextEnvVar]);
+
+        expectEnvVars(envVars, [fooAnyUserEnvVar, barContextEnvVar]);
     });
 
     it("should resolve env variables from context with project ", async () => {
@@ -586,15 +528,8 @@ describe("EnvVarService", async () => {
             ...commitContext,
             ...contextEnvVars,
         });
-        envVars.project = cleanEnvVarShapes(envVars.project);
-        envVars.workspace = cleanEnvVarShapes(envVars.workspace);
-        expect(envVars.project).to.have.deep.members(
-            [barProjectCensoredEnvVar, bazProjectEnvVar].map((e) => ({
-                name: e.name,
-                censored: e.censored,
-            })),
-        );
-        expect(envVars.workspace).to.have.deep.members([fooAnyUserEnvVar, barContextEnvVar, bazProjectEnvVar]);
+
+        expectEnvVars(envVars, [fooAnyUserEnvVar, barContextEnvVar, bazProjectEnvVar]);
     });
 
     it("should resolve env variables with precedence", async () => {
@@ -634,11 +569,8 @@ describe("EnvVarService", async () => {
             const envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "regular", {
                 ...commitContext,
             });
-            envVars.workspace = cleanEnvVarShapes(envVars.workspace);
-            expect(envVars, `test case: ${i}`).to.deep.equal({
-                project: [],
-                workspace: expectedVars,
-            });
+
+            expectEnvVars(envVars, expectedVars, `test case: ${i}`);
 
             for (let j = 0; j < inputVars.length; j++) {
                 await es.deleteUserEnvVar(member.id, member.id, inputVars[j]);
@@ -701,24 +633,22 @@ describe("EnvVarService", async () => {
         const envVars = await es.resolveEnvVariables(member.id, project.teamId, project.id, "regular", {
             ...gitlabSubgroupCommitContext,
         });
-        envVars.workspace = cleanEnvVarShapes(envVars.workspace);
-        expect(envVars.project.length).to.be.equal(0);
-        expect(envVars.workspace).to.have.deep.members(userEnvVars.filter((ev) => ev.value === "true"));
+        expectEnvVars(
+            envVars,
+            userEnvVars.filter((ev) => ev.value === "true"),
+        );
     });
 });
 
-function cleanEnvVarShapes<T extends object>(envVars: T[], dropAllProperties: boolean = false): T[] {
-    return envVars.map((ev) => {
-        delete (ev as any).id;
-        delete (ev as any).orgId;
-        delete (ev as any).projectId;
-        delete (ev as any).userId;
-        delete (ev as any).creationTime;
-        delete (ev as any).deleted;
-        if (dropAllProperties) {
-            delete (ev as any).repositoryPattern;
-            delete (ev as any).censored;
-        }
-        return ev;
+function envVars(evs: EnvVarWithValue[]): Pick<EnvVarWithValue, "name" | "value">[] {
+    return evs.map((ev) => {
+        return {
+            name: ev.name,
+            value: ev.value,
+        };
     });
+}
+
+function expectEnvVars(resolved: ResolvedEnvVars, expected: EnvVarWithValue[], message?: string) {
+    expect(envVars(resolved.workspace), message).to.have.deep.members(envVars(expected));
 }

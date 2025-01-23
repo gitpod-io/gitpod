@@ -270,6 +270,18 @@ export interface UserEnvVar extends UserEnvVarValue {
     deleted?: boolean;
 }
 
+export namespace EnvVar {
+    export const GITPOD_IMAGE_AUTH_ENV_VAR_NAME = "GITPOD_IMAGE_AUTH";
+    /**
+     * - GITPOD_IMAGE_AUTH is documented https://www.gitpod.io/docs/configure/workspaces/workspace-image#use-a-private-docker-image
+     */
+    export const WhiteListFromReserved = [GITPOD_IMAGE_AUTH_ENV_VAR_NAME];
+
+    export function is(data: any): data is EnvVar {
+        return data.hasOwnProperty("name") && data.hasOwnProperty("value");
+    }
+}
+
 export namespace UserEnvVar {
     export const DELIMITER = "/";
     export const WILDCARD_ASTERISK = "*";
@@ -277,15 +289,18 @@ export namespace UserEnvVar {
     export const WILDCARD_DOUBLE_ASTERISK = "**";
     const WILDCARD_SHARP = "#"; // TODO(gpl) Where does this come from? Bc we have/had patterns as part of URLs somewhere, maybe...?
     const MIN_PATTERN_SEGMENTS = 2;
-    export const GITPOD_IMAGE_AUTH_ENV_VAR_NAME = "GITPOD_IMAGE_AUTH";
-
-    /**
-     * - GITPOD_IMAGE_AUTH is documented https://www.gitpod.io/docs/configure/workspaces/workspace-image#use-a-private-docker-image
-     */
-    export const WhiteListFromReserved = [GITPOD_IMAGE_AUTH_ENV_VAR_NAME];
 
     function isWildcard(c: string): boolean {
         return c === WILDCARD_ASTERISK || c === WILDCARD_SHARP;
+    }
+
+    export function is(data: any): data is UserEnvVar {
+        return (
+            EnvVar.is(data) &&
+            data.hasOwnProperty("id") &&
+            data.hasOwnProperty("userId") &&
+            data.hasOwnProperty("repositoryPattern")
+        );
     }
 
     /**
@@ -295,7 +310,7 @@ export namespace UserEnvVar {
     export function validate(variable: UserEnvVarValue): string | undefined {
         const name = variable.name;
         const pattern = variable.repositoryPattern;
-        if (!WhiteListFromReserved.includes(name) && name.startsWith("GITPOD_")) {
+        if (!EnvVar.WhiteListFromReserved.includes(name) && name.startsWith("GITPOD_")) {
             return "Name with prefix 'GITPOD_' is reserved.";
         }
         if (name.trim() === "") {

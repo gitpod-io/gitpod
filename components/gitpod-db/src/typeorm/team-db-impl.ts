@@ -480,9 +480,11 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         return envVars;
     }
 
-    public async getOrgEnvironmentVariableValues(envVars: OrgEnvVar[]): Promise<OrgEnvVarWithValue[]> {
+    public async getOrgEnvironmentVariableValues(
+        envVars: Pick<OrgEnvVar, "id" | "orgId">[],
+    ): Promise<OrgEnvVarWithValue[]> {
         const envVarRepo = await this.getOrgEnvVarRepo();
-        const envVarsWithValues = await envVarRepo.findByIds(envVars);
+        const envVarsWithValues = await envVarRepo.findByIds(envVars.map((v) => ({ id: v.id, orgId: v.orgId })));
         return envVarsWithValues;
     }
 

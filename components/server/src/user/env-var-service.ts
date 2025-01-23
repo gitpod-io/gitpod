@@ -8,6 +8,7 @@ import { ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
     EnvVar,
+    EnvVarWithValue,
     OrgEnvVar,
     OrgEnvVarWithValue,
     ProjectEnvVar,
@@ -26,10 +27,8 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { Config } from "../config";
 
 export interface ResolvedEnvVars {
-    // all project env vars, censored included always
-    project: ProjectEnvVar[];
-    // merged workspace env vars
-    workspace: EnvVar[];
+    // merged workspace env vars (incl. org, user, project)
+    workspace: EnvVarWithValue[];
 }
 
 @injectable()
@@ -186,7 +185,7 @@ export class EnvVarService {
     ): Promise<ProjectEnvVar> {
         await this.auth.checkPermissionOnProject(requestorId, "write_env_var", projectId);
         this.validateProjectOrOrgEnvVar(envVar);
-        const existingVar = await this.projectDB.findProjectEnvironmentVariable(projectId, envVar);
+        const existingVar = await this.projectDB.findProjectEnvironmentVariableByName(projectId, envVar.name);
         if (existingVar) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Project env var ${envVar.name} already exists`);
         }
@@ -198,7 +197,7 @@ export class EnvVarService {
         if (!envVar.name) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Variable name cannot be empty");
         }
-        if (!UserEnvVar.WhiteListFromReserved.includes(envVar.name) && envVar.name.startsWith("GITPOD_")) {
+        if (!EnvVar.WhiteListFromReserved.includes(envVar.name) && envVar.name.startsWith("GITPOD_")) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Variable name with prefix 'GITPOD_' is reserved");
         }
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(envVar.name)) {
@@ -254,7 +253,7 @@ export class EnvVarService {
 
         // gpl: We only intent to use org-level env vars for this very specific use case right now.
         // If we every want to use it more generically, just lift this restriction
-        if (envVar.name !== UserEnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME) {
+        if (envVar.name !== EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME) {
             throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "Can only update GITPOD_IMAGE_AUTH env var on org level",
@@ -357,7 +356,6 @@ export class EnvVarService {
         }
 
         return {
-            project: projectEnvVars,
             workspace: [...workspaceEnvVars.values()],
         };
     }

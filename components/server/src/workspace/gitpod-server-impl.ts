@@ -1231,7 +1231,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const result: EnvVarWithValue[] = [];
         for (const value of envVars.workspace) {
             if (
-                "repositoryPattern" in value &&
+                UserEnvVar.is(value) &&
                 !(await this.resourceAccessGuard.canAccess({ kind: "envVar", subject: value }, "get"))
             ) {
                 continue;

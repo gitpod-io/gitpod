@@ -51,6 +51,6 @@ export interface TeamDB extends TransactionalDB<TeamDB> {
     getOrgEnvironmentVariableById(id: string): Promise<OrgEnvVar | undefined>;
     findOrgEnvironmentVariableByName(orgId: string, name: string): Promise<OrgEnvVar | undefined>;
     getOrgEnvironmentVariables(orgId: string): Promise<OrgEnvVar[]>;
-    getOrgEnvironmentVariableValues(envVars: OrgEnvVar[]): Promise<OrgEnvVarWithValue[]>;
+    getOrgEnvironmentVariableValues(envVars: Pick<OrgEnvVar, "id" | "orgId">[]): Promise<OrgEnvVarWithValue[]>;
     deleteOrgEnvironmentVariable(id: string): Promise<void>;
 }
