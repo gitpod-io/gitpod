@@ -818,7 +818,7 @@ func configureGit(cfg *Config) {
 		settings = append(settings, []string{"user.email", cfg.GitEmail})
 	}
 
-	if cfg.CommitAnnotationEnabled {
+	if cfg.CommitAnnotationEnabled && !cfg.isHeadless() {
 		err := setupGitMessageHook(filepath.Join(cfg.RepoRoot, ".git", "hooks"))
 		if err != nil {
 			log.WithError(err).Error("cannot setup git message hook")
