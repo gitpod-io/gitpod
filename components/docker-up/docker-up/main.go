@@ -10,9 +10,11 @@ package main
 import (
 	"archive/tar"
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -58,6 +60,7 @@ var aptUpdated = false
 const (
 	dockerSocketFN = "/var/run/docker.sock"
 	gitpodUserId   = 33333
+	gitpodGroupId  = 33333
 	containerIf    = "eth0"
 )
 
@@ -185,11 +188,86 @@ func runWithinNetns() (err error) {
 		}()
 	}
 
+	if imageAuth, _ := os.LookupEnv("GITPOD_IMAGE_AUTH"); strings.TrimSpace(imageAuth) != "" {
+		if err := waitUntilSocketPresent(dockerSocketFN); err == nil {
+			tryAuthenticateForAllHosts(imageAuth)
+		}
+	}
+
 	err = cmd.Wait()
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func waitUntilSocketPresent(dockerSocketFN string) error {
+	socketTimeout := 30 * time.Second
+	socketCtx, cancel := context.WithTimeout(context.Background(), socketTimeout)
+	defer cancel()
+
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-socketCtx.Done():
+			log.WithError(socketCtx.Err()).Warn("timeout waiting for docker socket")
+			return socketCtx.Err()
+		case <-ticker.C:
+			if _, err := os.Stat(dockerSocketFN); err == nil {
+				// Socket file exists
+				return nil
+			}
+		}
+	}
+}
+
+func tryAuthenticateForAllHosts(imageAuth string) {
+	splitHostAndCredentials := func(s string) (string, string) {
+		parts := strings.SplitN(s, ":", 2)
+		if len(parts) < 2 {
+			return "", ""
+		}
+		return parts[0], parts[1]
+	}
+	splitCredentials := func(host, s string) (string, string, error) {
+		credentials, err := base64.StdEncoding.DecodeString(s)
+		if err != nil {
+			return "", "", fmt.Errorf("Cannot decode docker credentials for host %s: %w", host, err)
+		}
+		parts := strings.SplitN(string(credentials), ":", 2)
+		if len(parts) < 2 {
+			return "", "", fmt.Errorf("Credentials in wrong format")
+		}
+		return parts[0], parts[1], nil
+	}
+
+	authenticationPerHost := strings.Split(imageAuth, ",")
+	for _, hostCredentials := range authenticationPerHost {
+		host, credentials := splitHostAndCredentials(hostCredentials)
+		if host == "" || credentials == "" {
+			log.Warnf("Unable to authenticate with host %s, skipping.", host)
+			continue
+		}
+		username, password, decodeErr := splitCredentials(host, credentials)
+		if decodeErr != nil || username == "" || password == "" {
+			log.WithError(decodeErr).Warnf("Unable to authenticate with host %s, skipping.", host)
+			continue
+		}
+
+		loginCmd := exec.Command("docker", "login", "--username", username, "--password-stdin", host)
+		loginCmd.SysProcAttr = &syscall.SysProcAttr{}
+		loginCmd.Env = append(loginCmd.Env, "USER=gitpod")
+		loginCmd.SysProcAttr.Credential = &syscall.Credential{Uid: gitpodUserId, Gid: gitpodGroupId}
+		loginCmd.Stdin = bytes.NewBufferString(password)
+		loginErr := loginCmd.Run()
+		if loginErr != nil {
+			log.WithError(loginErr).Warnf("Unable to authenticate with host %s, skipping.%s", host)
+			continue
+		}
+		log.Infof("Authenticated with host %s", host)
+	}
 }
 
 type ConvertUserArg func(arg, value string) ([]string, error)
