@@ -106,10 +106,13 @@ describe("PublicAPIConverter", () => {
 
         it("toWorkspaceSession", async () => {
             await startFixtureTest("../fixtures/toWorkspaceSession_*.json", async (input) =>
-                converter.toWorkspaceSession(input, new WorkspaceSession_Owner({
-                    id: "123",
-                    name: "Kum Quat"
-                })),
+                converter.toWorkspaceSession(
+                    input,
+                    new WorkspaceSession_Owner({
+                        id: "123",
+                        name: "Kum Quat",
+                    }),
+                ),
             );
         });
 
@@ -180,6 +183,12 @@ describe("PublicAPIConverter", () => {
         it("toConfigurationEnvironmentVariable", async () => {
             await startFixtureTest("../fixtures/toConfigurationEnvironmentVariable_*.json", async (input) =>
                 converter.toConfigurationEnvironmentVariable(input),
+            );
+        });
+
+        it("toOrganizationEnvironmentVariable", async () => {
+            await startFixtureTest("../fixtures/toOrganizationEnvironmentVariable_*.json", async (input) =>
+                converter.toOrganizationEnvironmentVariable(input),
             );
         });
 
