@@ -38,9 +38,6 @@
 
         <httpRequestHandler implementation="io.gitpod.jetbrains.remote.GitpodCLIService"/>
 
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodClientProjectSessionTracker"
-                        client="controller" preload="true"/>
-
         <gateway.customization.name
                 implementation="io.gitpod.jetbrains.remote.GitpodGatewayClientCustomizationProvider"/>
         <gateway.customization.metrics id="gitpodMetricsProvider"
