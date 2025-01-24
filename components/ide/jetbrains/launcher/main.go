@@ -415,7 +415,7 @@ func resolveToolboxLink(wsInfo *supervisor.WorkspaceInfoResponse) (string, error
 		Scheme:   "jetbrains",
 		Host:     "gateway",
 		Path:     "io.gitpod.toolbox.gateway/open-in-toolbox",
-		RawQuery: fmt.Sprintf("host=%s&workspaceId=%s&debugWorkspace=%t", gitpodUrl.Hostname(), wsInfo.WorkspaceId, debugWorkspace),
+		RawQuery: fmt.Sprintf("userId=%shost=%s&workspaceId=%s&debugWorkspace=%t", wsInfo.OwnerId, gitpodUrl.Hostname(), wsInfo.WorkspaceId, debugWorkspace),
 	}
 	return link.String(), nil
 }

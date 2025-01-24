@@ -6,8 +6,19 @@ Provides a way to connect to Gitpod Classic workspaces within the JetBrains Tool
 
 - Start an environment on [Gitpod Flex](https://app.gitpod.io) with current repository
 - Connect to the environment via **JetBrains Gateway** (because we want to restart Toolbox) SSH feature (user: gitpod_devcontainer)
-- [optional] Copy ./flex-sync.sh locally and chmod +x, the script is written for macOS, please adjust it if you're using other OS
-- Exec `./flex-sync.sh <env_host>`
+- [optional] Copy ./sync-flex.sh locally and chmod +x, the script is written for macOS, please adjust it if you're using other OS
+- Exec `./sync-flex.sh <env_host>`
+- Exec gradle task `./gradlew buildPluginFlex`, it will deploy plugin changes and restart Toolbox automatically.
+
+## How to Develoop with Gitpod Classic
+
+- [optional] Set your SSH Keys up https://catfood.gitpod.cloud/user/keys
+- Open a workspace on Gitpod Classic with current repository
+- Update default Java version to Java 21: `sdk install java 21.0.3.fx-zulu`
+- [optional] Connect to the environment via **JetBrains Gateway** (if you want to keep the editor opening when deploy Toolbox Plugin)
+- [optional] Copy ./sync-classic.sh locally and chmod +x, update the script base on your Gitpod host
+- Exec `./sync-classic.sh <workspace_id>`
+- Exec gradle task `./gradlew buildPluginFlex`, it will deploy plugin changes and restart Toolbox automatically.
 
 ## How to Develop locally
 

@@ -12,6 +12,7 @@
             <option value="$PROJECT_DIR$/components/supervisor-api/java" />
           </set>
         </option>
+        <option name="resolveExternalAnnotations" value="true" />
       </GradleProjectSettings>
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/components/ide/jetbrains/gateway-plugin" />
@@ -21,6 +22,7 @@
             <option value="$PROJECT_DIR$/components/ide/jetbrains/gateway-plugin" />
           </set>
         </option>
+        <option name="resolveExternalAnnotations" value="true" />
       </GradleProjectSettings>
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/components/ide/jetbrains/toolbox" />
@@ -31,6 +33,7 @@
             <option value="$PROJECT_DIR$/components/supervisor-api/java" />
           </set>
         </option>
+        <option name="resolveExternalAnnotations" value="true" />
       </GradleProjectSettings>
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/components/public-api/java" />

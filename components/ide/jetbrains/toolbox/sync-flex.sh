@@ -10,9 +10,10 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+PLUGIN_ID="io.gitpod.toolbox.gateway"
 REMOTE_HOST="$1"
-LOCAL_DIR="$HOME/Library/Caches/JetBrains/Toolbox/plugins"
-REMOTE_DIR="/workspace/gitpod/components/ide/jetbrains/toolbox/build/flex"
+LOCAL_DIR="$HOME/Library/Caches/JetBrains/Toolbox/plugins/$PLUGIN_ID"
+REMOTE_DIR="/workspace/gitpod/components/ide/jetbrains/toolbox/build/flex/$PLUGIN_ID"
 DEVCONTAINER_HOST="gitpod_devcontainer@$REMOTE_HOST"
 
 echo "Preparing..."
