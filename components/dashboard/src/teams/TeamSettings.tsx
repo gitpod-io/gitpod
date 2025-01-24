@@ -227,7 +227,6 @@ export default function TeamSettingsPage() {
                             <Subheading>Configure Docker registry permissions for the whole organization.</Subheading>
 
                             <NamedOrganizationEnvvarItem
-                                key={`envvar-named-${EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME}`}
                                 disabled={!isOwner}
                                 name={EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME}
                                 organizationId={org.id}
