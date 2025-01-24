@@ -16,10 +16,7 @@ export interface ProjectDB extends TransactionalDB<ProjectDB> {
     storeProject(project: Project): Promise<Project>;
     updateProject(partialProject: PartialProject): Promise<Project>;
     markDeleted(projectId: string): Promise<void>;
-    findProjectEnvironmentVariable(
-        projectId: string,
-        envVar: ProjectEnvVarWithValue,
-    ): Promise<ProjectEnvVar | undefined>;
+    findProjectEnvironmentVariableByName(projectId: string, name: string): Promise<ProjectEnvVar | undefined>;
     addProjectEnvironmentVariable(projectId: string, envVar: ProjectEnvVarWithValue): Promise<ProjectEnvVar>;
     updateProjectEnvironmentVariable(
         projectId: string,
@@ -28,7 +25,9 @@ export interface ProjectDB extends TransactionalDB<ProjectDB> {
     getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
     getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
-    getProjectEnvironmentVariableValues(envVars: ProjectEnvVar[]): Promise<ProjectEnvVarWithValue[]>;
+    getProjectEnvironmentVariableValues(
+        envVars: Pick<ProjectEnvVar, "id" | "projectId">[],
+    ): Promise<ProjectEnvVarWithValue[]>;
     findCachedProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
     storeCachedProjectOverview(projectId: string, overview: Project.Overview): Promise<void>;
     getProjectUsage(projectId: string): Promise<ProjectUsage | undefined>;

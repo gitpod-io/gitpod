@@ -5,7 +5,6 @@
 package dockerregistry
 
 import (
-	//nolint:typecheck
 	"encoding/base64"
 	"encoding/json"
 	"fmt"

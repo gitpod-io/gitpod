@@ -11,11 +11,11 @@ import (
 	"github.com/opencontainers/runc/libcontainer/cgroups/ebpf"
 	"github.com/opencontainers/runc/libcontainer/cgroups/ebpf/devicefilter"
 	"github.com/opencontainers/runc/libcontainer/devices"
-	"github.com/opencontainers/runc/libcontainer/specconv"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/libcontainer/specconv"
 )
 
 var (

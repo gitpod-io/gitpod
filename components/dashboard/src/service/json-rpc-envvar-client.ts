@@ -10,21 +10,29 @@ import { EnvironmentVariableService } from "@gitpod/public-api/lib/gitpod/v1/env
 import {
     CreateConfigurationEnvironmentVariableRequest,
     CreateConfigurationEnvironmentVariableResponse,
+    CreateOrganizationEnvironmentVariableRequest,
+    CreateOrganizationEnvironmentVariableResponse,
     CreateUserEnvironmentVariableRequest,
     CreateUserEnvironmentVariableResponse,
     DeleteConfigurationEnvironmentVariableRequest,
     DeleteConfigurationEnvironmentVariableResponse,
+    DeleteOrganizationEnvironmentVariableRequest,
+    DeleteOrganizationEnvironmentVariableResponse,
     DeleteUserEnvironmentVariableRequest,
     DeleteUserEnvironmentVariableResponse,
     EnvironmentVariableAdmission,
     ListConfigurationEnvironmentVariablesRequest,
     ListConfigurationEnvironmentVariablesResponse,
+    ListOrganizationEnvironmentVariablesRequest,
+    ListOrganizationEnvironmentVariablesResponse,
     ListUserEnvironmentVariablesRequest,
     ListUserEnvironmentVariablesResponse,
     ResolveWorkspaceEnvironmentVariablesRequest,
     ResolveWorkspaceEnvironmentVariablesResponse,
     UpdateConfigurationEnvironmentVariableRequest,
     UpdateConfigurationEnvironmentVariableResponse,
+    UpdateOrganizationEnvironmentVariableRequest,
+    UpdateOrganizationEnvironmentVariableResponse,
     UpdateUserEnvironmentVariableRequest,
     UpdateUserEnvironmentVariableResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
@@ -163,7 +171,9 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
                 req.configurationId,
                 req.name ?? projectEnvVarfound.name,
                 req.value ?? "",
-                req.admission === EnvironmentVariableAdmission.PREBUILD ?? projectEnvVarfound.censored,
+                req.admission === EnvironmentVariableAdmission.UNSPECIFIED
+                    ? projectEnvVarfound.censored
+                    : req.admission === EnvironmentVariableAdmission.PREBUILD,
                 req.environmentVariableId,
             );
 
@@ -222,6 +232,30 @@ export class JsonRpcEnvvarClient implements PromiseClient<typeof EnvironmentVari
 
         const response = new DeleteConfigurationEnvironmentVariableResponse();
         return response;
+    }
+
+    async listOrganizationEnvironmentVariables(
+        req: PartialMessage<ListOrganizationEnvironmentVariablesRequest>,
+    ): Promise<ListOrganizationEnvironmentVariablesResponse> {
+        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unimplemented");
+    }
+
+    async updateOrganizationEnvironmentVariable(
+        req: PartialMessage<UpdateOrganizationEnvironmentVariableRequest>,
+    ): Promise<UpdateOrganizationEnvironmentVariableResponse> {
+        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unimplemented");
+    }
+
+    async createOrganizationEnvironmentVariable(
+        req: PartialMessage<CreateOrganizationEnvironmentVariableRequest>,
+    ): Promise<CreateOrganizationEnvironmentVariableResponse> {
+        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unimplemented");
+    }
+
+    async deleteOrganizationEnvironmentVariable(
+        req: PartialMessage<DeleteOrganizationEnvironmentVariableRequest>,
+    ): Promise<DeleteOrganizationEnvironmentVariableResponse> {
+        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unimplemented");
     }
 
     async resolveWorkspaceEnvironmentVariables(

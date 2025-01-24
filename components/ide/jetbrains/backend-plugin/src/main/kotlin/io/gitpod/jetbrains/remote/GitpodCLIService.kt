@@ -5,6 +5,7 @@
 package io.gitpod.jetbrains.remote
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.CommandLineProcessor
 import com.intellij.openapi.client.ClientKind
@@ -27,10 +28,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.prometheus.client.exporter.common.TextFormat
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
 import java.io.OutputStreamWriter
@@ -113,14 +111,12 @@ class GitpodCLIService : RestService() {
     }
 
     private fun withClient(request: FullHttpRequest, context: ChannelHandlerContext, action: suspend (project: Project?) -> Unit): String? {
-        GlobalScope.launch {
-            getClientSessionAndProjectAsync().let { (session, project) ->
-                ClientId.withClientId(session.clientId) {
-                    runBlocking {
-                        action(project)
-                    }
-                    sendOk(request, context)
-                }
+        val scope = CoroutineScope(Dispatchers.Default)
+        scope.launch {
+            val (session, project) = getClientSessionAndProjectAsync()
+            withContext(session.clientId.asContextElement()) {
+                action(project)
+                sendOk(request, context)
             }
         }
         return null

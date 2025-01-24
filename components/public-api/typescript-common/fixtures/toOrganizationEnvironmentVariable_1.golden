@@ -1,0 +1,8 @@
+{
+    "result": {
+        "id": "test-id",
+        "name": "TEST_VAR",
+        "organizationId": "org-123"
+    },
+    "err": ""
+}

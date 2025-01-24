@@ -42,6 +42,7 @@ import {
     Configuration as GitpodServerInstallationConfiguration,
     NavigatorContext,
     RefType,
+    OrgEnvVar,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import { AuditLog as AuditLogProtocol } from "@gitpod/gitpod-protocol/lib/audit-log";
 import {
@@ -88,6 +89,7 @@ import {
     ConfigurationEnvironmentVariable,
     EnvironmentVariable,
     EnvironmentVariableAdmission,
+    OrganizationEnvironmentVariable,
     UserEnvironmentVariable,
 } from "@gitpod/public-api/lib/gitpod/v1/envvar_pb";
 import {
@@ -831,6 +833,14 @@ export class PublicAPIConverter {
         result.admission = envVar.censored
             ? EnvironmentVariableAdmission.PREBUILD
             : EnvironmentVariableAdmission.EVERYWHERE;
+        return result;
+    }
+
+    toOrganizationEnvironmentVariable(envVar: OrgEnvVar): OrganizationEnvironmentVariable {
+        const result = new OrganizationEnvironmentVariable();
+        result.id = envVar.id || "";
+        result.name = envVar.name;
+        result.organizationId = envVar.orgId;
         return result;
     }
 

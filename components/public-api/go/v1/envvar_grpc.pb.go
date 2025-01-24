@@ -50,6 +50,18 @@ type EnvironmentVariableServiceClient interface {
 	// DeleteConfigurationEnvironmentVariable deletes an environment variable in
 	// a configuration.
 	DeleteConfigurationEnvironmentVariable(ctx context.Context, in *DeleteConfigurationEnvironmentVariableRequest, opts ...grpc.CallOption) (*DeleteConfigurationEnvironmentVariableResponse, error)
+	// ListOrganizationEnvironmentVariables returns all environment variables in
+	// an organization.
+	ListOrganizationEnvironmentVariables(ctx context.Context, in *ListOrganizationEnvironmentVariablesRequest, opts ...grpc.CallOption) (*ListOrganizationEnvironmentVariablesResponse, error)
+	// UpdateOrganizationEnvironmentVariable updates an environment variable in
+	// an organization.
+	UpdateOrganizationEnvironmentVariable(ctx context.Context, in *UpdateOrganizationEnvironmentVariableRequest, opts ...grpc.CallOption) (*UpdateOrganizationEnvironmentVariableResponse, error)
+	// CreateOrganizationEnvironmentVariable creates a new environment variable
+	// in an organization.
+	CreateOrganizationEnvironmentVariable(ctx context.Context, in *CreateOrganizationEnvironmentVariableRequest, opts ...grpc.CallOption) (*CreateOrganizationEnvironmentVariableResponse, error)
+	// DeleteOrganizationEnvironmentVariable deletes an environment variable in
+	// an organization.
+	DeleteOrganizationEnvironmentVariable(ctx context.Context, in *DeleteOrganizationEnvironmentVariableRequest, opts ...grpc.CallOption) (*DeleteOrganizationEnvironmentVariableResponse, error)
 	ResolveWorkspaceEnvironmentVariables(ctx context.Context, in *ResolveWorkspaceEnvironmentVariablesRequest, opts ...grpc.CallOption) (*ResolveWorkspaceEnvironmentVariablesResponse, error)
 }
 
@@ -133,6 +145,42 @@ func (c *environmentVariableServiceClient) DeleteConfigurationEnvironmentVariabl
 	return out, nil
 }
 
+func (c *environmentVariableServiceClient) ListOrganizationEnvironmentVariables(ctx context.Context, in *ListOrganizationEnvironmentVariablesRequest, opts ...grpc.CallOption) (*ListOrganizationEnvironmentVariablesResponse, error) {
+	out := new(ListOrganizationEnvironmentVariablesResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.EnvironmentVariableService/ListOrganizationEnvironmentVariables", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *environmentVariableServiceClient) UpdateOrganizationEnvironmentVariable(ctx context.Context, in *UpdateOrganizationEnvironmentVariableRequest, opts ...grpc.CallOption) (*UpdateOrganizationEnvironmentVariableResponse, error) {
+	out := new(UpdateOrganizationEnvironmentVariableResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.EnvironmentVariableService/UpdateOrganizationEnvironmentVariable", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *environmentVariableServiceClient) CreateOrganizationEnvironmentVariable(ctx context.Context, in *CreateOrganizationEnvironmentVariableRequest, opts ...grpc.CallOption) (*CreateOrganizationEnvironmentVariableResponse, error) {
+	out := new(CreateOrganizationEnvironmentVariableResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.EnvironmentVariableService/CreateOrganizationEnvironmentVariable", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *environmentVariableServiceClient) DeleteOrganizationEnvironmentVariable(ctx context.Context, in *DeleteOrganizationEnvironmentVariableRequest, opts ...grpc.CallOption) (*DeleteOrganizationEnvironmentVariableResponse, error) {
+	out := new(DeleteOrganizationEnvironmentVariableResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.EnvironmentVariableService/DeleteOrganizationEnvironmentVariable", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *environmentVariableServiceClient) ResolveWorkspaceEnvironmentVariables(ctx context.Context, in *ResolveWorkspaceEnvironmentVariablesRequest, opts ...grpc.CallOption) (*ResolveWorkspaceEnvironmentVariablesResponse, error) {
 	out := new(ResolveWorkspaceEnvironmentVariablesResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.v1.EnvironmentVariableService/ResolveWorkspaceEnvironmentVariables", in, out, opts...)
@@ -170,6 +218,18 @@ type EnvironmentVariableServiceServer interface {
 	// DeleteConfigurationEnvironmentVariable deletes an environment variable in
 	// a configuration.
 	DeleteConfigurationEnvironmentVariable(context.Context, *DeleteConfigurationEnvironmentVariableRequest) (*DeleteConfigurationEnvironmentVariableResponse, error)
+	// ListOrganizationEnvironmentVariables returns all environment variables in
+	// an organization.
+	ListOrganizationEnvironmentVariables(context.Context, *ListOrganizationEnvironmentVariablesRequest) (*ListOrganizationEnvironmentVariablesResponse, error)
+	// UpdateOrganizationEnvironmentVariable updates an environment variable in
+	// an organization.
+	UpdateOrganizationEnvironmentVariable(context.Context, *UpdateOrganizationEnvironmentVariableRequest) (*UpdateOrganizationEnvironmentVariableResponse, error)
+	// CreateOrganizationEnvironmentVariable creates a new environment variable
+	// in an organization.
+	CreateOrganizationEnvironmentVariable(context.Context, *CreateOrganizationEnvironmentVariableRequest) (*CreateOrganizationEnvironmentVariableResponse, error)
+	// DeleteOrganizationEnvironmentVariable deletes an environment variable in
+	// an organization.
+	DeleteOrganizationEnvironmentVariable(context.Context, *DeleteOrganizationEnvironmentVariableRequest) (*DeleteOrganizationEnvironmentVariableResponse, error)
 	ResolveWorkspaceEnvironmentVariables(context.Context, *ResolveWorkspaceEnvironmentVariablesRequest) (*ResolveWorkspaceEnvironmentVariablesResponse, error)
 	mustEmbedUnimplementedEnvironmentVariableServiceServer()
 }
@@ -201,6 +261,18 @@ func (UnimplementedEnvironmentVariableServiceServer) CreateConfigurationEnvironm
 }
 func (UnimplementedEnvironmentVariableServiceServer) DeleteConfigurationEnvironmentVariable(context.Context, *DeleteConfigurationEnvironmentVariableRequest) (*DeleteConfigurationEnvironmentVariableResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteConfigurationEnvironmentVariable not implemented")
+}
+func (UnimplementedEnvironmentVariableServiceServer) ListOrganizationEnvironmentVariables(context.Context, *ListOrganizationEnvironmentVariablesRequest) (*ListOrganizationEnvironmentVariablesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListOrganizationEnvironmentVariables not implemented")
+}
+func (UnimplementedEnvironmentVariableServiceServer) UpdateOrganizationEnvironmentVariable(context.Context, *UpdateOrganizationEnvironmentVariableRequest) (*UpdateOrganizationEnvironmentVariableResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateOrganizationEnvironmentVariable not implemented")
+}
+func (UnimplementedEnvironmentVariableServiceServer) CreateOrganizationEnvironmentVariable(context.Context, *CreateOrganizationEnvironmentVariableRequest) (*CreateOrganizationEnvironmentVariableResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOrganizationEnvironmentVariable not implemented")
+}
+func (UnimplementedEnvironmentVariableServiceServer) DeleteOrganizationEnvironmentVariable(context.Context, *DeleteOrganizationEnvironmentVariableRequest) (*DeleteOrganizationEnvironmentVariableResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteOrganizationEnvironmentVariable not implemented")
 }
 func (UnimplementedEnvironmentVariableServiceServer) ResolveWorkspaceEnvironmentVariables(context.Context, *ResolveWorkspaceEnvironmentVariablesRequest) (*ResolveWorkspaceEnvironmentVariablesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResolveWorkspaceEnvironmentVariables not implemented")
@@ -363,6 +435,78 @@ func _EnvironmentVariableService_DeleteConfigurationEnvironmentVariable_Handler(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EnvironmentVariableService_ListOrganizationEnvironmentVariables_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListOrganizationEnvironmentVariablesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EnvironmentVariableServiceServer).ListOrganizationEnvironmentVariables(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.EnvironmentVariableService/ListOrganizationEnvironmentVariables",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EnvironmentVariableServiceServer).ListOrganizationEnvironmentVariables(ctx, req.(*ListOrganizationEnvironmentVariablesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EnvironmentVariableService_UpdateOrganizationEnvironmentVariable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOrganizationEnvironmentVariableRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EnvironmentVariableServiceServer).UpdateOrganizationEnvironmentVariable(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.EnvironmentVariableService/UpdateOrganizationEnvironmentVariable",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EnvironmentVariableServiceServer).UpdateOrganizationEnvironmentVariable(ctx, req.(*UpdateOrganizationEnvironmentVariableRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EnvironmentVariableService_CreateOrganizationEnvironmentVariable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOrganizationEnvironmentVariableRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EnvironmentVariableServiceServer).CreateOrganizationEnvironmentVariable(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.EnvironmentVariableService/CreateOrganizationEnvironmentVariable",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EnvironmentVariableServiceServer).CreateOrganizationEnvironmentVariable(ctx, req.(*CreateOrganizationEnvironmentVariableRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EnvironmentVariableService_DeleteOrganizationEnvironmentVariable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteOrganizationEnvironmentVariableRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EnvironmentVariableServiceServer).DeleteOrganizationEnvironmentVariable(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.EnvironmentVariableService/DeleteOrganizationEnvironmentVariable",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EnvironmentVariableServiceServer).DeleteOrganizationEnvironmentVariable(ctx, req.(*DeleteOrganizationEnvironmentVariableRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EnvironmentVariableService_ResolveWorkspaceEnvironmentVariables_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ResolveWorkspaceEnvironmentVariablesRequest)
 	if err := dec(in); err != nil {
@@ -419,6 +563,22 @@ var EnvironmentVariableService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteConfigurationEnvironmentVariable",
 			Handler:    _EnvironmentVariableService_DeleteConfigurationEnvironmentVariable_Handler,
+		},
+		{
+			MethodName: "ListOrganizationEnvironmentVariables",
+			Handler:    _EnvironmentVariableService_ListOrganizationEnvironmentVariables_Handler,
+		},
+		{
+			MethodName: "UpdateOrganizationEnvironmentVariable",
+			Handler:    _EnvironmentVariableService_UpdateOrganizationEnvironmentVariable_Handler,
+		},
+		{
+			MethodName: "CreateOrganizationEnvironmentVariable",
+			Handler:    _EnvironmentVariableService_CreateOrganizationEnvironmentVariable_Handler,
+		},
+		{
+			MethodName: "DeleteOrganizationEnvironmentVariable",
+			Handler:    _EnvironmentVariableService_DeleteOrganizationEnvironmentVariable_Handler,
 		},
 		{
 			MethodName: "ResolveWorkspaceEnvironmentVariables",

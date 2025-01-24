@@ -344,7 +344,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
                     "onboardingSettings can only be set on enterprise installations",
                 );
             }
-            if (req.onboardingSettings.internalLink?.length ?? 0 > 255) {
+            if ((req.onboardingSettings.internalLink?.length ?? 0) > 255) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "internalLink must be <= 255 characters");
             }
 

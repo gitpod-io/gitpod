@@ -208,6 +208,13 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].descr
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].powerups "2"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].credits.perMinute "0.1666666667"
 
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[+].id "g1-large"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[2].category "GENERAL PURPOSE"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[2].displayName "Large"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[2].description "Large workspace class (50GB disk)"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[2].powerups "3"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[2].credits.perMinute "0.5"
+
 # create two workspace classes (g1-standard and g1-small) in ws-manager configmap
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].name "g1-standard"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.requests.cpu "100m"
@@ -221,6 +228,11 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].re
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].resources.limits.storage "5Gi"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].resources.limits.ephemeral-storage "5Gi"
 
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-large"].name "g1-large"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-large"].resources.requests.cpu "100m"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-large"].resources.requests.memory "16Gi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-large"].resources.limits.storage "50Gi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-large"].resources.limits.ephemeral-storage "50Gi"
 #
 # configureObjectStorage
 #

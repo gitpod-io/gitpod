@@ -10,6 +10,8 @@ import {
     TeamMemberRole,
     TeamMembershipInvite,
     OrganizationSettings,
+    OrgEnvVar,
+    OrgEnvVarWithValue,
 } from "@gitpod/gitpod-protocol";
 import { DBTeamMembership } from "./typeorm/entity/db-team-membership";
 import { TransactionalDB } from "./typeorm/transactional-db-impl";
@@ -43,4 +45,12 @@ export interface TeamDB extends TransactionalDB<TeamDB> {
     setOrgSettings(teamId: string, settings: Partial<OrganizationSettings>): Promise<OrganizationSettings>;
 
     hasActiveSSO(organizationId: string): Promise<boolean>;
+
+    addOrgEnvironmentVariable(orgId: string, envVar: OrgEnvVarWithValue): Promise<OrgEnvVar>;
+    updateOrgEnvironmentVariable(orgId: string, envVar: Partial<OrgEnvVarWithValue>): Promise<OrgEnvVar | undefined>;
+    getOrgEnvironmentVariableById(id: string): Promise<OrgEnvVar | undefined>;
+    findOrgEnvironmentVariableByName(orgId: string, name: string): Promise<OrgEnvVar | undefined>;
+    getOrgEnvironmentVariables(orgId: string): Promise<OrgEnvVar[]>;
+    getOrgEnvironmentVariableValues(envVars: Pick<OrgEnvVar, "id" | "orgId">[]): Promise<OrgEnvVarWithValue[]>;
+    deleteOrgEnvironmentVariable(id: string): Promise<void>;
 }

@@ -32,6 +32,7 @@ import {
     CommitContext,
     Disposable,
     DisposableCollection,
+    EnvVar,
     GitCheckoutInfo,
     GitpodServer,
     GitpodToken,
@@ -411,6 +412,7 @@ export class WorkspaceStarter {
 
                         const envVars = await this.envVarService.resolveEnvVariables(
                             user.id,
+                            workspace.organizationId,
                             workspace.projectId,
                             workspace.type,
                             workspace.context,
@@ -839,14 +841,12 @@ export class WorkspaceStarter {
 
     private async getAdditionalImageAuth(envVars: ResolvedEnvVars): Promise<Map<string, string>> {
         const res = new Map<string, string>();
-        const imageAuth = envVars.project.find((e) => e.name === "GITPOD_IMAGE_AUTH");
+        const imageAuth = envVars.workspace.find((e) => e.name === EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME);
         if (!imageAuth) {
             return res;
         }
 
-        const imageAuthValue = (await this.projectDB.getProjectEnvironmentVariableValues([imageAuth]))[0];
-
-        (imageAuthValue.value || "")
+        (imageAuth.value || "")
             .split(",")
             .map((e) => e.trim().split(":"))
             .filter((e) => e.length == 2)

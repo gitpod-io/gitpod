@@ -35,7 +35,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, errors.New("missing configuration for spicedb.secretRef")
 	}
 
-	//nolint:typecheck//nolint:typecheck
 	bootstrapVolume, bootstrapVolumeMount, bootstrapFiles, contentHash, err := getBootstrapConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get bootstrap config: %w", err)

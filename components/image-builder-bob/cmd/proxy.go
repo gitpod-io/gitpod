@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/containerd/containerd/remotes/docker"
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/spf13/cobra"
 
 	log "github.com/gitpod-io/gitpod/common-go/log"

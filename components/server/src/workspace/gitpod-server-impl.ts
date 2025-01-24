@@ -1221,6 +1221,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
         const envVars = await this.envVarService.resolveEnvVariables(
             workspace.ownerId,
+            workspace.organizationId,
             workspace.projectId,
             workspace.type,
             workspace.context,
@@ -1230,7 +1231,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const result: EnvVarWithValue[] = [];
         for (const value of envVars.workspace) {
             if (
-                "repositoryPattern" in value &&
+                UserEnvVar.is(value) &&
                 !(await this.resourceAccessGuard.canAccess({ kind: "envVar", subject: value }, "get"))
             ) {
                 continue;

@@ -4,7 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { PlainMessage } from "@bufbuild/protobuf";
+import { EnvVar } from "@gitpod/gitpod-protocol";
+import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { Button } from "@podkit/buttons/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
+import { SwitchInputField } from "@podkit/switch/Switch";
+import { Heading2, Heading3, Subheading } from "@podkit/typography/Headings";
 import React, { Children, ReactNode, useCallback, useMemo, useState } from "react";
 import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -12,28 +19,24 @@ import { InputWithCopy } from "../components/InputWithCopy";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { InputField } from "../components/forms/InputField";
 import { TextInputField } from "../components/forms/TextInputField";
+import { useToast } from "../components/toasts/Toasts";
+import { useFeatureFlag } from "../data/featureflag-query";
+import { useInstallationDefaultWorkspaceImageQuery } from "../data/installation/default-workspace-image-query";
 import { useIsOwner } from "../data/organizations/members-query";
+import { useListOrganizationEnvironmentVariables } from "../data/organizations/org-envvar-queries";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation";
 import { useUpdateOrgSettingsMutation } from "../data/organizations/update-org-settings-mutation";
+import { useDocumentTitle } from "../hooks/use-document-title";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { ReactComponent as Stack } from "../icons/Stack.svg";
+import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
 import { organizationClient } from "../service/public-api";
 import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
-import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { Button } from "@podkit/buttons/Button";
-import { useInstallationDefaultWorkspaceImageQuery } from "../data/installation/default-workspace-image-query";
-import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
-import { useDocumentTitle } from "../hooks/use-document-title";
-import { PlainMessage } from "@bufbuild/protobuf";
-import { useToast } from "../components/toasts/Toasts";
-import { SwitchInputField } from "@podkit/switch/Switch";
-import { Heading2, Heading3, Subheading } from "@podkit/typography/Headings";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { NamedOrganizationEnvvarItem } from "./variables/NamedOrganizationEnvvarItem";
 
 export default function TeamSettingsPage() {
     useDocumentTitle("Organization Settings - General");
@@ -47,6 +50,9 @@ export default function TeamSettingsPage() {
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
     const [teamName, setTeamName] = useState(org?.name || "");
     const [updated, setUpdated] = useState(false);
+
+    const orgEnvVars = useListOrganizationEnvironmentVariables(org?.id || "");
+    const gitpodImageAuthEnvVar = orgEnvVars.data?.find((v) => v.name === EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME);
 
     const updateOrg = useUpdateOrgMutation();
     const isCommitAnnotationEnabled = useFeatureFlag("commit_annotation_setting_enabled");
@@ -255,6 +261,20 @@ export default function TeamSettingsPage() {
                             installationDefaultWorkspaceImage={installationDefaultImage}
                             onClose={() => setShowImageEditModal(false)}
                         />
+                    )}
+
+                    {org?.id && (
+                        <ConfigurationSettingsField>
+                            <Heading3>Docker Registry authentication</Heading3>
+                            <Subheading>Configure Docker registry permissions for the whole organization.</Subheading>
+
+                            <NamedOrganizationEnvvarItem
+                                disabled={!isOwner}
+                                name={EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME}
+                                organizationId={org.id}
+                                variable={gitpodImageAuthEnvVar}
+                            />
+                        </ConfigurationSettingsField>
                     )}
 
                     {user?.organizationId !== org?.id && isOwner && (
