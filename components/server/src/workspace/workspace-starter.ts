@@ -1563,7 +1563,6 @@ export class WorkspaceStarter {
         }
 
         const organizationSettings = await this.orgService.getSettings(user.id, workspace.organizationId);
-        organizationSettings.annotateGitCommits;
         sysEnvvars.push(
             newEnvVar("GITPOD_COMMIT_ANNOTATION_ENABLED", organizationSettings.annotateGitCommits ? "true" : "false"),
         );
