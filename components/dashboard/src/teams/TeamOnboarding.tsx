@@ -81,11 +81,11 @@ export default function TeamOnboardingPage() {
                 <ConfigurationSettingsField>
                     <Heading3>Internal dashboard</Heading3>
                     <Subheading>
-                        The link to your internal dashboard. This link will be shown to your organization members during
-                        the onboarding process. You can disable showing a link by leaving this field empty.
+                        The link to your internal landing page. This link will be shown to your organization members
+                        during the onboarding process. You can disable showing a link by leaving this field empty.
                     </Subheading>
                     <form onSubmit={handleUpdateInternalLink}>
-                        <InputField label="Internal dashboard link" error={undefined} className="mb-4">
+                        <InputField label="Internal landing page link" error={undefined} className="mb-4">
                             <TextInput
                                 value={internalLink}
                                 type="url"

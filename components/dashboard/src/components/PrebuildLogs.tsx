@@ -171,7 +171,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
     }, [logsEmitter, props.workspaceId, workspace?.instanceId, workspace?.phase]);
 
     return (
-        <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col mb-8">
+        <div className="rounded-xl overflow-hidden bg-pk-surface-secondary flex flex-col mb-8">
             <div className="h-96 flex">
                 <Suspense fallback={<div />}>
                     <WorkspaceLogs
@@ -182,7 +182,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
                     />
                 </Suspense>
             </div>
-            <div className="w-full bottom-0 h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex flex-row items-center space-x-2">
+            <div className="w-full bottom-0 h-20 px-6 bg-pk-surface-secondary border-t border-gray-200 dark:border-gray-600 flex flex-row items-center space-x-2">
                 {prebuild && <PrebuildStatusOld prebuild={prebuild} />}
                 <div className="flex-grow" />
                 {props.children}

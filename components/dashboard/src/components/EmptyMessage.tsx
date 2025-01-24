@@ -5,7 +5,7 @@
  */
 
 import classNames from "classnames";
-import { FC, ReactNode, useCallback } from "react";
+import { FC, ReactNode } from "react";
 import { Button } from "@podkit/buttons/Button";
 import { Heading2, Subheading } from "./typography/headings";
 
@@ -17,20 +17,17 @@ type Props = {
     className?: string;
 };
 export const EmptyMessage: FC<Props> = ({ title, subtitle, buttonText, onClick, className }) => {
-    const handleClick = useCallback(() => {
-        onClick && onClick();
-    }, [onClick]);
     return (
         <div
             className={classNames(
-                "w-full flex justify-center mt-2 rounded-xl bg-gray-100 dark:bg-gray-800 px-4 py-14",
+                "w-full flex justify-center mt-2 rounded-xl bg-pk-surface-secondary px-4 py-14",
                 className,
             )}
         >
             <div className="flex flex-col justify-center items-center text-center space-y-4">
-                {title && <Heading2 color="light">{title}</Heading2>}
+                {title && <Heading2 className="text-pk-content-invert-secondary">{title}</Heading2>}
                 {subtitle && <Subheading className="max-w-md">{subtitle}</Subheading>}
-                {buttonText && <Button onClick={handleClick}>{buttonText}</Button>}
+                {buttonText && <Button onClick={onClick}>{buttonText}</Button>}
             </div>
         </div>
     );

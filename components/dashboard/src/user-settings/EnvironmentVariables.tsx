@@ -109,7 +109,7 @@ function DeleteEnvVarModal(p: { variable: UserEnvVarValue; deleteVariable: () =>
                 <span className="truncate">Name</span>
                 <span className="truncate">Scope</span>
             </div>
-            <div className="grid grid-cols-2 gap-4 p-3 mt-3 text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-xl">
+            <div className="grid grid-cols-2 gap-4 p-3 mt-3 text-gray-400 bg-pk-surface-secondary rounded-xl">
                 <span className="truncate text-gray-900 dark:text-gray-50">{p.variable.name}</span>
                 <span className="truncate text-sm">{p.variable.repositoryPattern}</span>
             </div>
@@ -249,9 +249,9 @@ export default function EnvVars() {
                 ) : null}
             </div>
             {envVars.length === 0 ? (
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full h-96">
+                <div className="bg-pk-surface-secondary rounded-xl w-full h-96">
                     <div className="pt-28 flex flex-col items-center w-96 m-auto">
-                        <Heading2 color="light" className="text-center pb-3">
+                        <Heading2 className="text-pk-content-invert-secondary text-center pb-3">
                             No Environment Variables
                         </Heading2>
                         <Subheading className="text-center pb-6">

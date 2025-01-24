@@ -13,8 +13,11 @@ import { useDocumentTitle } from "../hooks/use-document-title";
 import { organizationClient } from "../service/public-api";
 import { Button } from "@podkit/buttons/Button";
 import { TextInputField } from "../components/forms/TextInputField";
+import { cn } from "@podkit/lib/cn";
 
 export default function NewTeamPage() {
+    useDocumentTitle("New Organization");
+
     const invalidateOrgs = useOrganizationsInvalidator();
     const [name, setName] = useState("");
 
@@ -39,8 +42,6 @@ export default function NewTeamPage() {
         }
     };
 
-    useDocumentTitle("New Organization");
-
     return (
         <div className="flex flex-col w-96 mt-24 mx-auto items-center">
             <Heading1>New&nbsp;Organization</Heading1>
@@ -49,13 +50,13 @@ export default function NewTeamPage() {
                     Organizations
                 </a>{" "}
                 allow you to manage related{" "}
-                <a href="https://www.gitpod.io/docs/configure/projects" className="gp-link">
-                    projects
+                <a href="https://www.gitpod.io/docs/configure/repositories" className="gp-link">
+                    repositories
                 </a>{" "}
                 and collaborate with other members.
             </Subheading>
-            <form className="mt-16" onSubmit={createTeam}>
-                <div className="rounded-xl p-6 bg-gray-50 dark:bg-gray-800">
+            <form className="mt-6 mb-4" onSubmit={createTeam}>
+                <div className="rounded-xl p-6 bg-pk-surface-secondary">
                     <Heading3>You're creating a new organization</Heading3>
                     <Subheading>After creating an organization, you can invite others to join.</Subheading>
 
@@ -63,7 +64,7 @@ export default function NewTeamPage() {
                         label="Organization Name"
                         value={name}
                         autoFocus
-                        className={`w-full${!!creationError ? " error" : ""}`}
+                        className={cn("w-full", { error: !!creationError })}
                         onChange={setName}
                     />
                     {!!creationError && (

@@ -15,6 +15,7 @@ import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "..
 import { TextInputField } from "../../components/forms/TextInputField";
 import { useToast } from "../../components/toasts/Toasts";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { MiddleDot } from "../../components/typography/MiddleDot";
 
 type Props = {
     disabled?: boolean;
@@ -47,13 +48,11 @@ export const NamedOrganizationEnvvarItem = ({ disabled, organizationId, name, va
             )}
 
             <InputField disabled={disabled} className="w-full max-w-lg">
-                <div className="flex flex-col bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                <div className="flex flex-col bg-pk-surface-secondary p-3 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div className="flex-1 flex items-center overflow-hidden h-8 gap-2" title={value}>
-                            <span className="w-5 h-5">
-                                <Stack />
-                            </span>
-                            <span className="truncate font-medium text-gray-700 dark:text-gray-200">{name}</span>
+                            <Stack className="w-5 h-5" />
+                            <span className="truncate font-medium text-pk-content-secondary">{name}</span>
                         </div>
                         {!disabled && !variable && (
                             <Button variant="link" onClick={() => setShowAddModal(true)}>
@@ -66,12 +65,12 @@ export const NamedOrganizationEnvvarItem = ({ disabled, organizationId, name, va
                             </Button>
                         )}
                     </div>
-                    <div className="mx-7 text-gray-400 dark:text-gray-500 truncate">
-                        <>{value}</>
+                    <div className="mx-7 text-pk-content-tertiary truncate">
+                        {value}
                         {disabled && (
                             <>
-                                &nbsp;&middot;&nbsp; Requires <span className="font-medium">Owner</span> permissions to
-                                change
+                                <MiddleDot />
+                                Requires <span className="font-medium">Owner</span> permissions to change
                             </>
                         )}
                     </div>
@@ -117,7 +116,7 @@ export const AddOrgEnvironmentVariableModal = ({
         <Modal visible onClose={onClose} onSubmit={addVariable}>
             <ModalHeader>Add a variable</ModalHeader>
             <ModalBody>
-                <div className="mt-8">
+                <div>
                     <TextInputField
                         disabled={staticName !== undefined}
                         label="Name"

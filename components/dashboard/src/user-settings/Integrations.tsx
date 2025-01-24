@@ -519,9 +519,9 @@ function GitIntegrations() {
             </div>
 
             {providers && providers.length === 0 && (
-                <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-800">
+                <div className="w-full flex h-80 mt-2 rounded-xl bg-pk-surface-secondary">
                     <div className="m-auto text-center">
-                        <Heading2 color="light" className="self-center mb-4">
+                        <Heading2 className="text-pk-content-invert-secondary self-center mb-4">
                             No Git Integrations
                         </Heading2>
                         <Subheading className="text-gray-500 mb-6">
