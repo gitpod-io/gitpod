@@ -239,6 +239,9 @@ export interface OrganizationSettings {
 
     // onboarding settings for the organization
     onboardingSettings?: OnboardingSettings;
+
+    // whether to add a special annotation to commits that are created through Gitpod
+    annotateGitCommits?: boolean;
 }
 
 export type TimeoutSettings = {

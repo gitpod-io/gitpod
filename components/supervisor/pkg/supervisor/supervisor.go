@@ -751,7 +751,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 			}
 
 			// write some feedback to the terminal
-			out.WriteString(fmt.Sprintf("# echo linking %s -> %s\n", path, homeFN))
+			_, _ = out.WriteString(fmt.Sprintf("# echo linking %s -> %s\n", path, homeFN))
 
 			return os.Symlink(path, homeFN)
 		})
@@ -818,6 +818,13 @@ func configureGit(cfg *Config) {
 		settings = append(settings, []string{"user.email", cfg.GitEmail})
 	}
 
+	if cfg.CommitAnnotationEnabled {
+		err := setupGitMessageHook(filepath.Join(cfg.RepoRoot, ".git", "hooks"))
+		if err != nil {
+			log.WithError(err).Error("cannot setup git message hook")
+		}
+	}
+
 	for _, s := range settings {
 		cmd := exec.Command("git", append([]string{"config", "--global"}, s...)...)
 		cmd = runAsGitpodUser(cmd)
@@ -828,6 +835,27 @@ func configureGit(cfg *Config) {
 			log.WithError(err).WithField("args", s).Warn("git config error")
 		}
 	}
+}
+
+const hookContent = `#!/bin/sh
+exec /usr/bin/gp git-commit-message-helper --file "$1"
+`
+
+func setupGitMessageHook(path string) error {
+	if err := os.MkdirAll(path, 0755); err != nil {
+		return err
+	}
+
+	fn := filepath.Join(path, "prepare-commit-msg")
+	// do not override existing hooks. Relevant for workspaces based off of prebuilds, which might already have a hook.
+	if _, err := os.Stat(fn); err == nil {
+		return nil
+	}
+	if err := os.WriteFile(fn, []byte(hookContent), 0755); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func hasMetadataAccess() bool {

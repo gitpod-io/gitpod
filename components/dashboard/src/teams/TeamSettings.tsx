@@ -4,7 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { PlainMessage } from "@bufbuild/protobuf";
+import { EnvVar } from "@gitpod/gitpod-protocol";
+import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { Button } from "@podkit/buttons/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
+import { SwitchInputField } from "@podkit/switch/Switch";
+import { Heading2, Heading3, Subheading } from "@podkit/typography/Headings";
 import React, { Children, ReactNode, useCallback, useMemo, useState } from "react";
 import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -12,29 +19,24 @@ import { InputWithCopy } from "../components/InputWithCopy";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { InputField } from "../components/forms/InputField";
 import { TextInputField } from "../components/forms/TextInputField";
-import { Heading2, Heading3, Subheading } from "../components/typography/headings";
+import { useToast } from "../components/toasts/Toasts";
+import { useFeatureFlag } from "../data/featureflag-query";
+import { useInstallationDefaultWorkspaceImageQuery } from "../data/installation/default-workspace-image-query";
 import { useIsOwner } from "../data/organizations/members-query";
+import { useListOrganizationEnvironmentVariables } from "../data/organizations/org-envvar-queries";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation";
 import { useUpdateOrgSettingsMutation } from "../data/organizations/update-org-settings-mutation";
+import { useDocumentTitle } from "../hooks/use-document-title";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { ReactComponent as Stack } from "../icons/Stack.svg";
+import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
 import { organizationClient } from "../service/public-api";
 import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
-import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { Button } from "@podkit/buttons/Button";
-import { useInstallationDefaultWorkspaceImageQuery } from "../data/installation/default-workspace-image-query";
-import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
-import { useDocumentTitle } from "../hooks/use-document-title";
-import { PlainMessage } from "@bufbuild/protobuf";
-import { useToast } from "../components/toasts/Toasts";
 import { NamedOrganizationEnvvarItem } from "./variables/NamedOrganizationEnvvarItem";
-import { useListOrganizationEnvironmentVariables } from "../data/organizations/org-envvar-queries";
-import { EnvVar } from "@gitpod/gitpod-protocol";
 
 export default function TeamSettingsPage() {
     useDocumentTitle("Organization Settings - General");
@@ -53,6 +55,7 @@ export default function TeamSettingsPage() {
     const gitpodImageAuthEnvVar = orgEnvVars.data?.find((v) => v.name === EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME);
 
     const updateOrg = useUpdateOrgMutation();
+    const isCommitAnnotationEnabled = useFeatureFlag("commit_annotation_setting_enabled");
 
     const close = () => setModal(false);
 
@@ -126,6 +129,17 @@ export default function TeamSettingsPage() {
             }
         },
         [updateTeamSettings, org?.id, isOwner, settings, toast],
+    );
+
+    const handleUpdateAnnotatedCommits = useCallback(
+        async (value: boolean) => {
+            try {
+                await handleUpdateTeamSettings({ annotateGitCommits: value });
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        [handleUpdateTeamSettings],
     );
 
     return (
@@ -212,6 +226,34 @@ export default function TeamSettingsPage() {
                             onClick={() => setShowImageEditModal(true)}
                         />
                     </ConfigurationSettingsField>
+
+                    {isCommitAnnotationEnabled && (
+                        <ConfigurationSettingsField>
+                            <Heading3>Insights</Heading3>
+                            <Subheading className="mb-4">
+                                Configure insights into usage of Gitpod in your organization.
+                            </Subheading>
+
+                            <InputField
+                                label="Annotate git commits"
+                                hint={
+                                    <>
+                                        Add a <code>Tool:</code> field to all git commit messages created from
+                                        workspaces in your organization to associate them with this Gitpod instance.
+                                    </>
+                                }
+                                id="annotate-git-commits"
+                            >
+                                <SwitchInputField
+                                    id="annotate-git-commits"
+                                    checked={settings?.annotateGitCommits || false}
+                                    disabled={!isOwner || isLoading}
+                                    onCheckedChange={handleUpdateAnnotatedCommits}
+                                    label=""
+                                />
+                            </InputField>
+                        </ConfigurationSettingsField>
+                    )}
 
                     {showImageEditModal && (
                         <OrgDefaultWorkspaceImageModal

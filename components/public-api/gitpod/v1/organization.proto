@@ -65,6 +65,7 @@ message OrganizationSettings {
   // max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
   int32 max_parallel_running_workspaces = 9;
   OnboardingSettings onboarding_settings = 10;
+  bool annotate_git_commits = 11;
 }
 
 service OrganizationService {
@@ -193,6 +194,9 @@ message UpdateOrganizationSettingsRequest {
 
   // onboarding_settings are the settings for the organization's onboarding
   optional OnboardingSettings onboarding_settings = 16;
+
+  // annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
+  optional bool annotate_git_commits = 17;
 }
 
 message UpdateOrganizationSettingsResponse {
