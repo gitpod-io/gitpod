@@ -66,7 +66,7 @@ export const NamedOrganizationEnvvarItem = ({ disabled, organizationId, name, va
                             </Button>
                         )}
                     </div>
-                    <div className="mx-6 text-gray-400 dark:text-gray-500 truncate">
+                    <div className="mx-7 text-gray-400 dark:text-gray-500 truncate">
                         <>{value}</>
                         {disabled && (
                             <>
