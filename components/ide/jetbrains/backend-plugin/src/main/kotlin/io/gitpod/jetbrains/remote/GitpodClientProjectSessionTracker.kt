@@ -9,7 +9,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.thisLogger
@@ -35,10 +35,10 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 
 @Suppress("UnstableApiUsage", "OPT_IN_USAGE")
-class GitpodClientProjectSessionTracker(private val project: Project) : Disposable {
+abstract class AbstractGitpodClientProjectSessionTracker(private val project: Project) : Disposable {
 
     private val manager = service<GitpodManager>()
-    private val session = ClientSessionsManager.getProjectSession(project)
+    abstract val session: ClientProjectSession?
 
     private lateinit var info: Info.WorkspaceInfoResponse
     private val lifetime = Lifetime.Eternal.createNested()
