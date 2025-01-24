@@ -64,7 +64,7 @@ export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
                 className={classNames(
                     "mt-6 p-6",
                     "border-2 border-dashed rounded-md space-y-4",
-                    "bg-gray-50 dark:bg-gray-800 dark:border-gray-600",
+                    "bg-pk-surface-secondary dark:border-gray-600",
                 )}
             >
                 <div className="flex items-center justify-center space-x-6">

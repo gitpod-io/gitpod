@@ -295,13 +295,13 @@ const WorkspacesPage: FunctionComponent = () => {
                                         <div>
                                             <div
                                                 onClick={() => setShowInactive(!showInactive)}
-                                                className="flex cursor-pointer py-6 px-6 flex-row text-gray-400 bg-gray-50  hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl mb-2"
+                                                className="flex cursor-pointer p-6 flex-row bg-pk-surface-secondary hover:bg-pk-surface-tertiary text-pk-content-tertiary rounded-xl mb-2"
                                             >
                                                 <div className="pr-2">
                                                     <Arrow direction={showInactive ? "down" : "right"} />
                                                 </div>
                                                 <div className="flex flex-grow flex-col ">
-                                                    <div className="font-medium text-gray-500 dark:text-gray-200 truncate">
+                                                    <div className="font-medium truncate">
                                                         <span>Inactive Workspaces&nbsp;</span>
                                                         <span className="text-gray-400 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 rounded-xl px-2 py-0.5 text-xs">
                                                             {filteredInactiveWorkspaces.length}

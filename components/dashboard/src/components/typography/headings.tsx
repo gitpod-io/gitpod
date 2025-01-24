@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import classNames from "classnames";
+import { cn } from "@podkit/lib/cn";
 import { FC } from "react";
 
 type HeadingProps = {
@@ -18,8 +18,8 @@ export const Heading1: FC<HeadingProps> = ({ id, color, tracking, className, chi
     return (
         <h1
             id={id}
-            className={classNames(
-                getHeadingColor(color),
+            className={cn(
+                "text-pk-content-primary",
                 getTracking(tracking),
                 "font-bold text-4xl leading-normal",
                 className,
@@ -34,7 +34,7 @@ export const Heading2: FC<HeadingProps> = ({ id, color, tracking, className, chi
     return (
         <h2
             id={id}
-            className={classNames(getHeadingColor(color), getTracking(tracking), "font-semibold text-2xl", className)}
+            className={cn("text-pk-content-primary", getTracking(tracking), "font-semibold text-2xl", className)}
         >
             {children}
         </h2>
@@ -45,7 +45,7 @@ export const Heading3: FC<HeadingProps> = ({ id, color, tracking, className, chi
     return (
         <h3
             id={id}
-            className={classNames(getHeadingColor(color), getTracking(tracking), "font-semibold text-lg", className)}
+            className={cn("text-pk-content-primary", getTracking(tracking), "font-semibold text-lg", className)}
         >
             {children}
         </h3>
@@ -55,15 +55,11 @@ export const Heading3: FC<HeadingProps> = ({ id, color, tracking, className, chi
 // Intended to be placed beneath a heading to provide more context
 export const Subheading: FC<HeadingProps> = ({ id, tracking, className, children }) => {
     return (
-        <p id={id} className={classNames("text-base text-pk-content-secondary", getTracking(tracking), className)}>
+        <p id={id} className={cn("text-base text-pk-content-secondary", getTracking(tracking), className)}>
             {children}
         </p>
     );
 };
-
-function getHeadingColor(color: HeadingProps["color"] = "dark") {
-    return color === "dark" ? "text-gray-800 dark:text-gray-100" : "text-gray-500 dark:text-gray-400";
-}
 
 function getTracking(tracking: HeadingProps["tracking"]) {
     if (tracking === "wide") {

@@ -126,7 +126,7 @@ export const PrebuildsTable: FC<Props> = ({
                 ) : (
                     <div
                         className={cn(
-                            "w-full flex justify-center rounded-xl bg-gray-100 dark:bg-gray-800 px-4 py-10 animate-fade-in-fast",
+                            "w-full flex justify-center rounded-xl bg-pk-surface-secondary px-4 py-10 animate-fade-in-fast",
                         )}
                     >
                         <Subheading className="max-w-md">No results found. Try adjusting your search terms.</Subheading>

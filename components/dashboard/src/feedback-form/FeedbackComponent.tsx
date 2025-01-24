@@ -84,7 +84,7 @@ function FeedbackComponent(props: {
                 <div
                     className={
                         "flex flex-col justify-center px-6 py-4 border-gray-200 dark:border-gray-800 " +
-                        (props.isError ? "mt-20 bg-gray-100 dark:bg-gray-800 rounded-xl" : "border-t")
+                        (props.isError ? "mt-20 bg-pk-surface-secondary rounded-xl" : "border-t")
                     }
                 >
                     <p
@@ -105,16 +105,14 @@ function FeedbackComponent(props: {
                 <div
                     className={
                         "flex flex-col px-6 py-4 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 " +
-                        (props.isError
-                            ? "w-96 mt-6 bg-gray-100 dark:bg-gray-800 rounded-xl"
-                            : "-mx-6 border-t border-b")
+                        (props.isError ? "w-96 mt-6 bg-pk-surface-secondary rounded-xl" : "-mx-6 border-t border-b")
                     }
                 >
                     <div className="relative">
                         <textarea
                             style={{ height: "160px", borderRadius: "6px" }}
                             autoFocus
-                            className="w-full resize-none text-gray-400 dark:text-gray-400 focus:ring-0 focus:border-gray-400 dark:focus:border-gray-400 rounded-md border dark:bg-gray-800 dark:border-gray-500 border-gray-500"
+                            className="w-full resize-none text-pk-content-secondary focus:ring-0 focus:border-gray-400 dark:focus:border-gray-400 rounded-md border bg-pk-surface-secondary border-pk-border-base"
                             name="name"
                             value={text}
                             placeholder="Have more feedback?"
@@ -122,7 +120,7 @@ function FeedbackComponent(props: {
                         />
                     </div>
                     <div>
-                        <p className="text-gray-500">
+                        <p className="mt-2 text-pk-content-secondary">
                             {" "}
                             By submitting this form you acknowledge that you have read and understood our{" "}
                             <a className="gp-link" target="gitpod-privacy" href="https://www.gitpod.io/privacy/">
@@ -148,7 +146,7 @@ function FeedbackComponent(props: {
                 <div
                     className={
                         "flex flex-col px-6 py-4 border-gray-200 dark:border-gray-800 " +
-                        (props.isError ? "mt-20 bg-gray-100 dark:bg-gray-800 rounded-xl" : "")
+                        (props.isError ? "mt-20 bg-pk-surface-secondary rounded-xl" : "")
                     }
                 >
                     <p className={"text-center text-base " + (props.isError ? "text-gray-400" : "text-gray-500")}>

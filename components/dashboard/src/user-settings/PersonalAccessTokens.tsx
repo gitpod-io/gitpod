@@ -185,7 +185,7 @@ function ListAccessTokensView() {
                 </Alert>
             )}
             {tokenInfo && (
-                <div className="p-4 mb-4 divide-y rounded-xl bg-gray-50 dark:bg-gray-800">
+                <div className="p-4 mb-4 divide-y rounded-xl bg-pk-surface-secondary">
                     <div className="pb-2">
                         <div className="flex gap-2 content-center font-semibold text-gray-700 dark:text-gray-200">
                             <span>{tokenInfo.data.name}</span>
@@ -225,8 +225,8 @@ function ListAccessTokensView() {
             ) : (
                 <>
                     {tokens.length === 0 ? (
-                        <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center">
-                            <Heading2 color="light" className="text-center pb-3">
+                        <div className="bg-pk-surface-secondary rounded-xl w-full py-28 flex flex-col items-center">
+                            <Heading2 className="text-center pb-3 text-pk-content-invert-secondary">
                                 No Access Tokens
                             </Heading2>
                             <Subheading className="text-center pb-6 w-96">
@@ -236,7 +236,7 @@ function ListAccessTokensView() {
                         </div>
                     ) : (
                         <>
-                            <div className="px-3 py-3 flex justify-between space-x-2 text-sm text-gray-400 mb-2 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                            <div className="px-3 py-3 flex justify-between space-x-2 text-sm text-gray-400 mb-2 bg-pk-surface-secondary rounded-xl">
                                 <Subheading className="w-4/12">Token Name</Subheading>
                                 <Subheading className="w-4/12">Permissions</Subheading>
                                 <Subheading className="w-3/12">Expires</Subheading>

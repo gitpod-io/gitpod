@@ -44,7 +44,7 @@ function ShowTokenModal(props: TokenModalProps) {
                 <div className="text-gray-500 dark:text-gray-400 text-md">
                     <span>{props.description}</span> <span className="font-semibold">{props.descriptionImportant}</span>
                 </div>
-                <div className="p-4 mt-2 rounded-xl bg-gray-50 dark:bg-gray-800">
+                <div className="p-4 mt-2 rounded-xl bg-pk-surface-secondary">
                     <div className="font-semibold text-gray-700 dark:text-gray-200">{props.token.name}</div>
                     <div className="font-medium text-gray-400 dark:text-gray-300">
                         {getTokenExpirationDescription(props.token.expirationTime!.toDate())}

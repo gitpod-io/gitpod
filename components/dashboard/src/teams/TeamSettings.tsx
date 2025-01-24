@@ -303,32 +303,56 @@ export default function TeamSettingsPage() {
                 onClose={close}
                 onConfirm={deleteTeam}
             >
-                <p className="text-base text-gray-500">
-                    You are about to permanently delete <b>{org?.name}</b> including all associated data.
-                </p>
-                <ol className="text-gray-500 text-m list-outside list-decimal">
-                    <li className="ml-5">
-                        All <b>projects</b> added in this organization will be deleted and cannot be restored
-                        afterwards.
-                    </li>
-                    <li className="ml-5">
-                        All <b>members</b> of this organization will lose access to this organization, associated
-                        projects and workspaces.
-                    </li>
-                    <li className="ml-5">Any free credit allowances granted to this organization will be lost.</li>
-                </ol>
-                <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">
-                    Type <code>{org?.name}</code> to confirm
-                </p>
-                <input
-                    autoFocus
-                    className="w-full"
-                    type="text"
-                    onChange={(e) => setTeamNameToDelete(e.target.value)}
-                ></input>
+                <div className="text-pk-content-secondary">
+                    <p className="text-base">
+                        You are about to permanently delete <b>{org?.name}</b> including all associated data.
+                    </p>
+                    <ol className="text-m list-outside list-decimal">
+                        <li className="ml-5">
+                            All <b>projects</b> added in this organization will be deleted and cannot be restored
+                            afterwards.
+                        </li>
+                        <li className="ml-5">
+                            All <b>members</b> of this organization will lose access to this organization, associated
+                            projects and workspaces.
+                        </li>
+                        <li className="ml-5">Any free credit allowances granted to this organization will be lost.</li>
+                    </ol>
+                    <p className="pt-4 pb-2 text-base font-semibold text-pk-content-secondary">
+                        Type <code>{org?.name}</code> to confirm
+                    </p>
+                    <input
+                        autoFocus
+                        className="w-full"
+                        type="text"
+                        onChange={(e) => setTeamNameToDelete(e.target.value)}
+                    ></input>
+                </div>
             </ConfirmationModal>
         </>
     );
+}
+function parseDockerImage(image: string) {
+    // https://docs.docker.com/registry/spec/api/
+    let registry, repository, tag;
+    let parts = image.split("/");
+
+    if (parts.length > 1 && parts[0].includes(".")) {
+        registry = parts.shift();
+    } else {
+        registry = "docker.io";
+    }
+
+    const remaining = parts.join("/");
+    [repository, tag] = remaining.split(":");
+    if (!tag) {
+        tag = "latest";
+    }
+    return {
+        registry,
+        repository,
+        tag,
+    };
 }
 
 function WorkspaceImageButton(props: {
@@ -337,29 +361,6 @@ function WorkspaceImageButton(props: {
     onClick: () => void;
     disabled?: boolean;
 }) {
-    function parseDockerImage(image: string) {
-        // https://docs.docker.com/registry/spec/api/
-        let registry, repository, tag;
-        let parts = image.split("/");
-
-        if (parts.length > 1 && parts[0].includes(".")) {
-            registry = parts.shift();
-        } else {
-            registry = "docker.io";
-        }
-
-        const remaining = parts.join("/");
-        [repository, tag] = remaining.split(":");
-        if (!tag) {
-            tag = "latest";
-        }
-        return {
-            registry,
-            repository,
-            tag,
-        };
-    }
-
     const image = props.settings?.defaultWorkspaceImage || props.installationDefaultWorkspaceImage || "";
 
     const descList = useMemo(() => {
@@ -386,17 +387,17 @@ function WorkspaceImageButton(props: {
 
     return (
         <InputField disabled={props.disabled} className="w-full max-w-lg">
-            <div className="flex flex-col bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+            <div className="flex flex-col bg-pk-surface-secondary p-3 rounded-lg">
                 <div className="flex items-center justify-between">
                     <div className="flex-1 flex items-center overflow-hidden h-8" title={image}>
                         <span className="w-5 h-5 mr-1">
                             <Stack />
                         </span>
-                        <span className="truncate font-medium text-gray-700 dark:text-gray-200">
+                        <span className="truncate font-medium text-pk-content-secondary">
                             {parseDockerImage(image).repository}
                         </span>
                         &nbsp;&middot;&nbsp;
-                        <span className="truncate text-gray-500 dark:text-gray-400">{parseDockerImage(image).tag}</span>
+                        <span className="truncate text-pk-content-tertiary">{parseDockerImage(image).tag}</span>
                     </div>
                     {!props.disabled && (
                         <Button variant="link" onClick={props.onClick}>
@@ -405,7 +406,7 @@ function WorkspaceImageButton(props: {
                     )}
                 </div>
                 {descList.length > 0 && (
-                    <div className="mx-6 text-gray-400 dark:text-gray-500 truncate">{renderedDescription}</div>
+                    <div className="mx-6 text-pk-content-tertiary truncate">{renderedDescription}</div>
                 )}
             </div>
         </InputField>

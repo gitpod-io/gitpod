@@ -16,6 +16,7 @@ import { isAllowedToCreateOrganization } from "@gitpod/public-api-common/lib/use
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { PlusIcon } from "lucide-react";
 
 export default function OrganizationSelector() {
     const user = useCurrentUser();
@@ -143,16 +144,9 @@ export default function OrganizationSelector() {
                   {
                       title: "Create a new organization",
                       customContent: (
-                          <div className="w-full text-gray-500 flex items-center">
+                          <div className="w-full text-pk-content-secondary flex items-center">
                               <span className="flex-1">New Organization</span>
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5">
-                                  <path
-                                      fill="currentColor"
-                                      fillRule="evenodd"
-                                      d="M7 0a1 1 0 011 1v5h5a1 1 0 110 2H8v5a1 1 0 11-2 0V8H1a1 1 0 010-2h5V1a1 1 0 011-1z"
-                                      clipRule="evenodd"
-                                  />
-                              </svg>
+                              <PlusIcon size={20} className="size-3.5" />
                           </div>
                       ),
                       link: "/orgs/new",
