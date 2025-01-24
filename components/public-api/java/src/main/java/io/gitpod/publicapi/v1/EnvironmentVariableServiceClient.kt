@@ -169,6 +169,82 @@ public class EnvironmentVariableServiceClient(
   )
 
 
+  /**
+   *  ListOrganizationEnvironmentVariables returns all environment variables in
+   *  an organization.
+   */
+  override suspend
+      fun listOrganizationEnvironmentVariables(request: Envvar.ListOrganizationEnvironmentVariablesRequest,
+      headers: Headers): ResponseMessage<Envvar.ListOrganizationEnvironmentVariablesResponse> =
+      client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.EnvironmentVariableService/ListOrganizationEnvironmentVariables",
+      io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest::class,
+      io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
+
+  /**
+   *  UpdateOrganizationEnvironmentVariable updates an environment variable in
+   *  an organization.
+   */
+  override suspend
+      fun updateOrganizationEnvironmentVariable(request: Envvar.UpdateOrganizationEnvironmentVariableRequest,
+      headers: Headers): ResponseMessage<Envvar.UpdateOrganizationEnvironmentVariableResponse> =
+      client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.EnvironmentVariableService/UpdateOrganizationEnvironmentVariable",
+      io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest::class,
+      io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
+
+  /**
+   *  CreateOrganizationEnvironmentVariable creates a new environment variable
+   *  in an organization.
+   */
+  override suspend
+      fun createOrganizationEnvironmentVariable(request: Envvar.CreateOrganizationEnvironmentVariableRequest,
+      headers: Headers): ResponseMessage<Envvar.CreateOrganizationEnvironmentVariableResponse> =
+      client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.EnvironmentVariableService/CreateOrganizationEnvironmentVariable",
+      io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest::class,
+      io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
+
+  /**
+   *  DeleteOrganizationEnvironmentVariable deletes an environment variable in
+   *  an organization.
+   */
+  override suspend
+      fun deleteOrganizationEnvironmentVariable(request: Envvar.DeleteOrganizationEnvironmentVariableRequest,
+      headers: Headers): ResponseMessage<Envvar.DeleteOrganizationEnvironmentVariableResponse> =
+      client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.EnvironmentVariableService/DeleteOrganizationEnvironmentVariable",
+      io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest::class,
+      io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
+
   override suspend
       fun resolveWorkspaceEnvironmentVariables(request: Envvar.ResolveWorkspaceEnvironmentVariablesRequest,
       headers: Headers): ResponseMessage<Envvar.ResolveWorkspaceEnvironmentVariablesResponse> =

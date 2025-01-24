@@ -32,6 +32,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { PlainMessage } from "@bufbuild/protobuf";
 import { useToast } from "../components/toasts/Toasts";
+import { NamedOrganizationEnvvarItem } from "./variables/NamedOrganizationEnvvarItem";
+import { useListOrganizationEnvironmentVariables } from "../data/organizations/org-envvar-queries";
+import { EnvVar } from "@gitpod/gitpod-protocol";
 
 export default function TeamSettingsPage() {
     useDocumentTitle("Organization Settings - General");
@@ -45,6 +48,9 @@ export default function TeamSettingsPage() {
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
     const [teamName, setTeamName] = useState(org?.name || "");
     const [updated, setUpdated] = useState(false);
+
+    const orgEnvVars = useListOrganizationEnvironmentVariables(org?.id || "");
+    const gitpodImageAuthEnvVar = orgEnvVars.data?.find((v) => v.name === EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME);
 
     const updateOrg = useUpdateOrgMutation();
 
@@ -213,6 +219,20 @@ export default function TeamSettingsPage() {
                             installationDefaultWorkspaceImage={installationDefaultImage}
                             onClose={() => setShowImageEditModal(false)}
                         />
+                    )}
+
+                    {org?.id && (
+                        <ConfigurationSettingsField>
+                            <Heading3>Docker Registry authentication</Heading3>
+                            <Subheading>Configure Docker registry permissions for the whole organization.</Subheading>
+
+                            <NamedOrganizationEnvvarItem
+                                disabled={!isOwner}
+                                name={EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME}
+                                organizationId={org.id}
+                                variable={gitpodImageAuthEnvVar}
+                            />
+                        </ConfigurationSettingsField>
                     )}
 
                     {user?.organizationId !== org?.id && isOwner && (

@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateConfigurationEnvironmentVariableRequest, CreateConfigurationEnvironmentVariableResponse, CreateUserEnvironmentVariableRequest, CreateUserEnvironmentVariableResponse, DeleteConfigurationEnvironmentVariableRequest, DeleteConfigurationEnvironmentVariableResponse, DeleteUserEnvironmentVariableRequest, DeleteUserEnvironmentVariableResponse, ListConfigurationEnvironmentVariablesRequest, ListConfigurationEnvironmentVariablesResponse, ListUserEnvironmentVariablesRequest, ListUserEnvironmentVariablesResponse, ResolveWorkspaceEnvironmentVariablesRequest, ResolveWorkspaceEnvironmentVariablesResponse, UpdateConfigurationEnvironmentVariableRequest, UpdateConfigurationEnvironmentVariableResponse, UpdateUserEnvironmentVariableRequest, UpdateUserEnvironmentVariableResponse } from "./envvar_pb.js";
+import { CreateConfigurationEnvironmentVariableRequest, CreateConfigurationEnvironmentVariableResponse, CreateOrganizationEnvironmentVariableRequest, CreateOrganizationEnvironmentVariableResponse, CreateUserEnvironmentVariableRequest, CreateUserEnvironmentVariableResponse, DeleteConfigurationEnvironmentVariableRequest, DeleteConfigurationEnvironmentVariableResponse, DeleteOrganizationEnvironmentVariableRequest, DeleteOrganizationEnvironmentVariableResponse, DeleteUserEnvironmentVariableRequest, DeleteUserEnvironmentVariableResponse, ListConfigurationEnvironmentVariablesRequest, ListConfigurationEnvironmentVariablesResponse, ListOrganizationEnvironmentVariablesRequest, ListOrganizationEnvironmentVariablesResponse, ListUserEnvironmentVariablesRequest, ListUserEnvironmentVariablesResponse, ResolveWorkspaceEnvironmentVariablesRequest, ResolveWorkspaceEnvironmentVariablesResponse, UpdateConfigurationEnvironmentVariableRequest, UpdateConfigurationEnvironmentVariableResponse, UpdateOrganizationEnvironmentVariableRequest, UpdateOrganizationEnvironmentVariableResponse, UpdateUserEnvironmentVariableRequest, UpdateUserEnvironmentVariableResponse } from "./envvar_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -112,6 +112,54 @@ export const EnvironmentVariableService = {
       name: "DeleteConfigurationEnvironmentVariable",
       I: DeleteConfigurationEnvironmentVariableRequest,
       O: DeleteConfigurationEnvironmentVariableResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * ListOrganizationEnvironmentVariables returns all environment variables in
+     * an organization.
+     *
+     * @generated from rpc gitpod.v1.EnvironmentVariableService.ListOrganizationEnvironmentVariables
+     */
+    listOrganizationEnvironmentVariables: {
+      name: "ListOrganizationEnvironmentVariables",
+      I: ListOrganizationEnvironmentVariablesRequest,
+      O: ListOrganizationEnvironmentVariablesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * UpdateOrganizationEnvironmentVariable updates an environment variable in
+     * an organization.
+     *
+     * @generated from rpc gitpod.v1.EnvironmentVariableService.UpdateOrganizationEnvironmentVariable
+     */
+    updateOrganizationEnvironmentVariable: {
+      name: "UpdateOrganizationEnvironmentVariable",
+      I: UpdateOrganizationEnvironmentVariableRequest,
+      O: UpdateOrganizationEnvironmentVariableResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * CreateOrganizationEnvironmentVariable creates a new environment variable
+     * in an organization.
+     *
+     * @generated from rpc gitpod.v1.EnvironmentVariableService.CreateOrganizationEnvironmentVariable
+     */
+    createOrganizationEnvironmentVariable: {
+      name: "CreateOrganizationEnvironmentVariable",
+      I: CreateOrganizationEnvironmentVariableRequest,
+      O: CreateOrganizationEnvironmentVariableResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * DeleteOrganizationEnvironmentVariable deletes an environment variable in
+     * an organization.
+     *
+     * @generated from rpc gitpod.v1.EnvironmentVariableService.DeleteOrganizationEnvironmentVariable
+     */
+    deleteOrganizationEnvironmentVariable: {
+      name: "DeleteOrganizationEnvironmentVariable",
+      I: DeleteOrganizationEnvironmentVariableRequest,
+      O: DeleteOrganizationEnvironmentVariableResponse,
       kind: MethodKind.Unary,
     },
     /**

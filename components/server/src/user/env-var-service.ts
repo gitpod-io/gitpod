@@ -4,10 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ProjectDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
     EnvVar,
+    EnvVarWithValue,
+    OrgEnvVar,
+    OrgEnvVarWithValue,
     ProjectEnvVar,
     ProjectEnvVarWithValue,
     UserEnvVar,
@@ -24,10 +27,8 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { Config } from "../config";
 
 export interface ResolvedEnvVars {
-    // all project env vars, censored included always
-    project: ProjectEnvVar[];
-    // merged workspace env vars
-    workspace: EnvVar[];
+    // merged workspace env vars (incl. org, user, project)
+    workspace: EnvVarWithValue[];
 }
 
 @injectable()
@@ -36,6 +37,7 @@ export class EnvVarService {
         @inject(Config) private readonly config: Config,
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
+        @inject(TeamDB) private readonly orgDB: TeamDB,
         @inject(Authorizer) private readonly auth: Authorizer,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
     ) {}
@@ -181,9 +183,9 @@ export class EnvVarService {
         projectId: string,
         envVar: ProjectEnvVarWithValue,
     ): Promise<ProjectEnvVar> {
-        this.validateProjectEnvVar(envVar);
         await this.auth.checkPermissionOnProject(requestorId, "write_env_var", projectId);
-        const existingVar = await this.projectDB.findProjectEnvironmentVariable(projectId, envVar);
+        this.validateProjectOrOrgEnvVar(envVar);
+        const existingVar = await this.projectDB.findProjectEnvironmentVariableByName(projectId, envVar.name);
         if (existingVar) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Project env var ${envVar.name} already exists`);
         }
@@ -191,11 +193,11 @@ export class EnvVarService {
         return await this.projectDB.addProjectEnvironmentVariable(projectId, envVar);
     }
 
-    validateProjectEnvVar(envVar: Partial<ProjectEnvVarWithValue>) {
+    validateProjectOrOrgEnvVar(envVar: Partial<ProjectEnvVarWithValue>) {
         if (!envVar.name) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Variable name cannot be empty");
         }
-        if (!UserEnvVar.WhiteListFromReserved.includes(envVar.name) && envVar.name.startsWith("GITPOD_")) {
+        if (!EnvVar.WhiteListFromReserved.includes(envVar.name) && envVar.name.startsWith("GITPOD_")) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Variable name with prefix 'GITPOD_' is reserved");
         }
         if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(envVar.name)) {
@@ -211,8 +213,8 @@ export class EnvVarService {
         projectId: string,
         envVar: Partial<ProjectEnvVarWithValue>,
     ): Promise<ProjectEnvVar> {
-        this.validateProjectEnvVar(envVar);
         await this.auth.checkPermissionOnProject(requestorId, "write_env_var", projectId);
+        this.validateProjectOrOrgEnvVar(envVar);
         const result = await this.projectDB.updateProjectEnvironmentVariable(projectId, envVar);
         if (!result) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Project env var ${envVar.name} does not exists`);
@@ -227,16 +229,78 @@ export class EnvVarService {
         return this.projectDB.deleteProjectEnvironmentVariable(variableId);
     }
 
+    async listOrgEnvVars(requestorId: string, orgId: string): Promise<OrgEnvVar[]> {
+        await this.auth.checkPermissionOnOrganization(requestorId, "read_env_var", orgId);
+        return this.orgDB.getOrgEnvironmentVariables(orgId);
+    }
+
+    async getOrgEnvVarById(requestorId: string, id: string): Promise<OrgEnvVar> {
+        const result = await this.orgDB.getOrgEnvironmentVariableById(id);
+        if (!result) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${id} not found.`);
+        }
+        try {
+            await this.auth.checkPermissionOnOrganization(requestorId, "read_env_var", result.orgId);
+        } catch (err) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${id} not found.`);
+        }
+        return result;
+    }
+
+    async addOrgEnvVar(requestorId: string, orgId: string, envVar: OrgEnvVarWithValue): Promise<OrgEnvVar> {
+        await this.auth.checkPermissionOnOrganization(requestorId, "write_env_var", orgId);
+        this.validateProjectOrOrgEnvVar(envVar);
+
+        // gpl: We only intent to use org-level env vars for this very specific use case right now.
+        // If we every want to use it more generically, just lift this restriction
+        if (envVar.name !== EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "Can only update GITPOD_IMAGE_AUTH env var on org level",
+            );
+        }
+
+        const existingVar = await this.orgDB.findOrgEnvironmentVariableByName(orgId, envVar.name);
+        if (existingVar) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Organization env var ${envVar.name} already exists`);
+        }
+
+        return await this.orgDB.addOrgEnvironmentVariable(orgId, envVar);
+    }
+
+    async updateOrgEnvVar(requestorId: string, orgId: string, envVar: Partial<OrgEnvVarWithValue>): Promise<OrgEnvVar> {
+        await this.auth.checkPermissionOnOrganization(requestorId, "write_env_var", orgId);
+        this.validateProjectOrOrgEnvVar(envVar);
+
+        const result = await this.orgDB.updateOrgEnvironmentVariable(orgId, envVar);
+        if (!result) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Organization env var ${envVar.name} does not exists`);
+        }
+
+        return result;
+    }
+
+    async deleteOrgEnvVar(requestorId: string, variableId: string): Promise<void> {
+        const variable = await this.getOrgEnvVarById(requestorId, variableId);
+        await this.auth.checkPermissionOnOrganization(requestorId, "write_env_var", variable.orgId);
+        return this.orgDB.deleteOrgEnvironmentVariable(variableId);
+    }
+
     async resolveEnvVariables(
         requestorId: string,
+        organizationId: string,
         projectId: string | undefined,
         wsType: WorkspaceType,
         wsContext: WorkspaceContext,
         wsConfig?: WorkspaceConfig,
     ): Promise<ResolvedEnvVars> {
-        await this.auth.checkPermissionOnUser(requestorId, "read_env_var", requestorId);
+        const isPrebuild = wsType === "prebuild";
+        if (!isPrebuild) {
+            await this.auth.checkPermissionOnUser(requestorId, "read_env_var", requestorId);
+        }
         if (projectId) {
             await this.auth.checkPermissionOnProject(requestorId, "read_env_var", projectId);
+            await this.auth.checkPermissionOnOrganization(requestorId, "read_env_var", organizationId);
         }
 
         const workspaceEnvVars = new Map<String, EnvVar>();
@@ -245,20 +309,6 @@ export class EnvVarService {
                 workspaceEnvVars.set(env.name, env);
             }
         };
-
-        const projectEnvVars = projectId
-            ? (await ApplicationError.notFoundToUndefined(this.listProjectEnvVars(requestorId, projectId))) || []
-            : [];
-
-        if (wsType === "prebuild") {
-            // prebuild does not have access to user env vars and cannot be started via prefix URL
-            const withValues = await this.projectDB.getProjectEnvironmentVariableValues(projectEnvVars);
-            merge(withValues);
-            return {
-                project: projectEnvVars,
-                workspace: [...workspaceEnvVars.values()],
-            };
-        }
 
         // 1. first merge the `env` in the .gitpod.yml
         if (wsConfig?.env) {
@@ -269,31 +319,43 @@ export class EnvVarService {
             merge(configEnvVars);
         }
 
-        // 2. then user envs
-        if (CommitContext.is(wsContext)) {
+        // 2. then org env vars (if applicable)
+        if (projectId) {
+            // !!! Important: Only apply the org env vars if the workspace is part of a project
+            // This is to prevent leaking org env vars to workspaces randomly started in an organization (safety feature)
+            const orgEnvVars =
+                (await ApplicationError.notFoundToUndefined(this.listOrgEnvVars(requestorId, organizationId))) || [];
+            const withValues: OrgEnvVarWithValue[] = await this.orgDB.getOrgEnvironmentVariableValues(orgEnvVars);
+            merge(withValues);
+        }
+
+        // 3. then user envs (if not a prebuild)
+        if (!isPrebuild && CommitContext.is(wsContext)) {
             // this is a commit context, thus we can filter the env vars
             const userEnvVars = await this.userDB.getEnvVars(requestorId);
             merge(UserEnvVar.filter(userEnvVars, wsContext.repository.owner, wsContext.repository.name));
         }
 
-        // 3. then from the project
+        // 4. then from the project
+        const projectEnvVars = projectId
+            ? (await ApplicationError.notFoundToUndefined(this.listProjectEnvVars(requestorId, projectId))) || []
+            : [];
         if (projectEnvVars.length) {
-            // Instead of using an access guard for Project environment variables, we let Project owners decide whether
-            // a variable should be:
-            //   - exposed in all workspaces (even for non-Project members when the repository is public), or
-            //   - censored from all workspaces (even for Project members)
-            const availablePrjEnvVars = projectEnvVars.filter((variable) => !variable.censored);
+            let availablePrjEnvVars = projectEnvVars;
+            if (!isPrebuild) {
+                // If "censored", a variable is only visible in Prebuilds, so we have to filter it out for other workspace types
+                availablePrjEnvVars = availablePrjEnvVars.filter((variable) => !variable.censored);
+            }
             const withValues = await this.projectDB.getProjectEnvironmentVariableValues(availablePrjEnvVars);
             merge(withValues);
         }
 
-        // 4. then parsed from the context URL
+        // 5. then parsed from the context URL
         if (WithEnvvarsContext.is(wsContext)) {
             merge(wsContext.envvars);
         }
 
         return {
-            project: projectEnvVars,
             workspace: [...workspaceEnvVars.values()],
         };
     }

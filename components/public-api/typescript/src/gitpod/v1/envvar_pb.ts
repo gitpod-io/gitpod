@@ -820,6 +820,387 @@ export class DeleteConfigurationEnvironmentVariableResponse extends Message<Dele
 }
 
 /**
+ * @generated from message gitpod.v1.OrganizationEnvironmentVariable
+ */
+export class OrganizationEnvironmentVariable extends Message<OrganizationEnvironmentVariable> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string organization_id = 3;
+   */
+  organizationId = "";
+
+  constructor(data?: PartialMessage<OrganizationEnvironmentVariable>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.OrganizationEnvironmentVariable";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationEnvironmentVariable {
+    return new OrganizationEnvironmentVariable().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OrganizationEnvironmentVariable {
+    return new OrganizationEnvironmentVariable().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OrganizationEnvironmentVariable {
+    return new OrganizationEnvironmentVariable().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: OrganizationEnvironmentVariable | PlainMessage<OrganizationEnvironmentVariable> | undefined, b: OrganizationEnvironmentVariable | PlainMessage<OrganizationEnvironmentVariable> | undefined): boolean {
+    return proto3.util.equals(OrganizationEnvironmentVariable, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListOrganizationEnvironmentVariablesRequest
+ */
+export class ListOrganizationEnvironmentVariablesRequest extends Message<ListOrganizationEnvironmentVariablesRequest> {
+  /**
+   * @generated from field: string organization_id = 1;
+   */
+  organizationId = "";
+
+  /**
+   * @generated from field: gitpod.v1.PaginationRequest pagination = 2;
+   */
+  pagination?: PaginationRequest;
+
+  constructor(data?: PartialMessage<ListOrganizationEnvironmentVariablesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListOrganizationEnvironmentVariablesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "pagination", kind: "message", T: PaginationRequest },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationEnvironmentVariablesRequest {
+    return new ListOrganizationEnvironmentVariablesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListOrganizationEnvironmentVariablesRequest {
+    return new ListOrganizationEnvironmentVariablesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListOrganizationEnvironmentVariablesRequest {
+    return new ListOrganizationEnvironmentVariablesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListOrganizationEnvironmentVariablesRequest | PlainMessage<ListOrganizationEnvironmentVariablesRequest> | undefined, b: ListOrganizationEnvironmentVariablesRequest | PlainMessage<ListOrganizationEnvironmentVariablesRequest> | undefined): boolean {
+    return proto3.util.equals(ListOrganizationEnvironmentVariablesRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.ListOrganizationEnvironmentVariablesResponse
+ */
+export class ListOrganizationEnvironmentVariablesResponse extends Message<ListOrganizationEnvironmentVariablesResponse> {
+  /**
+   * @generated from field: repeated gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1;
+   */
+  environmentVariables: OrganizationEnvironmentVariable[] = [];
+
+  /**
+   * @generated from field: gitpod.v1.PaginationResponse pagination = 2;
+   */
+  pagination?: PaginationResponse;
+
+  constructor(data?: PartialMessage<ListOrganizationEnvironmentVariablesResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.ListOrganizationEnvironmentVariablesResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "environment_variables", kind: "message", T: OrganizationEnvironmentVariable, repeated: true },
+    { no: 2, name: "pagination", kind: "message", T: PaginationResponse },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListOrganizationEnvironmentVariablesResponse {
+    return new ListOrganizationEnvironmentVariablesResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListOrganizationEnvironmentVariablesResponse {
+    return new ListOrganizationEnvironmentVariablesResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListOrganizationEnvironmentVariablesResponse {
+    return new ListOrganizationEnvironmentVariablesResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListOrganizationEnvironmentVariablesResponse | PlainMessage<ListOrganizationEnvironmentVariablesResponse> | undefined, b: ListOrganizationEnvironmentVariablesResponse | PlainMessage<ListOrganizationEnvironmentVariablesResponse> | undefined): boolean {
+    return proto3.util.equals(ListOrganizationEnvironmentVariablesResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.UpdateOrganizationEnvironmentVariableRequest
+ */
+export class UpdateOrganizationEnvironmentVariableRequest extends Message<UpdateOrganizationEnvironmentVariableRequest> {
+  /**
+   * @generated from field: string organization_id = 1;
+   */
+  organizationId = "";
+
+  /**
+   * @generated from field: string environment_variable_id = 2;
+   */
+  environmentVariableId = "";
+
+  /**
+   * @generated from field: optional string name = 3;
+   */
+  name?: string;
+
+  /**
+   * @generated from field: optional string value = 4;
+   */
+  value?: string;
+
+  constructor(data?: PartialMessage<UpdateOrganizationEnvironmentVariableRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.UpdateOrganizationEnvironmentVariableRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "environment_variable_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 4, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationEnvironmentVariableRequest {
+    return new UpdateOrganizationEnvironmentVariableRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateOrganizationEnvironmentVariableRequest {
+    return new UpdateOrganizationEnvironmentVariableRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateOrganizationEnvironmentVariableRequest {
+    return new UpdateOrganizationEnvironmentVariableRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateOrganizationEnvironmentVariableRequest | PlainMessage<UpdateOrganizationEnvironmentVariableRequest> | undefined, b: UpdateOrganizationEnvironmentVariableRequest | PlainMessage<UpdateOrganizationEnvironmentVariableRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateOrganizationEnvironmentVariableRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.UpdateOrganizationEnvironmentVariableResponse
+ */
+export class UpdateOrganizationEnvironmentVariableResponse extends Message<UpdateOrganizationEnvironmentVariableResponse> {
+  /**
+   * @generated from field: gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1;
+   */
+  environmentVariable?: OrganizationEnvironmentVariable;
+
+  constructor(data?: PartialMessage<UpdateOrganizationEnvironmentVariableResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.UpdateOrganizationEnvironmentVariableResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "environment_variable", kind: "message", T: OrganizationEnvironmentVariable },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationEnvironmentVariableResponse {
+    return new UpdateOrganizationEnvironmentVariableResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateOrganizationEnvironmentVariableResponse {
+    return new UpdateOrganizationEnvironmentVariableResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateOrganizationEnvironmentVariableResponse {
+    return new UpdateOrganizationEnvironmentVariableResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateOrganizationEnvironmentVariableResponse | PlainMessage<UpdateOrganizationEnvironmentVariableResponse> | undefined, b: UpdateOrganizationEnvironmentVariableResponse | PlainMessage<UpdateOrganizationEnvironmentVariableResponse> | undefined): boolean {
+    return proto3.util.equals(UpdateOrganizationEnvironmentVariableResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.CreateOrganizationEnvironmentVariableRequest
+ */
+export class CreateOrganizationEnvironmentVariableRequest extends Message<CreateOrganizationEnvironmentVariableRequest> {
+  /**
+   * @generated from field: string organization_id = 1;
+   */
+  organizationId = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string value = 3;
+   */
+  value = "";
+
+  constructor(data?: PartialMessage<CreateOrganizationEnvironmentVariableRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.CreateOrganizationEnvironmentVariableRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateOrganizationEnvironmentVariableRequest {
+    return new CreateOrganizationEnvironmentVariableRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateOrganizationEnvironmentVariableRequest {
+    return new CreateOrganizationEnvironmentVariableRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateOrganizationEnvironmentVariableRequest {
+    return new CreateOrganizationEnvironmentVariableRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateOrganizationEnvironmentVariableRequest | PlainMessage<CreateOrganizationEnvironmentVariableRequest> | undefined, b: CreateOrganizationEnvironmentVariableRequest | PlainMessage<CreateOrganizationEnvironmentVariableRequest> | undefined): boolean {
+    return proto3.util.equals(CreateOrganizationEnvironmentVariableRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.CreateOrganizationEnvironmentVariableResponse
+ */
+export class CreateOrganizationEnvironmentVariableResponse extends Message<CreateOrganizationEnvironmentVariableResponse> {
+  /**
+   * @generated from field: gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1;
+   */
+  environmentVariable?: OrganizationEnvironmentVariable;
+
+  constructor(data?: PartialMessage<CreateOrganizationEnvironmentVariableResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.CreateOrganizationEnvironmentVariableResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "environment_variable", kind: "message", T: OrganizationEnvironmentVariable },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateOrganizationEnvironmentVariableResponse {
+    return new CreateOrganizationEnvironmentVariableResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateOrganizationEnvironmentVariableResponse {
+    return new CreateOrganizationEnvironmentVariableResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateOrganizationEnvironmentVariableResponse {
+    return new CreateOrganizationEnvironmentVariableResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateOrganizationEnvironmentVariableResponse | PlainMessage<CreateOrganizationEnvironmentVariableResponse> | undefined, b: CreateOrganizationEnvironmentVariableResponse | PlainMessage<CreateOrganizationEnvironmentVariableResponse> | undefined): boolean {
+    return proto3.util.equals(CreateOrganizationEnvironmentVariableResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.DeleteOrganizationEnvironmentVariableRequest
+ */
+export class DeleteOrganizationEnvironmentVariableRequest extends Message<DeleteOrganizationEnvironmentVariableRequest> {
+  /**
+   * @generated from field: string environment_variable_id = 1;
+   */
+  environmentVariableId = "";
+
+  constructor(data?: PartialMessage<DeleteOrganizationEnvironmentVariableRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.DeleteOrganizationEnvironmentVariableRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "environment_variable_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteOrganizationEnvironmentVariableRequest {
+    return new DeleteOrganizationEnvironmentVariableRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteOrganizationEnvironmentVariableRequest {
+    return new DeleteOrganizationEnvironmentVariableRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteOrganizationEnvironmentVariableRequest {
+    return new DeleteOrganizationEnvironmentVariableRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteOrganizationEnvironmentVariableRequest | PlainMessage<DeleteOrganizationEnvironmentVariableRequest> | undefined, b: DeleteOrganizationEnvironmentVariableRequest | PlainMessage<DeleteOrganizationEnvironmentVariableRequest> | undefined): boolean {
+    return proto3.util.equals(DeleteOrganizationEnvironmentVariableRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.DeleteOrganizationEnvironmentVariableResponse
+ */
+export class DeleteOrganizationEnvironmentVariableResponse extends Message<DeleteOrganizationEnvironmentVariableResponse> {
+  constructor(data?: PartialMessage<DeleteOrganizationEnvironmentVariableResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.DeleteOrganizationEnvironmentVariableResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteOrganizationEnvironmentVariableResponse {
+    return new DeleteOrganizationEnvironmentVariableResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteOrganizationEnvironmentVariableResponse {
+    return new DeleteOrganizationEnvironmentVariableResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteOrganizationEnvironmentVariableResponse {
+    return new DeleteOrganizationEnvironmentVariableResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteOrganizationEnvironmentVariableResponse | PlainMessage<DeleteOrganizationEnvironmentVariableResponse> | undefined, b: DeleteOrganizationEnvironmentVariableResponse | PlainMessage<DeleteOrganizationEnvironmentVariableResponse> | undefined): boolean {
+    return proto3.util.equals(DeleteOrganizationEnvironmentVariableResponse, a, b);
+  }
+}
+
+/**
  * @generated from message gitpod.v1.ResolveWorkspaceEnvironmentVariablesRequest
  */
 export class ResolveWorkspaceEnvironmentVariablesRequest extends Message<ResolveWorkspaceEnvironmentVariablesRequest> {

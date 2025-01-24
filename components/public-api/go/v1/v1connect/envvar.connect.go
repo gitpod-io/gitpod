@@ -57,6 +57,18 @@ type EnvironmentVariableServiceClient interface {
 	// DeleteConfigurationEnvironmentVariable deletes an environment variable in
 	// a configuration.
 	DeleteConfigurationEnvironmentVariable(context.Context, *connect_go.Request[v1.DeleteConfigurationEnvironmentVariableRequest]) (*connect_go.Response[v1.DeleteConfigurationEnvironmentVariableResponse], error)
+	// ListOrganizationEnvironmentVariables returns all environment variables in
+	// an organization.
+	ListOrganizationEnvironmentVariables(context.Context, *connect_go.Request[v1.ListOrganizationEnvironmentVariablesRequest]) (*connect_go.Response[v1.ListOrganizationEnvironmentVariablesResponse], error)
+	// UpdateOrganizationEnvironmentVariable updates an environment variable in
+	// an organization.
+	UpdateOrganizationEnvironmentVariable(context.Context, *connect_go.Request[v1.UpdateOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.UpdateOrganizationEnvironmentVariableResponse], error)
+	// CreateOrganizationEnvironmentVariable creates a new environment variable
+	// in an organization.
+	CreateOrganizationEnvironmentVariable(context.Context, *connect_go.Request[v1.CreateOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.CreateOrganizationEnvironmentVariableResponse], error)
+	// DeleteOrganizationEnvironmentVariable deletes an environment variable in
+	// an organization.
+	DeleteOrganizationEnvironmentVariable(context.Context, *connect_go.Request[v1.DeleteOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.DeleteOrganizationEnvironmentVariableResponse], error)
 	ResolveWorkspaceEnvironmentVariables(context.Context, *connect_go.Request[v1.ResolveWorkspaceEnvironmentVariablesRequest]) (*connect_go.Response[v1.ResolveWorkspaceEnvironmentVariablesResponse], error)
 }
 
@@ -110,6 +122,26 @@ func NewEnvironmentVariableServiceClient(httpClient connect_go.HTTPClient, baseU
 			baseURL+"/gitpod.v1.EnvironmentVariableService/DeleteConfigurationEnvironmentVariable",
 			opts...,
 		),
+		listOrganizationEnvironmentVariables: connect_go.NewClient[v1.ListOrganizationEnvironmentVariablesRequest, v1.ListOrganizationEnvironmentVariablesResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.EnvironmentVariableService/ListOrganizationEnvironmentVariables",
+			opts...,
+		),
+		updateOrganizationEnvironmentVariable: connect_go.NewClient[v1.UpdateOrganizationEnvironmentVariableRequest, v1.UpdateOrganizationEnvironmentVariableResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.EnvironmentVariableService/UpdateOrganizationEnvironmentVariable",
+			opts...,
+		),
+		createOrganizationEnvironmentVariable: connect_go.NewClient[v1.CreateOrganizationEnvironmentVariableRequest, v1.CreateOrganizationEnvironmentVariableResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.EnvironmentVariableService/CreateOrganizationEnvironmentVariable",
+			opts...,
+		),
+		deleteOrganizationEnvironmentVariable: connect_go.NewClient[v1.DeleteOrganizationEnvironmentVariableRequest, v1.DeleteOrganizationEnvironmentVariableResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.EnvironmentVariableService/DeleteOrganizationEnvironmentVariable",
+			opts...,
+		),
 		resolveWorkspaceEnvironmentVariables: connect_go.NewClient[v1.ResolveWorkspaceEnvironmentVariablesRequest, v1.ResolveWorkspaceEnvironmentVariablesResponse](
 			httpClient,
 			baseURL+"/gitpod.v1.EnvironmentVariableService/ResolveWorkspaceEnvironmentVariables",
@@ -128,6 +160,10 @@ type environmentVariableServiceClient struct {
 	updateConfigurationEnvironmentVariable *connect_go.Client[v1.UpdateConfigurationEnvironmentVariableRequest, v1.UpdateConfigurationEnvironmentVariableResponse]
 	createConfigurationEnvironmentVariable *connect_go.Client[v1.CreateConfigurationEnvironmentVariableRequest, v1.CreateConfigurationEnvironmentVariableResponse]
 	deleteConfigurationEnvironmentVariable *connect_go.Client[v1.DeleteConfigurationEnvironmentVariableRequest, v1.DeleteConfigurationEnvironmentVariableResponse]
+	listOrganizationEnvironmentVariables   *connect_go.Client[v1.ListOrganizationEnvironmentVariablesRequest, v1.ListOrganizationEnvironmentVariablesResponse]
+	updateOrganizationEnvironmentVariable  *connect_go.Client[v1.UpdateOrganizationEnvironmentVariableRequest, v1.UpdateOrganizationEnvironmentVariableResponse]
+	createOrganizationEnvironmentVariable  *connect_go.Client[v1.CreateOrganizationEnvironmentVariableRequest, v1.CreateOrganizationEnvironmentVariableResponse]
+	deleteOrganizationEnvironmentVariable  *connect_go.Client[v1.DeleteOrganizationEnvironmentVariableRequest, v1.DeleteOrganizationEnvironmentVariableResponse]
 	resolveWorkspaceEnvironmentVariables   *connect_go.Client[v1.ResolveWorkspaceEnvironmentVariablesRequest, v1.ResolveWorkspaceEnvironmentVariablesResponse]
 }
 
@@ -179,6 +215,30 @@ func (c *environmentVariableServiceClient) DeleteConfigurationEnvironmentVariabl
 	return c.deleteConfigurationEnvironmentVariable.CallUnary(ctx, req)
 }
 
+// ListOrganizationEnvironmentVariables calls
+// gitpod.v1.EnvironmentVariableService.ListOrganizationEnvironmentVariables.
+func (c *environmentVariableServiceClient) ListOrganizationEnvironmentVariables(ctx context.Context, req *connect_go.Request[v1.ListOrganizationEnvironmentVariablesRequest]) (*connect_go.Response[v1.ListOrganizationEnvironmentVariablesResponse], error) {
+	return c.listOrganizationEnvironmentVariables.CallUnary(ctx, req)
+}
+
+// UpdateOrganizationEnvironmentVariable calls
+// gitpod.v1.EnvironmentVariableService.UpdateOrganizationEnvironmentVariable.
+func (c *environmentVariableServiceClient) UpdateOrganizationEnvironmentVariable(ctx context.Context, req *connect_go.Request[v1.UpdateOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.UpdateOrganizationEnvironmentVariableResponse], error) {
+	return c.updateOrganizationEnvironmentVariable.CallUnary(ctx, req)
+}
+
+// CreateOrganizationEnvironmentVariable calls
+// gitpod.v1.EnvironmentVariableService.CreateOrganizationEnvironmentVariable.
+func (c *environmentVariableServiceClient) CreateOrganizationEnvironmentVariable(ctx context.Context, req *connect_go.Request[v1.CreateOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.CreateOrganizationEnvironmentVariableResponse], error) {
+	return c.createOrganizationEnvironmentVariable.CallUnary(ctx, req)
+}
+
+// DeleteOrganizationEnvironmentVariable calls
+// gitpod.v1.EnvironmentVariableService.DeleteOrganizationEnvironmentVariable.
+func (c *environmentVariableServiceClient) DeleteOrganizationEnvironmentVariable(ctx context.Context, req *connect_go.Request[v1.DeleteOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.DeleteOrganizationEnvironmentVariableResponse], error) {
+	return c.deleteOrganizationEnvironmentVariable.CallUnary(ctx, req)
+}
+
 // ResolveWorkspaceEnvironmentVariables calls
 // gitpod.v1.EnvironmentVariableService.ResolveWorkspaceEnvironmentVariables.
 func (c *environmentVariableServiceClient) ResolveWorkspaceEnvironmentVariables(ctx context.Context, req *connect_go.Request[v1.ResolveWorkspaceEnvironmentVariablesRequest]) (*connect_go.Response[v1.ResolveWorkspaceEnvironmentVariablesResponse], error) {
@@ -212,6 +272,18 @@ type EnvironmentVariableServiceHandler interface {
 	// DeleteConfigurationEnvironmentVariable deletes an environment variable in
 	// a configuration.
 	DeleteConfigurationEnvironmentVariable(context.Context, *connect_go.Request[v1.DeleteConfigurationEnvironmentVariableRequest]) (*connect_go.Response[v1.DeleteConfigurationEnvironmentVariableResponse], error)
+	// ListOrganizationEnvironmentVariables returns all environment variables in
+	// an organization.
+	ListOrganizationEnvironmentVariables(context.Context, *connect_go.Request[v1.ListOrganizationEnvironmentVariablesRequest]) (*connect_go.Response[v1.ListOrganizationEnvironmentVariablesResponse], error)
+	// UpdateOrganizationEnvironmentVariable updates an environment variable in
+	// an organization.
+	UpdateOrganizationEnvironmentVariable(context.Context, *connect_go.Request[v1.UpdateOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.UpdateOrganizationEnvironmentVariableResponse], error)
+	// CreateOrganizationEnvironmentVariable creates a new environment variable
+	// in an organization.
+	CreateOrganizationEnvironmentVariable(context.Context, *connect_go.Request[v1.CreateOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.CreateOrganizationEnvironmentVariableResponse], error)
+	// DeleteOrganizationEnvironmentVariable deletes an environment variable in
+	// an organization.
+	DeleteOrganizationEnvironmentVariable(context.Context, *connect_go.Request[v1.DeleteOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.DeleteOrganizationEnvironmentVariableResponse], error)
 	ResolveWorkspaceEnvironmentVariables(context.Context, *connect_go.Request[v1.ResolveWorkspaceEnvironmentVariablesRequest]) (*connect_go.Response[v1.ResolveWorkspaceEnvironmentVariablesResponse], error)
 }
 
@@ -262,6 +334,26 @@ func NewEnvironmentVariableServiceHandler(svc EnvironmentVariableServiceHandler,
 		svc.DeleteConfigurationEnvironmentVariable,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.EnvironmentVariableService/ListOrganizationEnvironmentVariables", connect_go.NewUnaryHandler(
+		"/gitpod.v1.EnvironmentVariableService/ListOrganizationEnvironmentVariables",
+		svc.ListOrganizationEnvironmentVariables,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.EnvironmentVariableService/UpdateOrganizationEnvironmentVariable", connect_go.NewUnaryHandler(
+		"/gitpod.v1.EnvironmentVariableService/UpdateOrganizationEnvironmentVariable",
+		svc.UpdateOrganizationEnvironmentVariable,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.EnvironmentVariableService/CreateOrganizationEnvironmentVariable", connect_go.NewUnaryHandler(
+		"/gitpod.v1.EnvironmentVariableService/CreateOrganizationEnvironmentVariable",
+		svc.CreateOrganizationEnvironmentVariable,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.EnvironmentVariableService/DeleteOrganizationEnvironmentVariable", connect_go.NewUnaryHandler(
+		"/gitpod.v1.EnvironmentVariableService/DeleteOrganizationEnvironmentVariable",
+		svc.DeleteOrganizationEnvironmentVariable,
+		opts...,
+	))
 	mux.Handle("/gitpod.v1.EnvironmentVariableService/ResolveWorkspaceEnvironmentVariables", connect_go.NewUnaryHandler(
 		"/gitpod.v1.EnvironmentVariableService/ResolveWorkspaceEnvironmentVariables",
 		svc.ResolveWorkspaceEnvironmentVariables,
@@ -303,6 +395,22 @@ func (UnimplementedEnvironmentVariableServiceHandler) CreateConfigurationEnviron
 
 func (UnimplementedEnvironmentVariableServiceHandler) DeleteConfigurationEnvironmentVariable(context.Context, *connect_go.Request[v1.DeleteConfigurationEnvironmentVariableRequest]) (*connect_go.Response[v1.DeleteConfigurationEnvironmentVariableResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.EnvironmentVariableService.DeleteConfigurationEnvironmentVariable is not implemented"))
+}
+
+func (UnimplementedEnvironmentVariableServiceHandler) ListOrganizationEnvironmentVariables(context.Context, *connect_go.Request[v1.ListOrganizationEnvironmentVariablesRequest]) (*connect_go.Response[v1.ListOrganizationEnvironmentVariablesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.EnvironmentVariableService.ListOrganizationEnvironmentVariables is not implemented"))
+}
+
+func (UnimplementedEnvironmentVariableServiceHandler) UpdateOrganizationEnvironmentVariable(context.Context, *connect_go.Request[v1.UpdateOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.UpdateOrganizationEnvironmentVariableResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.EnvironmentVariableService.UpdateOrganizationEnvironmentVariable is not implemented"))
+}
+
+func (UnimplementedEnvironmentVariableServiceHandler) CreateOrganizationEnvironmentVariable(context.Context, *connect_go.Request[v1.CreateOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.CreateOrganizationEnvironmentVariableResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.EnvironmentVariableService.CreateOrganizationEnvironmentVariable is not implemented"))
+}
+
+func (UnimplementedEnvironmentVariableServiceHandler) DeleteOrganizationEnvironmentVariable(context.Context, *connect_go.Request[v1.DeleteOrganizationEnvironmentVariableRequest]) (*connect_go.Response[v1.DeleteOrganizationEnvironmentVariableResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.EnvironmentVariableService.DeleteOrganizationEnvironmentVariable is not implemented"))
 }
 
 func (UnimplementedEnvironmentVariableServiceHandler) ResolveWorkspaceEnvironmentVariables(context.Context, *connect_go.Request[v1.ResolveWorkspaceEnvironmentVariablesRequest]) (*connect_go.Response[v1.ResolveWorkspaceEnvironmentVariablesResponse], error) {

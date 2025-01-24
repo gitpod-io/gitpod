@@ -166,12 +166,12 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         await projectUsageRepo.delete({ projectId });
     }
 
-    public async findProjectEnvironmentVariable(
+    public async findProjectEnvironmentVariableByName(
         projectId: string,
-        envVar: ProjectEnvVarWithValue,
+        name: string,
     ): Promise<ProjectEnvVar | undefined> {
         const envVarRepo = await this.getProjectEnvVarRepo();
-        return envVarRepo.findOne({ projectId, name: envVar.name, deleted: false });
+        return envVarRepo.findOne({ projectId, name, deleted: false });
     }
 
     public async addProjectEnvironmentVariable(
@@ -222,11 +222,11 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return envVars;
     }
 
-    public async getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined> {
+    public async getProjectEnvironmentVariableById(id: string): Promise<ProjectEnvVar | undefined> {
         const envVarRepo = await this.getProjectEnvVarRepo();
-        const envVarWithValue = await envVarRepo.findOne({ id: variableId, deleted: false });
+        const envVarWithValue = await envVarRepo.findOne({ id, deleted: false });
         if (!envVarWithValue) {
-            return;
+            return undefined;
         }
         const envVar = toProjectEnvVar(envVarWithValue);
         return envVar;
@@ -237,9 +237,13 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         await envVarRepo.delete({ id: variableId });
     }
 
-    public async getProjectEnvironmentVariableValues(envVars: ProjectEnvVar[]): Promise<ProjectEnvVarWithValue[]> {
+    public async getProjectEnvironmentVariableValues(
+        envVars: Pick<ProjectEnvVar, "id" | "projectId">[],
+    ): Promise<ProjectEnvVarWithValue[]> {
         const envVarRepo = await this.getProjectEnvVarRepo();
-        const envVarsWithValues = await envVarRepo.findByIds(envVars);
+        const envVarsWithValues = await envVarRepo.findByIds(
+            envVars.map((v) => ({ id: v.id, projectId: v.projectId })),
+        );
         return envVarsWithValues;
     }
 

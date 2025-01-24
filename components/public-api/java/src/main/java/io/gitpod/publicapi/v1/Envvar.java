@@ -13107,6 +13107,6299 @@ public final class Envvar {
 
   }
 
+  public interface OrganizationEnvironmentVariableOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.OrganizationEnvironmentVariable)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string id = 1 [json_name = "id"];</code>
+     * @return The id.
+     */
+    java.lang.String getId();
+    /**
+     * <code>string id = 1 [json_name = "id"];</code>
+     * @return The bytes for id.
+     */
+    com.google.protobuf.ByteString
+        getIdBytes();
+
+    /**
+     * <code>string name = 2 [json_name = "name"];</code>
+     * @return The name.
+     */
+    java.lang.String getName();
+    /**
+     * <code>string name = 2 [json_name = "name"];</code>
+     * @return The bytes for name.
+     */
+    com.google.protobuf.ByteString
+        getNameBytes();
+
+    /**
+     * <code>string organization_id = 3 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    java.lang.String getOrganizationId();
+    /**
+     * <code>string organization_id = 3 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    com.google.protobuf.ByteString
+        getOrganizationIdBytes();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.OrganizationEnvironmentVariable}
+   */
+  public static final class OrganizationEnvironmentVariable extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.OrganizationEnvironmentVariable)
+      OrganizationEnvironmentVariableOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        OrganizationEnvironmentVariable.class.getName());
+    }
+    // Use OrganizationEnvironmentVariable.newBuilder() to construct.
+    private OrganizationEnvironmentVariable(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private OrganizationEnvironmentVariable() {
+      id_ = "";
+      name_ = "";
+      organizationId_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_OrganizationEnvironmentVariable_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_OrganizationEnvironmentVariable_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.class, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder.class);
+    }
+
+    public static final int ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object id_ = "";
+    /**
+     * <code>string id = 1 [json_name = "id"];</code>
+     * @return The id.
+     */
+    @java.lang.Override
+    public java.lang.String getId() {
+      java.lang.Object ref = id_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        id_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string id = 1 [json_name = "id"];</code>
+     * @return The bytes for id.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getIdBytes() {
+      java.lang.Object ref = id_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        id_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int NAME_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object name_ = "";
+    /**
+     * <code>string name = 2 [json_name = "name"];</code>
+     * @return The name.
+     */
+    @java.lang.Override
+    public java.lang.String getName() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        name_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string name = 2 [json_name = "name"];</code>
+     * @return The bytes for name.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getNameBytes() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        name_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int ORGANIZATION_ID_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object organizationId_ = "";
+    /**
+     * <code>string organization_id = 3 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    @java.lang.Override
+    public java.lang.String getOrganizationId() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        organizationId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string organization_id = 3 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getOrganizationIdBytes() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        organizationId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(id_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, id_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(name_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, name_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 3, organizationId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(id_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, id_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(name_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, name_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(3, organizationId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable other = (io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable) obj;
+
+      if (!getId()
+          .equals(other.getId())) return false;
+      if (!getName()
+          .equals(other.getName())) return false;
+      if (!getOrganizationId()
+          .equals(other.getOrganizationId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ID_FIELD_NUMBER;
+      hash = (53 * hash) + getId().hashCode();
+      hash = (37 * hash) + NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getName().hashCode();
+      hash = (37 * hash) + ORGANIZATION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getOrganizationId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.OrganizationEnvironmentVariable}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.OrganizationEnvironmentVariable)
+        io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_OrganizationEnvironmentVariable_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_OrganizationEnvironmentVariable_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.class, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        id_ = "";
+        name_ = "";
+        organizationId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_OrganizationEnvironmentVariable_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable build() {
+        io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable buildPartial() {
+        io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable result = new io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.id_ = id_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.name_ = name_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.organizationId_ = organizationId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable) {
+          return mergeFrom((io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable other) {
+        if (other == io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance()) return this;
+        if (!other.getId().isEmpty()) {
+          id_ = other.id_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.getName().isEmpty()) {
+          name_ = other.name_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getOrganizationId().isEmpty()) {
+          organizationId_ = other.organizationId_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                id_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                name_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                organizationId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object id_ = "";
+      /**
+       * <code>string id = 1 [json_name = "id"];</code>
+       * @return The id.
+       */
+      public java.lang.String getId() {
+        java.lang.Object ref = id_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          id_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string id = 1 [json_name = "id"];</code>
+       * @return The bytes for id.
+       */
+      public com.google.protobuf.ByteString
+          getIdBytes() {
+        java.lang.Object ref = id_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          id_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string id = 1 [json_name = "id"];</code>
+       * @param value The id to set.
+       * @return This builder for chaining.
+       */
+      public Builder setId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        id_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string id = 1 [json_name = "id"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearId() {
+        id_ = getDefaultInstance().getId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string id = 1 [json_name = "id"];</code>
+       * @param value The bytes for id to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        id_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object name_ = "";
+      /**
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @return The name.
+       */
+      public java.lang.String getName() {
+        java.lang.Object ref = name_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          name_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @return The bytes for name.
+       */
+      public com.google.protobuf.ByteString
+          getNameBytes() {
+        java.lang.Object ref = name_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          name_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @param value The name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setName(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        name_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearName() {
+        name_ = getDefaultInstance().getName();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @param value The bytes for name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        name_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object organizationId_ = "";
+      /**
+       * <code>string organization_id = 3 [json_name = "organizationId"];</code>
+       * @return The organizationId.
+       */
+      public java.lang.String getOrganizationId() {
+        java.lang.Object ref = organizationId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          organizationId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string organization_id = 3 [json_name = "organizationId"];</code>
+       * @return The bytes for organizationId.
+       */
+      public com.google.protobuf.ByteString
+          getOrganizationIdBytes() {
+        java.lang.Object ref = organizationId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          organizationId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string organization_id = 3 [json_name = "organizationId"];</code>
+       * @param value The organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        organizationId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string organization_id = 3 [json_name = "organizationId"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOrganizationId() {
+        organizationId_ = getDefaultInstance().getOrganizationId();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string organization_id = 3 [json_name = "organizationId"];</code>
+       * @param value The bytes for organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        organizationId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.OrganizationEnvironmentVariable)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.OrganizationEnvironmentVariable)
+    private static final io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable();
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<OrganizationEnvironmentVariable>
+        PARSER = new com.google.protobuf.AbstractParser<OrganizationEnvironmentVariable>() {
+      @java.lang.Override
+      public OrganizationEnvironmentVariable parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<OrganizationEnvironmentVariable> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<OrganizationEnvironmentVariable> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface ListOrganizationEnvironmentVariablesRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.ListOrganizationEnvironmentVariablesRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    java.lang.String getOrganizationId();
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    com.google.protobuf.ByteString
+        getOrganizationIdBytes();
+
+    /**
+     * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+     * @return Whether the pagination field is set.
+     */
+    boolean hasPagination();
+    /**
+     * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+     * @return The pagination.
+     */
+    io.gitpod.publicapi.v1.Pagination.PaginationRequest getPagination();
+    /**
+     * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+     */
+    io.gitpod.publicapi.v1.Pagination.PaginationRequestOrBuilder getPaginationOrBuilder();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.ListOrganizationEnvironmentVariablesRequest}
+   */
+  public static final class ListOrganizationEnvironmentVariablesRequest extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.ListOrganizationEnvironmentVariablesRequest)
+      ListOrganizationEnvironmentVariablesRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        ListOrganizationEnvironmentVariablesRequest.class.getName());
+    }
+    // Use ListOrganizationEnvironmentVariablesRequest.newBuilder() to construct.
+    private ListOrganizationEnvironmentVariablesRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private ListOrganizationEnvironmentVariablesRequest() {
+      organizationId_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest.class, io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int ORGANIZATION_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object organizationId_ = "";
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    @java.lang.Override
+    public java.lang.String getOrganizationId() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        organizationId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getOrganizationIdBytes() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        organizationId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int PAGINATION_FIELD_NUMBER = 2;
+    private io.gitpod.publicapi.v1.Pagination.PaginationRequest pagination_;
+    /**
+     * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+     * @return Whether the pagination field is set.
+     */
+    @java.lang.Override
+    public boolean hasPagination() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+     * @return The pagination.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Pagination.PaginationRequest getPagination() {
+      return pagination_ == null ? io.gitpod.publicapi.v1.Pagination.PaginationRequest.getDefaultInstance() : pagination_;
+    }
+    /**
+     * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Pagination.PaginationRequestOrBuilder getPaginationOrBuilder() {
+      return pagination_ == null ? io.gitpod.publicapi.v1.Pagination.PaginationRequest.getDefaultInstance() : pagination_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, organizationId_);
+      }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        output.writeMessage(2, getPagination());
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, organizationId_);
+      }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getPagination());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest other = (io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest) obj;
+
+      if (!getOrganizationId()
+          .equals(other.getOrganizationId())) return false;
+      if (hasPagination() != other.hasPagination()) return false;
+      if (hasPagination()) {
+        if (!getPagination()
+            .equals(other.getPagination())) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ORGANIZATION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getOrganizationId().hashCode();
+      if (hasPagination()) {
+        hash = (37 * hash) + PAGINATION_FIELD_NUMBER;
+        hash = (53 * hash) + getPagination().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.ListOrganizationEnvironmentVariablesRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.ListOrganizationEnvironmentVariablesRequest)
+        io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest.class, io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage
+                .alwaysUseFieldBuilders) {
+          getPaginationFieldBuilder();
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        organizationId_ = "";
+        pagination_ = null;
+        if (paginationBuilder_ != null) {
+          paginationBuilder_.dispose();
+          paginationBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest build() {
+        io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest buildPartial() {
+        io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest result = new io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.organizationId_ = organizationId_;
+        }
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.pagination_ = paginationBuilder_ == null
+              ? pagination_
+              : paginationBuilder_.build();
+          to_bitField0_ |= 0x00000001;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest) {
+          return mergeFrom((io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest other) {
+        if (other == io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest.getDefaultInstance()) return this;
+        if (!other.getOrganizationId().isEmpty()) {
+          organizationId_ = other.organizationId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (other.hasPagination()) {
+          mergePagination(other.getPagination());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                organizationId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                input.readMessage(
+                    getPaginationFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object organizationId_ = "";
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The organizationId.
+       */
+      public java.lang.String getOrganizationId() {
+        java.lang.Object ref = organizationId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          organizationId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The bytes for organizationId.
+       */
+      public com.google.protobuf.ByteString
+          getOrganizationIdBytes() {
+        java.lang.Object ref = organizationId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          organizationId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOrganizationId() {
+        organizationId_ = getDefaultInstance().getOrganizationId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The bytes for organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private io.gitpod.publicapi.v1.Pagination.PaginationRequest pagination_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Pagination.PaginationRequest, io.gitpod.publicapi.v1.Pagination.PaginationRequest.Builder, io.gitpod.publicapi.v1.Pagination.PaginationRequestOrBuilder> paginationBuilder_;
+      /**
+       * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+       * @return Whether the pagination field is set.
+       */
+      public boolean hasPagination() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+       * @return The pagination.
+       */
+      public io.gitpod.publicapi.v1.Pagination.PaginationRequest getPagination() {
+        if (paginationBuilder_ == null) {
+          return pagination_ == null ? io.gitpod.publicapi.v1.Pagination.PaginationRequest.getDefaultInstance() : pagination_;
+        } else {
+          return paginationBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+       */
+      public Builder setPagination(io.gitpod.publicapi.v1.Pagination.PaginationRequest value) {
+        if (paginationBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          pagination_ = value;
+        } else {
+          paginationBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+       */
+      public Builder setPagination(
+          io.gitpod.publicapi.v1.Pagination.PaginationRequest.Builder builderForValue) {
+        if (paginationBuilder_ == null) {
+          pagination_ = builderForValue.build();
+        } else {
+          paginationBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+       */
+      public Builder mergePagination(io.gitpod.publicapi.v1.Pagination.PaginationRequest value) {
+        if (paginationBuilder_ == null) {
+          if (((bitField0_ & 0x00000002) != 0) &&
+            pagination_ != null &&
+            pagination_ != io.gitpod.publicapi.v1.Pagination.PaginationRequest.getDefaultInstance()) {
+            getPaginationBuilder().mergeFrom(value);
+          } else {
+            pagination_ = value;
+          }
+        } else {
+          paginationBuilder_.mergeFrom(value);
+        }
+        if (pagination_ != null) {
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+       */
+      public Builder clearPagination() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        pagination_ = null;
+        if (paginationBuilder_ != null) {
+          paginationBuilder_.dispose();
+          paginationBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+       */
+      public io.gitpod.publicapi.v1.Pagination.PaginationRequest.Builder getPaginationBuilder() {
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return getPaginationFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+       */
+      public io.gitpod.publicapi.v1.Pagination.PaginationRequestOrBuilder getPaginationOrBuilder() {
+        if (paginationBuilder_ != null) {
+          return paginationBuilder_.getMessageOrBuilder();
+        } else {
+          return pagination_ == null ?
+              io.gitpod.publicapi.v1.Pagination.PaginationRequest.getDefaultInstance() : pagination_;
+        }
+      }
+      /**
+       * <code>.gitpod.v1.PaginationRequest pagination = 2 [json_name = "pagination"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Pagination.PaginationRequest, io.gitpod.publicapi.v1.Pagination.PaginationRequest.Builder, io.gitpod.publicapi.v1.Pagination.PaginationRequestOrBuilder>
+          getPaginationFieldBuilder() {
+        if (paginationBuilder_ == null) {
+          paginationBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.Pagination.PaginationRequest, io.gitpod.publicapi.v1.Pagination.PaginationRequest.Builder, io.gitpod.publicapi.v1.Pagination.PaginationRequestOrBuilder>(
+                  getPagination(),
+                  getParentForChildren(),
+                  isClean());
+          pagination_ = null;
+        }
+        return paginationBuilder_;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.ListOrganizationEnvironmentVariablesRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.ListOrganizationEnvironmentVariablesRequest)
+    private static final io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest();
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ListOrganizationEnvironmentVariablesRequest>
+        PARSER = new com.google.protobuf.AbstractParser<ListOrganizationEnvironmentVariablesRequest>() {
+      @java.lang.Override
+      public ListOrganizationEnvironmentVariablesRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<ListOrganizationEnvironmentVariablesRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ListOrganizationEnvironmentVariablesRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface ListOrganizationEnvironmentVariablesResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.ListOrganizationEnvironmentVariablesResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+     */
+    java.util.List<io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable>
+        getEnvironmentVariablesList();
+    /**
+     * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+     */
+    io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getEnvironmentVariables(int index);
+    /**
+     * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+     */
+    int getEnvironmentVariablesCount();
+    /**
+     * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+     */
+    java.util.List<? extends io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder>
+        getEnvironmentVariablesOrBuilderList();
+    /**
+     * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+     */
+    io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder getEnvironmentVariablesOrBuilder(
+        int index);
+
+    /**
+     * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+     * @return Whether the pagination field is set.
+     */
+    boolean hasPagination();
+    /**
+     * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+     * @return The pagination.
+     */
+    io.gitpod.publicapi.v1.Pagination.PaginationResponse getPagination();
+    /**
+     * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+     */
+    io.gitpod.publicapi.v1.Pagination.PaginationResponseOrBuilder getPaginationOrBuilder();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.ListOrganizationEnvironmentVariablesResponse}
+   */
+  public static final class ListOrganizationEnvironmentVariablesResponse extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.ListOrganizationEnvironmentVariablesResponse)
+      ListOrganizationEnvironmentVariablesResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        ListOrganizationEnvironmentVariablesResponse.class.getName());
+    }
+    // Use ListOrganizationEnvironmentVariablesResponse.newBuilder() to construct.
+    private ListOrganizationEnvironmentVariablesResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private ListOrganizationEnvironmentVariablesResponse() {
+      environmentVariables_ = java.util.Collections.emptyList();
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse.class, io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int ENVIRONMENT_VARIABLES_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private java.util.List<io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable> environmentVariables_;
+    /**
+     * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+     */
+    @java.lang.Override
+    public java.util.List<io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable> getEnvironmentVariablesList() {
+      return environmentVariables_;
+    }
+    /**
+     * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+     */
+    @java.lang.Override
+    public java.util.List<? extends io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder>
+        getEnvironmentVariablesOrBuilderList() {
+      return environmentVariables_;
+    }
+    /**
+     * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+     */
+    @java.lang.Override
+    public int getEnvironmentVariablesCount() {
+      return environmentVariables_.size();
+    }
+    /**
+     * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getEnvironmentVariables(int index) {
+      return environmentVariables_.get(index);
+    }
+    /**
+     * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder getEnvironmentVariablesOrBuilder(
+        int index) {
+      return environmentVariables_.get(index);
+    }
+
+    public static final int PAGINATION_FIELD_NUMBER = 2;
+    private io.gitpod.publicapi.v1.Pagination.PaginationResponse pagination_;
+    /**
+     * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+     * @return Whether the pagination field is set.
+     */
+    @java.lang.Override
+    public boolean hasPagination() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+     * @return The pagination.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Pagination.PaginationResponse getPagination() {
+      return pagination_ == null ? io.gitpod.publicapi.v1.Pagination.PaginationResponse.getDefaultInstance() : pagination_;
+    }
+    /**
+     * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Pagination.PaginationResponseOrBuilder getPaginationOrBuilder() {
+      return pagination_ == null ? io.gitpod.publicapi.v1.Pagination.PaginationResponse.getDefaultInstance() : pagination_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      for (int i = 0; i < environmentVariables_.size(); i++) {
+        output.writeMessage(1, environmentVariables_.get(i));
+      }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        output.writeMessage(2, getPagination());
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      for (int i = 0; i < environmentVariables_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, environmentVariables_.get(i));
+      }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getPagination());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse other = (io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse) obj;
+
+      if (!getEnvironmentVariablesList()
+          .equals(other.getEnvironmentVariablesList())) return false;
+      if (hasPagination() != other.hasPagination()) return false;
+      if (hasPagination()) {
+        if (!getPagination()
+            .equals(other.getPagination())) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (getEnvironmentVariablesCount() > 0) {
+        hash = (37 * hash) + ENVIRONMENT_VARIABLES_FIELD_NUMBER;
+        hash = (53 * hash) + getEnvironmentVariablesList().hashCode();
+      }
+      if (hasPagination()) {
+        hash = (37 * hash) + PAGINATION_FIELD_NUMBER;
+        hash = (53 * hash) + getPagination().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.ListOrganizationEnvironmentVariablesResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.ListOrganizationEnvironmentVariablesResponse)
+        io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse.class, io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage
+                .alwaysUseFieldBuilders) {
+          getEnvironmentVariablesFieldBuilder();
+          getPaginationFieldBuilder();
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        if (environmentVariablesBuilder_ == null) {
+          environmentVariables_ = java.util.Collections.emptyList();
+        } else {
+          environmentVariables_ = null;
+          environmentVariablesBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000001);
+        pagination_ = null;
+        if (paginationBuilder_ != null) {
+          paginationBuilder_.dispose();
+          paginationBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse build() {
+        io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse buildPartial() {
+        io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse result = new io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse(this);
+        buildPartialRepeatedFields(result);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartialRepeatedFields(io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse result) {
+        if (environmentVariablesBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) != 0)) {
+            environmentVariables_ = java.util.Collections.unmodifiableList(environmentVariables_);
+            bitField0_ = (bitField0_ & ~0x00000001);
+          }
+          result.environmentVariables_ = environmentVariables_;
+        } else {
+          result.environmentVariables_ = environmentVariablesBuilder_.build();
+        }
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse result) {
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.pagination_ = paginationBuilder_ == null
+              ? pagination_
+              : paginationBuilder_.build();
+          to_bitField0_ |= 0x00000001;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse) {
+          return mergeFrom((io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse other) {
+        if (other == io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse.getDefaultInstance()) return this;
+        if (environmentVariablesBuilder_ == null) {
+          if (!other.environmentVariables_.isEmpty()) {
+            if (environmentVariables_.isEmpty()) {
+              environmentVariables_ = other.environmentVariables_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+            } else {
+              ensureEnvironmentVariablesIsMutable();
+              environmentVariables_.addAll(other.environmentVariables_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.environmentVariables_.isEmpty()) {
+            if (environmentVariablesBuilder_.isEmpty()) {
+              environmentVariablesBuilder_.dispose();
+              environmentVariablesBuilder_ = null;
+              environmentVariables_ = other.environmentVariables_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+              environmentVariablesBuilder_ =
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getEnvironmentVariablesFieldBuilder() : null;
+            } else {
+              environmentVariablesBuilder_.addAllMessages(other.environmentVariables_);
+            }
+          }
+        }
+        if (other.hasPagination()) {
+          mergePagination(other.getPagination());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable m =
+                    input.readMessage(
+                        io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.parser(),
+                        extensionRegistry);
+                if (environmentVariablesBuilder_ == null) {
+                  ensureEnvironmentVariablesIsMutable();
+                  environmentVariables_.add(m);
+                } else {
+                  environmentVariablesBuilder_.addMessage(m);
+                }
+                break;
+              } // case 10
+              case 18: {
+                input.readMessage(
+                    getPaginationFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.util.List<io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable> environmentVariables_ =
+        java.util.Collections.emptyList();
+      private void ensureEnvironmentVariablesIsMutable() {
+        if (!((bitField0_ & 0x00000001) != 0)) {
+          environmentVariables_ = new java.util.ArrayList<io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable>(environmentVariables_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder> environmentVariablesBuilder_;
+
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public java.util.List<io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable> getEnvironmentVariablesList() {
+        if (environmentVariablesBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(environmentVariables_);
+        } else {
+          return environmentVariablesBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public int getEnvironmentVariablesCount() {
+        if (environmentVariablesBuilder_ == null) {
+          return environmentVariables_.size();
+        } else {
+          return environmentVariablesBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getEnvironmentVariables(int index) {
+        if (environmentVariablesBuilder_ == null) {
+          return environmentVariables_.get(index);
+        } else {
+          return environmentVariablesBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public Builder setEnvironmentVariables(
+          int index, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable value) {
+        if (environmentVariablesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEnvironmentVariablesIsMutable();
+          environmentVariables_.set(index, value);
+          onChanged();
+        } else {
+          environmentVariablesBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public Builder setEnvironmentVariables(
+          int index, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder builderForValue) {
+        if (environmentVariablesBuilder_ == null) {
+          ensureEnvironmentVariablesIsMutable();
+          environmentVariables_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          environmentVariablesBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public Builder addEnvironmentVariables(io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable value) {
+        if (environmentVariablesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEnvironmentVariablesIsMutable();
+          environmentVariables_.add(value);
+          onChanged();
+        } else {
+          environmentVariablesBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public Builder addEnvironmentVariables(
+          int index, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable value) {
+        if (environmentVariablesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEnvironmentVariablesIsMutable();
+          environmentVariables_.add(index, value);
+          onChanged();
+        } else {
+          environmentVariablesBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public Builder addEnvironmentVariables(
+          io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder builderForValue) {
+        if (environmentVariablesBuilder_ == null) {
+          ensureEnvironmentVariablesIsMutable();
+          environmentVariables_.add(builderForValue.build());
+          onChanged();
+        } else {
+          environmentVariablesBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public Builder addEnvironmentVariables(
+          int index, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder builderForValue) {
+        if (environmentVariablesBuilder_ == null) {
+          ensureEnvironmentVariablesIsMutable();
+          environmentVariables_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          environmentVariablesBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public Builder addAllEnvironmentVariables(
+          java.lang.Iterable<? extends io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable> values) {
+        if (environmentVariablesBuilder_ == null) {
+          ensureEnvironmentVariablesIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, environmentVariables_);
+          onChanged();
+        } else {
+          environmentVariablesBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public Builder clearEnvironmentVariables() {
+        if (environmentVariablesBuilder_ == null) {
+          environmentVariables_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+        } else {
+          environmentVariablesBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public Builder removeEnvironmentVariables(int index) {
+        if (environmentVariablesBuilder_ == null) {
+          ensureEnvironmentVariablesIsMutable();
+          environmentVariables_.remove(index);
+          onChanged();
+        } else {
+          environmentVariablesBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder getEnvironmentVariablesBuilder(
+          int index) {
+        return getEnvironmentVariablesFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder getEnvironmentVariablesOrBuilder(
+          int index) {
+        if (environmentVariablesBuilder_ == null) {
+          return environmentVariables_.get(index);  } else {
+          return environmentVariablesBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public java.util.List<? extends io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder>
+           getEnvironmentVariablesOrBuilderList() {
+        if (environmentVariablesBuilder_ != null) {
+          return environmentVariablesBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(environmentVariables_);
+        }
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder addEnvironmentVariablesBuilder() {
+        return getEnvironmentVariablesFieldBuilder().addBuilder(
+            io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder addEnvironmentVariablesBuilder(
+          int index) {
+        return getEnvironmentVariablesFieldBuilder().addBuilder(
+            index, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .gitpod.v1.OrganizationEnvironmentVariable environment_variables = 1 [json_name = "environmentVariables"];</code>
+       */
+      public java.util.List<io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder>
+           getEnvironmentVariablesBuilderList() {
+        return getEnvironmentVariablesFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder>
+          getEnvironmentVariablesFieldBuilder() {
+        if (environmentVariablesBuilder_ == null) {
+          environmentVariablesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder>(
+                  environmentVariables_,
+                  ((bitField0_ & 0x00000001) != 0),
+                  getParentForChildren(),
+                  isClean());
+          environmentVariables_ = null;
+        }
+        return environmentVariablesBuilder_;
+      }
+
+      private io.gitpod.publicapi.v1.Pagination.PaginationResponse pagination_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Pagination.PaginationResponse, io.gitpod.publicapi.v1.Pagination.PaginationResponse.Builder, io.gitpod.publicapi.v1.Pagination.PaginationResponseOrBuilder> paginationBuilder_;
+      /**
+       * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+       * @return Whether the pagination field is set.
+       */
+      public boolean hasPagination() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+       * @return The pagination.
+       */
+      public io.gitpod.publicapi.v1.Pagination.PaginationResponse getPagination() {
+        if (paginationBuilder_ == null) {
+          return pagination_ == null ? io.gitpod.publicapi.v1.Pagination.PaginationResponse.getDefaultInstance() : pagination_;
+        } else {
+          return paginationBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+       */
+      public Builder setPagination(io.gitpod.publicapi.v1.Pagination.PaginationResponse value) {
+        if (paginationBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          pagination_ = value;
+        } else {
+          paginationBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+       */
+      public Builder setPagination(
+          io.gitpod.publicapi.v1.Pagination.PaginationResponse.Builder builderForValue) {
+        if (paginationBuilder_ == null) {
+          pagination_ = builderForValue.build();
+        } else {
+          paginationBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+       */
+      public Builder mergePagination(io.gitpod.publicapi.v1.Pagination.PaginationResponse value) {
+        if (paginationBuilder_ == null) {
+          if (((bitField0_ & 0x00000002) != 0) &&
+            pagination_ != null &&
+            pagination_ != io.gitpod.publicapi.v1.Pagination.PaginationResponse.getDefaultInstance()) {
+            getPaginationBuilder().mergeFrom(value);
+          } else {
+            pagination_ = value;
+          }
+        } else {
+          paginationBuilder_.mergeFrom(value);
+        }
+        if (pagination_ != null) {
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+       */
+      public Builder clearPagination() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        pagination_ = null;
+        if (paginationBuilder_ != null) {
+          paginationBuilder_.dispose();
+          paginationBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+       */
+      public io.gitpod.publicapi.v1.Pagination.PaginationResponse.Builder getPaginationBuilder() {
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return getPaginationFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+       */
+      public io.gitpod.publicapi.v1.Pagination.PaginationResponseOrBuilder getPaginationOrBuilder() {
+        if (paginationBuilder_ != null) {
+          return paginationBuilder_.getMessageOrBuilder();
+        } else {
+          return pagination_ == null ?
+              io.gitpod.publicapi.v1.Pagination.PaginationResponse.getDefaultInstance() : pagination_;
+        }
+      }
+      /**
+       * <code>.gitpod.v1.PaginationResponse pagination = 2 [json_name = "pagination"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Pagination.PaginationResponse, io.gitpod.publicapi.v1.Pagination.PaginationResponse.Builder, io.gitpod.publicapi.v1.Pagination.PaginationResponseOrBuilder>
+          getPaginationFieldBuilder() {
+        if (paginationBuilder_ == null) {
+          paginationBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.Pagination.PaginationResponse, io.gitpod.publicapi.v1.Pagination.PaginationResponse.Builder, io.gitpod.publicapi.v1.Pagination.PaginationResponseOrBuilder>(
+                  getPagination(),
+                  getParentForChildren(),
+                  isClean());
+          pagination_ = null;
+        }
+        return paginationBuilder_;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.ListOrganizationEnvironmentVariablesResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.ListOrganizationEnvironmentVariablesResponse)
+    private static final io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse();
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<ListOrganizationEnvironmentVariablesResponse>
+        PARSER = new com.google.protobuf.AbstractParser<ListOrganizationEnvironmentVariablesResponse>() {
+      @java.lang.Override
+      public ListOrganizationEnvironmentVariablesResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<ListOrganizationEnvironmentVariablesResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ListOrganizationEnvironmentVariablesResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.ListOrganizationEnvironmentVariablesResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface UpdateOrganizationEnvironmentVariableRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.UpdateOrganizationEnvironmentVariableRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    java.lang.String getOrganizationId();
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    com.google.protobuf.ByteString
+        getOrganizationIdBytes();
+
+    /**
+     * <code>string environment_variable_id = 2 [json_name = "environmentVariableId"];</code>
+     * @return The environmentVariableId.
+     */
+    java.lang.String getEnvironmentVariableId();
+    /**
+     * <code>string environment_variable_id = 2 [json_name = "environmentVariableId"];</code>
+     * @return The bytes for environmentVariableId.
+     */
+    com.google.protobuf.ByteString
+        getEnvironmentVariableIdBytes();
+
+    /**
+     * <code>optional string name = 3 [json_name = "name"];</code>
+     * @return Whether the name field is set.
+     */
+    boolean hasName();
+    /**
+     * <code>optional string name = 3 [json_name = "name"];</code>
+     * @return The name.
+     */
+    java.lang.String getName();
+    /**
+     * <code>optional string name = 3 [json_name = "name"];</code>
+     * @return The bytes for name.
+     */
+    com.google.protobuf.ByteString
+        getNameBytes();
+
+    /**
+     * <code>optional string value = 4 [json_name = "value"];</code>
+     * @return Whether the value field is set.
+     */
+    boolean hasValue();
+    /**
+     * <code>optional string value = 4 [json_name = "value"];</code>
+     * @return The value.
+     */
+    java.lang.String getValue();
+    /**
+     * <code>optional string value = 4 [json_name = "value"];</code>
+     * @return The bytes for value.
+     */
+    com.google.protobuf.ByteString
+        getValueBytes();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.UpdateOrganizationEnvironmentVariableRequest}
+   */
+  public static final class UpdateOrganizationEnvironmentVariableRequest extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.UpdateOrganizationEnvironmentVariableRequest)
+      UpdateOrganizationEnvironmentVariableRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        UpdateOrganizationEnvironmentVariableRequest.class.getName());
+    }
+    // Use UpdateOrganizationEnvironmentVariableRequest.newBuilder() to construct.
+    private UpdateOrganizationEnvironmentVariableRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private UpdateOrganizationEnvironmentVariableRequest() {
+      organizationId_ = "";
+      environmentVariableId_ = "";
+      name_ = "";
+      value_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest.class, io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int ORGANIZATION_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object organizationId_ = "";
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    @java.lang.Override
+    public java.lang.String getOrganizationId() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        organizationId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getOrganizationIdBytes() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        organizationId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int ENVIRONMENT_VARIABLE_ID_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object environmentVariableId_ = "";
+    /**
+     * <code>string environment_variable_id = 2 [json_name = "environmentVariableId"];</code>
+     * @return The environmentVariableId.
+     */
+    @java.lang.Override
+    public java.lang.String getEnvironmentVariableId() {
+      java.lang.Object ref = environmentVariableId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        environmentVariableId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string environment_variable_id = 2 [json_name = "environmentVariableId"];</code>
+     * @return The bytes for environmentVariableId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getEnvironmentVariableIdBytes() {
+      java.lang.Object ref = environmentVariableId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        environmentVariableId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int NAME_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object name_ = "";
+    /**
+     * <code>optional string name = 3 [json_name = "name"];</code>
+     * @return Whether the name field is set.
+     */
+    @java.lang.Override
+    public boolean hasName() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>optional string name = 3 [json_name = "name"];</code>
+     * @return The name.
+     */
+    @java.lang.Override
+    public java.lang.String getName() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        name_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string name = 3 [json_name = "name"];</code>
+     * @return The bytes for name.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getNameBytes() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        name_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int VALUE_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object value_ = "";
+    /**
+     * <code>optional string value = 4 [json_name = "value"];</code>
+     * @return Whether the value field is set.
+     */
+    @java.lang.Override
+    public boolean hasValue() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>optional string value = 4 [json_name = "value"];</code>
+     * @return The value.
+     */
+    @java.lang.Override
+    public java.lang.String getValue() {
+      java.lang.Object ref = value_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        value_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string value = 4 [json_name = "value"];</code>
+     * @return The bytes for value.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getValueBytes() {
+      java.lang.Object ref = value_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        value_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, organizationId_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(environmentVariableId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, environmentVariableId_);
+      }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 3, name_);
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 4, value_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, organizationId_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(environmentVariableId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, environmentVariableId_);
+      }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(3, name_);
+      }
+      if (((bitField0_ & 0x00000002) != 0)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(4, value_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest other = (io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest) obj;
+
+      if (!getOrganizationId()
+          .equals(other.getOrganizationId())) return false;
+      if (!getEnvironmentVariableId()
+          .equals(other.getEnvironmentVariableId())) return false;
+      if (hasName() != other.hasName()) return false;
+      if (hasName()) {
+        if (!getName()
+            .equals(other.getName())) return false;
+      }
+      if (hasValue() != other.hasValue()) return false;
+      if (hasValue()) {
+        if (!getValue()
+            .equals(other.getValue())) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ORGANIZATION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getOrganizationId().hashCode();
+      hash = (37 * hash) + ENVIRONMENT_VARIABLE_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getEnvironmentVariableId().hashCode();
+      if (hasName()) {
+        hash = (37 * hash) + NAME_FIELD_NUMBER;
+        hash = (53 * hash) + getName().hashCode();
+      }
+      if (hasValue()) {
+        hash = (37 * hash) + VALUE_FIELD_NUMBER;
+        hash = (53 * hash) + getValue().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.UpdateOrganizationEnvironmentVariableRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.UpdateOrganizationEnvironmentVariableRequest)
+        io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest.class, io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        organizationId_ = "";
+        environmentVariableId_ = "";
+        name_ = "";
+        value_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest build() {
+        io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest buildPartial() {
+        io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest result = new io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.organizationId_ = organizationId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.environmentVariableId_ = environmentVariableId_;
+        }
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.name_ = name_;
+          to_bitField0_ |= 0x00000001;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.value_ = value_;
+          to_bitField0_ |= 0x00000002;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest) {
+          return mergeFrom((io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest other) {
+        if (other == io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest.getDefaultInstance()) return this;
+        if (!other.getOrganizationId().isEmpty()) {
+          organizationId_ = other.organizationId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.getEnvironmentVariableId().isEmpty()) {
+          environmentVariableId_ = other.environmentVariableId_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (other.hasName()) {
+          name_ = other.name_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (other.hasValue()) {
+          value_ = other.value_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                organizationId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                environmentVariableId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                name_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                value_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object organizationId_ = "";
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The organizationId.
+       */
+      public java.lang.String getOrganizationId() {
+        java.lang.Object ref = organizationId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          organizationId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The bytes for organizationId.
+       */
+      public com.google.protobuf.ByteString
+          getOrganizationIdBytes() {
+        java.lang.Object ref = organizationId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          organizationId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOrganizationId() {
+        organizationId_ = getDefaultInstance().getOrganizationId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The bytes for organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object environmentVariableId_ = "";
+      /**
+       * <code>string environment_variable_id = 2 [json_name = "environmentVariableId"];</code>
+       * @return The environmentVariableId.
+       */
+      public java.lang.String getEnvironmentVariableId() {
+        java.lang.Object ref = environmentVariableId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          environmentVariableId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string environment_variable_id = 2 [json_name = "environmentVariableId"];</code>
+       * @return The bytes for environmentVariableId.
+       */
+      public com.google.protobuf.ByteString
+          getEnvironmentVariableIdBytes() {
+        java.lang.Object ref = environmentVariableId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          environmentVariableId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string environment_variable_id = 2 [json_name = "environmentVariableId"];</code>
+       * @param value The environmentVariableId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEnvironmentVariableId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        environmentVariableId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string environment_variable_id = 2 [json_name = "environmentVariableId"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearEnvironmentVariableId() {
+        environmentVariableId_ = getDefaultInstance().getEnvironmentVariableId();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string environment_variable_id = 2 [json_name = "environmentVariableId"];</code>
+       * @param value The bytes for environmentVariableId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEnvironmentVariableIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        environmentVariableId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object name_ = "";
+      /**
+       * <code>optional string name = 3 [json_name = "name"];</code>
+       * @return Whether the name field is set.
+       */
+      public boolean hasName() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <code>optional string name = 3 [json_name = "name"];</code>
+       * @return The name.
+       */
+      public java.lang.String getName() {
+        java.lang.Object ref = name_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          name_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string name = 3 [json_name = "name"];</code>
+       * @return The bytes for name.
+       */
+      public com.google.protobuf.ByteString
+          getNameBytes() {
+        java.lang.Object ref = name_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          name_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string name = 3 [json_name = "name"];</code>
+       * @param value The name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setName(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        name_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string name = 3 [json_name = "name"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearName() {
+        name_ = getDefaultInstance().getName();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string name = 3 [json_name = "name"];</code>
+       * @param value The bytes for name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        name_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object value_ = "";
+      /**
+       * <code>optional string value = 4 [json_name = "value"];</code>
+       * @return Whether the value field is set.
+       */
+      public boolean hasValue() {
+        return ((bitField0_ & 0x00000008) != 0);
+      }
+      /**
+       * <code>optional string value = 4 [json_name = "value"];</code>
+       * @return The value.
+       */
+      public java.lang.String getValue() {
+        java.lang.Object ref = value_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          value_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string value = 4 [json_name = "value"];</code>
+       * @return The bytes for value.
+       */
+      public com.google.protobuf.ByteString
+          getValueBytes() {
+        java.lang.Object ref = value_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          value_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string value = 4 [json_name = "value"];</code>
+       * @param value The value to set.
+       * @return This builder for chaining.
+       */
+      public Builder setValue(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        value_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string value = 4 [json_name = "value"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearValue() {
+        value_ = getDefaultInstance().getValue();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string value = 4 [json_name = "value"];</code>
+       * @param value The bytes for value to set.
+       * @return This builder for chaining.
+       */
+      public Builder setValueBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        value_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.UpdateOrganizationEnvironmentVariableRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.UpdateOrganizationEnvironmentVariableRequest)
+    private static final io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest();
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<UpdateOrganizationEnvironmentVariableRequest>
+        PARSER = new com.google.protobuf.AbstractParser<UpdateOrganizationEnvironmentVariableRequest>() {
+      @java.lang.Override
+      public UpdateOrganizationEnvironmentVariableRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<UpdateOrganizationEnvironmentVariableRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<UpdateOrganizationEnvironmentVariableRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface UpdateOrganizationEnvironmentVariableResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.UpdateOrganizationEnvironmentVariableResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     * @return Whether the environmentVariable field is set.
+     */
+    boolean hasEnvironmentVariable();
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     * @return The environmentVariable.
+     */
+    io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getEnvironmentVariable();
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     */
+    io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder getEnvironmentVariableOrBuilder();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.UpdateOrganizationEnvironmentVariableResponse}
+   */
+  public static final class UpdateOrganizationEnvironmentVariableResponse extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.UpdateOrganizationEnvironmentVariableResponse)
+      UpdateOrganizationEnvironmentVariableResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        UpdateOrganizationEnvironmentVariableResponse.class.getName());
+    }
+    // Use UpdateOrganizationEnvironmentVariableResponse.newBuilder() to construct.
+    private UpdateOrganizationEnvironmentVariableResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private UpdateOrganizationEnvironmentVariableResponse() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse.class, io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int ENVIRONMENT_VARIABLE_FIELD_NUMBER = 1;
+    private io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable environmentVariable_;
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     * @return Whether the environmentVariable field is set.
+     */
+    @java.lang.Override
+    public boolean hasEnvironmentVariable() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     * @return The environmentVariable.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getEnvironmentVariable() {
+      return environmentVariable_ == null ? io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance() : environmentVariable_;
+    }
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder getEnvironmentVariableOrBuilder() {
+      return environmentVariable_ == null ? io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance() : environmentVariable_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (((bitField0_ & 0x00000001) != 0)) {
+        output.writeMessage(1, getEnvironmentVariable());
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, getEnvironmentVariable());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse other = (io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse) obj;
+
+      if (hasEnvironmentVariable() != other.hasEnvironmentVariable()) return false;
+      if (hasEnvironmentVariable()) {
+        if (!getEnvironmentVariable()
+            .equals(other.getEnvironmentVariable())) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasEnvironmentVariable()) {
+        hash = (37 * hash) + ENVIRONMENT_VARIABLE_FIELD_NUMBER;
+        hash = (53 * hash) + getEnvironmentVariable().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.UpdateOrganizationEnvironmentVariableResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.UpdateOrganizationEnvironmentVariableResponse)
+        io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse.class, io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage
+                .alwaysUseFieldBuilders) {
+          getEnvironmentVariableFieldBuilder();
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        environmentVariable_ = null;
+        if (environmentVariableBuilder_ != null) {
+          environmentVariableBuilder_.dispose();
+          environmentVariableBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse build() {
+        io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse buildPartial() {
+        io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse result = new io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse result) {
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.environmentVariable_ = environmentVariableBuilder_ == null
+              ? environmentVariable_
+              : environmentVariableBuilder_.build();
+          to_bitField0_ |= 0x00000001;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse) {
+          return mergeFrom((io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse other) {
+        if (other == io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse.getDefaultInstance()) return this;
+        if (other.hasEnvironmentVariable()) {
+          mergeEnvironmentVariable(other.getEnvironmentVariable());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                input.readMessage(
+                    getEnvironmentVariableFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable environmentVariable_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder> environmentVariableBuilder_;
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       * @return Whether the environmentVariable field is set.
+       */
+      public boolean hasEnvironmentVariable() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       * @return The environmentVariable.
+       */
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getEnvironmentVariable() {
+        if (environmentVariableBuilder_ == null) {
+          return environmentVariable_ == null ? io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance() : environmentVariable_;
+        } else {
+          return environmentVariableBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public Builder setEnvironmentVariable(io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable value) {
+        if (environmentVariableBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          environmentVariable_ = value;
+        } else {
+          environmentVariableBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public Builder setEnvironmentVariable(
+          io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder builderForValue) {
+        if (environmentVariableBuilder_ == null) {
+          environmentVariable_ = builderForValue.build();
+        } else {
+          environmentVariableBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public Builder mergeEnvironmentVariable(io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable value) {
+        if (environmentVariableBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) != 0) &&
+            environmentVariable_ != null &&
+            environmentVariable_ != io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance()) {
+            getEnvironmentVariableBuilder().mergeFrom(value);
+          } else {
+            environmentVariable_ = value;
+          }
+        } else {
+          environmentVariableBuilder_.mergeFrom(value);
+        }
+        if (environmentVariable_ != null) {
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public Builder clearEnvironmentVariable() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        environmentVariable_ = null;
+        if (environmentVariableBuilder_ != null) {
+          environmentVariableBuilder_.dispose();
+          environmentVariableBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder getEnvironmentVariableBuilder() {
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return getEnvironmentVariableFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder getEnvironmentVariableOrBuilder() {
+        if (environmentVariableBuilder_ != null) {
+          return environmentVariableBuilder_.getMessageOrBuilder();
+        } else {
+          return environmentVariable_ == null ?
+              io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance() : environmentVariable_;
+        }
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder>
+          getEnvironmentVariableFieldBuilder() {
+        if (environmentVariableBuilder_ == null) {
+          environmentVariableBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder>(
+                  getEnvironmentVariable(),
+                  getParentForChildren(),
+                  isClean());
+          environmentVariable_ = null;
+        }
+        return environmentVariableBuilder_;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.UpdateOrganizationEnvironmentVariableResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.UpdateOrganizationEnvironmentVariableResponse)
+    private static final io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse();
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<UpdateOrganizationEnvironmentVariableResponse>
+        PARSER = new com.google.protobuf.AbstractParser<UpdateOrganizationEnvironmentVariableResponse>() {
+      @java.lang.Override
+      public UpdateOrganizationEnvironmentVariableResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<UpdateOrganizationEnvironmentVariableResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<UpdateOrganizationEnvironmentVariableResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.UpdateOrganizationEnvironmentVariableResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface CreateOrganizationEnvironmentVariableRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.CreateOrganizationEnvironmentVariableRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    java.lang.String getOrganizationId();
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    com.google.protobuf.ByteString
+        getOrganizationIdBytes();
+
+    /**
+     * <code>string name = 2 [json_name = "name"];</code>
+     * @return The name.
+     */
+    java.lang.String getName();
+    /**
+     * <code>string name = 2 [json_name = "name"];</code>
+     * @return The bytes for name.
+     */
+    com.google.protobuf.ByteString
+        getNameBytes();
+
+    /**
+     * <code>string value = 3 [json_name = "value"];</code>
+     * @return The value.
+     */
+    java.lang.String getValue();
+    /**
+     * <code>string value = 3 [json_name = "value"];</code>
+     * @return The bytes for value.
+     */
+    com.google.protobuf.ByteString
+        getValueBytes();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.CreateOrganizationEnvironmentVariableRequest}
+   */
+  public static final class CreateOrganizationEnvironmentVariableRequest extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.CreateOrganizationEnvironmentVariableRequest)
+      CreateOrganizationEnvironmentVariableRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        CreateOrganizationEnvironmentVariableRequest.class.getName());
+    }
+    // Use CreateOrganizationEnvironmentVariableRequest.newBuilder() to construct.
+    private CreateOrganizationEnvironmentVariableRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private CreateOrganizationEnvironmentVariableRequest() {
+      organizationId_ = "";
+      name_ = "";
+      value_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest.class, io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest.Builder.class);
+    }
+
+    public static final int ORGANIZATION_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object organizationId_ = "";
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    @java.lang.Override
+    public java.lang.String getOrganizationId() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        organizationId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getOrganizationIdBytes() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        organizationId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int NAME_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object name_ = "";
+    /**
+     * <code>string name = 2 [json_name = "name"];</code>
+     * @return The name.
+     */
+    @java.lang.Override
+    public java.lang.String getName() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        name_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string name = 2 [json_name = "name"];</code>
+     * @return The bytes for name.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getNameBytes() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        name_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int VALUE_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object value_ = "";
+    /**
+     * <code>string value = 3 [json_name = "value"];</code>
+     * @return The value.
+     */
+    @java.lang.Override
+    public java.lang.String getValue() {
+      java.lang.Object ref = value_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        value_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string value = 3 [json_name = "value"];</code>
+     * @return The bytes for value.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getValueBytes() {
+      java.lang.Object ref = value_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        value_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, organizationId_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(name_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, name_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(value_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 3, value_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, organizationId_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(name_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, name_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(value_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(3, value_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest other = (io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest) obj;
+
+      if (!getOrganizationId()
+          .equals(other.getOrganizationId())) return false;
+      if (!getName()
+          .equals(other.getName())) return false;
+      if (!getValue()
+          .equals(other.getValue())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ORGANIZATION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getOrganizationId().hashCode();
+      hash = (37 * hash) + NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getName().hashCode();
+      hash = (37 * hash) + VALUE_FIELD_NUMBER;
+      hash = (53 * hash) + getValue().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.CreateOrganizationEnvironmentVariableRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.CreateOrganizationEnvironmentVariableRequest)
+        io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest.class, io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        organizationId_ = "";
+        name_ = "";
+        value_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest build() {
+        io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest buildPartial() {
+        io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest result = new io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.organizationId_ = organizationId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.name_ = name_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.value_ = value_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest) {
+          return mergeFrom((io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest other) {
+        if (other == io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest.getDefaultInstance()) return this;
+        if (!other.getOrganizationId().isEmpty()) {
+          organizationId_ = other.organizationId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.getName().isEmpty()) {
+          name_ = other.name_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getValue().isEmpty()) {
+          value_ = other.value_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                organizationId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                name_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                value_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object organizationId_ = "";
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The organizationId.
+       */
+      public java.lang.String getOrganizationId() {
+        java.lang.Object ref = organizationId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          organizationId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The bytes for organizationId.
+       */
+      public com.google.protobuf.ByteString
+          getOrganizationIdBytes() {
+        java.lang.Object ref = organizationId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          organizationId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOrganizationId() {
+        organizationId_ = getDefaultInstance().getOrganizationId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The bytes for organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object name_ = "";
+      /**
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @return The name.
+       */
+      public java.lang.String getName() {
+        java.lang.Object ref = name_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          name_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @return The bytes for name.
+       */
+      public com.google.protobuf.ByteString
+          getNameBytes() {
+        java.lang.Object ref = name_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          name_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @param value The name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setName(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        name_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearName() {
+        name_ = getDefaultInstance().getName();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string name = 2 [json_name = "name"];</code>
+       * @param value The bytes for name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        name_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object value_ = "";
+      /**
+       * <code>string value = 3 [json_name = "value"];</code>
+       * @return The value.
+       */
+      public java.lang.String getValue() {
+        java.lang.Object ref = value_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          value_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string value = 3 [json_name = "value"];</code>
+       * @return The bytes for value.
+       */
+      public com.google.protobuf.ByteString
+          getValueBytes() {
+        java.lang.Object ref = value_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          value_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string value = 3 [json_name = "value"];</code>
+       * @param value The value to set.
+       * @return This builder for chaining.
+       */
+      public Builder setValue(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        value_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string value = 3 [json_name = "value"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearValue() {
+        value_ = getDefaultInstance().getValue();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string value = 3 [json_name = "value"];</code>
+       * @param value The bytes for value to set.
+       * @return This builder for chaining.
+       */
+      public Builder setValueBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        value_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.CreateOrganizationEnvironmentVariableRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.CreateOrganizationEnvironmentVariableRequest)
+    private static final io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest();
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<CreateOrganizationEnvironmentVariableRequest>
+        PARSER = new com.google.protobuf.AbstractParser<CreateOrganizationEnvironmentVariableRequest>() {
+      @java.lang.Override
+      public CreateOrganizationEnvironmentVariableRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<CreateOrganizationEnvironmentVariableRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<CreateOrganizationEnvironmentVariableRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface CreateOrganizationEnvironmentVariableResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.CreateOrganizationEnvironmentVariableResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     * @return Whether the environmentVariable field is set.
+     */
+    boolean hasEnvironmentVariable();
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     * @return The environmentVariable.
+     */
+    io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getEnvironmentVariable();
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     */
+    io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder getEnvironmentVariableOrBuilder();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.CreateOrganizationEnvironmentVariableResponse}
+   */
+  public static final class CreateOrganizationEnvironmentVariableResponse extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.CreateOrganizationEnvironmentVariableResponse)
+      CreateOrganizationEnvironmentVariableResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        CreateOrganizationEnvironmentVariableResponse.class.getName());
+    }
+    // Use CreateOrganizationEnvironmentVariableResponse.newBuilder() to construct.
+    private CreateOrganizationEnvironmentVariableResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private CreateOrganizationEnvironmentVariableResponse() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse.class, io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int ENVIRONMENT_VARIABLE_FIELD_NUMBER = 1;
+    private io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable environmentVariable_;
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     * @return Whether the environmentVariable field is set.
+     */
+    @java.lang.Override
+    public boolean hasEnvironmentVariable() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     * @return The environmentVariable.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getEnvironmentVariable() {
+      return environmentVariable_ == null ? io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance() : environmentVariable_;
+    }
+    /**
+     * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder getEnvironmentVariableOrBuilder() {
+      return environmentVariable_ == null ? io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance() : environmentVariable_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (((bitField0_ & 0x00000001) != 0)) {
+        output.writeMessage(1, getEnvironmentVariable());
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, getEnvironmentVariable());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse other = (io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse) obj;
+
+      if (hasEnvironmentVariable() != other.hasEnvironmentVariable()) return false;
+      if (hasEnvironmentVariable()) {
+        if (!getEnvironmentVariable()
+            .equals(other.getEnvironmentVariable())) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (hasEnvironmentVariable()) {
+        hash = (37 * hash) + ENVIRONMENT_VARIABLE_FIELD_NUMBER;
+        hash = (53 * hash) + getEnvironmentVariable().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.CreateOrganizationEnvironmentVariableResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.CreateOrganizationEnvironmentVariableResponse)
+        io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse.class, io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage
+                .alwaysUseFieldBuilders) {
+          getEnvironmentVariableFieldBuilder();
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        environmentVariable_ = null;
+        if (environmentVariableBuilder_ != null) {
+          environmentVariableBuilder_.dispose();
+          environmentVariableBuilder_ = null;
+        }
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse build() {
+        io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse buildPartial() {
+        io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse result = new io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse result) {
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.environmentVariable_ = environmentVariableBuilder_ == null
+              ? environmentVariable_
+              : environmentVariableBuilder_.build();
+          to_bitField0_ |= 0x00000001;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse) {
+          return mergeFrom((io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse other) {
+        if (other == io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse.getDefaultInstance()) return this;
+        if (other.hasEnvironmentVariable()) {
+          mergeEnvironmentVariable(other.getEnvironmentVariable());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                input.readMessage(
+                    getEnvironmentVariableFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable environmentVariable_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder> environmentVariableBuilder_;
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       * @return Whether the environmentVariable field is set.
+       */
+      public boolean hasEnvironmentVariable() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       * @return The environmentVariable.
+       */
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable getEnvironmentVariable() {
+        if (environmentVariableBuilder_ == null) {
+          return environmentVariable_ == null ? io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance() : environmentVariable_;
+        } else {
+          return environmentVariableBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public Builder setEnvironmentVariable(io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable value) {
+        if (environmentVariableBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          environmentVariable_ = value;
+        } else {
+          environmentVariableBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public Builder setEnvironmentVariable(
+          io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder builderForValue) {
+        if (environmentVariableBuilder_ == null) {
+          environmentVariable_ = builderForValue.build();
+        } else {
+          environmentVariableBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public Builder mergeEnvironmentVariable(io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable value) {
+        if (environmentVariableBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) != 0) &&
+            environmentVariable_ != null &&
+            environmentVariable_ != io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance()) {
+            getEnvironmentVariableBuilder().mergeFrom(value);
+          } else {
+            environmentVariable_ = value;
+          }
+        } else {
+          environmentVariableBuilder_.mergeFrom(value);
+        }
+        if (environmentVariable_ != null) {
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public Builder clearEnvironmentVariable() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        environmentVariable_ = null;
+        if (environmentVariableBuilder_ != null) {
+          environmentVariableBuilder_.dispose();
+          environmentVariableBuilder_ = null;
+        }
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder getEnvironmentVariableBuilder() {
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return getEnvironmentVariableFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      public io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder getEnvironmentVariableOrBuilder() {
+        if (environmentVariableBuilder_ != null) {
+          return environmentVariableBuilder_.getMessageOrBuilder();
+        } else {
+          return environmentVariable_ == null ?
+              io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.getDefaultInstance() : environmentVariable_;
+        }
+      }
+      /**
+       * <code>.gitpod.v1.OrganizationEnvironmentVariable environment_variable = 1 [json_name = "environmentVariable"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder>
+          getEnvironmentVariableFieldBuilder() {
+        if (environmentVariableBuilder_ == null) {
+          environmentVariableBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariable.Builder, io.gitpod.publicapi.v1.Envvar.OrganizationEnvironmentVariableOrBuilder>(
+                  getEnvironmentVariable(),
+                  getParentForChildren(),
+                  isClean());
+          environmentVariable_ = null;
+        }
+        return environmentVariableBuilder_;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.CreateOrganizationEnvironmentVariableResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.CreateOrganizationEnvironmentVariableResponse)
+    private static final io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse();
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<CreateOrganizationEnvironmentVariableResponse>
+        PARSER = new com.google.protobuf.AbstractParser<CreateOrganizationEnvironmentVariableResponse>() {
+      @java.lang.Override
+      public CreateOrganizationEnvironmentVariableResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<CreateOrganizationEnvironmentVariableResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<CreateOrganizationEnvironmentVariableResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.CreateOrganizationEnvironmentVariableResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface DeleteOrganizationEnvironmentVariableRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.DeleteOrganizationEnvironmentVariableRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string environment_variable_id = 1 [json_name = "environmentVariableId"];</code>
+     * @return The environmentVariableId.
+     */
+    java.lang.String getEnvironmentVariableId();
+    /**
+     * <code>string environment_variable_id = 1 [json_name = "environmentVariableId"];</code>
+     * @return The bytes for environmentVariableId.
+     */
+    com.google.protobuf.ByteString
+        getEnvironmentVariableIdBytes();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.DeleteOrganizationEnvironmentVariableRequest}
+   */
+  public static final class DeleteOrganizationEnvironmentVariableRequest extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.DeleteOrganizationEnvironmentVariableRequest)
+      DeleteOrganizationEnvironmentVariableRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        DeleteOrganizationEnvironmentVariableRequest.class.getName());
+    }
+    // Use DeleteOrganizationEnvironmentVariableRequest.newBuilder() to construct.
+    private DeleteOrganizationEnvironmentVariableRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private DeleteOrganizationEnvironmentVariableRequest() {
+      environmentVariableId_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest.class, io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest.Builder.class);
+    }
+
+    public static final int ENVIRONMENT_VARIABLE_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object environmentVariableId_ = "";
+    /**
+     * <code>string environment_variable_id = 1 [json_name = "environmentVariableId"];</code>
+     * @return The environmentVariableId.
+     */
+    @java.lang.Override
+    public java.lang.String getEnvironmentVariableId() {
+      java.lang.Object ref = environmentVariableId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        environmentVariableId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string environment_variable_id = 1 [json_name = "environmentVariableId"];</code>
+     * @return The bytes for environmentVariableId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getEnvironmentVariableIdBytes() {
+      java.lang.Object ref = environmentVariableId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        environmentVariableId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(environmentVariableId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, environmentVariableId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(environmentVariableId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, environmentVariableId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest other = (io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest) obj;
+
+      if (!getEnvironmentVariableId()
+          .equals(other.getEnvironmentVariableId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ENVIRONMENT_VARIABLE_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getEnvironmentVariableId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.DeleteOrganizationEnvironmentVariableRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.DeleteOrganizationEnvironmentVariableRequest)
+        io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest.class, io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        environmentVariableId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest build() {
+        io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest buildPartial() {
+        io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest result = new io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.environmentVariableId_ = environmentVariableId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest) {
+          return mergeFrom((io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest other) {
+        if (other == io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest.getDefaultInstance()) return this;
+        if (!other.getEnvironmentVariableId().isEmpty()) {
+          environmentVariableId_ = other.environmentVariableId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                environmentVariableId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object environmentVariableId_ = "";
+      /**
+       * <code>string environment_variable_id = 1 [json_name = "environmentVariableId"];</code>
+       * @return The environmentVariableId.
+       */
+      public java.lang.String getEnvironmentVariableId() {
+        java.lang.Object ref = environmentVariableId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          environmentVariableId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string environment_variable_id = 1 [json_name = "environmentVariableId"];</code>
+       * @return The bytes for environmentVariableId.
+       */
+      public com.google.protobuf.ByteString
+          getEnvironmentVariableIdBytes() {
+        java.lang.Object ref = environmentVariableId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          environmentVariableId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string environment_variable_id = 1 [json_name = "environmentVariableId"];</code>
+       * @param value The environmentVariableId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEnvironmentVariableId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        environmentVariableId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string environment_variable_id = 1 [json_name = "environmentVariableId"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearEnvironmentVariableId() {
+        environmentVariableId_ = getDefaultInstance().getEnvironmentVariableId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string environment_variable_id = 1 [json_name = "environmentVariableId"];</code>
+       * @param value The bytes for environmentVariableId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEnvironmentVariableIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        environmentVariableId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.DeleteOrganizationEnvironmentVariableRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.DeleteOrganizationEnvironmentVariableRequest)
+    private static final io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest();
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<DeleteOrganizationEnvironmentVariableRequest>
+        PARSER = new com.google.protobuf.AbstractParser<DeleteOrganizationEnvironmentVariableRequest>() {
+      @java.lang.Override
+      public DeleteOrganizationEnvironmentVariableRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<DeleteOrganizationEnvironmentVariableRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<DeleteOrganizationEnvironmentVariableRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface DeleteOrganizationEnvironmentVariableResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.DeleteOrganizationEnvironmentVariableResponse)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.DeleteOrganizationEnvironmentVariableResponse}
+   */
+  public static final class DeleteOrganizationEnvironmentVariableResponse extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.DeleteOrganizationEnvironmentVariableResponse)
+      DeleteOrganizationEnvironmentVariableResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        DeleteOrganizationEnvironmentVariableResponse.class.getName());
+    }
+    // Use DeleteOrganizationEnvironmentVariableResponse.newBuilder() to construct.
+    private DeleteOrganizationEnvironmentVariableResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private DeleteOrganizationEnvironmentVariableResponse() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse.class, io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse other = (io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse) obj;
+
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.DeleteOrganizationEnvironmentVariableResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.DeleteOrganizationEnvironmentVariableResponse)
+        io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse.class, io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Envvar.internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse build() {
+        io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse buildPartial() {
+        io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse result = new io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse) {
+          return mergeFrom((io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse other) {
+        if (other == io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.DeleteOrganizationEnvironmentVariableResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.DeleteOrganizationEnvironmentVariableResponse)
+    private static final io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse();
+    }
+
+    public static io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<DeleteOrganizationEnvironmentVariableResponse>
+        PARSER = new com.google.protobuf.AbstractParser<DeleteOrganizationEnvironmentVariableResponse>() {
+      @java.lang.Override
+      public DeleteOrganizationEnvironmentVariableResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<DeleteOrganizationEnvironmentVariableResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<DeleteOrganizationEnvironmentVariableResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Envvar.DeleteOrganizationEnvironmentVariableResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface ResolveWorkspaceEnvironmentVariablesRequestOrBuilder extends
       // @@protoc_insertion_point(interface_extends:gitpod.v1.ResolveWorkspaceEnvironmentVariablesRequest)
       com.google.protobuf.MessageOrBuilder {
@@ -15106,6 +21399,51 @@ public final class Envvar {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_DeleteConfigurationEnvironmentVariableResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_OrganizationEnvironmentVariable_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_OrganizationEnvironmentVariable_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_v1_ResolveWorkspaceEnvironmentVariablesRequest_descriptor;
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -15198,55 +21536,102 @@ public final class Envvar {
       "EnvironmentVariableRequest\0226\n\027environmen" +
       "t_variable_id\030\001 \001(\tR\025environmentVariable" +
       "Id\"0\n.DeleteConfigurationEnvironmentVari" +
-      "ableResponse\"P\n+ResolveWorkspaceEnvironm" +
-      "entVariablesRequest\022!\n\014workspace_id\030\001 \001(" +
-      "\tR\013workspaceId\"\203\001\n,ResolveWorkspaceEnvir" +
-      "onmentVariablesResponse\022S\n\025environment_v" +
-      "ariables\030\001 \003(\0132\036.gitpod.v1.EnvironmentVa" +
-      "riableR\024environmentVariables\"?\n\023Environm" +
-      "entVariable\022\022\n\004name\030\001 \001(\tR\004name\022\024\n\005value" +
-      "\030\002 \001(\tR\005value*\252\001\n\034EnvironmentVariableAdm" +
-      "ission\022.\n*ENVIRONMENT_VARIABLE_ADMISSION" +
-      "_UNSPECIFIED\020\000\022+\n\'ENVIRONMENT_VARIABLE_A" +
-      "DMISSION_PREBUILD\020\001\022-\n)ENVIRONMENT_VARIA" +
-      "BLE_ADMISSION_EVERYWHERE\020\0022\326\n\n\032Environme" +
-      "ntVariableService\022\201\001\n\034ListUserEnvironmen" +
-      "tVariables\022..gitpod.v1.ListUserEnvironme" +
-      "ntVariablesRequest\032/.gitpod.v1.ListUserE" +
-      "nvironmentVariablesResponse\"\000\022\204\001\n\035Update" +
-      "UserEnvironmentVariable\022/.gitpod.v1.Upda" +
-      "teUserEnvironmentVariableRequest\0320.gitpo" +
-      "d.v1.UpdateUserEnvironmentVariableRespon" +
-      "se\"\000\022\204\001\n\035CreateUserEnvironmentVariable\022/" +
-      ".gitpod.v1.CreateUserEnvironmentVariable" +
-      "Request\0320.gitpod.v1.CreateUserEnvironmen" +
-      "tVariableResponse\"\000\022\204\001\n\035DeleteUserEnviro" +
-      "nmentVariable\022/.gitpod.v1.DeleteUserEnvi" +
-      "ronmentVariableRequest\0320.gitpod.v1.Delet" +
-      "eUserEnvironmentVariableResponse\"\000\022\234\001\n%L" +
-      "istConfigurationEnvironmentVariables\0227.g" +
-      "itpod.v1.ListConfigurationEnvironmentVar" +
-      "iablesRequest\0328.gitpod.v1.ListConfigurat" +
-      "ionEnvironmentVariablesResponse\"\000\022\237\001\n&Up" +
-      "dateConfigurationEnvironmentVariable\0228.g" +
-      "itpod.v1.UpdateConfigurationEnvironmentV" +
-      "ariableRequest\0329.gitpod.v1.UpdateConfigu" +
-      "rationEnvironmentVariableResponse\"\000\022\237\001\n&" +
-      "CreateConfigurationEnvironmentVariable\0228" +
-      ".gitpod.v1.CreateConfigurationEnvironmen" +
-      "tVariableRequest\0329.gitpod.v1.CreateConfi" +
-      "gurationEnvironmentVariableResponse\"\000\022\237\001" +
-      "\n&DeleteConfigurationEnvironmentVariable" +
-      "\0228.gitpod.v1.DeleteConfigurationEnvironm" +
-      "entVariableRequest\0329.gitpod.v1.DeleteCon" +
-      "figurationEnvironmentVariableResponse\"\000\022" +
-      "\231\001\n$ResolveWorkspaceEnvironmentVariables" +
-      "\0226.gitpod.v1.ResolveWorkspaceEnvironment" +
-      "VariablesRequest\0327.gitpod.v1.ResolveWork" +
-      "spaceEnvironmentVariablesResponse\"\000BQ\n\026i" +
-      "o.gitpod.publicapi.v1Z7github.com/gitpod" +
-      "-io/gitpod/components/public-api/go/v1b\006" +
-      "proto3"
+      "ableResponse\"n\n\037OrganizationEnvironmentV" +
+      "ariable\022\016\n\002id\030\001 \001(\tR\002id\022\022\n\004name\030\002 \001(\tR\004n" +
+      "ame\022\'\n\017organization_id\030\003 \001(\tR\016organizati" +
+      "onId\"\224\001\n+ListOrganizationEnvironmentVari" +
+      "ablesRequest\022\'\n\017organization_id\030\001 \001(\tR\016o" +
+      "rganizationId\022<\n\npagination\030\002 \001(\0132\034.gitp" +
+      "od.v1.PaginationRequestR\npagination\"\316\001\n," +
+      "ListOrganizationEnvironmentVariablesResp" +
+      "onse\022_\n\025environment_variables\030\001 \003(\0132*.gi" +
+      "tpod.v1.OrganizationEnvironmentVariableR" +
+      "\024environmentVariables\022=\n\npagination\030\002 \001(" +
+      "\0132\035.gitpod.v1.PaginationResponseR\npagina" +
+      "tion\"\326\001\n,UpdateOrganizationEnvironmentVa" +
+      "riableRequest\022\'\n\017organization_id\030\001 \001(\tR\016" +
+      "organizationId\0226\n\027environment_variable_i" +
+      "d\030\002 \001(\tR\025environmentVariableId\022\027\n\004name\030\003" +
+      " \001(\tH\000R\004name\210\001\001\022\031\n\005value\030\004 \001(\tH\001R\005value\210" +
+      "\001\001B\007\n\005_nameB\010\n\006_value\"\216\001\n-UpdateOrganiza" +
+      "tionEnvironmentVariableResponse\022]\n\024envir" +
+      "onment_variable\030\001 \001(\0132*.gitpod.v1.Organi" +
+      "zationEnvironmentVariableR\023environmentVa" +
+      "riable\"\201\001\n,CreateOrganizationEnvironment" +
+      "VariableRequest\022\'\n\017organization_id\030\001 \001(\t" +
+      "R\016organizationId\022\022\n\004name\030\002 \001(\tR\004name\022\024\n\005" +
+      "value\030\003 \001(\tR\005value\"\216\001\n-CreateOrganizatio" +
+      "nEnvironmentVariableResponse\022]\n\024environm" +
+      "ent_variable\030\001 \001(\0132*.gitpod.v1.Organizat" +
+      "ionEnvironmentVariableR\023environmentVaria" +
+      "ble\"f\n,DeleteOrganizationEnvironmentVari" +
+      "ableRequest\0226\n\027environment_variable_id\030\001" +
+      " \001(\tR\025environmentVariableId\"/\n-DeleteOrg" +
+      "anizationEnvironmentVariableResponse\"P\n+" +
+      "ResolveWorkspaceEnvironmentVariablesRequ" +
+      "est\022!\n\014workspace_id\030\001 \001(\tR\013workspaceId\"\203" +
+      "\001\n,ResolveWorkspaceEnvironmentVariablesR" +
+      "esponse\022S\n\025environment_variables\030\001 \003(\0132\036" +
+      ".gitpod.v1.EnvironmentVariableR\024environm" +
+      "entVariables\"?\n\023EnvironmentVariable\022\022\n\004n" +
+      "ame\030\001 \001(\tR\004name\022\024\n\005value\030\002 \001(\tR\005value*\252\001" +
+      "\n\034EnvironmentVariableAdmission\022.\n*ENVIRO" +
+      "NMENT_VARIABLE_ADMISSION_UNSPECIFIED\020\000\022+" +
+      "\n\'ENVIRONMENT_VARIABLE_ADMISSION_PREBUIL" +
+      "D\020\001\022-\n)ENVIRONMENT_VARIABLE_ADMISSION_EV" +
+      "ERYWHERE\020\0022\317\017\n\032EnvironmentVariableServic" +
+      "e\022\201\001\n\034ListUserEnvironmentVariables\022..git" +
+      "pod.v1.ListUserEnvironmentVariablesReque" +
+      "st\032/.gitpod.v1.ListUserEnvironmentVariab" +
+      "lesResponse\"\000\022\204\001\n\035UpdateUserEnvironmentV" +
+      "ariable\022/.gitpod.v1.UpdateUserEnvironmen" +
+      "tVariableRequest\0320.gitpod.v1.UpdateUserE" +
+      "nvironmentVariableResponse\"\000\022\204\001\n\035CreateU" +
+      "serEnvironmentVariable\022/.gitpod.v1.Creat" +
+      "eUserEnvironmentVariableRequest\0320.gitpod" +
+      ".v1.CreateUserEnvironmentVariableRespons" +
+      "e\"\000\022\204\001\n\035DeleteUserEnvironmentVariable\022/." +
+      "gitpod.v1.DeleteUserEnvironmentVariableR" +
+      "equest\0320.gitpod.v1.DeleteUserEnvironment" +
+      "VariableResponse\"\000\022\234\001\n%ListConfiguration" +
+      "EnvironmentVariables\0227.gitpod.v1.ListCon" +
+      "figurationEnvironmentVariablesRequest\0328." +
+      "gitpod.v1.ListConfigurationEnvironmentVa" +
+      "riablesResponse\"\000\022\237\001\n&UpdateConfiguratio" +
+      "nEnvironmentVariable\0228.gitpod.v1.UpdateC" +
+      "onfigurationEnvironmentVariableRequest\0329" +
+      ".gitpod.v1.UpdateConfigurationEnvironmen" +
+      "tVariableResponse\"\000\022\237\001\n&CreateConfigurat" +
+      "ionEnvironmentVariable\0228.gitpod.v1.Creat" +
+      "eConfigurationEnvironmentVariableRequest" +
+      "\0329.gitpod.v1.CreateConfigurationEnvironm" +
+      "entVariableResponse\"\000\022\237\001\n&DeleteConfigur" +
+      "ationEnvironmentVariable\0228.gitpod.v1.Del" +
+      "eteConfigurationEnvironmentVariableReque" +
+      "st\0329.gitpod.v1.DeleteConfigurationEnviro" +
+      "nmentVariableResponse\"\000\022\231\001\n$ListOrganiza" +
+      "tionEnvironmentVariables\0226.gitpod.v1.Lis" +
+      "tOrganizationEnvironmentVariablesRequest" +
+      "\0327.gitpod.v1.ListOrganizationEnvironment" +
+      "VariablesResponse\"\000\022\234\001\n%UpdateOrganizati" +
+      "onEnvironmentVariable\0227.gitpod.v1.Update" +
+      "OrganizationEnvironmentVariableRequest\0328" +
+      ".gitpod.v1.UpdateOrganizationEnvironment" +
+      "VariableResponse\"\000\022\234\001\n%CreateOrganizatio" +
+      "nEnvironmentVariable\0227.gitpod.v1.CreateO" +
+      "rganizationEnvironmentVariableRequest\0328." +
+      "gitpod.v1.CreateOrganizationEnvironmentV" +
+      "ariableResponse\"\000\022\234\001\n%DeleteOrganization" +
+      "EnvironmentVariable\0227.gitpod.v1.DeleteOr" +
+      "ganizationEnvironmentVariableRequest\0328.g" +
+      "itpod.v1.DeleteOrganizationEnvironmentVa" +
+      "riableResponse\"\000\022\231\001\n$ResolveWorkspaceEnv" +
+      "ironmentVariables\0226.gitpod.v1.ResolveWor" +
+      "kspaceEnvironmentVariablesRequest\0327.gitp" +
+      "od.v1.ResolveWorkspaceEnvironmentVariabl" +
+      "esResponse\"\000BQ\n\026io.gitpod.publicapi.v1Z7" +
+      "github.com/gitpod-io/gitpod/components/p" +
+      "ublic-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -15361,20 +21746,74 @@ public final class Envvar {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteConfigurationEnvironmentVariableResponse_descriptor,
         new java.lang.String[] { });
-    internal_static_gitpod_v1_ResolveWorkspaceEnvironmentVariablesRequest_descriptor =
+    internal_static_gitpod_v1_OrganizationEnvironmentVariable_descriptor =
       getDescriptor().getMessageTypes().get(18);
+    internal_static_gitpod_v1_OrganizationEnvironmentVariable_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_OrganizationEnvironmentVariable_descriptor,
+        new java.lang.String[] { "Id", "Name", "OrganizationId", });
+    internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesRequest_descriptor =
+      getDescriptor().getMessageTypes().get(19);
+    internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesRequest_descriptor,
+        new java.lang.String[] { "OrganizationId", "Pagination", });
+    internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesResponse_descriptor =
+      getDescriptor().getMessageTypes().get(20);
+    internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_ListOrganizationEnvironmentVariablesResponse_descriptor,
+        new java.lang.String[] { "EnvironmentVariables", "Pagination", });
+    internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableRequest_descriptor =
+      getDescriptor().getMessageTypes().get(21);
+    internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableRequest_descriptor,
+        new java.lang.String[] { "OrganizationId", "EnvironmentVariableId", "Name", "Value", });
+    internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableResponse_descriptor =
+      getDescriptor().getMessageTypes().get(22);
+    internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_UpdateOrganizationEnvironmentVariableResponse_descriptor,
+        new java.lang.String[] { "EnvironmentVariable", });
+    internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableRequest_descriptor =
+      getDescriptor().getMessageTypes().get(23);
+    internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableRequest_descriptor,
+        new java.lang.String[] { "OrganizationId", "Name", "Value", });
+    internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableResponse_descriptor =
+      getDescriptor().getMessageTypes().get(24);
+    internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_CreateOrganizationEnvironmentVariableResponse_descriptor,
+        new java.lang.String[] { "EnvironmentVariable", });
+    internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableRequest_descriptor =
+      getDescriptor().getMessageTypes().get(25);
+    internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableRequest_descriptor,
+        new java.lang.String[] { "EnvironmentVariableId", });
+    internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableResponse_descriptor =
+      getDescriptor().getMessageTypes().get(26);
+    internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_DeleteOrganizationEnvironmentVariableResponse_descriptor,
+        new java.lang.String[] { });
+    internal_static_gitpod_v1_ResolveWorkspaceEnvironmentVariablesRequest_descriptor =
+      getDescriptor().getMessageTypes().get(27);
     internal_static_gitpod_v1_ResolveWorkspaceEnvironmentVariablesRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ResolveWorkspaceEnvironmentVariablesRequest_descriptor,
         new java.lang.String[] { "WorkspaceId", });
     internal_static_gitpod_v1_ResolveWorkspaceEnvironmentVariablesResponse_descriptor =
-      getDescriptor().getMessageTypes().get(19);
+      getDescriptor().getMessageTypes().get(28);
     internal_static_gitpod_v1_ResolveWorkspaceEnvironmentVariablesResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_ResolveWorkspaceEnvironmentVariablesResponse_descriptor,
         new java.lang.String[] { "EnvironmentVariables", });
     internal_static_gitpod_v1_EnvironmentVariable_descriptor =
-      getDescriptor().getMessageTypes().get(20);
+      getDescriptor().getMessageTypes().get(29);
     internal_static_gitpod_v1_EnvironmentVariable_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_EnvironmentVariable_descriptor,

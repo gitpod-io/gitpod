@@ -80,6 +80,42 @@ public interface EnvironmentVariableServiceClientInterface {
       headers: Headers = emptyMap()):
       ResponseMessage<Envvar.DeleteConfigurationEnvironmentVariableResponse>
 
+  /**
+   *  ListOrganizationEnvironmentVariables returns all environment variables in
+   *  an organization.
+   */
+  public suspend
+      fun listOrganizationEnvironmentVariables(request: Envvar.ListOrganizationEnvironmentVariablesRequest,
+      headers: Headers = emptyMap()):
+      ResponseMessage<Envvar.ListOrganizationEnvironmentVariablesResponse>
+
+  /**
+   *  UpdateOrganizationEnvironmentVariable updates an environment variable in
+   *  an organization.
+   */
+  public suspend
+      fun updateOrganizationEnvironmentVariable(request: Envvar.UpdateOrganizationEnvironmentVariableRequest,
+      headers: Headers = emptyMap()):
+      ResponseMessage<Envvar.UpdateOrganizationEnvironmentVariableResponse>
+
+  /**
+   *  CreateOrganizationEnvironmentVariable creates a new environment variable
+   *  in an organization.
+   */
+  public suspend
+      fun createOrganizationEnvironmentVariable(request: Envvar.CreateOrganizationEnvironmentVariableRequest,
+      headers: Headers = emptyMap()):
+      ResponseMessage<Envvar.CreateOrganizationEnvironmentVariableResponse>
+
+  /**
+   *  DeleteOrganizationEnvironmentVariable deletes an environment variable in
+   *  an organization.
+   */
+  public suspend
+      fun deleteOrganizationEnvironmentVariable(request: Envvar.DeleteOrganizationEnvironmentVariableRequest,
+      headers: Headers = emptyMap()):
+      ResponseMessage<Envvar.DeleteOrganizationEnvironmentVariableResponse>
+
   public suspend
       fun resolveWorkspaceEnvironmentVariables(request: Envvar.ResolveWorkspaceEnvironmentVariablesRequest,
       headers: Headers = emptyMap()):
