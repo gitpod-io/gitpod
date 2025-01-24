@@ -10,7 +10,7 @@ import { columnExists } from "./helper/helper";
 const table = "d_b_org_settings";
 const newColumn = "annotateGitCommits";
 
-export class AddOrgSettingsCommitAnnotation1736951418625 implements MigrationInterface {
+export class AddOrgSettingsCommitAnnotation1737714449389 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (!(await columnExists(queryRunner, table, newColumn))) {
             await queryRunner.query(`ALTER TABLE ${table} ADD COLUMN ${newColumn} BOOLEAN DEFAULT FALSE`);
