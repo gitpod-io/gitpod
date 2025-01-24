@@ -347,6 +347,9 @@ type WorkspaceConfig struct {
 	ConfigcatEnabled bool `env:"GITPOD_CONFIGCAT_ENABLED"`
 
 	SSHGatewayCAPublicKey string `env:"GITPOD_SSH_CA_PUBLIC_KEY"`
+
+	// Comma-separated list of host:<base64ed user:password> pairs to authenticate against docker registries
+	GitpodImageAuth string `env:"GITPOD_IMAGE_AUTH"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.
