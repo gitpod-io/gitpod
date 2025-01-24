@@ -49,8 +49,8 @@ export const NamedOrganizationEnvvarItem = ({ disabled, organizationId, name, va
             <InputField disabled={disabled} className="w-full max-w-lg">
                 <div className="flex flex-col bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                     <div className="flex items-center justify-between">
-                        <div className="flex-1 flex items-center overflow-hidden h-8" title={value}>
-                            <span className="w-5 h-5 mr-1">
+                        <div className="flex-1 flex items-center overflow-hidden h-8 gap-2" title={value}>
+                            <span className="w-5 h-5">
                                 <Stack />
                             </span>
                             <span className="truncate font-medium text-gray-700 dark:text-gray-200">{name}</span>
