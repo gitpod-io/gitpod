@@ -226,7 +226,7 @@ abstract class AbstractGitpodClientProjectSessionTracker(private val project: Pr
     private fun trackEvent(eventName: String, props: Map<String, Any?>) {
         if (session == null) return
         manager.trackEvent(eventName, mapOf(
-                "sessionId" to session.clientId.value
+                "sessionId" to session?.clientId?.value
         ).plus(props))
     }
 }
