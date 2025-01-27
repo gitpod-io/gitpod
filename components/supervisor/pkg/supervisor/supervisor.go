@@ -189,6 +189,16 @@ func Run(options ...RunOption) {
 		return
 	}
 
+	var (
+		ideReady                       = newIDEReadyState(&cfg.IDE)
+		desktopIdeReady *ideReadyState = nil
+
+		cstate        = NewInMemoryContentState(cfg.RepoRoot)
+		gitpodService serverapi.APIInterface
+
+		notificationService = NewNotificationService()
+	)
+
 	endpoint, host, err := cfg.GitpodAPIEndpoint()
 	if err != nil {
 		log.WithError(err).Fatal("cannot find Gitpod API endpoint")
@@ -211,6 +221,14 @@ func Run(options ...RunOption) {
 	symlinkBinaries(cfg)
 
 	configureGit(cfg)
+	go func() {
+		<-cstate.ContentReady()
+		if cfg.CommitAnnotationEnabled && !cfg.isHeadless() {
+			if err := setupGitMessageHook(filepath.Join(cfg.RepoRoot, ".git", "hooks")); err != nil {
+				log.WithError(err).Error("cannot setup git message hook")
+			}
+		}
+	}()
 
 	telemetry := analytics.NewFromEnvironment()
 	defer telemetry.Close()
@@ -259,16 +277,6 @@ func Run(options ...RunOption) {
 	if cfg.isDebugWorkspace() {
 		internalPorts = append(internalPorts, debugProxyPort)
 	}
-
-	var (
-		ideReady                       = newIDEReadyState(&cfg.IDE)
-		desktopIdeReady *ideReadyState = nil
-
-		cstate        = NewInMemoryContentState(cfg.RepoRoot)
-		gitpodService serverapi.APIInterface
-
-		notificationService = NewNotificationService()
-	)
 
 	if !opts.RunGP {
 		gitpodService = serverapi.NewServerApiService(ctx, &serverapi.ServiceConfig{
@@ -818,13 +826,6 @@ func configureGit(cfg *Config) {
 		settings = append(settings, []string{"user.email", cfg.GitEmail})
 	}
 
-	if cfg.CommitAnnotationEnabled && !cfg.isHeadless() {
-		err := setupGitMessageHook(filepath.Join(cfg.RepoRoot, ".git", "hooks"))
-		if err != nil {
-			log.WithError(err).Error("cannot setup git message hook")
-		}
-	}
-
 	for _, s := range settings {
 		cmd := exec.Command("git", append([]string{"config", "--global"}, s...)...)
 		cmd = runAsGitpodUser(cmd)
@@ -850,7 +851,7 @@ func setupGitMessageHook(path string) error {
 	}
 
 	fn := filepath.Join(path, "prepare-commit-msg")
-	// do not override existing hooks. Relevant for workspaces based off of prebuilds, which might already have a hook.
+	// do not override existing hooks
 	if _, err := os.Stat(fn); err == nil {
 		return nil
 	}
