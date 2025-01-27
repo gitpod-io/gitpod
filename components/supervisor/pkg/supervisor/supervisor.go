@@ -220,15 +220,7 @@ func Run(options ...RunOption) {
 	}
 	symlinkBinaries(cfg)
 
-	configureGit(cfg)
-	go func() {
-		<-cstate.ContentReady()
-		if cfg.CommitAnnotationEnabled && !cfg.isHeadless() {
-			if err := setupGitMessageHook(filepath.Join(cfg.RepoRoot, ".git", "hooks")); err != nil {
-				log.WithError(err).Error("cannot setup git message hook")
-			}
-		}
-	}()
+	configureGit(cfg, cstate.ContentReady())
 
 	telemetry := analytics.NewFromEnvironment()
 	defer telemetry.Close()
@@ -812,7 +804,7 @@ func symlinkBinaries(cfg *Config) {
 	}
 }
 
-func configureGit(cfg *Config) {
+func configureGit(cfg *Config, contentReady <-chan struct{}) {
 	settings := [][]string{
 		{"push.default", "simple"},
 		{"alias.lg", "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"},
@@ -836,6 +828,15 @@ func configureGit(cfg *Config) {
 			log.WithError(err).WithField("args", s).Warn("git config error")
 		}
 	}
+
+	go func() {
+		<-contentReady
+		if cfg.CommitAnnotationEnabled && !cfg.isHeadless() {
+			if err := setupGitMessageHook(filepath.Join(cfg.RepoRoot, ".git", "hooks")); err != nil {
+				log.WithError(err).Error("cannot setup git message hook")
+			}
+		}
+	}()
 }
 
 const hookContent = `#!/bin/sh
