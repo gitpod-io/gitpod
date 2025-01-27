@@ -189,6 +189,16 @@ func Run(options ...RunOption) {
 		return
 	}
 
+	var (
+		ideReady                       = newIDEReadyState(&cfg.IDE)
+		desktopIdeReady *ideReadyState = nil
+
+		cstate        = NewInMemoryContentState(cfg.RepoRoot)
+		gitpodService serverapi.APIInterface
+
+		notificationService = NewNotificationService()
+	)
+
 	endpoint, host, err := cfg.GitpodAPIEndpoint()
 	if err != nil {
 		log.WithError(err).Fatal("cannot find Gitpod API endpoint")
@@ -210,7 +220,7 @@ func Run(options ...RunOption) {
 	}
 	symlinkBinaries(cfg)
 
-	configureGit(cfg)
+	configureGit(cfg, cstate.ContentReady())
 
 	telemetry := analytics.NewFromEnvironment()
 	defer telemetry.Close()
@@ -259,16 +269,6 @@ func Run(options ...RunOption) {
 	if cfg.isDebugWorkspace() {
 		internalPorts = append(internalPorts, debugProxyPort)
 	}
-
-	var (
-		ideReady                       = newIDEReadyState(&cfg.IDE)
-		desktopIdeReady *ideReadyState = nil
-
-		cstate        = NewInMemoryContentState(cfg.RepoRoot)
-		gitpodService serverapi.APIInterface
-
-		notificationService = NewNotificationService()
-	)
 
 	if !opts.RunGP {
 		gitpodService = serverapi.NewServerApiService(ctx, &serverapi.ServiceConfig{
@@ -804,7 +804,7 @@ func symlinkBinaries(cfg *Config) {
 	}
 }
 
-func configureGit(cfg *Config) {
+func configureGit(cfg *Config, contentReady <-chan struct{}) {
 	settings := [][]string{
 		{"push.default", "simple"},
 		{"alias.lg", "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"},
@@ -818,13 +818,6 @@ func configureGit(cfg *Config) {
 		settings = append(settings, []string{"user.email", cfg.GitEmail})
 	}
 
-	if cfg.CommitAnnotationEnabled {
-		err := setupGitMessageHook(filepath.Join(cfg.RepoRoot, ".git", "hooks"))
-		if err != nil {
-			log.WithError(err).Error("cannot setup git message hook")
-		}
-	}
-
 	for _, s := range settings {
 		cmd := exec.Command("git", append([]string{"config", "--global"}, s...)...)
 		cmd = runAsGitpodUser(cmd)
@@ -835,6 +828,15 @@ func configureGit(cfg *Config) {
 			log.WithError(err).WithField("args", s).Warn("git config error")
 		}
 	}
+
+	go func() {
+		<-contentReady
+		if cfg.CommitAnnotationEnabled && !cfg.isHeadless() {
+			if err := setupGitMessageHook(filepath.Join(cfg.RepoRoot, ".git", "hooks")); err != nil {
+				log.WithError(err).Error("cannot setup git message hook")
+			}
+		}
+	}()
 }
 
 const hookContent = `#!/bin/sh
@@ -847,11 +849,19 @@ func setupGitMessageHook(path string) error {
 	}
 
 	fn := filepath.Join(path, "prepare-commit-msg")
-	// do not override existing hooks. Relevant for workspaces based off of prebuilds, which might already have a hook.
+	// do not override existing hooks
 	if _, err := os.Stat(fn); err == nil {
 		return nil
 	}
 	if err := os.WriteFile(fn, []byte(hookContent), 0755); err != nil {
+		return err
+	}
+
+	// Change ownership of both path and file to the gitpod user
+	if err := os.Chown(path, gitpodUID, gitpodGID); err != nil {
+		return err
+	}
+	if err := os.Chown(fn, gitpodUID, gitpodGID); err != nil {
 		return err
 	}
 
