@@ -847,9 +847,6 @@ func setupGitMessageHook(path string) error {
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return err
 	}
-	if err := os.Chown(path, gitpodUID, gitpodGID); err != nil {
-		return err
-	}
 
 	fn := filepath.Join(path, "prepare-commit-msg")
 	// do not override existing hooks
@@ -857,6 +854,11 @@ func setupGitMessageHook(path string) error {
 		return nil
 	}
 	if err := os.WriteFile(fn, []byte(hookContent), 0755); err != nil {
+		return err
+	}
+
+	// Change ownership of both path and file to the gitpod user
+	if err := os.Chown(path, gitpodUID, gitpodGID); err != nil {
 		return err
 	}
 	if err := os.Chown(fn, gitpodUID, gitpodGID); err != nil {
