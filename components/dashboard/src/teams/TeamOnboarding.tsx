@@ -115,11 +115,13 @@ export default function TeamOnboardingPage() {
                 <ConfigurationSettingsField>
                     <Heading3>Suggested repositories</Heading3>
                     <Subheading>
-                        A list of repositories suggested to new organization members. To set them up, visit the{" "}
+                        A list of repositories suggested to new organization members. To manage recommended
+                        repositories, visit the{" "}
                         <Link to="/repositories" className="gp-link">
                             Repository settings
                         </Link>{" "}
-                        page and in the context menu of a repository in the list, select "Add to suggested repos".
+                        page and add / remove repositories from the list using the context menu on the corresponding
+                        repository's row.
                     </Subheading>
                     {(suggestedRepos ?? []).length > 0 && (
                         <Table className="mt-4">
