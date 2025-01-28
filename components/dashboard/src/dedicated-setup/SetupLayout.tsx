@@ -38,7 +38,7 @@ export const SetupLayout: FC<Props> = ({
         <div className="container">
             <div className="app-container">
                 <div className="flex justify-between items-center">
-                    <div className="flex items-center justify-start items-center py-3 space-x-1">
+                    <div className="flex items-center justify-start py-3 space-x-1">
                         <img src={gitpodIcon} className="w-6 h-6" alt="Gitpod's logo" />
                         {showOrg ? (
                             <div className="pr-1 flex font-semibold whitespace-nowrap max-w-xs overflow-hidden">
@@ -55,7 +55,7 @@ export const SetupLayout: FC<Props> = ({
                         )}
                     </div>
                 </div>
-                <div className={`mt-24 ${noMaxWidth ? "" : "max-w-md"}`}>
+                <div className={`mt-24 ${noMaxWidth ? "" : "max-w-md"} pb-4`}>
                     {/* generate the rounded dots for the progress  */}
                     {progressCurrent !== undefined && progressTotal !== undefined ? (
                         <div className="flex flex-row space-x-2 mb-4">

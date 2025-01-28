@@ -227,6 +227,28 @@ export default function TeamSettingsPage() {
                         />
                     </ConfigurationSettingsField>
 
+                    {org?.id && (
+                        <ConfigurationSettingsField>
+                            <Heading3>Docker Registry authentication</Heading3>
+                            <Subheading>Configure Docker registry permissions for the whole organization.</Subheading>
+
+                            <NamedOrganizationEnvvarItem
+                                disabled={!isOwner}
+                                name={EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME}
+                                organizationId={org.id}
+                                variable={gitpodImageAuthEnvVar}
+                            />
+                        </ConfigurationSettingsField>
+                    )}
+
+                    {showImageEditModal && (
+                        <OrgDefaultWorkspaceImageModal
+                            settings={settings}
+                            installationDefaultWorkspaceImage={installationDefaultImage}
+                            onClose={() => setShowImageEditModal(false)}
+                        />
+                    )}
+
                     {isCommitAnnotationEnabled && (
                         <ConfigurationSettingsField>
                             <Heading3>Insights</Heading3>
@@ -252,28 +274,6 @@ export default function TeamSettingsPage() {
                                     label=""
                                 />
                             </InputField>
-                        </ConfigurationSettingsField>
-                    )}
-
-                    {showImageEditModal && (
-                        <OrgDefaultWorkspaceImageModal
-                            settings={settings}
-                            installationDefaultWorkspaceImage={installationDefaultImage}
-                            onClose={() => setShowImageEditModal(false)}
-                        />
-                    )}
-
-                    {org?.id && (
-                        <ConfigurationSettingsField>
-                            <Heading3>Docker Registry authentication</Heading3>
-                            <Subheading>Configure Docker registry permissions for the whole organization.</Subheading>
-
-                            <NamedOrganizationEnvvarItem
-                                disabled={!isOwner}
-                                name={EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME}
-                                organizationId={org.id}
-                                variable={gitpodImageAuthEnvVar}
-                            />
                         </ConfigurationSettingsField>
                     )}
 
