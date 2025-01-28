@@ -91,7 +91,7 @@ export default function TeamOnboardingPage() {
                     <Subheading>Customize the onboarding experience for your organization members.</Subheading>
                 </div>
                 <ConfigurationSettingsField>
-                    <Heading3>Internal dashboard</Heading3>
+                    <Heading3>Internal landing page</Heading3>
                     <Subheading>
                         The link to your internal landing page. This link will be shown to your organization members
                         during the onboarding process. You can disable showing a link by leaving this field empty.
