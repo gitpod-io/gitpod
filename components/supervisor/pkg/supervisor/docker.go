@@ -191,7 +191,13 @@ func listenToDockerSocket(parentCtx context.Context, term *terminal.Mux, cfg *Co
 			}
 
 			cmd := exec.CommandContext(ctx, "/usr/bin/docker-up")
-			cmd.Env = append(os.Environ(), "LISTEN_FDS=1")
+			// TODO(gpl): Why are we using os.Environ() in the first place, and not childProcEnvvars?
+			// Might be an oversight from times when we still passed all dockerupEnv vars as Pod dockerupEnv vars... otherwise I don't see why not use [] instead.
+			// But I'm not sure, so sticking with the slightly more verbose version here.
+			dockerupEnv := os.Environ()
+			dockerupEnv = append(dockerupEnv, fmt.Sprintf("GITPOD_IMAGE_AUTH=%s", cfg.GitpodImageAuth))
+			dockerupEnv = append(dockerupEnv, "LISTEN_FDS=1")
+			cmd.Env = dockerupEnv
 			cmd.ExtraFiles = []*os.File{socketFD}
 			cmd.Stdout = stdout
 			cmd.Stderr = stderr

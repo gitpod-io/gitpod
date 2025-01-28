@@ -593,7 +593,8 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 			"GITPOD_EXTERNAL_EXTENSIONS",
 			"GITPOD_WORKSPACE_CLASS_INFO",
 			"GITPOD_IDE_ALIAS",
-			"GITPOD_RLIMIT_CORE":
+			"GITPOD_RLIMIT_CORE",
+			"GITPOD_IMAGE_AUTH":
 			// these variables are allowed - don't skip them
 		default:
 			if strings.HasPrefix(e.Name, "GITPOD_") {
