@@ -12,6 +12,7 @@ import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organizat
 import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useOrgWorkspaceClassesQueryInvalidator } from "./org-workspace-classes-query";
 import { PlainMessage } from "@bufbuild/protobuf";
+import { useOrgRepoSuggestionsInvalidator } from "./suggested-repositories-query";
 
 type UpdateOrganizationSettingsArgs = Partial<
     Pick<
@@ -34,7 +35,8 @@ export const useUpdateOrgSettingsMutation = () => {
     const org = useCurrentOrg().data;
     const invalidateOrgSettings = useOrgSettingsQueryInvalidator();
     const invalidateWorkspaceClasses = useOrgWorkspaceClassesQueryInvalidator();
-    const teamId = org?.id ?? "";
+    const invalidateOrgRepoSuggestions = useOrgRepoSuggestionsInvalidator();
+    const organizationId = org?.id ?? "";
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
         mutationFn: async ({
@@ -51,7 +53,7 @@ export const useUpdateOrgSettingsMutation = () => {
             annotateGitCommits,
         }) => {
             const settings = await organizationClient.updateOrganizationSettings({
-                organizationId: teamId,
+                organizationId,
                 workspaceSharingDisabled: workspaceSharingDisabled ?? false,
                 defaultWorkspaceImage,
                 allowedWorkspaceClasses,
@@ -72,6 +74,7 @@ export const useUpdateOrgSettingsMutation = () => {
         onSuccess: () => {
             invalidateOrgSettings();
             invalidateWorkspaceClasses();
+            invalidateOrgRepoSuggestions();
         },
         onError: (err) => {
             if (!ErrorCode.isUserError((err as any)?.["code"])) {

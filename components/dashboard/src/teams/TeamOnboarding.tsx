@@ -19,6 +19,11 @@ import type { PlainMessage } from "@bufbuild/protobuf";
 import { InputField } from "../components/forms/InputField";
 import { TextInput } from "../components/forms/TextInputField";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { Link } from "react-router-dom";
+import { useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
+import { RepositoryListItem } from "../repositories/list/RepoListItem";
+import { LoadingState } from "@podkit/loading/LoadingState";
+import { Table, TableHeader, TableRow, TableHead, TableBody } from "@podkit/tables/Table";
 
 export default function TeamOnboardingPage() {
     useDocumentTitle("Organization Settings - Onboarding");
@@ -28,6 +33,8 @@ export default function TeamOnboardingPage() {
 
     const { data: settings } = useOrgSettingsQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
+
+    const { data: suggestedRepos, isLoading: isLoadingSuggestedRepos } = useOrgSuggestedRepos();
 
     const [internalLink, setInternalLink] = useState<string | undefined>(undefined);
 
@@ -60,9 +67,28 @@ export default function TeamOnboardingPage() {
         async (e: FormEvent) => {
             e.preventDefault();
 
-            await handleUpdateTeamSettings({ onboardingSettings: { internalLink } });
+            await handleUpdateTeamSettings({
+                onboardingSettings: {
+                    internalLink,
+                    recommendedRepositories: settings?.onboardingSettings?.recommendedRepositories ?? [],
+                },
+            });
         },
-        [handleUpdateTeamSettings, internalLink],
+        [handleUpdateTeamSettings, internalLink, settings?.onboardingSettings?.recommendedRepositories],
+    );
+
+    const removeRecommendedRepository = useCallback(
+        async (configurationId: string) => {
+            const newRepositories = new Set(settings?.onboardingSettings?.recommendedRepositories ?? []);
+            newRepositories.delete(configurationId);
+
+            await updateTeamSettings.mutateAsync({
+                onboardingSettings: {
+                    recommendedRepositories: [...newRepositories],
+                },
+            });
+        },
+        [settings?.onboardingSettings?.recommendedRepositories, updateTeamSettings],
     );
 
     useEffect(() => {
@@ -98,6 +124,52 @@ export default function TeamOnboardingPage() {
                             Save
                         </LoadingButton>
                     </form>
+                </ConfigurationSettingsField>
+
+                <ConfigurationSettingsField>
+                    <Heading3>Suggested repositories</Heading3>
+                    <Subheading>
+                        Repositories suggested to start workspaces from for new organization members. To set them up,
+                        visit the{" "}
+                        <Link to="/repositories" className="gp-link">
+                            Repository settings
+                        </Link>{" "}
+                        page and in the context menu of a repository in the list, select "Add to suggested repos".
+                    </Subheading>
+                    {(suggestedRepos ?? []).length > 0 && (
+                        <Table className="mt-4">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-52">Name</TableHead>
+                                    <TableHead hideOnSmallScreen>Repository</TableHead>
+                                    <TableHead className="w-32" hideOnSmallScreen>
+                                        Created
+                                    </TableHead>
+                                    <TableHead className="w-24" hideOnSmallScreen>
+                                        Prebuilds
+                                    </TableHead>
+                                    {/* Action column, loading status in header */}
+                                    <TableHead className="w-24 text-right">
+                                        {isLoadingSuggestedRepos && (
+                                            <div className="flex flex-right justify-end items-center">
+                                                <LoadingState delay={false} size={16} />
+                                            </div>
+                                        )}
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {(suggestedRepos ?? []).map((repo) => (
+                                    <RepositoryListItem
+                                        key={repo.configurationId}
+                                        configuration={repo.configuration}
+                                        isSuggested={true}
+                                        handleModifySuggestedRepository={removeRecommendedRepository}
+                                    />
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
                 </ConfigurationSettingsField>
             </div>
         </OrgSettingsPage>

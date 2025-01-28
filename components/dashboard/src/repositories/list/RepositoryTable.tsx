@@ -17,6 +17,8 @@ import { SortableTableHead, TableSortOrder } from "@podkit/tables/SortableTable"
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { Button } from "@podkit/buttons/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
+import { useUpdateOrgSettingsMutation } from "../../data/organizations/update-org-settings-mutation";
+import { useOrgSettingsQuery } from "../../data/organizations/org-settings-query";
 
 type Props = {
     configurations: Configuration[];
@@ -51,6 +53,24 @@ export const RepositoryTable: FC<Props> = ({
     onLoadNextPage,
     onSort,
 }) => {
+    const updateTeamSettings = useUpdateOrgSettingsMutation();
+    const { data: settings } = useOrgSettingsQuery();
+
+    const updateRecommendedRepository = async (configurationId: string, suggested: boolean) => {
+        const newRepositories = new Set(settings?.onboardingSettings?.recommendedRepositories ?? []);
+        if (suggested) {
+            newRepositories.add(configurationId);
+        } else {
+            newRepositories.delete(configurationId);
+        }
+
+        await updateTeamSettings.mutateAsync({
+            onboardingSettings: {
+                recommendedRepositories: [...newRepositories],
+            },
+        });
+    };
+
     return (
         <>
             {/* Search/Filter bar */}
@@ -118,7 +138,18 @@ export const RepositoryTable: FC<Props> = ({
                         </TableHeader>
                         <TableBody>
                             {configurations.map((configuration) => {
-                                return <RepositoryListItem key={configuration.id} configuration={configuration} />;
+                                return (
+                                    <RepositoryListItem
+                                        key={configuration.id}
+                                        configuration={configuration}
+                                        isSuggested={
+                                            settings?.onboardingSettings?.recommendedRepositories.includes(
+                                                configuration.id,
+                                            ) ?? false
+                                        }
+                                        handleModifySuggestedRepository={updateRecommendedRepository}
+                                    />
+                                );
                             })}
                         </TableBody>
                     </Table>
