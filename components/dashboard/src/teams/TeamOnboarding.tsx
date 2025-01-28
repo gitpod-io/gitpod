@@ -87,8 +87,8 @@ export default function TeamOnboardingPage() {
         <OrgSettingsPage>
             <div className="space-y-8">
                 <div>
-                    <Heading2>Policies</Heading2>
-                    <Subheading>Restrict workspace classes, editors and sharing across your organization.</Subheading>
+                    <Heading2>Onboarding</Heading2>
+                    <Subheading>Customize the onboarding experience for your organization members.</Subheading>
                 </div>
                 <ConfigurationSettingsField>
                     <Heading3>Internal dashboard</Heading3>
