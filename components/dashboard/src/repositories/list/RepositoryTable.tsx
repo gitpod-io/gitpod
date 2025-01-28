@@ -19,6 +19,7 @@ import { Button } from "@podkit/buttons/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
 import { useUpdateOrgSettingsMutation } from "../../data/organizations/update-org-settings-mutation";
 import { useOrgSettingsQuery } from "../../data/organizations/org-settings-query";
+import { useToast } from "../../components/toasts/Toasts";
 
 type Props = {
     configurations: Configuration[];
@@ -55,6 +56,7 @@ export const RepositoryTable: FC<Props> = ({
 }) => {
     const updateTeamSettings = useUpdateOrgSettingsMutation();
     const { data: settings } = useOrgSettingsQuery();
+    const { toast } = useToast();
 
     const updateRecommendedRepository = async (configurationId: string, suggested: boolean) => {
         const newRepositories = new Set(settings?.onboardingSettings?.recommendedRepositories ?? []);
@@ -64,11 +66,18 @@ export const RepositoryTable: FC<Props> = ({
             newRepositories.delete(configurationId);
         }
 
-        await updateTeamSettings.mutateAsync({
-            onboardingSettings: {
-                recommendedRepositories: [...newRepositories],
+        await updateTeamSettings.mutateAsync(
+            {
+                onboardingSettings: {
+                    recommendedRepositories: [...newRepositories],
+                },
             },
-        });
+            {
+                onError: (error) => {
+                    toast(`Failed to update recommended repositories: ${error.message}`);
+                },
+            },
+        );
     };
 
     return (
@@ -106,7 +115,7 @@ export const RepositoryTable: FC<Props> = ({
                         <TableHeader>
                             <TableRow>
                                 <SortableTableHead
-                                    className="w-52"
+                                    className="w-auto md:w-64"
                                     columnName="name"
                                     sortOrder={sortBy === "name" ? sortOrder : undefined}
                                     onSort={onSort}

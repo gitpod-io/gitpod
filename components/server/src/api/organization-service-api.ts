@@ -358,14 +358,14 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
                         "there can't be more than 3 recommendedRepositories",
                     );
                 }
-                for (const repo of req.onboardingSettings.recommendedRepositories) {
-                    if (!uuidValidate(repo)) {
+                for (const configurationId of req.onboardingSettings.recommendedRepositories) {
+                    if (!uuidValidate(configurationId)) {
                         throw new ApplicationError(ErrorCodes.BAD_REQUEST, "recommendedRepositories must be UUIDs");
                     }
 
-                    const project = await this.projectService.getProject(ctxUserId(), repo);
+                    const project = await this.projectService.getProject(ctxUserId(), configurationId);
                     if (!project) {
-                        throw new ApplicationError(ErrorCodes.BAD_REQUEST, `repository ${repo} not found`);
+                        throw new ApplicationError(ErrorCodes.BAD_REQUEST, `repository ${configurationId} not found`);
                     }
                 }
             }

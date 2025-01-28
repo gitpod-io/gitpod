@@ -77,20 +77,6 @@ export default function TeamOnboardingPage() {
         [handleUpdateTeamSettings, internalLink, settings?.onboardingSettings?.recommendedRepositories],
     );
 
-    const removeRecommendedRepository = useCallback(
-        async (configurationId: string) => {
-            const newRepositories = new Set(settings?.onboardingSettings?.recommendedRepositories ?? []);
-            newRepositories.delete(configurationId);
-
-            await updateTeamSettings.mutateAsync({
-                onboardingSettings: {
-                    recommendedRepositories: [...newRepositories],
-                },
-            });
-        },
-        [settings?.onboardingSettings?.recommendedRepositories, updateTeamSettings],
-    );
-
     useEffect(() => {
         if (settings) {
             setInternalLink(settings.onboardingSettings?.internalLink);
@@ -129,8 +115,7 @@ export default function TeamOnboardingPage() {
                 <ConfigurationSettingsField>
                     <Heading3>Suggested repositories</Heading3>
                     <Subheading>
-                        Repositories suggested to start workspaces from for new organization members. To set them up,
-                        visit the{" "}
+                        A list of repositories suggested to new organization members. To set them up, visit the{" "}
                         <Link to="/repositories" className="gp-link">
                             Repository settings
                         </Link>{" "}
@@ -164,7 +149,6 @@ export default function TeamOnboardingPage() {
                                         key={repo.configurationId}
                                         configuration={repo.configuration}
                                         isSuggested={true}
-                                        handleModifySuggestedRepository={removeRecommendedRepository}
                                     />
                                 ))}
                             </TableBody>
