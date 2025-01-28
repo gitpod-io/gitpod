@@ -271,6 +271,11 @@ export interface OnboardingSettings {
      * the link to an internal onboarding page for the organization, possibly featuring a custom onboarding guide and other resources
      */
     internalLink?: string;
+
+    /**
+     * the repository IDs of the repositories that are recommended for members to start with
+     */
+    recommendedRepositories?: string[];
 }
 
 export type TeamMemberInfo = OrgMemberInfo;

@@ -51,6 +51,8 @@ message RoleRestrictionEntry {
 message OnboardingSettings {
   // internal_link is the link to an internal onboarding page for the organization, possibly featuring a custom onboarding guide and other resources
   optional string internal_link = 1;
+  // recommended_repositories are the repositories that are recommended for new org members
+  repeated string recommended_repositories = 2;
 }
 
 message OrganizationSettings {

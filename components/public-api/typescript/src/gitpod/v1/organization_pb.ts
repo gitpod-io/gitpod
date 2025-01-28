@@ -254,6 +254,13 @@ export class OnboardingSettings extends Message<OnboardingSettings> {
    */
   internalLink?: string;
 
+  /**
+   * recommended_repositories are the repositories that are recommended for new org members
+   *
+   * @generated from field: repeated string recommended_repositories = 2;
+   */
+  recommendedRepositories: string[] = [];
+
   constructor(data?: PartialMessage<OnboardingSettings>) {
     super();
     proto3.util.initPartial(data, this);
@@ -263,6 +270,7 @@ export class OnboardingSettings extends Message<OnboardingSettings> {
   static readonly typeName = "gitpod.v1.OnboardingSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "internal_link", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 2, name: "recommended_repositories", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OnboardingSettings {
@@ -707,7 +715,7 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   onboardingSettings?: OnboardingSettings;
 
   /**
-   * annotate_git_commits specifies whether to annotate git commits with the gitpod host
+   * annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
    *
    * @generated from field: optional bool annotate_git_commits = 17;
    */

@@ -3553,6 +3553,47 @@ public final class OrganizationOuterClass {
      */
     com.google.protobuf.ByteString
         getInternalLinkBytes();
+
+    /**
+     * <pre>
+     * recommended_repositories are the repositories that are recommended for new org members
+     * </pre>
+     *
+     * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+     * @return A list containing the recommendedRepositories.
+     */
+    java.util.List<java.lang.String>
+        getRecommendedRepositoriesList();
+    /**
+     * <pre>
+     * recommended_repositories are the repositories that are recommended for new org members
+     * </pre>
+     *
+     * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+     * @return The count of recommendedRepositories.
+     */
+    int getRecommendedRepositoriesCount();
+    /**
+     * <pre>
+     * recommended_repositories are the repositories that are recommended for new org members
+     * </pre>
+     *
+     * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+     * @param index The index of the element to return.
+     * @return The recommendedRepositories at the given index.
+     */
+    java.lang.String getRecommendedRepositories(int index);
+    /**
+     * <pre>
+     * recommended_repositories are the repositories that are recommended for new org members
+     * </pre>
+     *
+     * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the recommendedRepositories at the given index.
+     */
+    com.google.protobuf.ByteString
+        getRecommendedRepositoriesBytes(int index);
   }
   /**
    * Protobuf type {@code gitpod.v1.OnboardingSettings}
@@ -3577,6 +3618,8 @@ public final class OrganizationOuterClass {
     }
     private OnboardingSettings() {
       internalLink_ = "";
+      recommendedRepositories_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -3652,6 +3695,59 @@ public final class OrganizationOuterClass {
       }
     }
 
+    public static final int RECOMMENDED_REPOSITORIES_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.LazyStringArrayList recommendedRepositories_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    /**
+     * <pre>
+     * recommended_repositories are the repositories that are recommended for new org members
+     * </pre>
+     *
+     * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+     * @return A list containing the recommendedRepositories.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getRecommendedRepositoriesList() {
+      return recommendedRepositories_;
+    }
+    /**
+     * <pre>
+     * recommended_repositories are the repositories that are recommended for new org members
+     * </pre>
+     *
+     * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+     * @return The count of recommendedRepositories.
+     */
+    public int getRecommendedRepositoriesCount() {
+      return recommendedRepositories_.size();
+    }
+    /**
+     * <pre>
+     * recommended_repositories are the repositories that are recommended for new org members
+     * </pre>
+     *
+     * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+     * @param index The index of the element to return.
+     * @return The recommendedRepositories at the given index.
+     */
+    public java.lang.String getRecommendedRepositories(int index) {
+      return recommendedRepositories_.get(index);
+    }
+    /**
+     * <pre>
+     * recommended_repositories are the repositories that are recommended for new org members
+     * </pre>
+     *
+     * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the recommendedRepositories at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getRecommendedRepositoriesBytes(int index) {
+      return recommendedRepositories_.getByteString(index);
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -3669,6 +3765,9 @@ public final class OrganizationOuterClass {
       if (((bitField0_ & 0x00000001) != 0)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 1, internalLink_);
       }
+      for (int i = 0; i < recommendedRepositories_.size(); i++) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, recommendedRepositories_.getRaw(i));
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -3680,6 +3779,14 @@ public final class OrganizationOuterClass {
       size = 0;
       if (((bitField0_ & 0x00000001) != 0)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(1, internalLink_);
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < recommendedRepositories_.size(); i++) {
+          dataSize += computeStringSizeNoTag(recommendedRepositories_.getRaw(i));
+        }
+        size += dataSize;
+        size += 1 * getRecommendedRepositoriesList().size();
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -3701,6 +3808,8 @@ public final class OrganizationOuterClass {
         if (!getInternalLink()
             .equals(other.getInternalLink())) return false;
       }
+      if (!getRecommendedRepositoriesList()
+          .equals(other.getRecommendedRepositoriesList())) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -3715,6 +3824,10 @@ public final class OrganizationOuterClass {
       if (hasInternalLink()) {
         hash = (37 * hash) + INTERNAL_LINK_FIELD_NUMBER;
         hash = (53 * hash) + getInternalLink().hashCode();
+      }
+      if (getRecommendedRepositoriesCount() > 0) {
+        hash = (37 * hash) + RECOMMENDED_REPOSITORIES_FIELD_NUMBER;
+        hash = (53 * hash) + getRecommendedRepositoriesList().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -3848,6 +3961,8 @@ public final class OrganizationOuterClass {
         super.clear();
         bitField0_ = 0;
         internalLink_ = "";
+        recommendedRepositories_ =
+            com.google.protobuf.LazyStringArrayList.emptyList();
         return this;
       }
 
@@ -3886,6 +4001,10 @@ public final class OrganizationOuterClass {
           result.internalLink_ = internalLink_;
           to_bitField0_ |= 0x00000001;
         }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          recommendedRepositories_.makeImmutable();
+          result.recommendedRepositories_ = recommendedRepositories_;
+        }
         result.bitField0_ |= to_bitField0_;
       }
 
@@ -3904,6 +4023,16 @@ public final class OrganizationOuterClass {
         if (other.hasInternalLink()) {
           internalLink_ = other.internalLink_;
           bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.recommendedRepositories_.isEmpty()) {
+          if (recommendedRepositories_.isEmpty()) {
+            recommendedRepositories_ = other.recommendedRepositories_;
+            bitField0_ |= 0x00000002;
+          } else {
+            ensureRecommendedRepositoriesIsMutable();
+            recommendedRepositories_.addAll(other.recommendedRepositories_);
+          }
           onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
@@ -3937,6 +4066,12 @@ public final class OrganizationOuterClass {
                 bitField0_ |= 0x00000001;
                 break;
               } // case 10
+              case 18: {
+                java.lang.String s = input.readStringRequireUtf8();
+                ensureRecommendedRepositoriesIsMutable();
+                recommendedRepositories_.add(s);
+                break;
+              } // case 18
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -4053,6 +4188,153 @@ public final class OrganizationOuterClass {
         checkByteStringIsUtf8(value);
         internalLink_ = value;
         bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.LazyStringArrayList recommendedRepositories_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
+      private void ensureRecommendedRepositoriesIsMutable() {
+        if (!recommendedRepositories_.isModifiable()) {
+          recommendedRepositories_ = new com.google.protobuf.LazyStringArrayList(recommendedRepositories_);
+        }
+        bitField0_ |= 0x00000002;
+      }
+      /**
+       * <pre>
+       * recommended_repositories are the repositories that are recommended for new org members
+       * </pre>
+       *
+       * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+       * @return A list containing the recommendedRepositories.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getRecommendedRepositoriesList() {
+        recommendedRepositories_.makeImmutable();
+        return recommendedRepositories_;
+      }
+      /**
+       * <pre>
+       * recommended_repositories are the repositories that are recommended for new org members
+       * </pre>
+       *
+       * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+       * @return The count of recommendedRepositories.
+       */
+      public int getRecommendedRepositoriesCount() {
+        return recommendedRepositories_.size();
+      }
+      /**
+       * <pre>
+       * recommended_repositories are the repositories that are recommended for new org members
+       * </pre>
+       *
+       * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+       * @param index The index of the element to return.
+       * @return The recommendedRepositories at the given index.
+       */
+      public java.lang.String getRecommendedRepositories(int index) {
+        return recommendedRepositories_.get(index);
+      }
+      /**
+       * <pre>
+       * recommended_repositories are the repositories that are recommended for new org members
+       * </pre>
+       *
+       * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the recommendedRepositories at the given index.
+       */
+      public com.google.protobuf.ByteString
+          getRecommendedRepositoriesBytes(int index) {
+        return recommendedRepositories_.getByteString(index);
+      }
+      /**
+       * <pre>
+       * recommended_repositories are the repositories that are recommended for new org members
+       * </pre>
+       *
+       * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+       * @param index The index to set the value at.
+       * @param value The recommendedRepositories to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRecommendedRepositories(
+          int index, java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureRecommendedRepositoriesIsMutable();
+        recommendedRepositories_.set(index, value);
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * recommended_repositories are the repositories that are recommended for new org members
+       * </pre>
+       *
+       * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+       * @param value The recommendedRepositories to add.
+       * @return This builder for chaining.
+       */
+      public Builder addRecommendedRepositories(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureRecommendedRepositoriesIsMutable();
+        recommendedRepositories_.add(value);
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * recommended_repositories are the repositories that are recommended for new org members
+       * </pre>
+       *
+       * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+       * @param values The recommendedRepositories to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllRecommendedRepositories(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureRecommendedRepositoriesIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, recommendedRepositories_);
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * recommended_repositories are the repositories that are recommended for new org members
+       * </pre>
+       *
+       * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRecommendedRepositories() {
+        recommendedRepositories_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000002);;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * recommended_repositories are the repositories that are recommended for new org members
+       * </pre>
+       *
+       * <code>repeated string recommended_repositories = 2 [json_name = "recommendedRepositories"];</code>
+       * @param value The bytes of the recommendedRepositories to add.
+       * @return This builder for chaining.
+       */
+      public Builder addRecommendedRepositoriesBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        ensureRecommendedRepositoriesIsMutable();
+        recommendedRepositories_.add(value);
+        bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
@@ -10808,7 +11090,7 @@ java.lang.String defaultValue);
 
     /**
      * <pre>
-     * annotate_git_commits specifies whether to annotate git commits with the gitpod host
+     * annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
      * </pre>
      *
      * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
@@ -10817,7 +11099,7 @@ java.lang.String defaultValue);
     boolean hasAnnotateGitCommits();
     /**
      * <pre>
-     * annotate_git_commits specifies whether to annotate git commits with the gitpod host
+     * annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
      * </pre>
      *
      * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
@@ -11521,7 +11803,7 @@ java.lang.String defaultValue) {
     private boolean annotateGitCommits_ = false;
     /**
      * <pre>
-     * annotate_git_commits specifies whether to annotate git commits with the gitpod host
+     * annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
      * </pre>
      *
      * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
@@ -11533,7 +11815,7 @@ java.lang.String defaultValue) {
     }
     /**
      * <pre>
-     * annotate_git_commits specifies whether to annotate git commits with the gitpod host
+     * annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
      * </pre>
      *
      * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
@@ -13992,7 +14274,7 @@ java.lang.String defaultValue) {
       private boolean annotateGitCommits_ ;
       /**
        * <pre>
-       * annotate_git_commits specifies whether to annotate git commits with the gitpod host
+       * annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
        * </pre>
        *
        * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
@@ -14004,7 +14286,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * annotate_git_commits specifies whether to annotate git commits with the gitpod host
+       * annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
        * </pre>
        *
        * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
@@ -14016,7 +14298,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * annotate_git_commits specifies whether to annotate git commits with the gitpod host
+       * annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
        * </pre>
        *
        * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
@@ -14032,7 +14314,7 @@ java.lang.String defaultValue) {
       }
       /**
        * <pre>
-       * annotate_git_commits specifies whether to annotate git commits with the gitpod host
+       * annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
        * </pre>
        *
        * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
@@ -29124,186 +29406,187 @@ java.lang.String defaultValue) {
       "leRestrictionEntry\022/\n\004role\030\001 \001(\0162\033.gitpo" +
       "d.v1.OrganizationRoleR\004role\022C\n\013permissio" +
       "ns\030\002 \003(\0162!.gitpod.v1.OrganizationPermiss" +
-      "ionR\013permissions\"P\n\022OnboardingSettings\022(" +
-      "\n\rinternal_link\030\001 \001(\tH\000R\014internalLink\210\001\001" +
-      "B\020\n\016_internal_link\"\273\006\n\024OrganizationSetti" +
-      "ngs\022<\n\032workspace_sharing_disabled\030\001 \001(\010R" +
-      "\030workspaceSharingDisabled\0226\n\027default_wor" +
-      "kspace_image\030\002 \001(\tR\025defaultWorkspaceImag" +
-      "e\022:\n\031allowed_workspace_classes\030\003 \003(\tR\027al" +
-      "lowedWorkspaceClasses\0226\n\027restricted_edit" +
-      "or_names\030\004 \003(\tR\025restrictedEditorNames\022o\n" +
-      "\026pinned_editor_versions\030\005 \003(\01329.gitpod.v" +
-      "1.OrganizationSettings.PinnedEditorVersi" +
-      "onsEntryR\024pinnedEditorVersions\022!\n\014defaul" +
-      "t_role\030\006 \001(\tR\013defaultRole\022E\n\020timeout_set" +
-      "tings\030\007 \001(\0132\032.gitpod.v1.TimeoutSettingsR" +
-      "\017timeoutSettings\022L\n\021role_restrictions\030\010 " +
-      "\003(\0132\037.gitpod.v1.RoleRestrictionEntryR\020ro" +
-      "leRestrictions\022E\n\037max_parallel_running_w" +
-      "orkspaces\030\t \001(\005R\034maxParallelRunningWorks" +
-      "paces\022N\n\023onboarding_settings\030\n \001(\0132\035.git" +
-      "pod.v1.OnboardingSettingsR\022onboardingSet" +
-      "tings\0220\n\024annotate_git_commits\030\013 \001(\010R\022ann" +
-      "otateGitCommits\032G\n\031PinnedEditorVersionsE" +
-      "ntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005v" +
-      "alue:\0028\001\"\220\001\n\'ListOrganizationWorkspaceCl" +
-      "assesRequest\022<\n\npagination\030\001 \001(\0132\034.gitpo" +
-      "d.v1.PaginationRequestR\npagination\022\'\n\017or" +
-      "ganization_id\030\002 \001(\tR\016organizationId\"\261\001\n(" +
-      "ListOrganizationWorkspaceClassesResponse" +
-      "\022=\n\npagination\030\001 \001(\0132\035.gitpod.v1.Paginat" +
-      "ionResponseR\npagination\022F\n\021workspace_cla" +
-      "sses\030\002 \003(\0132\031.gitpod.v1.WorkspaceClassR\020w" +
-      "orkspaceClasses\"f\n\031UpdateOrganizationReq" +
-      "uest\022\'\n\017organization_id\030\001 \001(\tR\016organizat" +
-      "ionId\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001B\007\n\005_name\"" +
-      "Y\n\032UpdateOrganizationResponse\022;\n\014organiz" +
-      "ation\030\001 \001(\0132\027.gitpod.v1.OrganizationR\014or" +
-      "ganization\"\252\001\n\017TimeoutSettings\022>\n\ninacti" +
-      "vity\030\001 \001(\0132\031.google.protobuf.DurationH\000R" +
-      "\ninactivity\210\001\001\0221\n\022deny_user_timeouts\030\002 \001" +
-      "(\010H\001R\020denyUserTimeouts\210\001\001B\r\n\013_inactivity" +
-      "B\025\n\023_deny_user_timeouts\"\212\013\n!UpdateOrgani" +
-      "zationSettingsRequest\022\'\n\017organization_id" +
-      "\030\001 \001(\tR\016organizationId\022A\n\032workspace_shar" +
-      "ing_disabled\030\003 \001(\010H\000R\030workspaceSharingDi" +
-      "sabled\210\001\001\022;\n\027default_workspace_image\030\004 \001" +
-      "(\tH\001R\025defaultWorkspaceImage\210\001\001\022:\n\031allowe" +
-      "d_workspace_classes\030\005 \003(\tR\027allowedWorksp" +
-      "aceClasses\0226\n\027restricted_editor_names\030\006 " +
-      "\003(\tR\025restrictedEditorNames\022H\n\036update_res" +
-      "tricted_editor_names\030\007 \001(\010H\002R\033updateRest" +
-      "rictedEditorNames\210\001\001\022|\n\026pinned_editor_ve" +
-      "rsions\030\010 \003(\0132F.gitpod.v1.UpdateOrganizat" +
-      "ionSettingsRequest.PinnedEditorVersionsE" +
-      "ntryR\024pinnedEditorVersions\022F\n\035update_pin" +
-      "ned_editor_versions\030\t \001(\010H\003R\032updatePinne" +
-      "dEditorVersions\210\001\001\022&\n\014default_role\030\n \001(\t" +
-      "H\004R\013defaultRole\210\001\001\022J\n\020timeout_settings\030\013" +
-      " \001(\0132\032.gitpod.v1.TimeoutSettingsH\005R\017time" +
-      "outSettings\210\001\001\022L\n\021role_restrictions\030\014 \003(" +
-      "\0132\037.gitpod.v1.RoleRestrictionEntryR\020role" +
-      "Restrictions\022=\n\030update_role_restrictions" +
-      "\030\r \001(\010H\006R\026updateRoleRestrictions\210\001\001\022J\n\037m" +
-      "ax_parallel_running_workspaces\030\017 \001(\005H\007R\034" +
-      "maxParallelRunningWorkspaces\210\001\001\022S\n\023onboa" +
-      "rding_settings\030\020 \001(\0132\035.gitpod.v1.Onboard" +
-      "ingSettingsH\010R\022onboardingSettings\210\001\001\0225\n\024" +
-      "annotate_git_commits\030\021 \001(\010H\tR\022annotateGi" +
-      "tCommits\210\001\001\032G\n\031PinnedEditorVersionsEntry" +
-      "\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005value" +
-      ":\0028\001B\035\n\033_workspace_sharing_disabledB\032\n\030_" +
-      "default_workspace_imageB!\n\037_update_restr" +
-      "icted_editor_namesB \n\036_update_pinned_edi" +
-      "tor_versionsB\017\n\r_default_roleB\023\n\021_timeou" +
-      "t_settingsB\033\n\031_update_role_restrictionsB" +
-      "\"\n _max_parallel_running_workspacesB\026\n\024_" +
-      "onboarding_settingsB\027\n\025_annotate_git_com" +
-      "mits\"a\n\"UpdateOrganizationSettingsRespon" +
-      "se\022;\n\010settings\030\001 \001(\0132\037.gitpod.v1.Organiz" +
-      "ationSettingsR\010settings\"I\n\036GetOrganizati" +
-      "onSettingsRequest\022\'\n\017organization_id\030\001 \001" +
-      "(\tR\016organizationId\"^\n\037GetOrganizationSet" +
-      "tingsResponse\022;\n\010settings\030\001 \001(\0132\037.gitpod" +
-      ".v1.OrganizationSettingsR\010settings\"/\n\031Cr" +
-      "eateOrganizationRequest\022\022\n\004name\030\001 \001(\tR\004n" +
-      "ame\"Y\n\032CreateOrganizationResponse\022;\n\014org" +
-      "anization\030\001 \001(\0132\027.gitpod.v1.Organization" +
-      "R\014organization\"A\n\026GetOrganizationRequest" +
-      "\022\'\n\017organization_id\030\001 \001(\tR\016organizationI" +
-      "d\"V\n\027GetOrganizationResponse\022;\n\014organiza" +
-      "tion\030\001 \001(\0132\027.gitpod.v1.OrganizationR\014org" +
-      "anization\"\332\001\n\030ListOrganizationsRequest\022<" +
-      "\n\npagination\030\001 \001(\0132\034.gitpod.v1.Paginatio" +
-      "nRequestR\npagination\022?\n\005scope\030\002 \001(\0162).gi" +
-      "tpod.v1.ListOrganizationsRequest.ScopeR\005" +
-      "scope\"?\n\005Scope\022\025\n\021SCOPE_UNSPECIFIED\020\000\022\020\n" +
-      "\014SCOPE_MEMBER\020\001\022\r\n\tSCOPE_ALL\020\002\"\231\001\n\031ListO" +
-      "rganizationsResponse\022=\n\rorganizations\030\001 " +
-      "\003(\0132\027.gitpod.v1.OrganizationR\rorganizati" +
-      "ons\022=\n\npagination\030\002 \001(\0132\035.gitpod.v1.Pagi" +
-      "nationResponseR\npagination\"D\n\031DeleteOrga" +
-      "nizationRequest\022\'\n\017organization_id\030\001 \001(\t" +
-      "R\016organizationId\"\034\n\032DeleteOrganizationRe" +
-      "sponse\"K\n GetOrganizationInvitationReque" +
-      "st\022\'\n\017organization_id\030\001 \001(\tR\016organizatio" +
-      "nId\"H\n!GetOrganizationInvitationResponse" +
-      "\022#\n\rinvitation_id\030\001 \001(\tR\014invitationId\">\n" +
-      "\027JoinOrganizationRequest\022#\n\rinvitation_i" +
-      "d\030\001 \001(\tR\014invitationId\"C\n\030JoinOrganizatio" +
-      "nResponse\022\'\n\017organization_id\030\001 \001(\tR\016orga" +
-      "nizationId\"M\n\"ResetOrganizationInvitatio" +
-      "nRequest\022\'\n\017organization_id\030\001 \001(\tR\016organ" +
-      "izationId\"J\n#ResetOrganizationInvitation" +
-      "Response\022#\n\rinvitation_id\030\001 \001(\tR\014invitat" +
-      "ionId\"\207\001\n\036ListOrganizationMembersRequest" +
-      "\022\'\n\017organization_id\030\001 \001(\tR\016organizationI" +
-      "d\022<\n\npagination\030\002 \001(\0132\034.gitpod.v1.Pagina" +
-      "tionRequestR\npagination\"\231\001\n\037ListOrganiza" +
-      "tionMembersResponse\0227\n\007members\030\001 \003(\0132\035.g" +
-      "itpod.v1.OrganizationMemberR\007members\022=\n\n" +
-      "pagination\030\002 \001(\0132\035.gitpod.v1.PaginationR" +
-      "esponseR\npagination\"\242\001\n\037UpdateOrganizati" +
-      "onMemberRequest\022\'\n\017organization_id\030\001 \001(\t" +
-      "R\016organizationId\022\027\n\007user_id\030\002 \001(\tR\006userI" +
-      "d\0224\n\004role\030\003 \001(\0162\033.gitpod.v1.Organization" +
-      "RoleH\000R\004role\210\001\001B\007\n\005_role\"Y\n UpdateOrgani" +
-      "zationMemberResponse\0225\n\006member\030\001 \001(\0132\035.g" +
-      "itpod.v1.OrganizationMemberR\006member\"c\n\037D" +
-      "eleteOrganizationMemberRequest\022\'\n\017organi" +
-      "zation_id\030\001 \001(\tR\016organizationId\022\027\n\007user_" +
-      "id\030\002 \001(\tR\006userId\"\"\n DeleteOrganizationMe" +
-      "mberResponse*\224\001\n\020OrganizationRole\022!\n\035ORG" +
-      "ANIZATION_ROLE_UNSPECIFIED\020\000\022\033\n\027ORGANIZA" +
-      "TION_ROLE_OWNER\020\001\022\034\n\030ORGANIZATION_ROLE_M" +
-      "EMBER\020\002\022\"\n\036ORGANIZATION_ROLE_COLLABORATO" +
-      "R\020\003*t\n\026OrganizationPermission\022\'\n#ORGANIZ" +
-      "ATION_PERMISSION_UNSPECIFIED\020\000\0221\n-ORGANI" +
-      "ZATION_PERMISSION_START_ARBITRARY_REPOS\020" +
-      "\0012\276\014\n\023OrganizationService\022c\n\022CreateOrgan" +
-      "ization\022$.gitpod.v1.CreateOrganizationRe" +
-      "quest\032%.gitpod.v1.CreateOrganizationResp" +
-      "onse\"\000\022Z\n\017GetOrganization\022!.gitpod.v1.Ge" +
-      "tOrganizationRequest\032\".gitpod.v1.GetOrga" +
-      "nizationResponse\"\000\022c\n\022UpdateOrganization" +
-      "\022$.gitpod.v1.UpdateOrganizationRequest\032%" +
-      ".gitpod.v1.UpdateOrganizationResponse\"\000\022" +
-      "`\n\021ListOrganizations\022#.gitpod.v1.ListOrg" +
-      "anizationsRequest\032$.gitpod.v1.ListOrgani" +
-      "zationsResponse\"\000\022c\n\022DeleteOrganization\022" +
-      "$.gitpod.v1.DeleteOrganizationRequest\032%." +
-      "gitpod.v1.DeleteOrganizationResponse\"\000\022x" +
-      "\n\031GetOrganizationInvitation\022+.gitpod.v1." +
-      "GetOrganizationInvitationRequest\032,.gitpo" +
-      "d.v1.GetOrganizationInvitationResponse\"\000" +
-      "\022]\n\020JoinOrganization\022\".gitpod.v1.JoinOrg" +
-      "anizationRequest\032#.gitpod.v1.JoinOrganiz" +
-      "ationResponse\"\000\022~\n\033ResetOrganizationInvi" +
-      "tation\022-.gitpod.v1.ResetOrganizationInvi" +
-      "tationRequest\032..gitpod.v1.ResetOrganizat" +
-      "ionInvitationResponse\"\000\022r\n\027ListOrganizat" +
-      "ionMembers\022).gitpod.v1.ListOrganizationM" +
-      "embersRequest\032*.gitpod.v1.ListOrganizati" +
-      "onMembersResponse\"\000\022u\n\030UpdateOrganizatio" +
-      "nMember\022*.gitpod.v1.UpdateOrganizationMe" +
-      "mberRequest\032+.gitpod.v1.UpdateOrganizati" +
-      "onMemberResponse\"\000\022u\n\030DeleteOrganization" +
-      "Member\022*.gitpod.v1.DeleteOrganizationMem" +
-      "berRequest\032+.gitpod.v1.DeleteOrganizatio" +
-      "nMemberResponse\"\000\022r\n\027GetOrganizationSett" +
-      "ings\022).gitpod.v1.GetOrganizationSettings" +
-      "Request\032*.gitpod.v1.GetOrganizationSetti" +
-      "ngsResponse\"\000\022{\n\032UpdateOrganizationSetti" +
-      "ngs\022,.gitpod.v1.UpdateOrganizationSettin" +
-      "gsRequest\032-.gitpod.v1.UpdateOrganization" +
-      "SettingsResponse\"\000\022\215\001\n ListOrganizationW" +
-      "orkspaceClasses\0222.gitpod.v1.ListOrganiza" +
-      "tionWorkspaceClassesRequest\0323.gitpod.v1." +
-      "ListOrganizationWorkspaceClassesResponse" +
-      "\"\000BQ\n\026io.gitpod.publicapi.v1Z7github.com" +
-      "/gitpod-io/gitpod/components/public-api/" +
-      "go/v1b\006proto3"
+      "ionR\013permissions\"\213\001\n\022OnboardingSettings\022" +
+      "(\n\rinternal_link\030\001 \001(\tH\000R\014internalLink\210\001" +
+      "\001\0229\n\030recommended_repositories\030\002 \003(\tR\027rec" +
+      "ommendedRepositoriesB\020\n\016_internal_link\"\273" +
+      "\006\n\024OrganizationSettings\022<\n\032workspace_sha" +
+      "ring_disabled\030\001 \001(\010R\030workspaceSharingDis" +
+      "abled\0226\n\027default_workspace_image\030\002 \001(\tR\025" +
+      "defaultWorkspaceImage\022:\n\031allowed_workspa" +
+      "ce_classes\030\003 \003(\tR\027allowedWorkspaceClasse" +
+      "s\0226\n\027restricted_editor_names\030\004 \003(\tR\025rest" +
+      "rictedEditorNames\022o\n\026pinned_editor_versi" +
+      "ons\030\005 \003(\01329.gitpod.v1.OrganizationSettin" +
+      "gs.PinnedEditorVersionsEntryR\024pinnedEdit" +
+      "orVersions\022!\n\014default_role\030\006 \001(\tR\013defaul" +
+      "tRole\022E\n\020timeout_settings\030\007 \001(\0132\032.gitpod" +
+      ".v1.TimeoutSettingsR\017timeoutSettings\022L\n\021" +
+      "role_restrictions\030\010 \003(\0132\037.gitpod.v1.Role" +
+      "RestrictionEntryR\020roleRestrictions\022E\n\037ma" +
+      "x_parallel_running_workspaces\030\t \001(\005R\034max" +
+      "ParallelRunningWorkspaces\022N\n\023onboarding_" +
+      "settings\030\n \001(\0132\035.gitpod.v1.OnboardingSet" +
+      "tingsR\022onboardingSettings\0220\n\024annotate_gi" +
+      "t_commits\030\013 \001(\010R\022annotateGitCommits\032G\n\031P" +
+      "innedEditorVersionsEntry\022\020\n\003key\030\001 \001(\tR\003k" +
+      "ey\022\024\n\005value\030\002 \001(\tR\005value:\0028\001\"\220\001\n\'ListOrg" +
+      "anizationWorkspaceClassesRequest\022<\n\npagi" +
+      "nation\030\001 \001(\0132\034.gitpod.v1.PaginationReque" +
+      "stR\npagination\022\'\n\017organization_id\030\002 \001(\tR" +
+      "\016organizationId\"\261\001\n(ListOrganizationWork" +
+      "spaceClassesResponse\022=\n\npagination\030\001 \001(\013" +
+      "2\035.gitpod.v1.PaginationResponseR\npaginat" +
+      "ion\022F\n\021workspace_classes\030\002 \003(\0132\031.gitpod." +
+      "v1.WorkspaceClassR\020workspaceClasses\"f\n\031U" +
+      "pdateOrganizationRequest\022\'\n\017organization" +
+      "_id\030\001 \001(\tR\016organizationId\022\027\n\004name\030\002 \001(\tH" +
+      "\000R\004name\210\001\001B\007\n\005_name\"Y\n\032UpdateOrganizatio" +
+      "nResponse\022;\n\014organization\030\001 \001(\0132\027.gitpod" +
+      ".v1.OrganizationR\014organization\"\252\001\n\017Timeo" +
+      "utSettings\022>\n\ninactivity\030\001 \001(\0132\031.google." +
+      "protobuf.DurationH\000R\ninactivity\210\001\001\0221\n\022de" +
+      "ny_user_timeouts\030\002 \001(\010H\001R\020denyUserTimeou" +
+      "ts\210\001\001B\r\n\013_inactivityB\025\n\023_deny_user_timeo" +
+      "uts\"\212\013\n!UpdateOrganizationSettingsReques" +
+      "t\022\'\n\017organization_id\030\001 \001(\tR\016organization" +
+      "Id\022A\n\032workspace_sharing_disabled\030\003 \001(\010H\000" +
+      "R\030workspaceSharingDisabled\210\001\001\022;\n\027default" +
+      "_workspace_image\030\004 \001(\tH\001R\025defaultWorkspa" +
+      "ceImage\210\001\001\022:\n\031allowed_workspace_classes\030" +
+      "\005 \003(\tR\027allowedWorkspaceClasses\0226\n\027restri" +
+      "cted_editor_names\030\006 \003(\tR\025restrictedEdito" +
+      "rNames\022H\n\036update_restricted_editor_names" +
+      "\030\007 \001(\010H\002R\033updateRestrictedEditorNames\210\001\001" +
+      "\022|\n\026pinned_editor_versions\030\010 \003(\0132F.gitpo" +
+      "d.v1.UpdateOrganizationSettingsRequest.P" +
+      "innedEditorVersionsEntryR\024pinnedEditorVe" +
+      "rsions\022F\n\035update_pinned_editor_versions\030" +
+      "\t \001(\010H\003R\032updatePinnedEditorVersions\210\001\001\022&" +
+      "\n\014default_role\030\n \001(\tH\004R\013defaultRole\210\001\001\022J" +
+      "\n\020timeout_settings\030\013 \001(\0132\032.gitpod.v1.Tim" +
+      "eoutSettingsH\005R\017timeoutSettings\210\001\001\022L\n\021ro" +
+      "le_restrictions\030\014 \003(\0132\037.gitpod.v1.RoleRe" +
+      "strictionEntryR\020roleRestrictions\022=\n\030upda" +
+      "te_role_restrictions\030\r \001(\010H\006R\026updateRole" +
+      "Restrictions\210\001\001\022J\n\037max_parallel_running_" +
+      "workspaces\030\017 \001(\005H\007R\034maxParallelRunningWo" +
+      "rkspaces\210\001\001\022S\n\023onboarding_settings\030\020 \001(\013" +
+      "2\035.gitpod.v1.OnboardingSettingsH\010R\022onboa" +
+      "rdingSettings\210\001\001\0225\n\024annotate_git_commits" +
+      "\030\021 \001(\010H\tR\022annotateGitCommits\210\001\001\032G\n\031Pinne" +
+      "dEditorVersionsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024" +
+      "\n\005value\030\002 \001(\tR\005value:\0028\001B\035\n\033_workspace_s" +
+      "haring_disabledB\032\n\030_default_workspace_im" +
+      "ageB!\n\037_update_restricted_editor_namesB " +
+      "\n\036_update_pinned_editor_versionsB\017\n\r_def" +
+      "ault_roleB\023\n\021_timeout_settingsB\033\n\031_updat" +
+      "e_role_restrictionsB\"\n _max_parallel_run" +
+      "ning_workspacesB\026\n\024_onboarding_settingsB" +
+      "\027\n\025_annotate_git_commits\"a\n\"UpdateOrgani" +
+      "zationSettingsResponse\022;\n\010settings\030\001 \001(\013" +
+      "2\037.gitpod.v1.OrganizationSettingsR\010setti" +
+      "ngs\"I\n\036GetOrganizationSettingsRequest\022\'\n" +
+      "\017organization_id\030\001 \001(\tR\016organizationId\"^" +
+      "\n\037GetOrganizationSettingsResponse\022;\n\010set" +
+      "tings\030\001 \001(\0132\037.gitpod.v1.OrganizationSett" +
+      "ingsR\010settings\"/\n\031CreateOrganizationRequ" +
+      "est\022\022\n\004name\030\001 \001(\tR\004name\"Y\n\032CreateOrganiz" +
+      "ationResponse\022;\n\014organization\030\001 \001(\0132\027.gi" +
+      "tpod.v1.OrganizationR\014organization\"A\n\026Ge" +
+      "tOrganizationRequest\022\'\n\017organization_id\030" +
+      "\001 \001(\tR\016organizationId\"V\n\027GetOrganization" +
+      "Response\022;\n\014organization\030\001 \001(\0132\027.gitpod." +
+      "v1.OrganizationR\014organization\"\332\001\n\030ListOr" +
+      "ganizationsRequest\022<\n\npagination\030\001 \001(\0132\034" +
+      ".gitpod.v1.PaginationRequestR\npagination" +
+      "\022?\n\005scope\030\002 \001(\0162).gitpod.v1.ListOrganiza" +
+      "tionsRequest.ScopeR\005scope\"?\n\005Scope\022\025\n\021SC" +
+      "OPE_UNSPECIFIED\020\000\022\020\n\014SCOPE_MEMBER\020\001\022\r\n\tS" +
+      "COPE_ALL\020\002\"\231\001\n\031ListOrganizationsResponse" +
+      "\022=\n\rorganizations\030\001 \003(\0132\027.gitpod.v1.Orga" +
+      "nizationR\rorganizations\022=\n\npagination\030\002 " +
+      "\001(\0132\035.gitpod.v1.PaginationResponseR\npagi" +
+      "nation\"D\n\031DeleteOrganizationRequest\022\'\n\017o" +
+      "rganization_id\030\001 \001(\tR\016organizationId\"\034\n\032" +
+      "DeleteOrganizationResponse\"K\n GetOrganiz" +
+      "ationInvitationRequest\022\'\n\017organization_i" +
+      "d\030\001 \001(\tR\016organizationId\"H\n!GetOrganizati" +
+      "onInvitationResponse\022#\n\rinvitation_id\030\001 " +
+      "\001(\tR\014invitationId\">\n\027JoinOrganizationReq" +
+      "uest\022#\n\rinvitation_id\030\001 \001(\tR\014invitationI" +
+      "d\"C\n\030JoinOrganizationResponse\022\'\n\017organiz" +
+      "ation_id\030\001 \001(\tR\016organizationId\"M\n\"ResetO" +
+      "rganizationInvitationRequest\022\'\n\017organiza" +
+      "tion_id\030\001 \001(\tR\016organizationId\"J\n#ResetOr" +
+      "ganizationInvitationResponse\022#\n\rinvitati" +
+      "on_id\030\001 \001(\tR\014invitationId\"\207\001\n\036ListOrgani" +
+      "zationMembersRequest\022\'\n\017organization_id\030" +
+      "\001 \001(\tR\016organizationId\022<\n\npagination\030\002 \001(" +
+      "\0132\034.gitpod.v1.PaginationRequestR\npaginat" +
+      "ion\"\231\001\n\037ListOrganizationMembersResponse\022" +
+      "7\n\007members\030\001 \003(\0132\035.gitpod.v1.Organizatio" +
+      "nMemberR\007members\022=\n\npagination\030\002 \001(\0132\035.g" +
+      "itpod.v1.PaginationResponseR\npagination\"" +
+      "\242\001\n\037UpdateOrganizationMemberRequest\022\'\n\017o" +
+      "rganization_id\030\001 \001(\tR\016organizationId\022\027\n\007" +
+      "user_id\030\002 \001(\tR\006userId\0224\n\004role\030\003 \001(\0162\033.gi" +
+      "tpod.v1.OrganizationRoleH\000R\004role\210\001\001B\007\n\005_" +
+      "role\"Y\n UpdateOrganizationMemberResponse" +
+      "\0225\n\006member\030\001 \001(\0132\035.gitpod.v1.Organizatio" +
+      "nMemberR\006member\"c\n\037DeleteOrganizationMem" +
+      "berRequest\022\'\n\017organization_id\030\001 \001(\tR\016org" +
+      "anizationId\022\027\n\007user_id\030\002 \001(\tR\006userId\"\"\n " +
+      "DeleteOrganizationMemberResponse*\224\001\n\020Org" +
+      "anizationRole\022!\n\035ORGANIZATION_ROLE_UNSPE" +
+      "CIFIED\020\000\022\033\n\027ORGANIZATION_ROLE_OWNER\020\001\022\034\n" +
+      "\030ORGANIZATION_ROLE_MEMBER\020\002\022\"\n\036ORGANIZAT" +
+      "ION_ROLE_COLLABORATOR\020\003*t\n\026OrganizationP" +
+      "ermission\022\'\n#ORGANIZATION_PERMISSION_UNS" +
+      "PECIFIED\020\000\0221\n-ORGANIZATION_PERMISSION_ST" +
+      "ART_ARBITRARY_REPOS\020\0012\276\014\n\023OrganizationSe" +
+      "rvice\022c\n\022CreateOrganization\022$.gitpod.v1." +
+      "CreateOrganizationRequest\032%.gitpod.v1.Cr" +
+      "eateOrganizationResponse\"\000\022Z\n\017GetOrganiz" +
+      "ation\022!.gitpod.v1.GetOrganizationRequest" +
+      "\032\".gitpod.v1.GetOrganizationResponse\"\000\022c" +
+      "\n\022UpdateOrganization\022$.gitpod.v1.UpdateO" +
+      "rganizationRequest\032%.gitpod.v1.UpdateOrg" +
+      "anizationResponse\"\000\022`\n\021ListOrganizations" +
+      "\022#.gitpod.v1.ListOrganizationsRequest\032$." +
+      "gitpod.v1.ListOrganizationsResponse\"\000\022c\n" +
+      "\022DeleteOrganization\022$.gitpod.v1.DeleteOr" +
+      "ganizationRequest\032%.gitpod.v1.DeleteOrga" +
+      "nizationResponse\"\000\022x\n\031GetOrganizationInv" +
+      "itation\022+.gitpod.v1.GetOrganizationInvit" +
+      "ationRequest\032,.gitpod.v1.GetOrganization" +
+      "InvitationResponse\"\000\022]\n\020JoinOrganization" +
+      "\022\".gitpod.v1.JoinOrganizationRequest\032#.g" +
+      "itpod.v1.JoinOrganizationResponse\"\000\022~\n\033R" +
+      "esetOrganizationInvitation\022-.gitpod.v1.R" +
+      "esetOrganizationInvitationRequest\032..gitp" +
+      "od.v1.ResetOrganizationInvitationRespons" +
+      "e\"\000\022r\n\027ListOrganizationMembers\022).gitpod." +
+      "v1.ListOrganizationMembersRequest\032*.gitp" +
+      "od.v1.ListOrganizationMembersResponse\"\000\022" +
+      "u\n\030UpdateOrganizationMember\022*.gitpod.v1." +
+      "UpdateOrganizationMemberRequest\032+.gitpod" +
+      ".v1.UpdateOrganizationMemberResponse\"\000\022u" +
+      "\n\030DeleteOrganizationMember\022*.gitpod.v1.D" +
+      "eleteOrganizationMemberRequest\032+.gitpod." +
+      "v1.DeleteOrganizationMemberResponse\"\000\022r\n" +
+      "\027GetOrganizationSettings\022).gitpod.v1.Get" +
+      "OrganizationSettingsRequest\032*.gitpod.v1." +
+      "GetOrganizationSettingsResponse\"\000\022{\n\032Upd" +
+      "ateOrganizationSettings\022,.gitpod.v1.Upda" +
+      "teOrganizationSettingsRequest\032-.gitpod.v" +
+      "1.UpdateOrganizationSettingsResponse\"\000\022\215" +
+      "\001\n ListOrganizationWorkspaceClasses\0222.gi" +
+      "tpod.v1.ListOrganizationWorkspaceClasses" +
+      "Request\0323.gitpod.v1.ListOrganizationWork" +
+      "spaceClassesResponse\"\000BQ\n\026io.gitpod.publ" +
+      "icapi.v1Z7github.com/gitpod-io/gitpod/co" +
+      "mponents/public-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -29336,7 +29619,7 @@ java.lang.String defaultValue) {
     internal_static_gitpod_v1_OnboardingSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_OnboardingSettings_descriptor,
-        new java.lang.String[] { "InternalLink", });
+        new java.lang.String[] { "InternalLink", "RecommendedRepositories", });
     internal_static_gitpod_v1_OrganizationSettings_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_gitpod_v1_OrganizationSettings_fieldAccessorTable = new
