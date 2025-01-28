@@ -766,6 +766,20 @@ export namespace Workspace {
         }
         return undefined;
     }
+
+    const NAME_PREFIX = "named:";
+    export function fromWorkspaceName(name?: Workspace["description"]): string | undefined {
+        if (name?.startsWith(NAME_PREFIX)) {
+            return name.slice(NAME_PREFIX.length);
+        }
+        return undefined;
+    }
+    export function toWorkspaceName(name?: Workspace["description"]): string {
+        if (!name || name?.trim().length === 0) {
+            return "no-name";
+        }
+        return `${NAME_PREFIX}${name}`;
+    }
 }
 
 export interface GuessGitTokenScopesParams {
