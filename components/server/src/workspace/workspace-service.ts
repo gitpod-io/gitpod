@@ -1407,9 +1407,17 @@ export class WorkspaceService {
         });
     }
 
-    public async validateImageRef(ctx: TraceContext, user: User, imageRef: string) {
+    public async validateImageRef(ctx: TraceContext, user: User, imageRef: string, organizationId?: string) {
         try {
-            return await this.workspaceStarter.resolveBaseImage(ctx, user, imageRef);
+            return await this.workspaceStarter.resolveBaseImage(
+                ctx,
+                user,
+                imageRef,
+                undefined,
+                undefined,
+                undefined,
+                organizationId,
+            );
         } catch (e) {
             // see https://github.com/gitpod-io/gitpod/blob/f3e41f8d86234e4101edff2199c54f50f8cbb656/components/image-builder-mk3/pkg/orchestrator/orchestrator.go#L561
             // TODO(ak) ideally we won't check a message (subject to change)
@@ -1423,8 +1431,8 @@ export class WorkspaceService {
             ) {
                 let message = details;
                 // strip confusing prefix
-                if (details.startsWith("cannt resolve base image ref: ")) {
-                    message = details.substring("cannt resolve base image ref: ".length);
+                if (details.startsWith("can't resolve base image ref: ")) {
+                    message = details.substring("can't resolve base image ref: ".length);
                 }
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, message);
             }
