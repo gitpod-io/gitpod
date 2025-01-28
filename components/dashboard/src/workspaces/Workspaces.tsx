@@ -253,7 +253,7 @@ const WorkspacesPage: FunctionComponent = () => {
                         </div>
                     )}
 
-                    {(recentRepos.length || 1) > 0 && (
+                    {recentRepos.length > 0 && (
                         <>
                             <Subheading className="font-semibold text-pk-content-primary mb-2 app-container">
                                 Suggested
