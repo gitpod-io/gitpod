@@ -22,6 +22,7 @@ export type RedisPrebuildUpdate = {
     prebuildID: string;
     workspaceID: string;
     projectID: string;
+    organizationID?: string;
 };
 
 export type RedisHeadlessUpdate = {

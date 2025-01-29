@@ -67,7 +67,7 @@ export class RedisSubscriber {
                 let err: Error | undefined;
                 try {
                     await this.onMessage(channel, message);
-                    log.debug("[redis] Succesfully handled update", { channel, message });
+                    log.debug("[redis] Successfully handled update", { channel, message });
                 } catch (e) {
                     err = e;
                     log.error("[redis] Failed to handle message from Pub/Sub", e, { channel, message });
@@ -132,7 +132,10 @@ export class RedisSubscriber {
             return;
         }
 
-        const listeners = this.prebuildUpdateListeners.get(update.projectID) || [];
+        const listeners = this.prebuildUpdateListeners.get(update.projectID) ?? [];
+        if (update.organizationID) {
+            listeners.push(...(this.prebuildUpdateListeners.get(update.organizationID) ?? []));
+        }
         if (listeners.length === 0) {
             return;
         }
@@ -182,8 +185,12 @@ export class RedisSubscriber {
         this.disposables.dispose();
     }
 
-    listenForPrebuildUpdates(projectId: string, listener: PrebuildUpdateListener): Disposable {
+    listenForProjectPrebuildUpdates(projectId: string, listener: PrebuildUpdateListener): Disposable {
         return this.doRegister(projectId, listener, this.prebuildUpdateListeners, "prebuild");
+    }
+
+    listenForOrganizationPrebuildUpdates(organizationId: string, listener: PrebuildUpdateListener): Disposable {
+        return this.doRegister(organizationId, listener, this.prebuildUpdateListeners, "prebuild");
     }
 
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable {
