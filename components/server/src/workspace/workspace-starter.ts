@@ -42,7 +42,6 @@ import {
     ImageBuildLogInfo,
     ImageConfigFile,
     NamedWorkspaceFeatureFlag,
-    OrgEnvVarWithValue,
     Permission,
     Project,
     RefType,
@@ -129,7 +128,7 @@ import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
 import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
-import { SYSTEM_USER, SYSTEM_USER_ID, Authorizer } from "../authorization/authorizer";
+import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { EnvVarService, ResolvedEnvVars } from "../user/env-var-service";
 import { RedlockAbortSignal } from "redlock";
 import { ConfigProvider } from "./config-provider";
@@ -240,7 +239,6 @@ export class WorkspaceStarter {
         @inject(EnvVarService) private readonly envVarService: EnvVarService,
         @inject(OrganizationService) private readonly orgService: OrganizationService,
         @inject(ProjectsService) private readonly projectService: ProjectsService,
-        @inject(Authorizer) private readonly auth: Authorizer,
     ) {}
 
     public async startWorkspace(
@@ -2047,11 +2045,9 @@ export class WorkspaceStarter {
 
         // if the image resolution is for an organization, we also include the organization's set up env vars
         if (organizationId) {
-            await this.auth.checkPermissionOnOrganization(user.id, "read_env_var", organizationId);
-            const orgEnvVars = await this.orgDB.getOrgEnvironmentVariables(organizationId);
-            const orgEnvVarValues: OrgEnvVarWithValue[] = await this.orgDB.getOrgEnvironmentVariableValues(orgEnvVars);
+            const envVars = await this.envVarService.listOrgEnvVarsWithValues(user.id, organizationId);
 
-            const additionalAuth = await this.getAdditionalImageAuth({ workspace: orgEnvVarValues });
+            const additionalAuth = await this.getAdditionalImageAuth({ workspace: envVars });
             additionalAuth.forEach((val, key) => auth.getAdditionalMap().set(key, val));
         }
 
