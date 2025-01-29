@@ -1,10 +1,8 @@
-## JetBrains Intergration Test
+#JetBrains Intergration Test,
 
-See also [Internal Document](https://www.notion.so/gitpod/IDE-Integration-Tests-350235cc0db7489e86ebb57488a91f78)
+See also [Internal Document](https://www.notion.so/gitpod/IDE-Integration-Tests-350235cc0db7489e86ebb57488a91f78)### How to trigger it manually?
 
-### How to trigger it manually?
-
-#### 1. With GHA
+file 1. With GHA
 
 - Trigger https://github.com/gitpod-io/gitpod/actions/workflows/ide-integration-tests.yml
 
