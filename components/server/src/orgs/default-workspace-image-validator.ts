@@ -4,5 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-export type DefaultWorkspaceImageValidator = (userId: string, imageRef: string) => Promise<void>;
+export type DefaultWorkspaceImageValidator = (
+    userId: string,
+    imageRef: string,
+    organizationId?: string,
+) => Promise<void>;
 export const DefaultWorkspaceImageValidator = Symbol("DefaultWorkspaceImageValidator");
