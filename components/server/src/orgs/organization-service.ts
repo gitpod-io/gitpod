@@ -493,7 +493,7 @@ export class OrganizationService {
         if (typeof settings.defaultWorkspaceImage === "string") {
             const defaultWorkspaceImage = settings.defaultWorkspaceImage.trim();
             if (defaultWorkspaceImage) {
-                await this.validateDefaultWorkspaceImage(userId, defaultWorkspaceImage);
+                await this.validateDefaultWorkspaceImage(userId, defaultWorkspaceImage, orgId);
                 settings = { ...settings, defaultWorkspaceImage };
             } else {
                 settings = { ...settings, defaultWorkspaceImage: null };

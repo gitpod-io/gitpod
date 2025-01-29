@@ -2033,6 +2033,7 @@ export class WorkspaceStarter {
         workspace?: Workspace,
         instance?: WorkspaceInstance,
         region?: WorkspaceRegion,
+        organizationId?: string,
     ) {
         const req = new ResolveBaseImageRequest();
         req.setRef(imageRef);
@@ -2041,6 +2042,15 @@ export class WorkspaceStarter {
         const auth = new BuildRegistryAuth();
         auth.setTotal(allowAll);
         req.setAuth(auth);
+
+        // if the image resolution is for an organization, we also include the organization's set up env vars
+        if (organizationId) {
+            const envVars = await this.envVarService.listOrgEnvVarsWithValues(user.id, organizationId);
+
+            const additionalAuth = await this.getAdditionalImageAuth({ workspace: envVars });
+            additionalAuth.forEach((val, key) => auth.getAdditionalMap().set(key, val));
+        }
+
         const client = await this.getImageBuilderClient(user, workspace, instance, region);
         return client.resolveBaseImage({ span: ctx.span }, req);
     }

@@ -234,6 +234,13 @@ export class EnvVarService {
         return this.orgDB.getOrgEnvironmentVariables(orgId);
     }
 
+    async listOrgEnvVarsWithValues(requestorId: string, orgId: string): Promise<OrgEnvVarWithValue[]> {
+        const envVars = (await ApplicationError.notFoundToUndefined(this.listOrgEnvVars(requestorId, orgId))) ?? [];
+        const envVarValues = await this.orgDB.getOrgEnvironmentVariableValues(envVars);
+
+        return envVarValues;
+    }
+
     async getOrgEnvVarById(requestorId: string, id: string): Promise<OrgEnvVar> {
         const result = await this.orgDB.getOrgEnvironmentVariableById(id);
         if (!result) {

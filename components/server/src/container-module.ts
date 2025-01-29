@@ -412,9 +412,9 @@ export const productionContainerModule = new ContainerModule(
         bind<DefaultWorkspaceImageValidator>(DefaultWorkspaceImageValidator)
             .toDynamicValue((ctx) =>
                 // lazy load to avoid circular dependency
-                async (userId: string, imageRef: string) => {
+                async (userId: string, imageRef: string, organizationId?: string) => {
                     const user = await ctx.container.get(UserService).findUserById(userId, userId);
-                    await ctx.container.get(WorkspaceService).validateImageRef({}, user, imageRef);
+                    await ctx.container.get(WorkspaceService).validateImageRef({}, user, imageRef, organizationId);
                 },
             )
             .inSingletonScope();
