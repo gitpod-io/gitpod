@@ -1,13 +1,13 @@
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
+   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.2.0
     hooks:
       #- id: check-yaml
       #  args: [--allow-multiple-documents]
-      - id: check-json
+       id: check-json
         exclude: ^.devcontainer/devcontainer.json$
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
+       id: end-of-file-fixer
+       id: trailing-whitespace
       - id: check-symlinks
       - id: mixed-line-ending
       - id: check-case-conflict
