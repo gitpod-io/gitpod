@@ -1,0 +1,90 @@
+repos:
+   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.2.0
+    hooks:
+      #- id: check-yaml
+      #  args: [--allow-multiple-documents]
+       id: check-json
+        exclude: ^.devcontainer/devcontainer.json$
+       id: end-of-file-fixer
+       id: trailing-whitespace
+       id: check-symlinks
+       id: mixed-line-ending
+       id: check-case-conflict
+       id: check-executables-have-shebangs
+       id: check-shebang-scripts-are-executable
+       id: check-merge-conflict
+
+  # keep fork in sync!
+   repo: https://github.com/gitpod-io/pre-commit-hooks
+    rev: "2.1.5"
+    hooks:
+      - id: forbid-binary
+        exclude: |
+          (?x)^(
+            .*example-layer.tar.gz|
+            .*\.(png|svg|ico|gpg|webp)|
+            dev/version-manifest/version-manifest|
+            .*gradle-wrapper\.jar
+          )$
+      - id: script-must-have-extension
+      - id: shellcheck
+        args: [-e, "SC1090,SC1091"]
+        exclude: .*/gradlew$
+
+   repo: https://github.com/pre-commit/mirrors-prettier
+    rev: "v2.6.2"
+    hooks:
+      - id: prettier
+        # Only enabled for WebApp components initially, to build consensus and incrementally onboard others
+        files: ^components\/(server|gitpod-protocol|gitpod-db|dashboard|ws-manager-bridge)\/.*\.ts(x?)$
+
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: "v0.5.0"
+    hooks:
+      - id: go-fmt
+      - id: go-mod-tidy
+
+  - repo: local
+    hooks:
+      - id: license-header
+        name: license-header
+        entry: leeway run components:update-license-header
+        language: system
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: mocha-tests-only
+        name: mocha-tests-only
+        entry: leeway run components:check-mocha-no-only
+        language: system
+        pass_filenames: false
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.75.0
+    hooks:
+      - id: terraform_fmt
+        args:
+          - --args=-diff
+
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.15.0
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: dashboard-linter
+        name: dashboard-linter
+        entry: leeway run components/dashboard:lint
+        language: system
+        pass_filenames: false
+        files: ^components/dashboard/
+  - repo: https://gitlab.com/bmares/check-json5
+    rev: v1.0.0
+    hooks:
+    - id: check-json5
+      files: ^.devcontainer/devcontainer.json$
+
+exclude: ^install/installer/.*/.*\.golden$
