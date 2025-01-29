@@ -32,7 +32,7 @@ repos:
         args: [-e, "SC1090,SC1091"]
         exclude: .*/gradlew$
 
-  - repo: https://github.com/pre-commit/mirrors-prettier
+   repo: https://github.com/pre-commit/mirrors-prettier
     rev: "v2.6.2"
     hooks:
       - id: prettier
