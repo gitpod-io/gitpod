@@ -632,7 +632,7 @@ export class WorkspaceStarter {
             }
 
             // build workspace image
-            const additionalAuth = await this.getAdditionalImageAuth(envVars);
+            const additionalAuth = this.getAdditionalImageAuth(envVars);
             instance = await this.buildWorkspaceImage(
                 { span },
                 user,
@@ -839,7 +839,7 @@ export class WorkspaceStarter {
         return undefined;
     }
 
-    private async getAdditionalImageAuth(envVars: ResolvedEnvVars): Promise<Map<string, string>> {
+    private getAdditionalImageAuth(envVars: ResolvedEnvVars): Map<string, string> {
         const res = new Map<string, string>();
         const imageAuth = envVars.workspace.find((e) => e.name === EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME);
         if (!imageAuth) {
@@ -1492,6 +1492,18 @@ export class WorkspaceStarter {
             );
             envvars.push(ev);
         })();
+
+        const isDockerdProxyEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "dockerd_proxy_enabled",
+            false,
+            { user, projectId: workspace.projectId, gitpodHost: this.config.hostUrl.url.toString() },
+        );
+        if (isDockerdProxyEnabled) {
+            const ev = new EnvironmentVariable();
+            ev.setName("DOCKERD_PROXY_ENABLED");
+            ev.setValue("true");
+            envvars.push(ev);
+        }
 
         const portIndex = new Set<number>();
         const ports = (workspace.config.ports || [])
