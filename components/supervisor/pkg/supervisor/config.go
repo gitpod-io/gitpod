@@ -350,6 +350,9 @@ type WorkspaceConfig struct {
 	ConfigcatEnabled bool `env:"GITPOD_CONFIGCAT_ENABLED"`
 
 	SSHGatewayCAPublicKey string `env:"GITPOD_SSH_CA_PUBLIC_KEY"`
+
+	// DockerdProxyEnabled controls whether the dockerd proxy is enabled
+	DockerdProxyEnabled bool `env:"GITPOD_DOCKERD_PROXY_ENABLED"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.

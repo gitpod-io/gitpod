@@ -14,6 +14,7 @@ packages:
       - components/ws-daemon-api/go:lib
       - components/ide-metrics-api/go:lib
       - components/public-api/go:lib
+      - components/image-builder-bob:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux

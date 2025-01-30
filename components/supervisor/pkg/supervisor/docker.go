@@ -191,7 +191,10 @@ func listenToDockerSocket(parentCtx context.Context, term *terminal.Mux, cfg *Co
 			}
 
 			cmd := exec.CommandContext(ctx, "/usr/bin/docker-up")
-			cmd.Env = append(os.Environ(), "LISTEN_FDS=1")
+			env := os.Environ()
+			env = append(env, "LISTEN_FDS=1")
+			env = append(env, "DOCKERD_ARGS={ \"proxies\":{ \"http-proxy\": \"http://localhost:38080\", \"https-proxy\": \"https://localhost:38081\" } }")
+			cmd.Env = env
 			cmd.ExtraFiles = []*os.File{socketFD}
 			cmd.Stdout = stdout
 			cmd.Stderr = stderr
