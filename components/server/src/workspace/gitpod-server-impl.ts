@@ -236,29 +236,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         log.debug({ userId: this.userID }, "initializeClient");
 
         this.listenForWorkspaceInstanceUpdates();
-        this.listenForPrebuildUpdates().catch((err) => log.error("error registering for prebuild updates", err));
+        this.listenForPrebuildUpdates(connectionCtx).catch((err) =>
+            log.error("error registering for prebuild updates", err),
+        );
     }
 
-    private async listenForPrebuildUpdates() {
-        if (!this.client) {
+    private async listenForPrebuildUpdates(ctx?: TraceContext) {
+        const userId = this.userID;
+        if (!this.client || !userId) {
             return;
         }
-
-        // todo(ft) disable registering for all updates from all projects by default and only listen to updates when the client is explicity interested in them
-        const disableWebsocketPrebuildUpdates = await getExperimentsClientForBackend().getValueAsync(
-            "disableWebsocketPrebuildUpdates",
-            false,
-            {
-                gitpodHost: this.config.hostUrl.url.host,
-            },
-        );
-        if (disableWebsocketPrebuildUpdates) {
-            log.info("ws prebuild updates disabled by feature flag");
-            return;
-        }
-
-        // 'registering for prebuild updates for all projects this user has access to
-        const projects = await this.getAccessibleProjects();
 
         const handler = (ctx: TraceContext, update: PrebuildWithStatus) =>
             TraceContext.withSpan(
@@ -273,38 +260,30 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
 
         if (!this.disposables.disposed) {
-            for (const project of projects) {
-                this.disposables.push(this.subscriber.listenForPrebuildUpdates(project.id, handler));
-            }
+            await runWithRequestContext(
+                {
+                    requestKind: "gitpod-server-impl-listener",
+                    requestMethod: "listenForPrebuildUpdates",
+                    signal: new AbortController().signal,
+                    subjectId: SubjectId.fromUserId(userId),
+                },
+                async () => {
+                    const organizations = await this.getTeams(ctx ?? {});
+                    for (const organization of organizations) {
+                        const hasPermission = await this.auth.hasPermissionOnOrganization(
+                            userId,
+                            "read_prebuild",
+                            organization.id,
+                        );
+                        if (hasPermission) {
+                            this.disposables.push(
+                                this.subscriber.listenForOrganizationPrebuildUpdates(organization.id, handler),
+                            );
+                        }
+                    }
+                },
+            );
         }
-
-        // TODO(at) we need to keep the list of accessible project up to date
-    }
-
-    private async getAccessibleProjects() {
-        const userId = this.userID;
-        if (!userId) {
-            return [];
-        }
-
-        // update all project this user has access to
-        // gpl: This call to runWithRequestContext is not nice, but it's only there to please the old impl for a limited time, so it's fine.
-        return runWithRequestContext(
-            {
-                requestKind: "gitpod-server-impl-listener",
-                requestMethod: "getAccessibleProjects",
-                signal: new AbortController().signal,
-                subjectId: SubjectId.fromUserId(userId),
-            },
-            async () => {
-                const allProjects: Project[] = [];
-                const teams = await this.organizationService.listOrganizationsByMember(userId, userId);
-                for (const team of teams) {
-                    allProjects.push(...(await this.projectsService.getProjects(userId, team.id)));
-                }
-                return allProjects;
-            },
-        );
     }
 
     private listenForWorkspaceInstanceUpdates(): void {
@@ -497,9 +476,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     /**
      * Returns the descriptions of auth providers. This also controls the visibility of
-     * auth providers on the dashbard.
+     * auth providers on the dashboard.
      *
-     * If this call is unauthenticated (i.e. for anonumous users,) it returns only information
+     * If this call is unauthenticated (i.e. for anonymous users,) it returns only information
      * necessary for the Login page.
      *
      * If there are built-in auth providers configured, only these are returned.
@@ -1701,7 +1680,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     ctx,
                 );
 
-            this.disposables.pushAll([this.subscriber.listenForPrebuildUpdates(project.id, prebuildUpdateHandler)]);
+            this.disposables.pushAll([
+                this.subscriber.listenForProjectPrebuildUpdates(project.id, prebuildUpdateHandler),
+            ]);
         }
 
         return project;

@@ -33,7 +33,7 @@ import { sendTrackEvent } from "../Analytics";
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
 function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
-    let host = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi();
+    const host = gitpodHostUrl.asWebsocket().with({ pathname: GitpodServerPath }).withApi();
 
     const connectionProvider = new WebSocketConnectionProvider();
     instrumentWebSocketConnection(connectionProvider);

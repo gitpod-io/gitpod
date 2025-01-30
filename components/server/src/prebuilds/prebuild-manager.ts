@@ -100,7 +100,7 @@ export class PrebuildManager {
         await this.auth.checkPermissionOnProject(userId, "read_prebuild", configurationId);
         return generateAsyncGenerator<PrebuildWithStatus>((sink) => {
             try {
-                const toDispose = this.subscriber.listenForPrebuildUpdates(configurationId, (_ctx, prebuild) => {
+                const toDispose = this.subscriber.listenForProjectPrebuildUpdates(configurationId, (_ctx, prebuild) => {
                     sink.push(prebuild);
                 });
                 return () => {

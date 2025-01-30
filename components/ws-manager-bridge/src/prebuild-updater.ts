@@ -98,6 +98,7 @@ export class PrebuildUpdater {
                         prebuildID: updatedPrebuild.id,
                         status: updatedPrebuild.state,
                         workspaceID: workspaceId,
+                        organizationID: info.teamId,
                     });
                 }
             }
@@ -127,6 +128,7 @@ export class PrebuildUpdater {
                         prebuildID: prebuild.id,
                         status: prebuild.state,
                         workspaceID: instance.workspaceId,
+                        organizationID: info.teamId,
                     });
                 }
             }
