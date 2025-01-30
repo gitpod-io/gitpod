@@ -10,21 +10,14 @@ import { Button } from "@podkit/buttons/Button";
 import { Workspace } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { useUpdateWorkspaceMutation } from "../data/workspaces/update-workspace-mutation";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { Workspace as WorkspaceProtocol } from "@gitpod/gitpod-protocol";
 
-export const NAME_PREFIX = "named:";
 export function toWorkspaceName(name: string): string {
-    // unsetting the name
-    if (name.trim().length === 0) {
-        return "no-name";
-    }
-    return `${NAME_PREFIX}${name}`;
+    return WorkspaceProtocol.toWorkspaceName(name);
 }
 
 export function fromWorkspaceName(workspace?: Workspace): string | undefined {
-    if (workspace?.metadata?.name?.startsWith(NAME_PREFIX)) {
-        return workspace.metadata.name.slice(NAME_PREFIX.length);
-    }
-    return undefined;
+    return WorkspaceProtocol.fromWorkspaceName(workspace?.metadata?.name);
 }
 
 type Props = {

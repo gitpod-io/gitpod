@@ -17,7 +17,7 @@ class GitpodGatewayClientCustomizationProvider : GatewayClientCustomizationProvi
 
     override val controlCenter: GatewayControlCenterProvider = object : GatewayControlCenterProvider {
         override fun getHostnameDisplayKind() = GatewayHostnameDisplayKind.ShowHostnameOnNavbar
-        override fun getHostnameShort() = title
+        override fun getHostnameShort() = System.getenv("GITPOD_WORKSPACE_NAME") ?: title
         override fun getHostnameLong() = title
     }
 }

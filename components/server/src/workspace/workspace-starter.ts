@@ -1588,6 +1588,14 @@ export class WorkspaceStarter {
         sysEnvvars.push(isSetJavaXmx);
         sysEnvvars.push(isSetJavaProcessorCount);
         sysEnvvars.push(disableJetBrainsLocalPortForwarding);
+
+        const workspaceName = Workspace.fromWorkspaceName(workspace.description);
+        if (workspaceName && workspaceName.length > 0) {
+            const workspaceNameEnv = new EnvironmentVariable();
+            workspaceNameEnv.setName("GITPOD_WORKSPACE_NAME");
+            workspaceNameEnv.setValue(workspaceName);
+            sysEnvvars.push(workspaceNameEnv);
+        }
         const spec = new StartWorkspaceSpec();
         await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
