@@ -52,9 +52,26 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 		}).Info("authorizing registry access")
 	}()
 
+	// Strip any port from the host if present
+	host = strings.Split(host, ":")[0]
+
 	explicitHostMatcher := func() (authConfig, bool) {
 		res, ok := a[host]
 		return res, ok
+	}
+	suffixHostMatcher := func() (authConfig, bool) {
+		var match *authConfig
+		for k, v := range a {
+			if strings.HasSuffix(host, k) {
+				if match == nil || len(k) > len(host) {
+					match = &v
+				}
+			}
+		}
+		if match == nil {
+			return authConfig{}, false
+		}
+		return *match, true
 	}
 	ecrHostMatcher := func() (authConfig, bool) {
 		if isECRRegistry(host) {
@@ -71,7 +88,7 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 		return authConfig{}, false
 	}
 
-	matchers := []func() (authConfig, bool){explicitHostMatcher, ecrHostMatcher, dockerHubHostMatcher}
+	matchers := []func() (authConfig, bool){explicitHostMatcher, suffixHostMatcher, ecrHostMatcher, dockerHubHostMatcher}
 	res, ok := authConfig{}, false
 	for _, matcher := range matchers {
 		res, ok = matcher()
@@ -86,12 +103,13 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 
 	user, pass = res.Username, res.Password
 	if res.Auth != "" {
-		var auth []byte
-		auth, err = base64.StdEncoding.DecodeString(res.Auth)
+		var authBytes []byte
+		authBytes, err = base64.StdEncoding.DecodeString(res.Auth)
 		if err != nil {
 			return
 		}
-		segs := strings.Split(string(auth), ":")
+		auth := strings.TrimSpace(string(authBytes))
+		segs := strings.Split(auth, ":")
 		if len(segs) < 2 {
 			return
 		}
@@ -142,6 +160,26 @@ func NewAuthorizerFromEnvVar(content string) (auth MapAuthorizer, err error) {
 	err = json.Unmarshal([]byte(content), &res)
 	if err != nil {
 		return nil, err
+	}
+	return MapAuthorizer(res), nil
+}
+
+func NewAuthorizerFromGitpodImageAuth(content string) (auth MapAuthorizer, err error) {
+	if content == "" {
+		return nil, nil
+	}
+
+	res := map[string]authConfig{}
+	hostsCredentials := strings.Split(content, ",")
+	for _, hostCredentials := range hostsCredentials {
+		parts := strings.SplitN(hostCredentials, ":", 2)
+		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+			log.Debug("Error parsing host credential for authorizer, skipping.")
+			continue
+		}
+		res[parts[0]] = authConfig{
+			Auth: parts[1],
+		}
 	}
 	return MapAuthorizer(res), nil
 }

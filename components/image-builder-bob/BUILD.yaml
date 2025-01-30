@@ -16,6 +16,19 @@ packages:
   - ["go", "mod", "tidy"]
   config:
     packaging: app
+- name: lib
+  type: go
+  deps:
+    - components/common-go:lib
+  srcs:
+  - "cmd/*.go"
+  - "pkg/**/*.go"
+  - "main.go"
+  - "go.mod"
+  - "go.sum"
+  config:
+    packaging: library
+    dontTest: false
 - name: runc-facade
   type: go
   srcs:

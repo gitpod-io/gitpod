@@ -19,7 +19,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-const authKey = "authKey"
+const CONTEXT_KEY_AUTHORIZER = "authKey"
 
 func NewProxy(host *url.URL, aliases map[string]Repo, mirrorAuth func() docker.Authorizer) (*Proxy, error) {
 	if host.Host == "" || host.Scheme == "" {
@@ -146,10 +146,11 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.Host = host
 
 		auth := proxy.mirrorAuth()
-		r = r.WithContext(context.WithValue(ctx, authKey, auth))
+		r = r.WithContext(context.WithValue(ctx, CONTEXT_KEY_AUTHORIZER, auth))
 
 		r.RequestURI = ""
-		proxy.mirror(host).ServeHTTP(w, r)
+		targetUrl := &url.URL{Scheme: "https", Host: host}
+		proxy.mirror(targetUrl).ServeHTTP(w, r)
 		return
 	}
 
@@ -161,7 +162,7 @@ func (proxy *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.Host = r.URL.Host
 
 	auth := repo.Auth()
-	r = r.WithContext(context.WithValue(ctx, authKey, auth))
+	r = r.WithContext(context.WithValue(ctx, CONTEXT_KEY_AUTHORIZER, auth))
 
 	err := auth.Authorize(ctx, r)
 	if err != nil {
@@ -200,7 +201,7 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 			log.WithError(err).Warn("saw error during CheckRetry")
 			return false, err
 		}
-		auth, ok := ctx.Value(authKey).(docker.Authorizer)
+		auth, ok := ctx.Value(CONTEXT_KEY_AUTHORIZER).(docker.Authorizer)
 		if !ok || auth == nil {
 			return false, nil
 		}
@@ -256,7 +257,7 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 		// 			   @link https://golang.org/src/net/http/httputil/reverseproxy.go
 		r.Header.Set("X-Forwarded-For", "127.0.0.1")
 
-		auth, ok := r.Context().Value(authKey).(docker.Authorizer)
+		auth, ok := r.Context().Value(CONTEXT_KEY_AUTHORIZER).(docker.Authorizer)
 		if !ok || auth == nil {
 			return
 		}
@@ -307,16 +308,41 @@ func (proxy *Proxy) reverse(alias string) *httputil.ReverseProxy {
 }
 
 // mirror produces an authentication-adding reverse proxy for given host
-func (proxy *Proxy) mirror(host string) *httputil.ReverseProxy {
+func (proxy *Proxy) mirror(targetUrl *url.URL) *httputil.ReverseProxy {
 	proxy.mu.Lock()
 	defer proxy.mu.Unlock()
 
-	if rp, ok := proxy.proxies[host]; ok {
+	if rp, ok := proxy.proxies[targetUrl.Host]; ok {
 		return rp
 	}
 
-	rp := httputil.NewSingleHostReverseProxy(&url.URL{Scheme: "https", Host: host})
+	rp := createAuthenticatingReverseProxy(targetUrl)
+	proxy.proxies[targetUrl.Host] = rp
+	return rp
+}
 
+func createAuthenticatingReverseProxy(targetUrl *url.URL) *httputil.ReverseProxy {
+	rp := httputil.NewSingleHostReverseProxy(targetUrl)
+
+	client := CreateAuthenticatingDockerClient()
+	rp.Transport = &retryablehttp.RoundTripper{
+		Client: client,
+	}
+	rp.ModifyResponse = func(r *http.Response) error {
+		if r.StatusCode == http.StatusBadGateway {
+			// BadGateway makes containerd retry - we don't want that because we retry the upstream
+			// requests internally.
+			r.StatusCode = http.StatusInternalServerError
+			r.Status = http.StatusText(http.StatusInternalServerError)
+		}
+
+		return nil
+	}
+	return rp
+}
+
+// CreateAuthenticatingDockerClient creates a retryable http client that can authenticate against a docker registry, incl. handling it's idiosyncracies
+func CreateAuthenticatingDockerClient() *retryablehttp.Client {
 	client := retryablehttp.NewClient()
 	client.RetryMax = 3
 	client.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
@@ -324,11 +350,13 @@ func (proxy *Proxy) mirror(host string) *httputil.ReverseProxy {
 			log.WithError(err).Warn("saw error during CheckRetry")
 			return false, err
 		}
-		auth, ok := ctx.Value(authKey).(docker.Authorizer)
+		auth, ok := ctx.Value(CONTEXT_KEY_AUTHORIZER).(docker.Authorizer)
 		if !ok || auth == nil {
+			log.Warn("no authorizer found in context, won't retry.")
 			return false, nil
 		}
 		if resp.StatusCode == http.StatusUnauthorized {
+			log.Debug("employing authorizer workaround for 401")
 			// the docker authorizer only refreshes OAuth tokens after two
 			// successive 401 errors for the same URL. Rather than issue the same
 			// request multiple times to tickle the token-refreshing logic, just
@@ -352,6 +380,7 @@ func (proxy *Proxy) mirror(host string) *httputil.ReverseProxy {
 			}
 			return true, nil
 		}
+
 		if resp.StatusCode == http.StatusBadRequest {
 			log.WithField("URL", resp.Request.URL.String()).Warn("bad request")
 			return true, nil
@@ -374,7 +403,7 @@ func (proxy *Proxy) mirror(host string) *httputil.ReverseProxy {
 		// 			   @link https://golang.org/src/net/http/httputil/reverseproxy.go
 		r.Header.Set("X-Forwarded-For", "127.0.0.1")
 
-		auth, ok := r.Context().Value(authKey).(docker.Authorizer)
+		auth, ok := r.Context().Value(CONTEXT_KEY_AUTHORIZER).(docker.Authorizer)
 		if !ok || auth == nil {
 			return
 		}
@@ -382,19 +411,5 @@ func (proxy *Proxy) mirror(host string) *httputil.ReverseProxy {
 	}
 	client.ResponseLogHook = func(l retryablehttp.Logger, r *http.Response) {}
 
-	rp.Transport = &retryablehttp.RoundTripper{
-		Client: client,
-	}
-	rp.ModifyResponse = func(r *http.Response) error {
-		if r.StatusCode == http.StatusBadGateway {
-			// BadGateway makes containerd retry - we don't want that because we retry the upstream
-			// requests internally.
-			r.StatusCode = http.StatusInternalServerError
-			r.Status = http.StatusText(http.StatusInternalServerError)
-		}
-
-		return nil
-	}
-	proxy.proxies[host] = rp
-	return rp
+	return client
 }
