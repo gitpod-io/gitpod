@@ -225,6 +225,13 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		}
 	}
 
+	for _, ev := range req.Spec.Envvars {
+		if ev.Name == "GITPOD_DOCKERD_PROXY_ENABLED" {
+			annotations[wsk8s.WorkspaceDockerdProxyAnnotation] = util.BooleanTrueString
+			break
+		}
+	}
+
 	envSecretName := fmt.Sprintf("%s-%s", req.Id, "env")
 	userEnvVars, envData := extractWorkspaceUserEnv(envSecretName, req.Spec.Envvars, req.Spec.SysEnvvars)
 	sysEnvVars := extractWorkspaceSysEnv(req.Spec.SysEnvvars)

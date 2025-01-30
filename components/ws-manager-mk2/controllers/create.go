@@ -25,6 +25,7 @@ import (
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/constants"
@@ -572,6 +573,23 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 		result = append(result, corev1.EnvVar{Name: "NODE_EXTRA_CA_CERTS", Value: customCAMountPath})
 		result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAPATH", Value: certsMountPath})
 		result = append(result, corev1.EnvVar{Name: "GIT_SSL_CAINFO", Value: customCAMountPath})
+	}
+
+	if sctx.Workspace.Annotations[wsk8s.WorkspaceDockerdProxyAnnotation] == util.BooleanTrueString {
+		var imageAuth string
+		for _, ev := range sctx.Workspace.Spec.UserEnvVars {
+			if ev.Name == "GITPOD_IMAGE_AUTH" {
+				imageAuth = ev.Value
+				break
+			}
+		}
+		if imageAuth != "" {
+			// Start the dockerd-proxy which injects all HTTP(S) requests with the credentials we got in GITPOD_IMAGE_AUTH
+			result = append(result, corev1.EnvVar{Name: "WORKSPACEKIT_RING2_ENCLAVE", Value: "/.supervisor/supervisor dockerd-proxy"})
+			result = append(result, corev1.EnvVar{Name: "WORKSPACEKIT_GITPOD_IMAGE_AUTH", Value: string(imageAuth)})
+			// Trigger supervisor to configure dockerd to use this proxy
+			result = append(result, corev1.EnvVar{Name: "GITPOD_DOCKERD_PROXY_ENABLED", Value: "true"})
+		}
 	}
 
 	// System level env vars
