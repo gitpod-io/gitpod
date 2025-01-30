@@ -61,6 +61,7 @@
                             client="controller" preload="true"/>
         <gateway.customization.performance id="gitpodMetricsControl" order="before cpuControl"
                                            implementation="io.gitpod.jetbrains.remote.GitpodMetricControlProvider"/>
+        <statusBarWidgetFactory implementation="io.gitpod.jetbrains.remote.GitpodSystemMetricsFactory"/>
     </extensions>
 
     <actions>
