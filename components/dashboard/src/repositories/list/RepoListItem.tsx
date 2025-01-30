@@ -99,7 +99,7 @@ export const RepositoryListItem: FC<Props> = ({ configuration, isSuggested, hand
                                         Add to suggested repos
                                     </DropdownMenuItem>
                                     <DropdownLinkMenuItem
-                                        href="https://www.gitpod.io/docs/"
+                                        href="https://www.gitpod.io/docs/configure/orgs/onboarding#suggested-repositories"
                                         className="gap-1 text-xs"
                                         target="_blank"
                                         rel="noreferrer"
