@@ -125,6 +125,21 @@ describe("ProjectsService", async () => {
         expect(projects.length).to.equal(0);
     });
 
+    it("should remove project from org onboarding recommendations when deleted", async () => {
+        const ps = container.get(ProjectsService);
+        const project = await createTestProject(ps, org, owner);
+        const organizationService = container.get(OrganizationService);
+        const recommendations = await organizationService.updateSettings(owner.id, org.id, {
+            onboardingSettings: {
+                recommendedRepositories: ["a", project.id, "b"],
+            },
+        });
+        expect(recommendations.onboardingSettings?.recommendedRepositories).to.deep.equal(["a", project.id, "b"]);
+        await withTestCtx(owner, () => ps.deleteProject(owner.id, project.id));
+        const recommendationsAfterDelete = await organizationService.getSettings(owner.id, org.id);
+        expect(recommendationsAfterDelete.onboardingSettings?.recommendedRepositories).to.deep.equal(["a", "b"]);
+    });
+
     it("should updateProject", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
