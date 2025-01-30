@@ -124,7 +124,6 @@ function createServiceClient<T extends ServiceType>(
                     return grpcClient;
                 }
                 if (preferJsonRpc) {
-                    console.debug("using preferred jsonrpc client for", type.typeName, prop);
                     return jsonRpcOptions.client;
                 }
                 const featureFlags = [`dashboard_public_api_${jsonRpcOptions.featureFlagSuffix}_enabled`];

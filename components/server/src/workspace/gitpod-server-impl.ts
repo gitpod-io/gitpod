@@ -242,7 +242,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     private async listenForPrebuildUpdates(ctx?: TraceContext) {
-        if (!this.client) {
+        const userId = this.userID;
+        if (!this.client || !userId) {
             return;
         }
 
@@ -258,19 +259,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ctx,
             );
 
-        if (!this.disposables.disposed && this.userID) {
+        if (!this.disposables.disposed) {
             await runWithRequestContext(
                 {
                     requestKind: "gitpod-server-impl-listener",
                     requestMethod: "listenForPrebuildUpdates",
                     signal: new AbortController().signal,
-                    subjectId: SubjectId.fromUserId(this.userID),
+                    subjectId: SubjectId.fromUserId(userId),
                 },
                 async () => {
                     const organizations = await this.getTeams(ctx ?? {});
                     for (const organization of organizations) {
                         const hasPermission = await this.auth.hasPermissionOnOrganization(
-                            this.userID,
+                            userId,
                             "read_prebuild",
                             organization.id,
                         );

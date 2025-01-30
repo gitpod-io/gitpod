@@ -17,7 +17,7 @@ schema: |-
 
       permission make_admin = installation->admin + organization->installation_admin
 
-      // administrate is for changes such as blocking or verifying, i.e. things that only admins can do on user
+      // administrate is for changes such as blocking or verifiying, i.e. things that only admins can do on user
       permission admin_control = installation->admin + organization->installation_admin
 
       permission read_ssh = self

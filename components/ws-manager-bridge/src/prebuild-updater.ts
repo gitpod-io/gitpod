@@ -39,7 +39,6 @@ export class PrebuildUpdater {
         const span = TraceContext.startSpan("updatePrebuiltWorkspace", ctx);
         try {
             const prebuild = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(status.metadata!.metaId!);
-            const workspace = await this.workspaceDB.trace({ span }).findById(workspaceId);
             if (!prebuild) {
                 log.warn(logCtx, "Headless workspace without prebuild");
                 TraceContext.setError({ span }, new Error("headless workspace without prebuild"));
@@ -99,7 +98,7 @@ export class PrebuildUpdater {
                         prebuildID: updatedPrebuild.id,
                         status: updatedPrebuild.state,
                         workspaceID: workspaceId,
-                        organizationID: workspace?.organizationId,
+                        organizationID: info.teamId,
                     });
                 }
             }
@@ -115,7 +114,6 @@ export class PrebuildUpdater {
         const span = TraceContext.startSpan("stopPrebuildInstance", ctx);
 
         const prebuild = await this.workspaceDB.trace({}).findPrebuildByWorkspaceID(instance.workspaceId);
-        const workspace = await this.workspaceDB.trace({}).findById(instance.workspaceId);
         if (prebuild) {
             // this is a prebuild - set it to aborted
             prebuild.state = "aborted";
@@ -130,7 +128,7 @@ export class PrebuildUpdater {
                         prebuildID: prebuild.id,
                         status: prebuild.state,
                         workspaceID: instance.workspaceId,
-                        organizationID: workspace?.organizationId,
+                        organizationID: info.teamId,
                     });
                 }
             }
