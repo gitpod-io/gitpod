@@ -568,7 +568,7 @@ export class WorkspaceService {
                 daysToLive = daysToLive * 2;
             }
             deletionEligibilityTime.setDate(deletionEligibilityTime.getDate() + daysToLive);
-            if (new Date() > deletionEligibilityTime) {
+            if (new Date().toISOString() > deletionEligibilityTime.toISOString()) {
                 log.warn(
                     { userId, workspaceId, instanceId: instance?.id },
                     "[updateDeletionEligibilityTime] Prevented moving deletion eligibility time to the past",
