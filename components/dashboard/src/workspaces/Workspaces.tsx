@@ -132,21 +132,22 @@ const WorkspacesPage: FunctionComponent = () => {
         }
     }, [user?.profile?.coachmarksDismissals]);
 
-    const { data: suggestedRepos } = useSuggestedRepositories({ excludeConfigurations: false });
+    const { data: userSuggestedRepos } = useSuggestedRepositories({ excludeConfigurations: false });
     const { data: orgSuggestedRepos } = useOrgSuggestedRepos();
 
-    const recentRepos = useMemo(() => {
-        return (
-            suggestedRepos
+    const suggestedRepos = useMemo(() => {
+        const userSuggestions =
+            userSuggestedRepos
                 ?.filter((repo) => {
                     const autostartMatch = user?.workspaceAutostartOptions.find((option) => {
                         return option.cloneUrl.includes(repo.url);
                     });
                     return autostartMatch;
                 })
-                .slice(0, 3) ?? []
-        );
-    }, [suggestedRepos, user]);
+                .slice(0, 3) ?? [];
+        const orgSuggestions = orgSuggestedRepos ?? [];
+        return [...userSuggestions, ...orgSuggestions].slice(0, 3);
+    }, [userSuggestedRepos, user, orgSuggestedRepos]);
 
     const toggleGettingStarted = useCallback(
         (show: boolean) => {
@@ -253,14 +254,14 @@ const WorkspacesPage: FunctionComponent = () => {
                         </div>
                     )}
 
-                    {recentRepos.length > 0 && (
+                    {suggestedRepos.length > 0 && (
                         <>
                             <Subheading className="font-semibold text-pk-content-primary mb-2 app-container">
                                 Suggested
                             </Subheading>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:px-28 px-4">
-                                {[...recentRepos, ...(orgSuggestedRepos ?? [])].slice(0, 3).map((repo) => {
+                                {suggestedRepos.map((repo) => {
                                     const isOrgSuggested = (repo as SuggestedOrgRepository).orgSuggested ?? false;
                                     return (
                                         <Card
