@@ -568,13 +568,10 @@ export class WorkspaceService {
                 daysToLive = daysToLive * 2;
             }
             deletionEligibilityTime.setDate(deletionEligibilityTime.getDate() + daysToLive);
-            if (
-                workspace.deletionEligibilityTime &&
-                workspace.deletionEligibilityTime > deletionEligibilityTime.toISOString()
-            ) {
+            if (new Date().toISOString() > deletionEligibilityTime.toISOString()) {
                 log.warn(
                     { userId, workspaceId, instanceId: instance?.id },
-                    "[updateDeletionEligibilityTime] Prevented moving deletion eligibility time backwards",
+                    "[updateDeletionEligibilityTime] Prevented moving deletion eligibility time to the past",
                     {
                         hasGitChanges,
                         timestamps: new TrustedValue({
