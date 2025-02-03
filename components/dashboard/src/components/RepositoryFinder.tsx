@@ -25,6 +25,8 @@ import { useConfiguration, useListConfigurations } from "../data/configurations/
 import { useUserLoader } from "../hooks/use-user-loader";
 import { conjunctScmProviders, getDeduplicatedScmProviders } from "../utils";
 import { cn } from "@podkit/lib/cn";
+import { useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
+import { toRemoteURL } from "../projects/render-utils";
 
 const isPredefined = (repo: SuggestedRepository): boolean => {
     return PREDEFINED_REPOS.some((predefined) => predefined.url === repo.url) && !repo.configurationId;
@@ -35,7 +37,31 @@ const resolveIcon = (contextUrl?: string): string => {
     return PREDEFINED_REPOS.some((repo) => repo.url === contextUrl) ? GitpodRepositoryTemplateSVG : RepositorySVG;
 };
 
-interface RepositoryFinderProps {
+type PredefinedRepositoryOptionProps = {
+    repo: typeof PREDEFINED_REPOS[number];
+};
+const PredefinedRepositoryOption: FC<PredefinedRepositoryOptionProps> = ({ repo }) => {
+    const prettyUrl = toRemoteURL(repo.url);
+
+    return (
+        <div className="flex flex-col overflow-hidden" aria-label={`Demo: ${repo.url}`}>
+            <div className="flex items-center">
+                <GitpodRepositoryTemplate className="w-5 h-5 text-pk-content-secondary mr-2" />
+                <span className="text-sm font-semibold">{repo.repoName}</span>
+                <MiddleDot className="px-0.5 text-pk-content-secondary" />
+                <span
+                    className="text-sm whitespace-nowrap truncate overflow-ellipsis text-pk-content-secondary"
+                    title={prettyUrl}
+                >
+                    {prettyUrl}
+                </span>
+            </div>
+            <span className="text-xs text-pk-content-secondary ml-7">{repo.description}</span>
+        </div>
+    );
+};
+
+type RepositoryFinderProps = {
     selectedContextURL?: string;
     selectedConfigurationId?: string;
     disabled?: boolean;
@@ -44,8 +70,7 @@ interface RepositoryFinderProps {
     onlyConfigurations?: boolean;
     showExamples?: boolean;
     onChange?: (repo: SuggestedRepository) => void;
-}
-
+};
 export default function RepositoryFinder({
     selectedContextURL,
     selectedConfigurationId,
@@ -69,6 +94,8 @@ export default function RepositoryFinder({
         excludeConfigurations,
         onlyConfigurations,
     });
+
+    const { data: orgSuggestedRepos } = useOrgSuggestedRepos();
 
     // We search for the current context URL in order to have data for the selected suggestion
     const selectedItemSearch = useListConfigurations({
@@ -162,29 +189,6 @@ export default function RepositoryFinder({
     const [hasStartedSearching, setHasStartedSearching] = useState(false);
     const [isShowingExamples, setIsShowingExamples] = useState(showExamples);
 
-    type PredefinedRepositoryOptionProps = {
-        repo: typeof PREDEFINED_REPOS[number];
-    };
-
-    const PredefinedRepositoryOption: FC<PredefinedRepositoryOptionProps> = ({ repo }) => {
-        return (
-            <div className="flex flex-col overflow-hidden" aria-label={`Demo: ${repo.url}`}>
-                <div className="flex items-center">
-                    <GitpodRepositoryTemplate className="w-5 h-5 text-pk-content-secondary mr-2" />
-                    <span className="text-sm font-semibold">{repo.repoName}</span>
-                    <MiddleDot className="px-0.5 text-pk-content-secondary" />
-                    <span
-                        className="text-sm whitespace-nowrap truncate overflow-ellipsis text-pk-content-secondary"
-                        title={repo.repoPath}
-                    >
-                        {repo.repoPath}
-                    </span>
-                </div>
-                <span className="text-xs text-pk-content-secondary ml-7">{repo.description}</span>
-            </div>
-        );
-    };
-
     // Resolve the selected context url & configurationId id props to a suggestion entry
     useEffect(() => {
         let match = repos?.find((repo) => {
@@ -267,13 +271,21 @@ export default function RepositoryFinder({
     };
 
     const filteredPredefinedRepos = useMemo(() => {
+        if (orgSuggestedRepos?.length) {
+            return orgSuggestedRepos.map((repo) => ({
+                url: repo.url,
+                repoName: repo.repoName,
+                description: "",
+            }));
+        }
+
         return PREDEFINED_REPOS.filter((repo) => {
             const url = new URL(repo.url);
             const isMatchingAuthProviderAvailable =
                 authProviders.data?.some((provider) => provider.host === url.host) ?? false;
             return isMatchingAuthProviderAvailable;
         });
-    }, [authProviders.data]);
+    }, [authProviders.data, orgSuggestedRepos]);
 
     const getElements = useCallback(
         (searchString: string): ComboboxElement[] => {
