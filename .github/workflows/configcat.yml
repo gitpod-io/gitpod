@@ -11,7 +11,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Scan & upload
-        uses: configcat/scan-repository@v1
+        uses: configcat/scan-repository@v2
         with:
           api-user: ${{ secrets.CONFIGCAT_API_USER }}
           api-pass: ${{ secrets.CONFIGCAT_API_PASS }}
