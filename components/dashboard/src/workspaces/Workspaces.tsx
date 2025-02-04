@@ -37,9 +37,7 @@ import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutati
 import { useUserLoader } from "../hooks/use-user-loader";
 import Tooltip from "../components/Tooltip";
 import { useFeatureFlag } from "../data/featureflag-query";
-import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
-import PillLabel from "../components/PillLabel";
-import { SuggestedOrgRepository, useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
+import { useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
 
 export const GETTING_STARTED_DISMISSAL_KEY = "workspace-list-getting-started";
 
@@ -132,22 +130,7 @@ const WorkspacesPage: FunctionComponent = () => {
         }
     }, [user?.profile?.coachmarksDismissals]);
 
-    const { data: userSuggestedRepos } = useSuggestedRepositories({ excludeConfigurations: false });
     const { data: orgSuggestedRepos } = useOrgSuggestedRepos();
-
-    const suggestedRepos = useMemo(() => {
-        const userSuggestions =
-            userSuggestedRepos
-                ?.filter((repo) => {
-                    const autostartMatch = user?.workspaceAutostartOptions.find((option) => {
-                        return option.cloneUrl.includes(repo.url);
-                    });
-                    return autostartMatch;
-                })
-                .slice(0, 3) ?? [];
-        const orgSuggestions = orgSuggestedRepos ?? [];
-        return [...userSuggestions, ...orgSuggestions].slice(0, 3);
-    }, [userSuggestedRepos, user, orgSuggestedRepos]);
 
     const toggleGettingStarted = useCallback(
         (show: boolean) => {
@@ -257,53 +240,6 @@ const WorkspacesPage: FunctionComponent = () => {
                             </Card>
                         </div>
                     )}
-
-                    {suggestedRepos.length > 0 && (
-                        <>
-                            <Subheading className="font-semibold text-pk-content-primary mb-2 app-container">
-                                Suggested
-                            </Subheading>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:px-28 px-4">
-                                {suggestedRepos.map((repo) => {
-                                    const isOrgSuggested = (repo as SuggestedOrgRepository).orgSuggested ?? false;
-                                    return (
-                                        <Card
-                                            key={repo.url}
-                                            href={`/new#${repo.url}`}
-                                            className={cn(
-                                                "border-[0.5px] hover:bg-pk-surface-tertiary transition-colors w-full",
-                                                {
-                                                    "border-[#D79A45]": isOrgSuggested,
-                                                    "border-pk-border-base": !isOrgSuggested,
-                                                },
-                                            )}
-                                        >
-                                            <div className="min-w-0 w-full space-y-1.5">
-                                                <CardTitle className="flex flex-row items-center gap-2 w-full">
-                                                    <span className="truncate block min-w-0 text-base">
-                                                        {repo.configurationName || repo.repoName}
-                                                    </span>
-                                                    {isOrgSuggested && (
-                                                        <PillLabel
-                                                            className="capitalize bg-kumquat-light shrink-0 text-sm"
-                                                            type="warn"
-                                                        >
-                                                            Recommended
-                                                        </PillLabel>
-                                                    )}
-                                                </CardTitle>
-                                                <CardDescription className="truncate text-sm opacity-75">
-                                                    {repo.url}
-                                                </CardDescription>
-                                            </div>
-                                        </Card>
-                                    );
-                                })}
-                            </div>
-                        </>
-                    )}
-
                     <Modal
                         visible={isVideoModalVisible}
                         onClose={handleVideoModalClose}
