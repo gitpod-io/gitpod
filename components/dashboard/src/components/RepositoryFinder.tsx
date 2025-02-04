@@ -8,7 +8,6 @@ import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Combobox, ComboboxElement, ComboboxSelectedItem } from "./podkit/combobox/Combobox";
 import RepositorySVG from "../icons/Repository.svg";
 import { ReactComponent as RepositoryIcon } from "../icons/RepositoryWithColor.svg";
-import { ReactComponent as GitpodRepositoryTemplate } from "../icons/GitpodRepositoryTemplate.svg";
 import GitpodRepositoryTemplateSVG from "../icons/GitpodRepositoryTemplate.svg";
 import { MiddleDot } from "./typography/MiddleDot";
 import {
@@ -28,8 +27,12 @@ import { cn } from "@podkit/lib/cn";
 import { useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
 import { toRemoteURL } from "../projects/render-utils";
 
-const isPredefined = (repo: SuggestedRepository): boolean => {
-    return PREDEFINED_REPOS.some((predefined) => predefined.url === repo.url) && !repo.configurationId;
+type PredefinedRepoOption = typeof PREDEFINED_REPOS[number];
+const isPredefined = (repo: SuggestedRepository | PredefinedRepoOption): boolean => {
+    return (
+        PREDEFINED_REPOS.some((predefined) => predefined.url === repo.url) &&
+        !(repo as SuggestedRepository).configurationId
+    );
 };
 
 const resolveIcon = (contextUrl?: string): string => {
@@ -38,15 +41,16 @@ const resolveIcon = (contextUrl?: string): string => {
 };
 
 type PredefinedRepositoryOptionProps = {
-    repo: typeof PREDEFINED_REPOS[number];
+    repo: PredefinedRepoOption;
 };
 const PredefinedRepositoryOption: FC<PredefinedRepositoryOptionProps> = ({ repo }) => {
     const prettyUrl = toRemoteURL(repo.url);
+    const icon = resolveIcon(repo.url);
 
     return (
         <div className="flex flex-col overflow-hidden" aria-label={`Demo: ${repo.url}`}>
             <div className="flex items-center">
-                <GitpodRepositoryTemplate className="w-5 h-5 text-pk-content-secondary mr-2" />
+                <img className={cn("w-5 mr-2 text-pk-content-secondary")} src={icon} alt="" />
                 <span className="text-sm font-semibold">{repo.repoName}</span>
                 <MiddleDot className="px-0.5 text-pk-content-secondary" />
                 <span
