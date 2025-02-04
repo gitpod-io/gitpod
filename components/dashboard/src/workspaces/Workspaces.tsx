@@ -20,7 +20,7 @@ import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v
 import { Button } from "@podkit/buttons/Button";
 import { VideoCarousel } from "./VideoCarousel";
 import { BlogBanners } from "./BlogBanners";
-import { Book, BookOpen, Building, ChevronRight, Code, GraduationCap } from "lucide-react";
+import { Book, BookOpen, Building, ChevronRight, Code, Video } from "lucide-react";
 import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
 import PersonalizedContent from "./PersonalizedContent";
 import { useListenToWorkspacesWSMessages as useListenToWorkspacesStatusUpdates } from "../data/workspaces/listen-to-workspace-ws-messages";
@@ -37,6 +37,7 @@ import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutati
 import { useUserLoader } from "../hooks/use-user-loader";
 import Tooltip from "../components/Tooltip";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
 
 export const GETTING_STARTED_DISMISSAL_KEY = "workspace-list-getting-started";
 
@@ -129,6 +130,8 @@ const WorkspacesPage: FunctionComponent = () => {
         }
     }, [user?.profile?.coachmarksDismissals]);
 
+    const { data: orgSuggestedRepos } = useOrgSuggestedRepos();
+
     const toggleGettingStarted = useCallback(
         (show: boolean) => {
             setShowGettingStarted(show);
@@ -191,7 +194,7 @@ const WorkspacesPage: FunctionComponent = () => {
                     {showGettingStarted && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:px-28 px-4 pb-4">
                             <Card onClick={() => setVideoModalVisible(true)}>
-                                <GraduationCap className="flex-shrink-0" size={24} />
+                                <Video className="flex-shrink-0" size={24} />
                                 <div className="min-w-0">
                                     <CardTitle>Learn how Gitpod works</CardTitle>
                                     <CardDescription>
@@ -216,7 +219,11 @@ const WorkspacesPage: FunctionComponent = () => {
                                     <div className="min-w-0">
                                         <CardTitle>Open a sample repository</CardTitle>
                                         <CardDescription>
-                                            Explore a sample repository to quickly experience Gitpod.
+                                            Explore{" "}
+                                            {orgSuggestedRepos?.length
+                                                ? "repositories recommended by your organization"
+                                                : "a sample repository"}
+                                            to quickly experience Gitpod.
                                         </CardDescription>
                                     </div>
                                 </Card>

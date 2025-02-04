@@ -47,6 +47,7 @@ import { ctxUserId } from "../util/request-context";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { EntitlementService } from "../billing/entitlement-service";
 import { Config } from "../config";
+import { ProjectsService } from "../projects/projects-service";
 
 @injectable()
 export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationServiceInterface> {
@@ -59,6 +60,8 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         private readonly apiConverter: PublicAPIConverter,
         @inject(EntitlementService)
         private readonly entitlementService: EntitlementService,
+        @inject(ProjectsService)
+        private readonly projectService: ProjectsService,
     ) {}
 
     async listOrganizationWorkspaceClasses(
@@ -346,6 +349,25 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             }
             if ((req.onboardingSettings.internalLink?.length ?? 0) > 255) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, "internalLink must be <= 255 characters");
+            }
+
+            if (req.onboardingSettings.recommendedRepositories) {
+                if (req.onboardingSettings.recommendedRepositories.length > 3) {
+                    throw new ApplicationError(
+                        ErrorCodes.BAD_REQUEST,
+                        "there can't be more than 3 recommendedRepositories",
+                    );
+                }
+                for (const configurationId of req.onboardingSettings.recommendedRepositories) {
+                    if (!uuidValidate(configurationId)) {
+                        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "recommendedRepositories must be UUIDs");
+                    }
+
+                    const project = await this.projectService.getProject(ctxUserId(), configurationId);
+                    if (!project) {
+                        throw new ApplicationError(ErrorCodes.BAD_REQUEST, `repository ${configurationId} not found`);
+                    }
+                }
             }
 
             update.onboardingSettings = req.onboardingSettings;

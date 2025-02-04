@@ -92,7 +92,7 @@ describe("ProjectsService", async () => {
 
         const foundProject = await ps.getProject(stranger.id, project.id);
         expect(foundProject?.id).to.equal(project.id);
-        // listing by org still doesn't woprk because strangers don't have access to the org
+        // listing by org still doesn't work because strangers don't have access to the org
         await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjects(stranger.id, org.id));
     });
 
@@ -109,18 +109,35 @@ describe("ProjectsService", async () => {
 
         expect(await pdb.getProjectEnvironmentVariables(project1.id)).to.have.lengthOf(1);
 
-        await ps.deleteProject(member.id, project1.id);
+        await withTestCtx(member, () => ps.deleteProject(member.id, project1.id));
         let projects = await ps.getProjects(member.id, org.id);
         expect(projects.length).to.equal(0);
         // have to use db directly to verify the env vars are really deleted, the env var service would throw with project not found.
         expect(await pdb.getProjectEnvironmentVariables(project1.id)).to.have.lengthOf(0);
 
         const project2 = await createTestProject(ps, org, owner);
-        await expectError(ErrorCodes.NOT_FOUND, () => ps.deleteProject(stranger.id, project2.id));
+        await withTestCtx(stranger, () =>
+            expectError(ErrorCodes.NOT_FOUND, () => ps.deleteProject(stranger.id, project2.id)),
+        );
 
-        await ps.deleteProject(owner.id, project2.id);
+        await withTestCtx(owner, () => ps.deleteProject(owner.id, project2.id));
         projects = await ps.getProjects(owner.id, org.id);
         expect(projects.length).to.equal(0);
+    });
+
+    it("should remove project from org onboarding recommendations when deleted", async () => {
+        const ps = container.get(ProjectsService);
+        const project = await createTestProject(ps, org, owner);
+        const organizationService = container.get(OrganizationService);
+        const recommendations = await organizationService.updateSettings(owner.id, org.id, {
+            onboardingSettings: {
+                recommendedRepositories: ["a", project.id, "b"],
+            },
+        });
+        expect(recommendations.onboardingSettings?.recommendedRepositories).to.deep.equal(["a", project.id, "b"]);
+        await withTestCtx(owner, () => ps.deleteProject(owner.id, project.id));
+        const recommendationsAfterDelete = await organizationService.getSettings(owner.id, org.id);
+        expect(recommendationsAfterDelete.onboardingSettings?.recommendedRepositories).to.deep.equal(["a", "b"]);
     });
 
     it("should updateProject", async () => {

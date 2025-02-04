@@ -19,6 +19,11 @@ import type { PlainMessage } from "@bufbuild/protobuf";
 import { InputField } from "../components/forms/InputField";
 import { TextInput } from "../components/forms/TextInputField";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
+import { Link } from "react-router-dom";
+import { useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
+import { RepositoryListItem } from "../repositories/list/RepoListItem";
+import { LoadingState } from "@podkit/loading/LoadingState";
+import { Table, TableHeader, TableRow, TableHead, TableBody } from "@podkit/tables/Table";
 
 export default function TeamOnboardingPage() {
     useDocumentTitle("Organization Settings - Onboarding");
@@ -28,6 +33,8 @@ export default function TeamOnboardingPage() {
 
     const { data: settings } = useOrgSettingsQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
+
+    const { data: suggestedRepos, isLoading: isLoadingSuggestedRepos } = useOrgSuggestedRepos();
 
     const [internalLink, setInternalLink] = useState<string | undefined>(undefined);
 
@@ -60,9 +67,14 @@ export default function TeamOnboardingPage() {
         async (e: FormEvent) => {
             e.preventDefault();
 
-            await handleUpdateTeamSettings({ onboardingSettings: { internalLink } });
+            await handleUpdateTeamSettings({
+                onboardingSettings: {
+                    internalLink,
+                    recommendedRepositories: settings?.onboardingSettings?.recommendedRepositories ?? [],
+                },
+            });
         },
-        [handleUpdateTeamSettings, internalLink],
+        [handleUpdateTeamSettings, internalLink, settings?.onboardingSettings?.recommendedRepositories],
     );
 
     useEffect(() => {
@@ -75,11 +87,11 @@ export default function TeamOnboardingPage() {
         <OrgSettingsPage>
             <div className="space-y-8">
                 <div>
-                    <Heading2>Policies</Heading2>
-                    <Subheading>Restrict workspace classes, editors and sharing across your organization.</Subheading>
+                    <Heading2>Onboarding</Heading2>
+                    <Subheading>Customize the onboarding experience for your organization members.</Subheading>
                 </div>
                 <ConfigurationSettingsField>
-                    <Heading3>Internal dashboard</Heading3>
+                    <Heading3>Internal landing page</Heading3>
                     <Subheading>
                         The link to your internal landing page. This link will be shown to your organization members
                         during the onboarding process. You can disable showing a link by leaving this field empty.
@@ -98,6 +110,52 @@ export default function TeamOnboardingPage() {
                             Save
                         </LoadingButton>
                     </form>
+                </ConfigurationSettingsField>
+
+                <ConfigurationSettingsField>
+                    <Heading3>Suggested repositories</Heading3>
+                    <Subheading>
+                        A list of repositories suggested to new organization members. To manage recommended
+                        repositories, visit the{" "}
+                        <Link to="/repositories" className="gp-link">
+                            Repository settings
+                        </Link>{" "}
+                        page and add / remove repositories from the list using the context menu on the corresponding
+                        repository's row.
+                    </Subheading>
+                    {(suggestedRepos ?? []).length > 0 && (
+                        <Table className="mt-4">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-52">Name</TableHead>
+                                    <TableHead hideOnSmallScreen>Repository</TableHead>
+                                    <TableHead className="w-32" hideOnSmallScreen>
+                                        Created
+                                    </TableHead>
+                                    <TableHead className="w-24" hideOnSmallScreen>
+                                        Prebuilds
+                                    </TableHead>
+                                    {/* Action column, loading status in header */}
+                                    <TableHead className="w-24 text-right">
+                                        {isLoadingSuggestedRepos && (
+                                            <div className="flex flex-right justify-end items-center">
+                                                <LoadingState delay={false} size={16} />
+                                            </div>
+                                        )}
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {(suggestedRepos ?? []).map((repo) => (
+                                    <RepositoryListItem
+                                        key={repo.configurationId}
+                                        configuration={repo.configuration}
+                                        isSuggested={true}
+                                    />
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
                 </ConfigurationSettingsField>
             </div>
         </OrgSettingsPage>

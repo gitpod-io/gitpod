@@ -97,6 +97,29 @@ const DropdownMenuItem = React.forwardRef<
 ));
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 
+const DropdownLinkMenuItem = React.forwardRef<
+    HTMLAnchorElement,
+    React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+        inset?: boolean;
+    }
+>(({ className, inset, ...props }, ref) => (
+    <DropdownMenuItem asChild>
+        <a
+            href={props.href}
+            className={cn(
+                "relative flex cursor-default select-none items-center px-2 py-1.5 text-sm",
+                "outline-none bg-pk-surface-primary focus:text-pk-content-primary focus:bg-pk-surface-tertiary",
+                "data-[disabled]:pointer-events-none data-[disabled]:opacity-50 rounded-none",
+                className,
+            )}
+            {...props}
+        >
+            {props.children}
+        </a>
+    </DropdownMenuItem>
+));
+DropdownLinkMenuItem.displayName = "DropdownLinkMenuItem";
+
 const DropdownMenuCheckboxItem = React.forwardRef<
     React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
     React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem>
@@ -189,4 +212,5 @@ export {
     DropdownMenuSubContent,
     DropdownMenuSubTrigger,
     DropdownMenuRadioGroup,
+    DropdownLinkMenuItem,
 };

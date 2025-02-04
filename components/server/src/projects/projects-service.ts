@@ -39,6 +39,8 @@ import type { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ContextParser } from "../workspace/context-parser-service";
 import { UnauthorizedError } from "../errors";
+import { LazyOrganizationService } from "../billing/entitlement-service-ubp";
+import { SubjectId } from "../auth/subject-id";
 
 // to resolve circular dependency issues
 export const LazyPrebuildManager = Symbol("LazyPrebuildManager");
@@ -58,7 +60,7 @@ export class ProjectsService {
         @inject(LazyPrebuildManager) private readonly prebuildManager: LazyPrebuildManager,
         @inject(ContextParser) private readonly contextParser: ContextParser,
         @inject(WebhookEventDB) private readonly webhookEventDb: WebhookEventDB,
-
+        @inject(LazyOrganizationService) private readonly organizationService: LazyOrganizationService,
         @inject(InstallationService) private readonly installationService: InstallationService,
     ) {}
 
@@ -334,6 +336,8 @@ export class ProjectsService {
     async deleteProject(userId: string, projectId: string, transactionCtx?: TransactionalContext): Promise<void> {
         await this.auth.checkPermissionOnProject(userId, "delete", projectId);
 
+        const organizationService = this.organizationService();
+
         let orgId: string | undefined = undefined;
         try {
             await this.projectDB.transaction(transactionCtx, async (db) => {
@@ -349,6 +353,19 @@ export class ProjectsService {
                 for (const envVar of envVars) {
                     await db.deleteProjectEnvironmentVariable(envVar.id);
                 }
+
+                await runWithSubjectId(SubjectId.fromUserId(userId), async () => {
+                    const orgSettings = await organizationService.getSettings(userId, orgId!);
+                    const repoRecommendations = orgSettings.onboardingSettings?.recommendedRepositories;
+                    if (repoRecommendations) {
+                        const updatedRepoRecommendations = repoRecommendations.filter((id) => id !== projectId);
+                        if (updatedRepoRecommendations.length !== repoRecommendations.length) {
+                            await organizationService.updateSettings(userId, orgId!, {
+                                onboardingSettings: { recommendedRepositories: updatedRepoRecommendations },
+                            });
+                        }
+                    }
+                });
 
                 await this.auth.removeProjectFromOrg(userId, orgId, projectId);
             });

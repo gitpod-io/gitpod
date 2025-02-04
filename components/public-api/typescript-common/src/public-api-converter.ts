@@ -1147,6 +1147,7 @@ export class PublicAPIConverter {
             maxParallelRunningWorkspaces: settings.maxParallelRunningWorkspaces ?? 0,
             onboardingSettings: {
                 internalLink: settings?.onboardingSettings?.internalLink ?? undefined,
+                recommendedRepositories: settings?.onboardingSettings?.recommendedRepositories ?? [],
             },
             annotateGitCommits: settings.annotateGitCommits ?? false,
         });
