@@ -10,24 +10,15 @@ import { TextMuted } from "@podkit/typography/TextMuted";
 import { Text } from "@podkit/typography/Text";
 import { LinkButton } from "@podkit/buttons/LinkButton";
 import type { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
-import { AlertTriangleIcon, CheckCircle2Icon, SquareArrowOutUpRight, Ellipsis } from "lucide-react";
+import { AlertTriangleIcon, CheckCircle2Icon } from "lucide-react";
 import { TableCell, TableRow } from "@podkit/tables/Table";
-import { Button } from "@podkit/buttons/Button";
-import {
-    DropdownLinkMenuItem,
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@podkit/dropdown/DropDown";
 import PillLabel from "../../components/PillLabel";
 
 type Props = {
     configuration: Configuration;
     isSuggested: boolean;
-    handleModifySuggestedRepository?: (configurationId: string, suggested: boolean) => void;
 };
-export const RepositoryListItem: FC<Props> = ({ configuration, isSuggested, handleModifySuggestedRepository }) => {
+export const RepositoryListItem: FC<Props> = ({ configuration, isSuggested }) => {
     const url = usePrettyRepoURL(configuration.cloneUrl);
     const prebuildsEnabled = !!configuration.prebuildSettings?.enabled;
     const created =
@@ -77,41 +68,6 @@ export const RepositoryListItem: FC<Props> = ({ configuration, isSuggested, hand
                 <LinkButton href={`/repositories/${configuration.id}`} variant="secondary">
                     View
                 </LinkButton>
-                {handleModifySuggestedRepository && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost">
-                                <Ellipsis size={20} />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-52">
-                            {isSuggested ? (
-                                <DropdownMenuItem
-                                    onClick={() => handleModifySuggestedRepository(configuration.id, false)}
-                                >
-                                    Remove from suggested repos
-                                </DropdownMenuItem>
-                            ) : (
-                                <>
-                                    <DropdownMenuItem
-                                        onClick={() => handleModifySuggestedRepository(configuration.id, true)}
-                                    >
-                                        Add to suggested repos
-                                    </DropdownMenuItem>
-                                    <DropdownLinkMenuItem
-                                        href="https://www.gitpod.io/docs/configure/orgs/onboarding#suggested-repositories"
-                                        className="gap-1 text-xs"
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        Learn about suggestions
-                                        <SquareArrowOutUpRight size={12} />
-                                    </DropdownLinkMenuItem>
-                                </>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
             </TableCell>
         </TableRow>
     );
