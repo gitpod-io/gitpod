@@ -37,7 +37,9 @@ import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutati
 import { useUserLoader } from "../hooks/use-user-loader";
 import Tooltip from "../components/Tooltip";
 import { useFeatureFlag } from "../data/featureflag-query";
-import { useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
+import { SuggestedOrgRepository, useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
+import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
+import PillLabel from "../components/PillLabel";
 
 export const GETTING_STARTED_DISMISSAL_KEY = "workspace-list-getting-started";
 
@@ -130,7 +132,25 @@ const WorkspacesPage: FunctionComponent = () => {
         }
     }, [user?.profile?.coachmarksDismissals]);
 
+    const { data: userSuggestedRepos } = useSuggestedRepositories({ excludeConfigurations: false });
     const { data: orgSuggestedRepos } = useOrgSuggestedRepos();
+
+    const suggestedRepos = useMemo(() => {
+        const userSuggestions =
+            userSuggestedRepos
+                ?.filter((repo) => {
+                    const autostartMatch = user?.workspaceAutostartOptions.find((option) => {
+                        return option.cloneUrl.includes(repo.url);
+                    });
+                    return autostartMatch;
+                })
+                .slice(0, 3) ?? [];
+        const orgSuggestions = (orgSuggestedRepos ?? []).filter((repo) => {
+            return !userSuggestions.find((userSuggestion) => userSuggestion.configurationId === repo.configurationId); // don't show duplicates from user's autostart options
+        });
+
+        return [...userSuggestions, ...orgSuggestions].slice(0, 3);
+    }, [userSuggestedRepos, user, orgSuggestedRepos]);
 
     const toggleGettingStarted = useCallback(
         (show: boolean) => {
@@ -192,53 +212,103 @@ const WorkspacesPage: FunctionComponent = () => {
                     </div>
 
                     {showGettingStarted && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:px-28 px-4 pb-4">
-                            <Card onClick={() => setVideoModalVisible(true)}>
-                                <Video className="flex-shrink-0" size={24} />
-                                <div className="min-w-0">
-                                    <CardTitle>Learn how Gitpod works</CardTitle>
-                                    <CardDescription>
-                                        We've put together resources for you to get the most our of Gitpod.
-                                    </CardDescription>
-                                </div>
-                            </Card>
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:px-28 px-4 pb-4">
+                                <Card onClick={() => setVideoModalVisible(true)}>
+                                    <Video className="flex-shrink-0" size={24} />
+                                    <div className="min-w-0">
+                                        <CardTitle>Learn how Gitpod works</CardTitle>
+                                        <CardDescription>
+                                            We've put together resources for you to get the most our of Gitpod.
+                                        </CardDescription>
+                                    </div>
+                                </Card>
 
-                            {orgSettings?.onboardingSettings?.internalLink ? (
-                                <Card href={orgSettings.onboardingSettings.internalLink} isLinkExternal>
-                                    <Building className="flex-shrink-0" size={24} />
+                                {orgSettings?.onboardingSettings?.internalLink ? (
+                                    <Card href={orgSettings.onboardingSettings.internalLink} isLinkExternal>
+                                        <Building className="flex-shrink-0" size={24} />
+                                        <div className="min-w-0">
+                                            <CardTitle>Learn more about Gitpod at {org?.name}</CardTitle>
+                                            <CardDescription>
+                                                Read through the internal Gitpod landing page of your organization.
+                                            </CardDescription>
+                                        </div>
+                                    </Card>
+                                ) : (
+                                    <Card href={"/new?showExamples=true"}>
+                                        <Code className="flex-shrink-0" size={24} />
+                                        <div className="min-w-0">
+                                            <CardTitle>Open a sample repository</CardTitle>
+                                            <CardDescription>
+                                                Explore{" "}
+                                                {orgSuggestedRepos?.length
+                                                    ? "repositories recommended by your organization"
+                                                    : "a sample repository"}
+                                                to quickly experience Gitpod.
+                                            </CardDescription>
+                                        </div>
+                                    </Card>
+                                )}
+
+                                <Card href="https://www.gitpod.io/docs/introduction" isLinkExternal>
+                                    <Book className="flex-shrink-0" size={24} />
                                     <div className="min-w-0">
-                                        <CardTitle>Learn more about Gitpod at {org?.name}</CardTitle>
+                                        <CardTitle>Visit the docs</CardTitle>
                                         <CardDescription>
-                                            Read through the internal Gitpod landing page of your organization.
+                                            We have extensive documentation to help if you get stuck.
                                         </CardDescription>
                                     </div>
                                 </Card>
-                            ) : (
-                                <Card href={"/new?showExamples=true"}>
-                                    <Code className="flex-shrink-0" size={24} />
-                                    <div className="min-w-0">
-                                        <CardTitle>Open a sample repository</CardTitle>
-                                        <CardDescription>
-                                            Explore{" "}
-                                            {orgSuggestedRepos?.length
-                                                ? "repositories recommended by your organization"
-                                                : "a sample repository"}
-                                            to quickly experience Gitpod.
-                                        </CardDescription>
+                            </div>
+
+                            {suggestedRepos.length > 0 && (
+                                <>
+                                    <Subheading className="font-semibold text-pk-content-primary mb-2 app-container">
+                                        Suggested
+                                    </Subheading>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:px-28 px-4">
+                                        {suggestedRepos.map((repo) => {
+                                            const isOrgSuggested =
+                                                (repo as SuggestedOrgRepository).orgSuggested ?? false;
+
+                                            return (
+                                                <Card
+                                                    key={repo.url}
+                                                    href={`/new#${repo.url}`}
+                                                    className={cn(
+                                                        "border-[0.5px] hover:bg-pk-surface-tertiary transition-colors w-full",
+                                                        {
+                                                            "border-[#D79A45]": isOrgSuggested,
+                                                            "border-pk-border-base": !isOrgSuggested,
+                                                        },
+                                                    )}
+                                                >
+                                                    <div className="min-w-0 w-full space-y-1.5">
+                                                        <CardTitle className="flex flex-row items-center gap-2 w-full">
+                                                            <span className="truncate block min-w-0 text-base">
+                                                                {repo.configurationName || repo.repoName}
+                                                            </span>
+                                                            {isOrgSuggested && (
+                                                                <PillLabel
+                                                                    className="capitalize bg-kumquat-light shrink-0 text-sm"
+                                                                    type="warn"
+                                                                >
+                                                                    Recommended
+                                                                </PillLabel>
+                                                            )}
+                                                        </CardTitle>
+                                                        <CardDescription className="truncate text-sm opacity-75">
+                                                            {repo.url}
+                                                        </CardDescription>
+                                                    </div>
+                                                </Card>
+                                            );
+                                        })}
                                     </div>
-                                </Card>
+                                </>
                             )}
-
-                            <Card href="https://www.gitpod.io/docs/introduction" isLinkExternal>
-                                <Book className="flex-shrink-0" size={24} />
-                                <div className="min-w-0">
-                                    <CardTitle>Visit the docs</CardTitle>
-                                    <CardDescription>
-                                        We have extensive documentation to help if you get stuck.
-                                    </CardDescription>
-                                </div>
-                            </Card>
-                        </div>
+                        </>
                     )}
                     <Modal
                         visible={isVideoModalVisible}
