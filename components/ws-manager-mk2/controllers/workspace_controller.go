@@ -18,6 +18,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -47,13 +50,20 @@ const (
 	maintenanceRequeue         = 1 * time.Minute
 )
 
-func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, recorder record.EventRecorder, cfg *config.Configuration, reg prometheus.Registerer, maintenance maintenance.Maintenance) (*WorkspaceReconciler, error) {
+func NewWorkspaceReconciler(c client.Client, restConfig *rest.Config, scheme *runtime.Scheme, recorder record.EventRecorder, cfg *config.Configuration, reg prometheus.Registerer, maintenance maintenance.Maintenance) (*WorkspaceReconciler, error) {
+	// Create kubernetes clientset
+	kubeClient, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create kubernetes client: %w", err)
+	}
+
 	reconciler := &WorkspaceReconciler{
 		Client:      c,
 		Scheme:      scheme,
 		Config:      cfg,
 		maintenance: maintenance,
 		Recorder:    recorder,
+		kubeClient:  kubeClient,
 	}
 
 	metrics, err := newControllerMetrics(reconciler)
@@ -75,6 +85,8 @@ type WorkspaceReconciler struct {
 	metrics     *controllerMetrics
 	maintenance maintenance.Maintenance
 	Recorder    record.EventRecorder
+
+	kubeClient kubernetes.Interface
 }
 
 //+kubebuilder:rbac:groups=workspace.gitpod.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
@@ -181,7 +193,8 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		// if there isn't a workspace pod and we're not currently deleting this workspace,// create one.
 		switch {
 		case workspace.Status.PodStarts == 0 || workspace.Status.PodStarts-workspace.Status.PodRecreated < 1:
-			sctx, err := newStartWorkspaceContext(ctx, r.Config, workspace)
+			serverVersion := r.getServerVersion(ctx)
+			sctx, err := newStartWorkspaceContext(ctx, r.Config, workspace, serverVersion)
 			if err != nil {
 				log.Error(err, "unable to create startWorkspace context")
 				return ctrl.Result{Requeue: true}, err
@@ -625,6 +638,20 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			},
 		}).
 		Complete(r)
+}
+
+func (r *WorkspaceReconciler) getServerVersion(ctx context.Context) *version.Info {
+	log := log.FromContext(ctx)
+
+	serverVersion, err := r.kubeClient.Discovery().ServerVersion()
+	if err != nil {
+		log.Error(err, "cannot get server version! Assuming 1.30 going forward")
+		serverVersion = &version.Info{
+			Major: "1",
+			Minor: "30",
+		}
+	}
+	return serverVersion
 }
 
 func SetupIndexer(mgr ctrl.Manager) error {
