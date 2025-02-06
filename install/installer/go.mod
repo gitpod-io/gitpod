@@ -317,6 +317,8 @@ require (
 // Fix this version, so go mod does not revert to an older version that's not compatible with other depen
 replace helm.sh/helm/v3 => helm.sh/helm/v3 v3.16.0
 
+replace github.com/outcaste-io/badger/v3 => github.com/dgraph-io/badger/v3 v3.2103.5 // use the original instead of the outdated fork with CVEs
+
 replace github.com/gitpod-io/gitpod/components/spicedb => ../../components/spicedb // leeway
 
 replace github.com/gitpod-io/gitpod/image-builder => ../components/image-builder-mk3 // leeway
