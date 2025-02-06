@@ -8,10 +8,10 @@ import { useQuery } from "@tanstack/react-query";
 import { noPersistence } from "../data/setup";
 import { installationClient } from "../service/public-api";
 import { GetOnboardingStateRequest } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
-import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 /**
- * @description Returns a flage stating if the current installation still needs setup before it can be used. Also returns an isLoading indicator as the check is async
+ * @description Returns a flag stating if the current installation still needs setup before it can be used. Also returns an isLoading indicator as the check is async
  */
 export const useNeedsSetup = () => {
     const { data: onboardingState, isLoading } = useOnboardingState();
