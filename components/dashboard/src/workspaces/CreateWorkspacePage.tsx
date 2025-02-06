@@ -59,7 +59,7 @@ import { flattenPagedConfigurations } from "../data/git-providers/unified-reposi
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { useMemberRole } from "../data/organizations/members-query";
 import { OrganizationPermission } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
 
