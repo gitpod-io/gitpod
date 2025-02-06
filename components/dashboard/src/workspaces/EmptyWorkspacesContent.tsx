@@ -9,7 +9,7 @@ import { Heading2, Subheading } from "@podkit/typography/Headings";
 import { StartWorkspaceModalKeyBinding } from "../App";
 import { VideoSection } from "../onboarding/VideoSection";
 import { trackVideoClick } from "../Analytics";
-import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 export const EmptyWorkspacesContent = () => {
     const { data: installationConfig } = useInstallationConfiguration();

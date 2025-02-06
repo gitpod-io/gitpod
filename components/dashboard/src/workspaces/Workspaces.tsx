@@ -32,12 +32,12 @@ import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "../components/Mo
 import { VideoSection } from "../onboarding/VideoSection";
 import { trackVideoClick } from "../Analytics";
 import { cn } from "@podkit/lib/cn";
-import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { useUserLoader } from "../hooks/use-user-loader";
 import Tooltip from "../components/Tooltip";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 export const GETTING_STARTED_DISMISSAL_KEY = "workspace-list-getting-started";
 

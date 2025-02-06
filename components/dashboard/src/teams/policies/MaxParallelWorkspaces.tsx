@@ -13,7 +13,7 @@ import { NumberInput } from "../../components/forms/TextInputField";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
 import { MAX_PARALLEL_WORKSPACES_FREE, MAX_PARALLEL_WORKSPACES_PAID } from "@gitpod/gitpod-protocol";
 import { PlainMessage } from "@bufbuild/protobuf";
-import { useInstallationConfiguration } from "../../data/installation/default-workspace-image-query";
+import { useInstallationConfiguration } from "../../data/installation/installation-config-query";
 
 type Props = {
     isOwner: boolean;

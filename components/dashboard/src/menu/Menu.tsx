@@ -22,6 +22,7 @@ import classNames from "classnames";
 import { User, RoleOrPermission } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { ConfigurationsMigrationCoachmark } from "../repositories/coachmarks/MigrationCoachmark";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 interface Entry {
     title: string;
@@ -163,6 +164,9 @@ type UserMenuProps = {
     onFeedback?: () => void;
 };
 const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedbackLink, onFeedback }) => {
+    const { data: installationConfig, isLoading: isInstallationConfigLoading } = useInstallationConfiguration();
+    const isGitpodIo = isInstallationConfigLoading ? false : !installationConfig?.isDedicatedInstallation;
+
     const extraSection = useMemo(() => {
         const items: ContextMenuEntry[] = [];
 
@@ -172,7 +176,7 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedb
                 link: "/admin",
             });
         }
-        if (withFeedbackLink && isGitpodIo()) {
+        if (withFeedbackLink && isGitpodIo) {
             items.push({
                 title: "Feedback",
                 onClick: onFeedback,
@@ -185,7 +189,7 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedb
         }
 
         return items;
-    }, [onFeedback, user?.rolesOrPermissions, withAdminLink, withFeedbackLink]);
+    }, [isGitpodIo, onFeedback, user?.rolesOrPermissions, withAdminLink, withFeedbackLink]);
 
     const menuEntries = useMemo(() => {
         return [

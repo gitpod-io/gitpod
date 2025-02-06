@@ -14,9 +14,9 @@ import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useIsOwner, useListOrganizationMembers, useHasRolePermission } from "../data/organizations/members-query";
 import { isAllowedToCreateOrganization } from "@gitpod/public-api-common/lib/user-utils";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { PlusIcon } from "lucide-react";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 export default function OrganizationSelector() {
     const user = useCurrentUser();

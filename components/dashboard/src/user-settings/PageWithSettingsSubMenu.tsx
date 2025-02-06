@@ -5,6 +5,7 @@
  */
 
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 import {
     settingsPathAccount,
     settingsPathIntegrations,
@@ -23,7 +24,7 @@ export interface PageWithAdminSubMenuProps {
 }
 
 export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps) {
-    const settingsMenu = getSettingsMenu();
+    const settingsMenu = useUserSettingsMenu();
     return (
         <PageWithSubMenu subMenu={settingsMenu} title="User Settings" subtitle="Manage your personal account settings.">
             {children}
@@ -31,16 +32,23 @@ export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps)
     );
 }
 
-function getSettingsMenu() {
+function useUserSettingsMenu() {
+    const { data: installationConfig } = useInstallationConfiguration();
+    const isGitpodIo = installationConfig?.isDedicatedInstallation === false;
+
     return [
         {
             title: "Account",
             link: [settingsPathAccount, settingsPathMain],
         },
-        {
-            title: "Notifications",
-            link: [settingsPathNotifications],
-        },
+        ...(isGitpodIo
+            ? [
+                  {
+                      title: "Notifications",
+                      link: [settingsPathNotifications],
+                  },
+              ]
+            : []),
         {
             title: "Variables",
             link: [settingsPathVariables],
