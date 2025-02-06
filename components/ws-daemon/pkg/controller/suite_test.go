@@ -25,6 +25,7 @@ import (
 
 	//+kubebuilder:scaffold:imports
 
+	"github.com/gitpod-io/gitpod/common-go/util"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -50,11 +51,16 @@ func TestAPIs(t *testing.T) {
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
+	crdPath := filepath.Join("..", "..", "crd")
+	if !util.InLeewayBuild() {
+		crdPath = filepath.Join("..", "..", "..", "ws-manager-mk2", "config", "crd", "bases")
+	}
+
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
 		ControlPlaneStartTimeout: 1 * time.Minute,
 		ControlPlaneStopTimeout:  1 * time.Minute,
-		CRDDirectoryPaths:        []string{filepath.Join("..", "..", "crd")},
+		CRDDirectoryPaths:        []string{crdPath},
 		ErrorIfCRDPathMissing:    true,
 	}
 
