@@ -15,7 +15,6 @@ import { Separator } from "../components/Separator";
 import PillMenuItem from "../components/PillMenuItem";
 import { PaymentContext } from "../payment-context";
 import FeedbackFormModal from "../feedback-form/FeedbackModal";
-import { isGitpodIo } from "../utils";
 import OrganizationSelector from "./OrganizationSelector";
 import { getAdminTabs } from "../admin/admin.routes";
 import classNames from "classnames";
@@ -35,6 +34,9 @@ export default function Menu() {
     const location = useLocation();
     const { setCurrency } = useContext(PaymentContext);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
+
+    const { data: installationConfig, isLoading: isInstallationConfigLoading } = useInstallationConfiguration();
+    const isGitpodIo = isInstallationConfigLoading ? false : !installationConfig?.isDedicatedInstallation;
 
     useEffect(() => {
         const { server } = getGitpodService();
@@ -96,7 +98,7 @@ export default function Menu() {
                                         />
                                     </li>
                                 )}
-                                {isGitpodIo() && (
+                                {isGitpodIo && (
                                     <li className="cursor-pointer">
                                         <PillMenuItem name="Feedback" onClick={handleFeedbackFormClick} />
                                     </li>
