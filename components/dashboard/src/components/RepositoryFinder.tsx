@@ -19,7 +19,7 @@ import { useAuthProviderDescriptions } from "../data/auth-providers/auth-provide
 import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
 import { AuthProviderType } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { SuggestedRepository } from "@gitpod/public-api/lib/gitpod/v1/scm_pb";
-import { PREDEFINED_REPOS } from "../data/git-providers/predefined-repos";
+import { PREDEFINED_REPOS, PredefinedRepo } from "../data/git-providers/predefined-repos";
 import { useConfiguration, useListConfigurations } from "../data/configurations/configuration-queries";
 import { useUserLoader } from "../hooks/use-user-loader";
 import { conjunctScmProviders, getDeduplicatedScmProviders } from "../utils";
@@ -27,8 +27,7 @@ import { cn } from "@podkit/lib/cn";
 import { useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
 import { toRemoteURL } from "../projects/render-utils";
 
-type PredefinedRepoOption = typeof PREDEFINED_REPOS[number];
-const isPredefined = (repo: SuggestedRepository | PredefinedRepoOption): boolean => {
+const isPredefined = (repo: SuggestedRepository | PredefinedRepo): boolean => {
     return (
         PREDEFINED_REPOS.some((predefined) => predefined.url === repo.url) &&
         !(repo as SuggestedRepository).configurationId
@@ -41,7 +40,7 @@ const resolveIcon = (contextUrl?: string): string => {
 };
 
 type PredefinedRepositoryOptionProps = {
-    repo: PredefinedRepoOption;
+    repo: PredefinedRepo;
 };
 const PredefinedRepositoryOption: FC<PredefinedRepositoryOptionProps> = ({ repo }) => {
     const prettyUrl = toRemoteURL(repo.url);
@@ -50,7 +49,12 @@ const PredefinedRepositoryOption: FC<PredefinedRepositoryOptionProps> = ({ repo 
     return (
         <div className="flex flex-col overflow-hidden" aria-label={`Demo: ${repo.url}`}>
             <div className="flex items-center">
-                <img className={cn("w-5 mr-2 text-pk-content-secondary")} src={icon} alt="" />
+                {repo.configurationId ? (
+                    <RepositoryIcon className={cn("w-5 mr-2 text-kumquat-ripe")} />
+                ) : (
+                    <img className={cn("w-5 mr-2 text-pk-content-secondary")} src={icon} alt="" />
+                )}
+
                 <span className="text-sm font-semibold">{repo.repoName}</span>
                 <MiddleDot className="px-0.5 text-pk-content-secondary" />
                 <span
@@ -280,6 +284,7 @@ export default function RepositoryFinder({
                 url: repo.url,
                 repoName: repo.repoName,
                 description: "",
+                configurationId: repo.configurationId,
             }));
         }
 
@@ -317,11 +322,14 @@ export default function RepositoryFinder({
                         repo.url.toLowerCase().includes(searchString.toLowerCase()) ||
                         repo.repoName.toLowerCase().includes(searchString.toLowerCase())
                     ) {
-                        result.push({
-                            id: repo.url,
-                            element: <PredefinedRepositoryOption repo={repo} />,
-                            isSelectable: true,
-                        });
+                        const alreadyPresent = result.find((r) => r.id === repo.configurationId);
+                        if (!alreadyPresent) {
+                            result.push({
+                                id: repo.url,
+                                element: <PredefinedRepositoryOption repo={repo} />,
+                                isSelectable: true,
+                            });
+                        }
                     }
                 });
             }
