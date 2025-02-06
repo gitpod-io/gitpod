@@ -6,13 +6,13 @@ toolchain go1.23.3
 
 require (
 	github.com/containerd/console v1.0.3
-	github.com/containerd/containerd v1.6.36
+	github.com/containerd/containerd v1.7.2
 	github.com/distribution/reference v0.6.0
 	github.com/docker/cli v24.0.4+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/google/go-containerregistry v0.19.0
 	github.com/hashicorp/go-retryablehttp v0.7.2
-	github.com/moby/buildkit v0.11.6
+	github.com/moby/buildkit v0.12.5
 	github.com/opencontainers/runtime-spec v1.1.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
@@ -30,7 +30,7 @@ require (
 	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
-	github.com/containerd/typeurl v1.0.2 // indirect
+	github.com/containerd/typeurl/v2 v2.1.1 // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v24.0.0+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
@@ -89,6 +89,9 @@ require (
 	google.golang.org/protobuf v1.33.0 // indirect
 	gotest.tools/v3 v3.5.0 // indirect
 )
+
+// Fix to our chosen version of containerd
+replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.36
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 

@@ -53,8 +53,6 @@ require (
 	cloud.google.com/go/storage v1.39.1 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
-	github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20230306123547-8075edf89bb0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
@@ -99,12 +97,14 @@ require (
 	github.com/cilium/ebpf v0.9.1 // indirect
 	github.com/configcat/go-sdk/v7 v7.6.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
-	github.com/containerd/containerd v1.6.36 // indirect
+	github.com/containerd/containerd v1.7.12 // indirect
 	github.com/containerd/continuity v0.4.2 // indirect
+	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/containerd/ttrpc v1.2.2 // indirect
+	github.com/containerd/typeurl v1.0.2 // indirect
 	github.com/containerd/typeurl/v2 v2.1.1 // indirect
 	github.com/containers/storage v1.39.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
@@ -155,6 +155,7 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-yaml v1.11.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
+	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -215,7 +216,6 @@ require (
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.4.0 // indirect
 	github.com/moby/sys/mountinfo v0.6.2 // indirect
-	github.com/moby/sys/sequential v0.5.0 // indirect
 	github.com/moby/sys/signal v0.7.0 // indirect
 	github.com/moby/sys/user v0.1.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
@@ -317,7 +317,11 @@ require (
 // Fix this version, so go mod does not revert to an older version that's not compatible with other depen
 replace helm.sh/helm/v3 => helm.sh/helm/v3 v3.16.0
 
-replace github.com/outcaste-io/badger/v3 => github.com/dgraph-io/badger/v3 v3.2103.5 // use the original instead of the outdated fork with CVEs
+// use the original instead of the outdated fork with CVEs
+replace github.com/outcaste-io/badger/v3 => github.com/dgraph-io/badger/v3 v3.2103.5
+
+// Fix to our chosen version of containerd
+replace github.com/containerd/containerd => github.com/containerd/containerd v1.6.36
 
 replace github.com/gitpod-io/gitpod/components/spicedb => ../../components/spicedb // leeway
 
@@ -420,5 +424,3 @@ replace k8s.io/kubectl => k8s.io/kubectl v0.30.9 // leeway indirect from compone
 replace k8s.io/mount-utils => k8s.io/mount-utils v0.30.9 // leeway indirect from components/common-go:lib
 
 replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.30.9 // leeway indirect from components/common-go:lib
-
-replace github.com/containerd/containerd => github.com/containerd/containerd v1.7.13
