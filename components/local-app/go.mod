@@ -1,6 +1,8 @@
 module github.com/gitpod-io/local-app
 
-go 1.22
+go 1.22.0
+
+toolchain go1.23.3
 
 require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
@@ -21,7 +23,7 @@ require (
 	golang.org/x/crypto v0.31.0
 	golang.org/x/oauth2 v0.12.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
-	google.golang.org/grpc v1.58.2
+	google.golang.org/grpc v1.58.3
 	google.golang.org/protobuf v1.33.0
 	nhooyr.io/websocket v1.8.7 // indirect
 )
