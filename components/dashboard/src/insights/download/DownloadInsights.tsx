@@ -53,7 +53,8 @@ export const DownloadInsightsToast = ({ organizationId, from, to, organizationNa
         return (
             <div>
                 <span>Preparing usage export</span>
-                Exporting page {progress}
+                <br />
+                <span className="text-sm">Exporting page {progress}</span>
             </div>
         );
     }

@@ -17,9 +17,7 @@ import { SortableTableHead, TableSortOrder } from "@podkit/tables/SortableTable"
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { Button } from "@podkit/buttons/Button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@podkit/select/Select";
-import { useUpdateOrgSettingsMutation } from "../../data/organizations/update-org-settings-mutation";
 import { useOrgSettingsQuery } from "../../data/organizations/org-settings-query";
-import { useToast } from "../../components/toasts/Toasts";
 
 type Props = {
     configurations: Configuration[];
@@ -54,31 +52,7 @@ export const RepositoryTable: FC<Props> = ({
     onLoadNextPage,
     onSort,
 }) => {
-    const updateTeamSettings = useUpdateOrgSettingsMutation();
     const { data: settings } = useOrgSettingsQuery();
-    const { toast } = useToast();
-
-    const updateRecommendedRepository = async (configurationId: string, suggested: boolean) => {
-        const newRepositories = new Set(settings?.onboardingSettings?.recommendedRepositories ?? []);
-        if (suggested) {
-            newRepositories.add(configurationId);
-        } else {
-            newRepositories.delete(configurationId);
-        }
-
-        await updateTeamSettings.mutateAsync(
-            {
-                onboardingSettings: {
-                    recommendedRepositories: [...newRepositories],
-                },
-            },
-            {
-                onError: (error) => {
-                    toast(`Failed to update recommended repositories: ${error.message}`);
-                },
-            },
-        );
-    };
 
     return (
         <>
@@ -156,7 +130,6 @@ export const RepositoryTable: FC<Props> = ({
                                                 configuration.id,
                                             ) ?? false
                                         }
-                                        handleModifySuggestedRepository={updateRecommendedRepository}
                                     />
                                 );
                             })}
