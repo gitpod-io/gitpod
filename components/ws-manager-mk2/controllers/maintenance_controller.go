@@ -20,7 +20,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -135,29 +134,12 @@ func (r *MaintenanceReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 		}
 	}()
 
-	return c.Watch(source.Kind(mgr.GetCache(), &corev1.ConfigMap{}), &handler.EnqueueRequestForObject{}, &filterConfigMap{})
+	return c.Watch(source.Kind(mgr.GetCache(), &corev1.ConfigMap{}, &handler.TypedEnqueueRequestForObject[*corev1.ConfigMap]{}, predicate.NewTypedPredicateFuncs(filterMaintenanceModeConfigMap)))
 }
 
-type filterConfigMap struct {
-	predicate.Funcs
-}
-
-func (f filterConfigMap) Create(e event.CreateEvent) bool {
-	return f.filter(e.Object)
-}
-
-func (f filterConfigMap) Update(e event.UpdateEvent) bool {
-	return f.filter(e.ObjectNew)
-}
-
-func (f filterConfigMap) Generic(e event.GenericEvent) bool {
-	return f.filter(e.Object)
-}
-
-func (f filterConfigMap) filter(obj client.Object) bool {
+func filterMaintenanceModeConfigMap(obj *corev1.ConfigMap) bool {
 	if obj == nil {
 		return false
 	}
-
 	return obj.GetName() == configMapKey.Name && obj.GetNamespace() == configMapKey.Namespace
 }

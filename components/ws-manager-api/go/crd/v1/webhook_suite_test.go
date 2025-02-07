@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -48,11 +49,16 @@ var _ = BeforeSuite(func() {
 
 	ctx, cancel = context.WithCancel(context.TODO())
 
+	crdPath := filepath.Join("..", "..", "config", "crd", "bases")
+	if !util.InLeewayBuild() {
+		crdPath = filepath.Join("..", "..", "..", "..", "ws-manager-mk2", "config", "crd", "bases")
+	}
+
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
 		ControlPlaneStartTimeout: 1 * time.Minute,
 		ControlPlaneStopTimeout:  1 * time.Minute,
-		CRDDirectoryPaths:        []string{filepath.Join("..", "..", "config", "crd", "bases")},
+		CRDDirectoryPaths:        []string{crdPath},
 		ErrorIfCRDPathMissing:    false,
 		WebhookInstallOptions: envtest.WebhookInstallOptions{
 			Paths: []string{filepath.Join("..", "..", "config", "webhook")},

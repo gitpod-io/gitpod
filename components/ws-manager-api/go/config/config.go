@@ -254,7 +254,7 @@ func (c *Configuration) Validate() error {
 	}
 
 	if _, ok := c.WorkspaceClasses[DefaultWorkspaceClass]; !ok {
-		return xerrors.Errorf("missing \"%s\" workspace class", DefaultWorkspaceClass)
+		return xerrors.Errorf("missing default workspace class (\"%s\")", DefaultWorkspaceClass)
 	}
 	for name, class := range c.WorkspaceClasses {
 		if errs := validation.IsValidLabelValue(name); len(errs) > 0 {
