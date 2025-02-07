@@ -9,7 +9,7 @@ import { StartWorkspaceModalKeyBinding } from "../App";
 import DropDown from "../components/DropDown";
 import search from "../icons/search.svg";
 import { LinkButton } from "@podkit/buttons/LinkButton";
-import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 type WorkspacesSearchBarProps = {
     searchTerm: string;

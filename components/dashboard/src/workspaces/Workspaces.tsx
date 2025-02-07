@@ -32,11 +32,11 @@ import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "../components/Mo
 import { VideoSection } from "../onboarding/VideoSection";
 import { trackVideoClick } from "../Analytics";
 import { cn } from "@podkit/lib/cn";
-import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { useUserLoader } from "../hooks/use-user-loader";
 import Tooltip from "../components/Tooltip";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 import { SuggestedOrgRepository, useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
 import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
 import PillLabel from "../components/PillLabel";

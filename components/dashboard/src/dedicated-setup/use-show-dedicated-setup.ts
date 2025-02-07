@@ -7,7 +7,7 @@
 import { useQueryParams } from "../hooks/use-query-params";
 import { useCallback, useState } from "react";
 import { isCurrentHostExcludedFromSetup, useNeedsSetup } from "./use-needs-setup";
-import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 const FORCE_SETUP_PARAM = "dedicated-setup";
 const FORCE_SETUP_PARAM_VALUE = "force";

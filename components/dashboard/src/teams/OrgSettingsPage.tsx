@@ -15,7 +15,7 @@ import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { useIsOwner } from "../data/organizations/members-query";
-import { useInstallationConfiguration } from "../data/installation/default-workspace-image-query";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 export interface OrgSettingsPageProps {
     children: React.ReactNode;
