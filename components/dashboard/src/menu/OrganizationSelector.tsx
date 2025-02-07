@@ -77,13 +77,23 @@ export default function OrganizationSelector() {
                 separator: true,
                 link: "/members",
             });
-            linkEntries.push({
-                title: "Usage",
-                customContent: <LinkEntry>Usage</LinkEntry>,
-                active: false,
-                separator: false,
-                link: "/usage",
-            });
+            if (isDedicated) {
+                linkEntries.push({
+                    title: "Insights",
+                    customContent: <LinkEntry>Insights</LinkEntry>,
+                    active: false,
+                    separator: false,
+                    link: "/insights",
+                });
+            } else {
+                linkEntries.push({
+                    title: "Usage",
+                    customContent: <LinkEntry>Usage</LinkEntry>,
+                    active: false,
+                    separator: false,
+                    link: "/usage",
+                });
+            }
             // Show billing if user is an owner of current org
             if (owner) {
                 if (billingMode?.mode === "usage-based") {
