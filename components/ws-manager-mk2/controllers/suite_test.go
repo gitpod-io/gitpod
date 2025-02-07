@@ -107,7 +107,7 @@ var _ = BeforeSuite(func() {
 
 	conf := newTestConfig()
 	maintenance := &fakeMaintenance{enabled: false}
-	wsReconciler, err := NewWorkspaceReconciler(k8sManager.GetClient(), k8sManager.GetScheme(), k8sManager.GetEventRecorderFor("workspace"), &conf, metrics.Registry, maintenance)
+	wsReconciler, err := NewWorkspaceReconciler(k8sManager.GetClient(), k8sManager.GetConfig(), k8sManager.GetScheme(), k8sManager.GetEventRecorderFor("workspace"), &conf, metrics.Registry, maintenance)
 	wsMetrics = wsReconciler.metrics
 	Expect(err).ToNot(HaveOccurred())
 	Expect(wsReconciler.SetupWithManager(k8sManager)).To(Succeed())

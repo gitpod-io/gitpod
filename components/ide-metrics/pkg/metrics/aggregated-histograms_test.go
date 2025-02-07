@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 
 	dto "github.com/prometheus/client_model/go"
 )
@@ -54,7 +55,7 @@ func TestAggregatedHistograms(t *testing.T) {
 					{CumulativeCount: &highCount, UpperBound: &highBound},
 				},
 			},
-		}}, actual)
+		}}, actual, cmpopts.IgnoreUnexported(dto.Metric{}, dto.LabelPair{}, dto.Histogram{}, dto.Bucket{}))
 	}
 
 	_ = agg.Add([]string{"foo"}, 1, 0.004, []uint64{1, 1, 1})

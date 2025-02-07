@@ -201,7 +201,7 @@ func main() {
 		<-mgr.Elected()
 
 		workspaceReconciler, err := controllers.NewWorkspaceReconciler(
-			mgr.GetClient(), mgr.GetScheme(), mgr.GetEventRecorderFor("workspace"), &cfg.Manager, metrics.Registry, maintenanceReconciler)
+			mgr.GetClient(), mgr.GetConfig(), mgr.GetScheme(), mgr.GetEventRecorderFor("workspace"), &cfg.Manager, metrics.Registry, maintenanceReconciler)
 		if err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "Workspace")
 			os.Exit(1)

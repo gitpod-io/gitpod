@@ -101,14 +101,14 @@ func (r *SubscriberReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 	// we need several reconciliation loops during a workspace creation until it reaches a stable state.
 	// this introduces the side effect of multiple notifications to the subscribers with partial information.
 	// the filterByUpdate predicate acts as a filter to avoid this
-	filterByUpdate := predicate.Funcs{
-		CreateFunc: func(ce event.CreateEvent) bool {
-			ws := ce.Object.(*workspacev1.Workspace)
+	filterByUpdate := predicate.TypedFuncs[*workspacev1.Workspace]{
+		CreateFunc: func(ce event.TypedCreateEvent[*workspacev1.Workspace]) bool {
+			ws := ce.Object
 			return filterByManagedBy(ws)
 		},
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			old := e.ObjectOld.(*workspacev1.Workspace)
-			new := e.ObjectNew.(*workspacev1.Workspace)
+		UpdateFunc: func(e event.TypedUpdateEvent[*workspacev1.Workspace]) bool {
+			old := e.ObjectOld
+			new := e.ObjectNew
 
 			mgr, ok := new.Labels[k8s.WorkspaceManagedByLabel]
 			if !ok {
@@ -126,11 +126,11 @@ func (r *SubscriberReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 			return !cmp.Equal(old.Status, new.Status, cmpopts.IgnoreFields(workspacev1.WorkspaceStatus{}, "LastActivity"))
 		},
 
-		DeleteFunc: func(de event.DeleteEvent) bool {
-			ws := de.Object.(*workspacev1.Workspace)
+		DeleteFunc: func(de event.TypedDeleteEvent[*workspacev1.Workspace]) bool {
+			ws := de.Object
 			return filterByManagedBy(ws)
 		},
 	}
 
-	return c.Watch(source.Kind(mgr.GetCache(), &workspacev1.Workspace{}), &handler.EnqueueRequestForObject{}, filterByUpdate)
+	return c.Watch(source.Kind(mgr.GetCache(), &workspacev1.Workspace{}, &handler.TypedEnqueueRequestForObject[*workspacev1.Workspace]{}, filterByUpdate))
 }

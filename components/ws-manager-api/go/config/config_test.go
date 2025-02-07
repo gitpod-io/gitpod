@@ -56,7 +56,7 @@ func TestValidate(t *testing.T) {
 			Cfg: fromValidConfig(func(c *Configuration) {
 				delete(c.WorkspaceClasses, DefaultWorkspaceClass)
 			}),
-			Expectation: `missing "default" workspace class`,
+			Expectation: `missing default workspace class ("g1-standard")`,
 		},
 		{
 			Name: "invalid workspace class name",

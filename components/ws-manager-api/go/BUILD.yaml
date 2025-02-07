@@ -10,4 +10,3 @@ packages:
       - "go.sum"
     config:
       packaging: library
-      dontTest: true
