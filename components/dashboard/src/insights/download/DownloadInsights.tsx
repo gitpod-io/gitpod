@@ -52,7 +52,7 @@ export const DownloadInsightsToast = ({ organizationId, from, to, organizationNa
     if (isLoading) {
         return (
             <div>
-                <span>Preparing usage export</span>
+                <span>Preparing insights export</span>
                 <br />
                 <span className="text-sm">Exporting page {progress}</span>
             </div>
@@ -64,7 +64,7 @@ export const DownloadInsightsToast = ({ organizationId, from, to, organizationNa
             <div className="flex flex-row items-start space-x-2">
                 <AlertTriangle className="w-5 h-5 mt-0.5" />
                 <div>
-                    <span>Error exporting your usage data:</span>
+                    <span>Error exporting your insights data:</span>
                     <pre className="mt-2 whitespace-normal text-sm">{error.message}</pre>
                 </div>
             </div>
@@ -72,7 +72,7 @@ export const DownloadInsightsToast = ({ organizationId, from, to, organizationNa
     }
 
     if (!data || !data.blob || data.count === 0) {
-        return <span>No usage data for the selected period.</span>;
+        return <span>No insights data for the selected period.</span>;
     }
 
     const readableSize = prettyBytes(data.blob.size);
@@ -81,7 +81,7 @@ export const DownloadInsightsToast = ({ organizationId, from, to, organizationNa
     return (
         <div className="flex flex-row items-start justify-between space-x-2">
             <div>
-                <span>Usage export complete.</span>
+                <span>Insights export complete.</span>
                 <p className="dark:text-gray-500">
                     {readableSize} &middot; {formattedCount} {data.count !== 1 ? "entries" : "entry"} exported
                 </p>
