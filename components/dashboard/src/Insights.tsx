@@ -27,6 +27,7 @@ import { DownloadIcon } from "lucide-react";
 import { Button } from "@podkit/buttons/Button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@podkit/dropdown/DropDown";
 import { useInstallationConfiguration } from "./data/installation/installation-config-query";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export const Insights = () => {
     const toDate = useMemo(() => Timestamp.fromDate(new Date()), []);
@@ -49,6 +50,9 @@ export const Insights = () => {
     const grouped = Object.groupBy(sessions, (ws) => ws.workspace?.id ?? "unknown");
     const [page, setPage] = useState(0);
 
+    const isLackingPermissions =
+        errorMessage instanceof ApplicationError && errorMessage.code === ErrorCodes.PERMISSION_DENIED;
+
     return (
         <>
             <Header title="Insights" subtitle="Insights into workspace sessions in your organization" />
@@ -59,7 +63,7 @@ export const Insights = () => {
                         "md:flex-row md:items-center md:space-x-4 md:space-y-0",
                     )}
                 >
-                    <DownloadUsage to={toDate} />
+                    <DownloadUsage to={toDate} disabled={isLackingPermissions} />
                 </div>
 
                 <div
@@ -71,7 +75,16 @@ export const Insights = () => {
 
                 {errorMessage && (
                     <Alert type="error" className="mt-4">
-                        {errorMessage instanceof Error ? errorMessage.message : "An error occurred."}
+                        {isLackingPermissions ? (
+                            <>
+                                You don't have <span className="font-medium">Owner</span> permissions to access this
+                                organization's insights.
+                            </>
+                        ) : errorMessage instanceof Error ? (
+                            errorMessage.message
+                        ) : (
+                            "An error occurred."
+                        )}
                     </Alert>
                 )}
 
@@ -151,8 +164,9 @@ export const Insights = () => {
 
 type DownloadUsageProps = {
     to: Timestamp;
+    disabled?: boolean;
 };
-export const DownloadUsage = ({ to }: DownloadUsageProps) => {
+export const DownloadUsage = ({ to, disabled }: DownloadUsageProps) => {
     const { data: org } = useCurrentOrg();
     const { toast } = useToast();
     // When we start the download, we disable the button for a short time
@@ -184,7 +198,7 @@ export const DownloadUsage = ({ to }: DownloadUsageProps) => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="secondary" className="gap-1" disabled={downloadDisabled}>
+                <Button variant="secondary" className="gap-1" disabled={disabled || downloadDisabled}>
                     <DownloadIcon strokeWidth={3} className="w-4" />
                     <span>Export as CSV</span>
                 </Button>
