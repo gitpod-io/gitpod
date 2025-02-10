@@ -67,20 +67,20 @@ type Args = Pick<ListWorkspaceSessionsRequest, "organizationId" | "from" | "to">
     onProgress?: (percentage: number) => void;
 };
 
-export type DownloadUsageCSVResponse = {
+export type DownloadInsightsCSVResponse = {
     blob: Blob | null;
     filename: string;
     count: number;
 };
 
-const downloadUsageCSV = async ({
+const downloadInsightsCSV = async ({
     organizationId,
     from,
     to,
     organizationName,
     signal,
     onProgress,
-}: Args): Promise<DownloadUsageCSVResponse> => {
+}: Args): Promise<DownloadInsightsCSVResponse> => {
     const start = dayjs(from?.toDate()).format("YYYYMMDD");
     const end = dayjs(to?.toDate()).format("YYYYMMDD");
     const filename = `gitpod-sessions-${organizationName}-${start}-${end}.csv`;
@@ -197,16 +197,16 @@ export const transformSessionRecord = (session: WorkspaceSession) => {
 
 export const useDownloadSessionsCSV = (args: Args) => {
     const client = useQueryClient();
-    const key = getDownloadUsageCSVQueryKey(args);
+    const key = getDownloadInsightsCSVQueryKey(args);
 
     const abort = useCallback(() => {
         client.removeQueries([key]);
     }, [client, key]);
 
-    const query = useQuery<DownloadUsageCSVResponse, Error>(
+    const query = useQuery<DownloadInsightsCSVResponse, Error>(
         key,
         async ({ signal }) => {
-            return downloadUsageCSV({ ...args, signal });
+            return downloadInsightsCSV({ ...args, signal });
         },
         {
             retry: false,
@@ -221,6 +221,6 @@ export const useDownloadSessionsCSV = (args: Args) => {
     };
 };
 
-const getDownloadUsageCSVQueryKey = (args: Args) => {
-    return noPersistence(["usage-export", args]);
+const getDownloadInsightsCSVQueryKey = (args: Args) => {
+    return noPersistence(["insights-export", args]);
 };
