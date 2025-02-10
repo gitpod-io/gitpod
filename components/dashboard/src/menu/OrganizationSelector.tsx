@@ -23,7 +23,7 @@ export default function OrganizationSelector() {
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
     const members = useListOrganizationMembers().data ?? [];
-    const owner = useIsOwner();
+    const isOwner = useIsOwner();
     const hasMemberPermission = useHasRolePermission(OrganizationRole.MEMBER);
     const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
@@ -78,13 +78,15 @@ export default function OrganizationSelector() {
                 link: "/members",
             });
             if (isDedicated) {
-                linkEntries.push({
-                    title: "Insights",
-                    customContent: <LinkEntry>Insights</LinkEntry>,
-                    active: false,
-                    separator: false,
-                    link: "/insights",
-                });
+                if (isOwner) {
+                    linkEntries.push({
+                        title: "Insights",
+                        customContent: <LinkEntry>Insights</LinkEntry>,
+                        active: false,
+                        separator: false,
+                        link: "/insights",
+                    });
+                }
             } else {
                 linkEntries.push({
                     title: "Usage",
@@ -95,7 +97,7 @@ export default function OrganizationSelector() {
                 });
             }
             // Show billing if user is an owner of current org
-            if (owner) {
+            if (isOwner) {
                 if (billingMode?.mode === "usage-based") {
                     linkEntries.push({
                         title: "Billing",
