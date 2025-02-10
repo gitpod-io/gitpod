@@ -75,11 +75,16 @@ export const Insights = () => {
 
                 {errorMessage && (
                     <Alert type="error" className="mt-4">
-                        {isLackingPermissions
-                            ? "You don't have permission to access this organization's insights."
-                            : errorMessage instanceof Error
-                            ? errorMessage.message
-                            : "An error occurred."}
+                        {isLackingPermissions ? (
+                            <>
+                                You don't have <span className="font-medium">Owner</span> permissions to access this
+                                organization's insights.
+                            </>
+                        ) : errorMessage instanceof Error ? (
+                            errorMessage.message
+                        ) : (
+                            "An error occurred."
+                        )}
                     </Alert>
                 )}
 
