@@ -198,7 +198,7 @@ export const DownloadUsage = ({ to, disabled }: DownloadUsageProps) => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="secondary" className="gap-1" disabled={disabled ?? downloadDisabled}>
+                <Button variant="secondary" className="gap-1" disabled={disabled || downloadDisabled}>
                     <DownloadIcon strokeWidth={3} className="w-4" />
                     <span>Export as CSV</span>
                 </Button>
