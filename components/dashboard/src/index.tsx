@@ -26,6 +26,7 @@ import { PaymentContextProvider } from "./payment-context";
 import { ThemeContextProvider } from "./theme-context";
 import { UserContextProvider } from "./user-context";
 import { getURLHash, isGitpodIo, isWebsiteSlug } from "./utils";
+import { NuqsAdapter } from "nuqs/adapters/react";
 
 const bootApp = () => {
     // gitpod.io specific boot logic
@@ -68,7 +69,9 @@ const bootApp = () => {
                                     <ToastContextProvider>
                                         <UserContextProvider>
                                             <PaymentContextProvider>
-                                                <RootAppRouter />
+                                                <NuqsAdapter>
+                                                    <RootAppRouter />
+                                                </NuqsAdapter>
                                             </PaymentContextProvider>
                                         </UserContextProvider>
                                     </ToastContextProvider>

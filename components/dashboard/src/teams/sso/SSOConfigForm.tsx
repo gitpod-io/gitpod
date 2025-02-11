@@ -81,7 +81,7 @@ export const SSOConfigForm: FC<Props> = ({ config, readOnly = false, onChange })
             />
 
             <Subheading className="mt-8">
-                <strong>3.</strong> Restrict available accounts in your Identity Providers.
+                <strong>3.</strong> Restrict available accounts in your Identity Providers.{" "}
                 <a
                     href="https://www.gitpod.io/docs/enterprise/setup-gitpod/configure-sso#restrict-available-accounts-in-your-identity-providers"
                     target="_blank"

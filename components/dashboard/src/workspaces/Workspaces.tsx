@@ -275,7 +275,11 @@ const WorkspacesPage: FunctionComponent = () => {
                                             return (
                                                 <Card
                                                     key={repo.url}
-                                                    href={`/new#${repo.url}`}
+                                                    href={
+                                                        repo.configurationId
+                                                            ? `/new?configurationId=${repo.configurationId}`
+                                                            : `/new#${repo.url}`
+                                                    }
                                                     className={cn(
                                                         "border-[0.5px] hover:bg-pk-surface-tertiary transition-colors w-full",
                                                         {

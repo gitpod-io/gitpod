@@ -54,11 +54,13 @@ import Menu from "../menu/Menu";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useAllowedWorkspaceEditorsMemo } from "../data/ide-options/ide-options-query";
 import { isGitpodIo } from "../utils";
-import { useListConfigurations } from "../data/configurations/configuration-queries";
+import { useConfiguration, useListConfigurations } from "../data/configurations/configuration-queries";
 import { flattenPagedConfigurations } from "../data/git-providers/unified-repositories-search-query";
 import { Configuration } from "@gitpod/public-api/lib/gitpod/v1/configuration_pb";
 import { useMemberRole } from "../data/organizations/members-query";
 import { OrganizationPermission } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { createParser, useQueryState } from "nuqs";
+import { validate as validateUUID } from "uuid";
 import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 type NextLoadOption = "searchParams" | "autoStart" | "allDone";
@@ -76,10 +78,9 @@ export function CreateWorkspacePage() {
     const [autostart, setAutostart] = useState<boolean | undefined>(props.autostart);
     const createWorkspaceMutation = useCreateWorkspaceMutation();
 
-    // Currently this tracks if the user has selected a project from the dropdown
-    // Need to make sure we initialize this to a project if the url hash value maps to a project's repo url
-    // Will need to handle multiple projects w/ same repo url
-    const [selectedProjectID, setSelectedProjectID] = useState<string | undefined>(undefined);
+    // This stores the configurationId corresponding to a context URL
+    // it can either be resolved from the context URL [lossy context URL -> configuration conversion] or it can itself resolve the context URL when specified [lossless configurationId -> context URL conversion]
+    const [selectedProjectID, setSelectedProjectID] = useQueryState("configurationId", parseAsUUIDv4);
 
     const defaultLatestIde =
         props.ideSettings?.useLatestVersion !== undefined
@@ -91,12 +92,12 @@ export function CreateWorkspacePage() {
     // Note: it has data fetching and UI rendering race between the updating of `selectedProjectId` and `selectedIde`
     // We have to stored the using repositoryId locally so that we can know selectedIde is updated because if which repo
     // so that it doesn't show ide error messages in middle state
-    const [defaultIdeSource, setDefaultIdeSource] = useState<string | undefined>(selectedProjectID);
+    const [defaultIdeSource, setDefaultIdeSource] = useState<string | undefined>(selectedProjectID ?? undefined);
     const {
         computedDefault: computedDefaultEditor,
         usingConfigurationId,
         availableOptions: availableEditorOptions,
-    } = useAllowedWorkspaceEditorsMemo(selectedProjectID, {
+    } = useAllowedWorkspaceEditorsMemo(selectedProjectID ?? undefined, {
         userDefault: user?.editorSettings?.name,
         filterOutDisabled: true,
     });
@@ -106,7 +107,7 @@ export function CreateWorkspacePage() {
         computedDefaultClass,
         data: allowedWorkspaceClasses,
         isLoading: isLoadingWorkspaceClasses,
-    } = useAllowedWorkspaceClassesMemo(selectedProjectID);
+    } = useAllowedWorkspaceClassesMemo(selectedProjectID ?? undefined);
     const defaultWorkspaceClass = props.workspaceClass ?? computedDefaultClass;
     const showExamples = props.showExamples ?? false;
     const { data: orgSettings } = useOrgSettingsQuery();
@@ -123,9 +124,13 @@ export function CreateWorkspacePage() {
     const needsGitAuthorization = useNeedsGitAuthorization();
 
     useEffect(() => {
-        setContextURL(StartWorkspaceOptions.parseContextUrl(location.hash));
-        setSelectedProjectID(undefined);
-        setNextLoadOption("searchParams");
+        // if we have a context URL in the hash, we can proceed with resolving info based on it.
+        if (location.hash) {
+            setContextURL(StartWorkspaceOptions.parseContextUrl(location.hash));
+            setNextLoadOption("searchParams");
+        }
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- we don't want to depend on setSelectedProjectID
     }, [location.hash]);
 
     const cloneURL = workspaceContext.data?.cloneUrl;
@@ -189,24 +194,43 @@ export function CreateWorkspacePage() {
         setUser,
     ]);
 
-    // see if we have a matching configuration based on context url and configuration's repo url
-    const configuration = useMemo(() => {
+    // see if we have a matching configuration based on configuration id / context url and configuration's repo url
+    const configurationFromURL = useMemo(() => {
         if (!workspaceContext.data || configurations.length === 0) {
             return undefined;
         }
         if (!cloneURL) {
             return;
         }
-        // TODO: Account for multiple configurations w/ the same cloneUrl
+
         return configurations.find((p) => p.cloneUrl === cloneURL);
     }, [workspaceContext.data, configurations, cloneURL]);
+    const { data: configurationFromId, isLoading: isLoadingConfigurationFromId } = useConfiguration(
+        selectedProjectID ?? undefined,
+    );
+    const configuration = useMemo(
+        () => {
+            if (configurationFromId && (!cloneURL || configurationFromId.cloneUrl === cloneURL)) {
+                return configurationFromId;
+            }
+            if (configurationFromURL && !isLoadingConfigurationFromId) {
+                setSelectedProjectID(configurationFromURL.id); // idk about this
 
-    // Handle the case where the context url in the hash matches a project and we don't have that project selected yet
+                return configurationFromURL;
+            }
+
+            return undefined;
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- we don't want to depend on setSelectedProjectID
+        [configurationFromId, configurationFromURL, selectedProjectID],
+    );
+
+    // when the user comes in with a configuration id in the search params, we want to set the context URL to the configuration's clone URL
     useEffect(() => {
-        if (configuration && !selectedProjectID) {
-            setSelectedProjectID(configuration.id);
+        if (configuration && !contextURL) {
+            setContextURL(configuration.cloneUrl);
         }
-    }, [configuration, selectedProjectID]);
+    }, [configuration, contextURL]);
 
     // In addition to updating state, we want to update the url hash as well
     // This allows the contextURL to persist if user changes orgs, or copies/shares url
@@ -222,6 +246,8 @@ export function CreateWorkspacePage() {
             // reset load options
             setNextLoadOption("searchParams");
         },
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- we don't want to depend on setSelectedProjectID
         [history],
     );
 
@@ -291,7 +317,7 @@ export function CreateWorkspacePage() {
                     opts.metadata = {};
                 }
                 opts.metadata.organizationId = organizationId;
-                opts.metadata.configurationId = selectedProjectID;
+                opts.metadata.configurationId = selectedProjectID ?? undefined;
 
                 const contextUrlSource: PartialMessage<CreateAndStartWorkspaceRequest_ContextURL> =
                     opts.source?.case === "contextUrl" ? opts.source?.value ?? {} : {};
@@ -563,8 +589,8 @@ export function CreateWorkspacePage() {
                             <RepositoryFinder
                                 onChange={handleContextURLChange}
                                 selectedContextURL={contextURL}
-                                selectedConfigurationId={selectedProjectID}
-                                expanded={!contextURL}
+                                selectedConfigurationId={selectedProjectID ?? undefined}
+                                expanded={!contextURL && !selectedProjectID}
                                 onlyConfigurations={
                                     orgSettings?.roleRestrictions.some(
                                         (roleRestriction) =>
@@ -583,12 +609,14 @@ export function CreateWorkspacePage() {
                             <SelectIDEComponent
                                 onSelectionChange={onSelectEditorChange}
                                 availableOptions={
-                                    defaultIdeSource === selectedProjectID ? availableEditorOptions : undefined
+                                    defaultIdeSource === (selectedProjectID ?? undefined)
+                                        ? availableEditorOptions
+                                        : undefined
                                 }
                                 setError={setErrorIde}
                                 setWarning={setWarningIde}
                                 selectedIdeOption={selectedIde}
-                                selectedConfigurationId={selectedProjectID}
+                                selectedConfigurationId={selectedProjectID ?? undefined}
                                 pinnedEditorVersions={
                                     orgSettings?.pinnedEditorVersions &&
                                     new Map<string, string>(Object.entries(orgSettings.pinnedEditorVersions))
@@ -602,7 +630,7 @@ export function CreateWorkspacePage() {
 
                         <InputField error={errorWsClass}>
                             <SelectWorkspaceClassComponent
-                                selectedConfigurationId={selectedProjectID}
+                                selectedConfigurationId={selectedProjectID ?? undefined}
                                 onSelectionChange={setSelectedWsClass}
                                 setError={setErrorWsClass}
                                 selectedWorkspaceClass={selectedWsClass}
@@ -886,3 +914,15 @@ export function LimitReachedModal(p: { children: ReactNode }) {
         </Modal>
     );
 }
+
+export const parseAsUUIDv4 = createParser({
+    parse(queryValue) {
+        if (validateUUID(queryValue)) {
+            return queryValue;
+        }
+        return null;
+    },
+    serialize(value) {
+        return value;
+    },
+});
