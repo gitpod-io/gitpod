@@ -47,7 +47,7 @@ window.addEventListener("error", (event) => {
 
 require("../src/shared/index.css");
 
-import { WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
+import { Workspace, WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
 import { DisposableCollection } from "@gitpod/gitpod-protocol/lib/util/disposable";
 import * as heartBeat from "./ide/heart-beat";
 import * as IDEFrontendService from "./ide/ide-frontend-service-impl";
@@ -78,7 +78,10 @@ LoadingFrame.load().then(async (loading) => {
         willRedirect = true;
     });
 
-    document.title = frontendDashboardServiceClient.latestInfo.workspaceDescription ?? "gitpod";
+    document.title =
+        Workspace.fromWorkspaceName(frontendDashboardServiceClient.latestInfo.workspaceDescription) ??
+        frontendDashboardServiceClient.latestInfo.workspaceDescription ??
+        "gitpod";
     window.gitpod.loggedUserID = frontendDashboardServiceClient.latestInfo.loggedUserId;
     window.gitpod.openDesktopIDE = frontendDashboardServiceClient.openDesktopIDE.bind(frontendDashboardServiceClient);
     window.gitpod.decrypt = frontendDashboardServiceClient.decrypt.bind(frontendDashboardServiceClient);

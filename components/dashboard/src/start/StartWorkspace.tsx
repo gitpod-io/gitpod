@@ -88,7 +88,7 @@ function parseParameters(search?: string): { notFound?: boolean } {
 
 export interface StartWorkspaceState {
     /**
-     * This is set to the istanceId we started (think we started on).
+     * This is set to the instanceId we started (think we started on).
      * We only receive updates for this particular instance, or none if not set.
      */
     startedInstanceId?: string;
