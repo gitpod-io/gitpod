@@ -52,6 +52,9 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 		}).Info("authorizing registry access")
 	}()
 
+	// Strip any port from the host if present
+	host = strings.Split(host, ":")[0]
+
 	explicitHostMatcher := func() (authConfig, bool) {
 		res, ok := a[host]
 		return res, ok
@@ -86,12 +89,13 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 
 	user, pass = res.Username, res.Password
 	if res.Auth != "" {
-		var auth []byte
-		auth, err = base64.StdEncoding.DecodeString(res.Auth)
+		var authBytes []byte
+		authBytes, err = base64.StdEncoding.DecodeString(res.Auth)
 		if err != nil {
 			return
 		}
-		segs := strings.Split(string(auth), ":")
+		auth := strings.TrimSpace(string(authBytes))
+		segs := strings.Split(auth, ":")
 		if len(segs) < 2 {
 			return
 		}
