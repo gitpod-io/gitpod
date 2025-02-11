@@ -28,6 +28,11 @@ export interface ProjectSettings {
     restrictedWorkspaceClasses?: string[];
 
     restrictedEditorNames?: string[];
+
+    /**
+     * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+     */
+    enableDockerdAuthentication?: boolean;
 }
 export namespace PrebuildSettings {
     export type BranchStrategy = "default-branch" | "all-branches" | "matched-branches";

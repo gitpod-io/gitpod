@@ -3600,6 +3600,16 @@ public final class ConfigurationOuterClass {
      */
     com.google.protobuf.ByteString
         getRestrictedEditorNamesBytes(int index);
+
+    /**
+     * <pre>
+     * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+     * </pre>
+     *
+     * <code>bool enable_dockerd_authentication = 4 [json_name = "enableDockerdAuthentication"];</code>
+     * @return The enableDockerdAuthentication.
+     */
+    boolean getEnableDockerdAuthentication();
   }
   /**
    * Protobuf type {@code gitpod.v1.WorkspaceSettings}
@@ -3756,6 +3766,21 @@ public final class ConfigurationOuterClass {
       return restrictedEditorNames_.getByteString(index);
     }
 
+    public static final int ENABLE_DOCKERD_AUTHENTICATION_FIELD_NUMBER = 4;
+    private boolean enableDockerdAuthentication_ = false;
+    /**
+     * <pre>
+     * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+     * </pre>
+     *
+     * <code>bool enable_dockerd_authentication = 4 [json_name = "enableDockerdAuthentication"];</code>
+     * @return The enableDockerdAuthentication.
+     */
+    @java.lang.Override
+    public boolean getEnableDockerdAuthentication() {
+      return enableDockerdAuthentication_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -3778,6 +3803,9 @@ public final class ConfigurationOuterClass {
       }
       for (int i = 0; i < restrictedEditorNames_.size(); i++) {
         com.google.protobuf.GeneratedMessage.writeString(output, 3, restrictedEditorNames_.getRaw(i));
+      }
+      if (enableDockerdAuthentication_ != false) {
+        output.writeBool(4, enableDockerdAuthentication_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -3807,6 +3835,10 @@ public final class ConfigurationOuterClass {
         size += dataSize;
         size += 1 * getRestrictedEditorNamesList().size();
       }
+      if (enableDockerdAuthentication_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(4, enableDockerdAuthentication_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -3828,6 +3860,8 @@ public final class ConfigurationOuterClass {
           .equals(other.getRestrictedWorkspaceClassesList())) return false;
       if (!getRestrictedEditorNamesList()
           .equals(other.getRestrictedEditorNamesList())) return false;
+      if (getEnableDockerdAuthentication()
+          != other.getEnableDockerdAuthentication()) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -3849,6 +3883,9 @@ public final class ConfigurationOuterClass {
         hash = (37 * hash) + RESTRICTED_EDITOR_NAMES_FIELD_NUMBER;
         hash = (53 * hash) + getRestrictedEditorNamesList().hashCode();
       }
+      hash = (37 * hash) + ENABLE_DOCKERD_AUTHENTICATION_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getEnableDockerdAuthentication());
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -3985,6 +4022,7 @@ public final class ConfigurationOuterClass {
             com.google.protobuf.LazyStringArrayList.emptyList();
         restrictedEditorNames_ =
             com.google.protobuf.LazyStringArrayList.emptyList();
+        enableDockerdAuthentication_ = false;
         return this;
       }
 
@@ -4029,6 +4067,9 @@ public final class ConfigurationOuterClass {
           restrictedEditorNames_.makeImmutable();
           result.restrictedEditorNames_ = restrictedEditorNames_;
         }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.enableDockerdAuthentication_ = enableDockerdAuthentication_;
+        }
       }
 
       @java.lang.Override
@@ -4067,6 +4108,9 @@ public final class ConfigurationOuterClass {
             restrictedEditorNames_.addAll(other.restrictedEditorNames_);
           }
           onChanged();
+        }
+        if (other.getEnableDockerdAuthentication() != false) {
+          setEnableDockerdAuthentication(other.getEnableDockerdAuthentication());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -4111,6 +4155,11 @@ public final class ConfigurationOuterClass {
                 restrictedEditorNames_.add(s);
                 break;
               } // case 26
+              case 32: {
+                enableDockerdAuthentication_ = input.readBool();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 32
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -4418,6 +4467,50 @@ public final class ConfigurationOuterClass {
         ensureRestrictedEditorNamesIsMutable();
         restrictedEditorNames_.add(value);
         bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private boolean enableDockerdAuthentication_ ;
+      /**
+       * <pre>
+       * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+       * </pre>
+       *
+       * <code>bool enable_dockerd_authentication = 4 [json_name = "enableDockerdAuthentication"];</code>
+       * @return The enableDockerdAuthentication.
+       */
+      @java.lang.Override
+      public boolean getEnableDockerdAuthentication() {
+        return enableDockerdAuthentication_;
+      }
+      /**
+       * <pre>
+       * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+       * </pre>
+       *
+       * <code>bool enable_dockerd_authentication = 4 [json_name = "enableDockerdAuthentication"];</code>
+       * @param value The enableDockerdAuthentication to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEnableDockerdAuthentication(boolean value) {
+
+        enableDockerdAuthentication_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+       * </pre>
+       *
+       * <code>bool enable_dockerd_authentication = 4 [json_name = "enableDockerdAuthentication"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearEnableDockerdAuthentication() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        enableDockerdAuthentication_ = false;
         onChanged();
         return this;
       }
@@ -11002,6 +11095,25 @@ public final class ConfigurationOuterClass {
        * @return The updateRestrictedEditorNames.
        */
       boolean getUpdateRestrictedEditorNames();
+
+      /**
+       * <pre>
+       * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+       * </pre>
+       *
+       * <code>optional bool enable_dockerd_authentication = 6 [json_name = "enableDockerdAuthentication"];</code>
+       * @return Whether the enableDockerdAuthentication field is set.
+       */
+      boolean hasEnableDockerdAuthentication();
+      /**
+       * <pre>
+       * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+       * </pre>
+       *
+       * <code>optional bool enable_dockerd_authentication = 6 [json_name = "enableDockerdAuthentication"];</code>
+       * @return The enableDockerdAuthentication.
+       */
+      boolean getEnableDockerdAuthentication();
     }
     /**
      * Protobuf type {@code gitpod.v1.UpdateConfigurationRequest.WorkspaceSettings}
@@ -11269,6 +11381,33 @@ public final class ConfigurationOuterClass {
         return updateRestrictedEditorNames_;
       }
 
+      public static final int ENABLE_DOCKERD_AUTHENTICATION_FIELD_NUMBER = 6;
+      private boolean enableDockerdAuthentication_ = false;
+      /**
+       * <pre>
+       * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+       * </pre>
+       *
+       * <code>optional bool enable_dockerd_authentication = 6 [json_name = "enableDockerdAuthentication"];</code>
+       * @return Whether the enableDockerdAuthentication field is set.
+       */
+      @java.lang.Override
+      public boolean hasEnableDockerdAuthentication() {
+        return ((bitField0_ & 0x00000008) != 0);
+      }
+      /**
+       * <pre>
+       * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+       * </pre>
+       *
+       * <code>optional bool enable_dockerd_authentication = 6 [json_name = "enableDockerdAuthentication"];</code>
+       * @return The enableDockerdAuthentication.
+       */
+      @java.lang.Override
+      public boolean getEnableDockerdAuthentication() {
+        return enableDockerdAuthentication_;
+      }
+
       private byte memoizedIsInitialized = -1;
       @java.lang.Override
       public final boolean isInitialized() {
@@ -11297,6 +11436,9 @@ public final class ConfigurationOuterClass {
         }
         if (((bitField0_ & 0x00000004) != 0)) {
           output.writeBool(5, updateRestrictedEditorNames_);
+        }
+        if (((bitField0_ & 0x00000008) != 0)) {
+          output.writeBool(6, enableDockerdAuthentication_);
         }
         getUnknownFields().writeTo(output);
       }
@@ -11334,6 +11476,10 @@ public final class ConfigurationOuterClass {
           size += com.google.protobuf.CodedOutputStream
             .computeBoolSize(5, updateRestrictedEditorNames_);
         }
+        if (((bitField0_ & 0x00000008) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeBoolSize(6, enableDockerdAuthentication_);
+        }
         size += getUnknownFields().getSerializedSize();
         memoizedSize = size;
         return size;
@@ -11368,6 +11514,11 @@ public final class ConfigurationOuterClass {
           if (getUpdateRestrictedEditorNames()
               != other.getUpdateRestrictedEditorNames()) return false;
         }
+        if (hasEnableDockerdAuthentication() != other.hasEnableDockerdAuthentication()) return false;
+        if (hasEnableDockerdAuthentication()) {
+          if (getEnableDockerdAuthentication()
+              != other.getEnableDockerdAuthentication()) return false;
+        }
         if (!getUnknownFields().equals(other.getUnknownFields())) return false;
         return true;
       }
@@ -11400,6 +11551,11 @@ public final class ConfigurationOuterClass {
           hash = (37 * hash) + UPDATE_RESTRICTED_EDITOR_NAMES_FIELD_NUMBER;
           hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
               getUpdateRestrictedEditorNames());
+        }
+        if (hasEnableDockerdAuthentication()) {
+          hash = (37 * hash) + ENABLE_DOCKERD_AUTHENTICATION_FIELD_NUMBER;
+          hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+              getEnableDockerdAuthentication());
         }
         hash = (29 * hash) + getUnknownFields().hashCode();
         memoizedHashCode = hash;
@@ -11539,6 +11695,7 @@ public final class ConfigurationOuterClass {
           restrictedEditorNames_ =
               com.google.protobuf.LazyStringArrayList.emptyList();
           updateRestrictedEditorNames_ = false;
+          enableDockerdAuthentication_ = false;
           return this;
         }
 
@@ -11593,6 +11750,10 @@ public final class ConfigurationOuterClass {
             result.updateRestrictedEditorNames_ = updateRestrictedEditorNames_;
             to_bitField0_ |= 0x00000004;
           }
+          if (((from_bitField0_ & 0x00000020) != 0)) {
+            result.enableDockerdAuthentication_ = enableDockerdAuthentication_;
+            to_bitField0_ |= 0x00000008;
+          }
           result.bitField0_ |= to_bitField0_;
         }
 
@@ -11638,6 +11799,9 @@ public final class ConfigurationOuterClass {
           }
           if (other.hasUpdateRestrictedEditorNames()) {
             setUpdateRestrictedEditorNames(other.getUpdateRestrictedEditorNames());
+          }
+          if (other.hasEnableDockerdAuthentication()) {
+            setEnableDockerdAuthentication(other.getEnableDockerdAuthentication());
           }
           this.mergeUnknownFields(other.getUnknownFields());
           onChanged();
@@ -11692,6 +11856,11 @@ public final class ConfigurationOuterClass {
                   bitField0_ |= 0x00000010;
                   break;
                 } // case 40
+                case 48: {
+                  enableDockerdAuthentication_ = input.readBool();
+                  bitField0_ |= 0x00000020;
+                  break;
+                } // case 48
                 default: {
                   if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                     done = true; // was an endgroup tag
@@ -12226,6 +12395,62 @@ public final class ConfigurationOuterClass {
         public Builder clearUpdateRestrictedEditorNames() {
           bitField0_ = (bitField0_ & ~0x00000010);
           updateRestrictedEditorNames_ = false;
+          onChanged();
+          return this;
+        }
+
+        private boolean enableDockerdAuthentication_ ;
+        /**
+         * <pre>
+         * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+         * </pre>
+         *
+         * <code>optional bool enable_dockerd_authentication = 6 [json_name = "enableDockerdAuthentication"];</code>
+         * @return Whether the enableDockerdAuthentication field is set.
+         */
+        @java.lang.Override
+        public boolean hasEnableDockerdAuthentication() {
+          return ((bitField0_ & 0x00000020) != 0);
+        }
+        /**
+         * <pre>
+         * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+         * </pre>
+         *
+         * <code>optional bool enable_dockerd_authentication = 6 [json_name = "enableDockerdAuthentication"];</code>
+         * @return The enableDockerdAuthentication.
+         */
+        @java.lang.Override
+        public boolean getEnableDockerdAuthentication() {
+          return enableDockerdAuthentication_;
+        }
+        /**
+         * <pre>
+         * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+         * </pre>
+         *
+         * <code>optional bool enable_dockerd_authentication = 6 [json_name = "enableDockerdAuthentication"];</code>
+         * @param value The enableDockerdAuthentication to set.
+         * @return This builder for chaining.
+         */
+        public Builder setEnableDockerdAuthentication(boolean value) {
+
+          enableDockerdAuthentication_ = value;
+          bitField0_ |= 0x00000020;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+         * </pre>
+         *
+         * <code>optional bool enable_dockerd_authentication = 6 [json_name = "enableDockerdAuthentication"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearEnableDockerdAuthentication() {
+          bitField0_ = (bitField0_ & ~0x00000020);
+          enableDockerdAuthentication_ = false;
           onChanged();
           return this;
         }
@@ -14818,96 +15043,100 @@ public final class ConfigurationOuterClass {
       "ggerStrategy\022G\n\016clone_settings\030\007 \001(\0132 .g" +
       "itpod.v1.PrebuildCloneSettingsR\rcloneSet" +
       "tings\"6\n\025PrebuildCloneSettings\022\035\n\nfull_c" +
-      "lone\030\001 \001(\010R\tfullClone\"\266\001\n\021WorkspaceSetti" +
+      "lone\030\001 \001(\010R\tfullClone\"\372\001\n\021WorkspaceSetti" +
       "ngs\022\'\n\017workspace_class\030\001 \001(\tR\016workspaceC" +
       "lass\022@\n\034restricted_workspace_classes\030\002 \003" +
       "(\tR\032restrictedWorkspaceClasses\0226\n\027restri" +
       "cted_editor_names\030\003 \003(\tR\025restrictedEdito" +
-      "rNames\"v\n\032CreateConfigurationRequest\022\'\n\017" +
-      "organization_id\030\001 \001(\tR\016organizationId\022\022\n" +
-      "\004name\030\002 \001(\tR\004name\022\033\n\tclone_url\030\003 \001(\tR\010cl" +
-      "oneUrl\"]\n\033CreateConfigurationResponse\022>\n" +
-      "\rconfiguration\030\001 \001(\0132\030.gitpod.v1.Configu" +
-      "rationR\rconfiguration\"D\n\027GetConfiguratio" +
-      "nRequest\022)\n\020configuration_id\030\001 \001(\tR\017conf" +
-      "igurationId\"Z\n\030GetConfigurationResponse\022" +
-      ">\n\rconfiguration\030\001 \001(\0132\030.gitpod.v1.Confi" +
-      "gurationR\rconfiguration\"\220\002\n\031ListConfigur" +
-      "ationsRequest\022\'\n\017organization_id\030\001 \001(\tR\016" +
-      "organizationId\022\037\n\013search_term\030\002 \001(\tR\nsea" +
-      "rchTerm\022<\n\npagination\030\003 \001(\0132\034.gitpod.v1." +
-      "PaginationRequestR\npagination\022#\n\004sort\030\004 " +
-      "\003(\0132\017.gitpod.v1.SortR\004sort\0220\n\021prebuilds_" +
-      "enabled\030\005 \001(\010H\000R\020prebuildsEnabled\210\001\001B\024\n\022" +
-      "_prebuilds_enabled\"\235\001\n\032ListConfiguration" +
-      "sResponse\022@\n\016configurations\030\001 \003(\0132\030.gitp" +
-      "od.v1.ConfigurationR\016configurations\022=\n\np" +
-      "agination\030\002 \001(\0132\035.gitpod.v1.PaginationRe" +
-      "sponseR\npagination\"\372\n\n\032UpdateConfigurati" +
-      "onRequest\022)\n\020configuration_id\030\001 \001(\tR\017con" +
-      "figurationId\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001\022h\n" +
-      "\021prebuild_settings\030\003 \001(\01326.gitpod.v1.Upd" +
-      "ateConfigurationRequest.PrebuildSettings" +
-      "H\001R\020prebuildSettings\210\001\001\022k\n\022workspace_set" +
-      "tings\030\004 \001(\01327.gitpod.v1.UpdateConfigurat" +
-      "ionRequest.WorkspaceSettingsH\002R\021workspac" +
-      "eSettings\210\001\001\032\317\004\n\020PrebuildSettings\022\035\n\007ena" +
-      "bled\030\001 \001(\010H\000R\007enabled\210\001\001\022;\n\027branch_match" +
-      "ing_pattern\030\002 \001(\tH\001R\025branchMatchingPatte" +
-      "rn\210\001\001\022O\n\017branch_strategy\030\003 \001(\0162!.gitpod." +
-      "v1.BranchMatchingStrategyH\002R\016branchStrat" +
-      "egy\210\001\001\0220\n\021prebuild_interval\030\004 \001(\005H\003R\020pre" +
-      "buildInterval\210\001\001\022,\n\017workspace_class\030\005 \001(" +
-      "\tH\004R\016workspaceClass\210\001\001\022R\n\020trigger_strate" +
-      "gy\030\006 \001(\0162\".gitpod.v1.PrebuildTriggerStra" +
-      "tegyH\005R\017triggerStrategy\210\001\001\022L\n\016clone_sett" +
-      "ings\030\007 \001(\0132 .gitpod.v1.PrebuildCloneSett" +
-      "ingsH\006R\rcloneSettings\210\001\001B\n\n\010_enabledB\032\n\030" +
-      "_branch_matching_patternB\022\n\020_branch_stra" +
-      "tegyB\024\n\022_prebuild_intervalB\022\n\020_workspace" +
-      "_classB\023\n\021_trigger_strategyB\021\n\017_clone_se" +
-      "ttings\032\270\003\n\021WorkspaceSettings\022,\n\017workspac" +
-      "e_class\030\001 \001(\tH\000R\016workspaceClass\210\001\001\022@\n\034re" +
-      "stricted_workspace_classes\030\002 \003(\tR\032restri" +
-      "ctedWorkspaceClasses\022R\n#update_restricte" +
-      "d_workspace_classes\030\003 \001(\010H\001R updateRestr" +
-      "ictedWorkspaceClasses\210\001\001\0226\n\027restricted_e" +
-      "ditor_names\030\004 \003(\tR\025restrictedEditorNames" +
-      "\022H\n\036update_restricted_editor_names\030\005 \001(\010" +
-      "H\002R\033updateRestrictedEditorNames\210\001\001B\022\n\020_w" +
-      "orkspace_classB&\n$_update_restricted_wor" +
-      "kspace_classesB!\n\037_update_restricted_edi" +
-      "tor_namesB\007\n\005_nameB\024\n\022_prebuild_settings" +
-      "B\025\n\023_workspace_settings\"]\n\033UpdateConfigu" +
-      "rationResponse\022>\n\rconfiguration\030\001 \001(\0132\030." +
-      "gitpod.v1.ConfigurationR\rconfiguration\"G" +
-      "\n\032DeleteConfigurationRequest\022)\n\020configur" +
-      "ation_id\030\001 \001(\tR\017configurationId\"\035\n\033Delet" +
-      "eConfigurationResponse*r\n\027PrebuildTrigge" +
-      "rStrategy\022)\n%PREBUILD_TRIGGER_STRATEGY_U" +
-      "NSPECIFIED\020\000\022,\n(PREBUILD_TRIGGER_STRATEG" +
-      "Y_ACTIVITY_BASED\020\001*\311\001\n\026BranchMatchingStr" +
-      "ategy\022(\n$BRANCH_MATCHING_STRATEGY_UNSPEC" +
-      "IFIED\020\000\022+\n\'BRANCH_MATCHING_STRATEGY_DEFA" +
-      "ULT_BRANCH\020\001\022)\n%BRANCH_MATCHING_STRATEGY" +
-      "_ALL_BRANCHES\020\002\022-\n)BRANCH_MATCHING_STRAT" +
-      "EGY_MATCHED_BRANCHES\020\0032\222\004\n\024Configuration" +
-      "Service\022f\n\023CreateConfiguration\022%.gitpod." +
-      "v1.CreateConfigurationRequest\032&.gitpod.v" +
-      "1.CreateConfigurationResponse\"\000\022]\n\020GetCo" +
-      "nfiguration\022\".gitpod.v1.GetConfiguration" +
-      "Request\032#.gitpod.v1.GetConfigurationResp" +
-      "onse\"\000\022c\n\022ListConfigurations\022$.gitpod.v1" +
-      ".ListConfigurationsRequest\032%.gitpod.v1.L" +
-      "istConfigurationsResponse\"\000\022f\n\023UpdateCon" +
-      "figuration\022%.gitpod.v1.UpdateConfigurati" +
-      "onRequest\032&.gitpod.v1.UpdateConfiguratio" +
-      "nResponse\"\000\022f\n\023DeleteConfiguration\022%.git" +
-      "pod.v1.DeleteConfigurationRequest\032&.gitp" +
-      "od.v1.DeleteConfigurationResponse\"\000BQ\n\026i" +
-      "o.gitpod.publicapi.v1Z7github.com/gitpod" +
-      "-io/gitpod/components/public-api/go/v1b\006" +
-      "proto3"
+      "rNames\022B\n\035enable_dockerd_authentication\030" +
+      "\004 \001(\010R\033enableDockerdAuthentication\"v\n\032Cr" +
+      "eateConfigurationRequest\022\'\n\017organization" +
+      "_id\030\001 \001(\tR\016organizationId\022\022\n\004name\030\002 \001(\tR" +
+      "\004name\022\033\n\tclone_url\030\003 \001(\tR\010cloneUrl\"]\n\033Cr" +
+      "eateConfigurationResponse\022>\n\rconfigurati" +
+      "on\030\001 \001(\0132\030.gitpod.v1.ConfigurationR\rconf" +
+      "iguration\"D\n\027GetConfigurationRequest\022)\n\020" +
+      "configuration_id\030\001 \001(\tR\017configurationId\"" +
+      "Z\n\030GetConfigurationResponse\022>\n\rconfigura" +
+      "tion\030\001 \001(\0132\030.gitpod.v1.ConfigurationR\rco" +
+      "nfiguration\"\220\002\n\031ListConfigurationsReques" +
+      "t\022\'\n\017organization_id\030\001 \001(\tR\016organization" +
+      "Id\022\037\n\013search_term\030\002 \001(\tR\nsearchTerm\022<\n\np" +
+      "agination\030\003 \001(\0132\034.gitpod.v1.PaginationRe" +
+      "questR\npagination\022#\n\004sort\030\004 \003(\0132\017.gitpod" +
+      ".v1.SortR\004sort\0220\n\021prebuilds_enabled\030\005 \001(" +
+      "\010H\000R\020prebuildsEnabled\210\001\001B\024\n\022_prebuilds_e" +
+      "nabled\"\235\001\n\032ListConfigurationsResponse\022@\n" +
+      "\016configurations\030\001 \003(\0132\030.gitpod.v1.Config" +
+      "urationR\016configurations\022=\n\npagination\030\002 " +
+      "\001(\0132\035.gitpod.v1.PaginationResponseR\npagi" +
+      "nation\"\345\013\n\032UpdateConfigurationRequest\022)\n" +
+      "\020configuration_id\030\001 \001(\tR\017configurationId" +
+      "\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001\022h\n\021prebuild_se" +
+      "ttings\030\003 \001(\01326.gitpod.v1.UpdateConfigura" +
+      "tionRequest.PrebuildSettingsH\001R\020prebuild" +
+      "Settings\210\001\001\022k\n\022workspace_settings\030\004 \001(\0132" +
+      "7.gitpod.v1.UpdateConfigurationRequest.W" +
+      "orkspaceSettingsH\002R\021workspaceSettings\210\001\001" +
+      "\032\317\004\n\020PrebuildSettings\022\035\n\007enabled\030\001 \001(\010H\000" +
+      "R\007enabled\210\001\001\022;\n\027branch_matching_pattern\030" +
+      "\002 \001(\tH\001R\025branchMatchingPattern\210\001\001\022O\n\017bra" +
+      "nch_strategy\030\003 \001(\0162!.gitpod.v1.BranchMat" +
+      "chingStrategyH\002R\016branchStrategy\210\001\001\0220\n\021pr" +
+      "ebuild_interval\030\004 \001(\005H\003R\020prebuildInterva" +
+      "l\210\001\001\022,\n\017workspace_class\030\005 \001(\tH\004R\016workspa" +
+      "ceClass\210\001\001\022R\n\020trigger_strategy\030\006 \001(\0162\".g" +
+      "itpod.v1.PrebuildTriggerStrategyH\005R\017trig" +
+      "gerStrategy\210\001\001\022L\n\016clone_settings\030\007 \001(\0132 " +
+      ".gitpod.v1.PrebuildCloneSettingsH\006R\rclon" +
+      "eSettings\210\001\001B\n\n\010_enabledB\032\n\030_branch_matc" +
+      "hing_patternB\022\n\020_branch_strategyB\024\n\022_pre" +
+      "build_intervalB\022\n\020_workspace_classB\023\n\021_t" +
+      "rigger_strategyB\021\n\017_clone_settings\032\243\004\n\021W" +
+      "orkspaceSettings\022,\n\017workspace_class\030\001 \001(" +
+      "\tH\000R\016workspaceClass\210\001\001\022@\n\034restricted_wor" +
+      "kspace_classes\030\002 \003(\tR\032restrictedWorkspac" +
+      "eClasses\022R\n#update_restricted_workspace_" +
+      "classes\030\003 \001(\010H\001R updateRestrictedWorkspa" +
+      "ceClasses\210\001\001\0226\n\027restricted_editor_names\030" +
+      "\004 \003(\tR\025restrictedEditorNames\022H\n\036update_r" +
+      "estricted_editor_names\030\005 \001(\010H\002R\033updateRe" +
+      "strictedEditorNames\210\001\001\022G\n\035enable_dockerd" +
+      "_authentication\030\006 \001(\010H\003R\033enableDockerdAu" +
+      "thentication\210\001\001B\022\n\020_workspace_classB&\n$_" +
+      "update_restricted_workspace_classesB!\n\037_" +
+      "update_restricted_editor_namesB \n\036_enabl" +
+      "e_dockerd_authenticationB\007\n\005_nameB\024\n\022_pr" +
+      "ebuild_settingsB\025\n\023_workspace_settings\"]" +
+      "\n\033UpdateConfigurationResponse\022>\n\rconfigu" +
+      "ration\030\001 \001(\0132\030.gitpod.v1.ConfigurationR\r" +
+      "configuration\"G\n\032DeleteConfigurationRequ" +
+      "est\022)\n\020configuration_id\030\001 \001(\tR\017configura" +
+      "tionId\"\035\n\033DeleteConfigurationResponse*r\n" +
+      "\027PrebuildTriggerStrategy\022)\n%PREBUILD_TRI" +
+      "GGER_STRATEGY_UNSPECIFIED\020\000\022,\n(PREBUILD_" +
+      "TRIGGER_STRATEGY_ACTIVITY_BASED\020\001*\311\001\n\026Br" +
+      "anchMatchingStrategy\022(\n$BRANCH_MATCHING_" +
+      "STRATEGY_UNSPECIFIED\020\000\022+\n\'BRANCH_MATCHIN" +
+      "G_STRATEGY_DEFAULT_BRANCH\020\001\022)\n%BRANCH_MA" +
+      "TCHING_STRATEGY_ALL_BRANCHES\020\002\022-\n)BRANCH" +
+      "_MATCHING_STRATEGY_MATCHED_BRANCHES\020\0032\222\004" +
+      "\n\024ConfigurationService\022f\n\023CreateConfigur" +
+      "ation\022%.gitpod.v1.CreateConfigurationReq" +
+      "uest\032&.gitpod.v1.CreateConfigurationResp" +
+      "onse\"\000\022]\n\020GetConfiguration\022\".gitpod.v1.G" +
+      "etConfigurationRequest\032#.gitpod.v1.GetCo" +
+      "nfigurationResponse\"\000\022c\n\022ListConfigurati" +
+      "ons\022$.gitpod.v1.ListConfigurationsReques" +
+      "t\032%.gitpod.v1.ListConfigurationsResponse" +
+      "\"\000\022f\n\023UpdateConfiguration\022%.gitpod.v1.Up" +
+      "dateConfigurationRequest\032&.gitpod.v1.Upd" +
+      "ateConfigurationResponse\"\000\022f\n\023DeleteConf" +
+      "iguration\022%.gitpod.v1.DeleteConfiguratio" +
+      "nRequest\032&.gitpod.v1.DeleteConfiguration" +
+      "Response\"\000BQ\n\026io.gitpod.publicapi.v1Z7gi" +
+      "thub.com/gitpod-io/gitpod/components/pub" +
+      "lic-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -14939,7 +15168,7 @@ public final class ConfigurationOuterClass {
     internal_static_gitpod_v1_WorkspaceSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceSettings_descriptor,
-        new java.lang.String[] { "WorkspaceClass", "RestrictedWorkspaceClasses", "RestrictedEditorNames", });
+        new java.lang.String[] { "WorkspaceClass", "RestrictedWorkspaceClasses", "RestrictedEditorNames", "EnableDockerdAuthentication", });
     internal_static_gitpod_v1_CreateConfigurationRequest_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_gitpod_v1_CreateConfigurationRequest_fieldAccessorTable = new
@@ -14993,7 +15222,7 @@ public final class ConfigurationOuterClass {
     internal_static_gitpod_v1_UpdateConfigurationRequest_WorkspaceSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateConfigurationRequest_WorkspaceSettings_descriptor,
-        new java.lang.String[] { "WorkspaceClass", "RestrictedWorkspaceClasses", "UpdateRestrictedWorkspaceClasses", "RestrictedEditorNames", "UpdateRestrictedEditorNames", });
+        new java.lang.String[] { "WorkspaceClass", "RestrictedWorkspaceClasses", "UpdateRestrictedWorkspaceClasses", "RestrictedEditorNames", "UpdateRestrictedEditorNames", "EnableDockerdAuthentication", });
     internal_static_gitpod_v1_UpdateConfigurationResponse_descriptor =
       getDescriptor().getMessageTypes().get(11);
     internal_static_gitpod_v1_UpdateConfigurationResponse_fieldAccessorTable = new

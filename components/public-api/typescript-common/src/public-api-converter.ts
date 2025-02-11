@@ -1042,7 +1042,13 @@ export class PublicAPIConverter {
 
     fromWorkspaceSettings(settings?: DeepPartial<WorkspaceSettings>) {
         const result: Partial<
-            Pick<ProjectSettings, "workspaceClasses" | "restrictedWorkspaceClasses" | "restrictedEditorNames">
+            Pick<
+                ProjectSettings,
+                | "workspaceClasses"
+                | "restrictedWorkspaceClasses"
+                | "restrictedEditorNames"
+                | "enableDockerdAuthentication"
+            >
         > = {};
         if (settings?.workspaceClass) {
             result.workspaceClasses = {
@@ -1056,6 +1062,9 @@ export class PublicAPIConverter {
 
         if (settings?.restrictedEditorNames) {
             result.restrictedEditorNames = settings.restrictedEditorNames.filter((e) => !!e) as string[];
+        }
+        if (settings?.enableDockerdAuthentication !== undefined) {
+            result.enableDockerdAuthentication = settings.enableDockerdAuthentication;
         }
         return result;
     }
@@ -1097,13 +1106,11 @@ export class PublicAPIConverter {
 
     fromPartialConfiguration(configuration: PartialConfiguration): PartialProject {
         const prebuilds = this.fromPartialPrebuildSettings(configuration.prebuildSettings);
-        const { workspaceClasses, restrictedWorkspaceClasses, restrictedEditorNames } = this.fromWorkspaceSettings(
-            configuration.workspaceSettings,
-        );
+        const settings = this.fromWorkspaceSettings(configuration.workspaceSettings);
 
         const result: PartialProject = {
             id: configuration.id,
-            settings: {},
+            settings,
         };
 
         if (configuration.name !== undefined) {
@@ -1112,15 +1119,6 @@ export class PublicAPIConverter {
 
         if (Object.keys(prebuilds).length > 0) {
             result.settings!.prebuilds = prebuilds;
-        }
-        if (workspaceClasses && Object.keys(workspaceClasses).length > 0) {
-            result.settings!.workspaceClasses = workspaceClasses;
-        }
-        if (restrictedWorkspaceClasses) {
-            result.settings!.restrictedWorkspaceClasses = restrictedWorkspaceClasses;
-        }
-        if (restrictedEditorNames) {
-            result.settings!.restrictedEditorNames = restrictedEditorNames;
         }
 
         return result;
@@ -1224,6 +1222,9 @@ export class PublicAPIConverter {
         }
         if (projectSettings?.restrictedEditorNames) {
             result.restrictedEditorNames = projectSettings.restrictedEditorNames;
+        }
+        if (projectSettings?.enableDockerdAuthentication !== undefined) {
+            result.enableDockerdAuthentication = projectSettings.enableDockerdAuthentication;
         }
         return result;
     }

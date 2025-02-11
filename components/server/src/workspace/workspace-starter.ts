@@ -211,6 +211,14 @@ export function isClusterMaintenanceError(err: any): boolean {
     );
 }
 
+/**
+ * Context for creating the actual workspace spec.
+ * This is meant to help make the actual spec generation stateless and testable.
+ */
+interface CreateSpecContext {
+    project?: Project;
+}
+
 @injectable()
 export class WorkspaceStarter {
     static readonly STARTING_PHASES: WorkspaceInstancePhase[] = ["preparing", "building", "pending"];
@@ -632,7 +640,7 @@ export class WorkspaceStarter {
             }
 
             // build workspace image
-            const additionalAuth = await this.getAdditionalImageAuth(envVars);
+            const additionalAuth = envVars.gitpodImageAuth || new Map<string, string>();
             instance = await this.buildWorkspaceImage(
                 { span },
                 user,
@@ -645,7 +653,8 @@ export class WorkspaceStarter {
             );
 
             // create spec
-            const spec = await this.createSpec({ span }, user, workspace, instance, envVars);
+            const specCtx = await this.getCreateSpecContext(user, workspace);
+            const spec = await this.createSpec({ span }, specCtx, user, workspace, instance, envVars);
 
             // create start workspace request
             const metadata = await this.createMetadata(workspace);
@@ -837,21 +846,6 @@ export class WorkspaceStarter {
         }
 
         return undefined;
-    }
-
-    private async getAdditionalImageAuth(envVars: ResolvedEnvVars): Promise<Map<string, string>> {
-        const res = new Map<string, string>();
-        const imageAuth = envVars.workspace.find((e) => e.name === EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME);
-        if (!imageAuth) {
-            return res;
-        }
-
-        (imageAuth.value || "")
-            .split(",")
-            .map((e) => e.trim().split(":"))
-            .filter((e) => e.length == 2)
-            .forEach((e) => res.set(e[0], e[1]));
-        return res;
     }
 
     /**
@@ -1385,6 +1379,7 @@ export class WorkspaceStarter {
 
     private async createSpec(
         traceCtx: TraceContext,
+        specCtx: CreateSpecContext,
         user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
@@ -2003,6 +1998,14 @@ export class WorkspaceStarter {
         };
     }
 
+    private async getCreateSpecContext(user: User, workspace: Workspace): Promise<CreateSpecContext> {
+        let project: Project | undefined;
+        if (workspace.projectId) {
+            project = await this.projectService.getProject(user.id, workspace.projectId, true);
+        }
+        return { project };
+    }
+
     private toWorkspaceFeatureFlags(featureFlags: NamedWorkspaceFeatureFlag[]): WorkspaceFeatureFlag[] {
         const result = featureFlags
             .map((name) => {
@@ -2056,7 +2059,7 @@ export class WorkspaceStarter {
         if (organizationId) {
             const envVars = await this.envVarService.listOrgEnvVarsWithValues(user.id, organizationId);
 
-            const additionalAuth = await this.getAdditionalImageAuth({ workspace: envVars });
+            const additionalAuth = EnvVar.getGitpodImageAuth(envVars);
             additionalAuth.forEach((val, key) => auth.getAdditionalMap().set(key, val));
         }
 

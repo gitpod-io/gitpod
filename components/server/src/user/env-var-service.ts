@@ -11,6 +11,7 @@ import {
     EnvVarWithValue,
     OrgEnvVar,
     OrgEnvVarWithValue,
+    Project,
     ProjectEnvVar,
     ProjectEnvVarWithValue,
     UserEnvVar,
@@ -27,7 +28,16 @@ import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messag
 import { Config } from "../config";
 
 export interface ResolvedEnvVars {
-    // merged workspace env vars (incl. org, user, project)
+    /**
+     * Credentials for private Docker registries, if it was present in the `workspace` env vars.
+     * Always be filled, even if project settings hide it from workspaces.
+     */
+    gitpodImageAuth?: Map<string, string>;
+
+    /**
+     * Merged workspace env vars (incl. org, user, project)
+     * Will exactly contain the env vars a workspace can/should be able to access.
+     */
     workspace: EnvVarWithValue[];
 }
 
@@ -362,7 +372,18 @@ export class EnvVarService {
             merge(wsContext.envvars);
         }
 
+        // GITPOD_IMAGE_AUTH is a special case: it is only passed into the workspace if the project settings allow it
+        const credentials = EnvVar.getGitpodImageAuth([...workspaceEnvVars.values()]);
+        let project: Project | undefined;
+        if (projectId) {
+            project = await this.projectDB.findProjectById(projectId);
+        }
+        if (!project?.settings?.enableDockerdAuthentication) {
+            workspaceEnvVars.delete(EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME);
+        }
+
         return {
+            gitpodImageAuth: credentials,
             workspace: [...workspaceEnvVars.values()],
         };
     }

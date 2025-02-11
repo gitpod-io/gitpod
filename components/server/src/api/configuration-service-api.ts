@@ -196,6 +196,9 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
         }
 
         if (req.workspaceSettings !== undefined) {
+            // TODO(gpl): What is this? Why do we invent the 4th place to to a shape translation, when there should be only 1?
+            // The only reason to not re-do all of the API handling here is bc of our Classic timeline... and I'm not sure it's
+            // a good enough excuse.
             update.workspaceSettings = {};
             if (req.workspaceSettings.workspaceClass !== undefined) {
                 update.workspaceSettings.workspaceClass = req.workspaceSettings.workspaceClass;
@@ -216,6 +219,7 @@ export class ConfigurationServiceAPI implements ServiceImpl<typeof Configuration
                     "updateRestrictedEditorNames is required to be true to update restrictedEditorNames",
                 );
             }
+            update.workspaceSettings.enableDockerdAuthentication = req.workspaceSettings.enableDockerdAuthentication;
         }
 
         if (Object.keys(update).length <= 1) {
