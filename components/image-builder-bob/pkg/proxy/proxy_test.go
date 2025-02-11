@@ -70,6 +70,22 @@ func TestRewriteNonDockerAPIURL(t *testing.T) {
 			},
 		},
 		{
+			Name: "fromPrefix and toPrefix are not empty and origin url is not start with fromPrefix",
+			in: input{
+				fromPrefix: "from",
+				toPrefix:   "to",
+				host:       "localhost.com",
+				u: url.URL{
+					Host: "example.com",
+					Path: "/other-string/some/random/path",
+				},
+			},
+			u: url.URL{
+				Host: "localhost.com",
+				Path: "/to/other-string/some/random/path",
+			},
+		},
+		{
 			Name: "fromPrefix and toPrefix are empty",
 			in: input{
 				fromPrefix: "",
@@ -132,6 +148,23 @@ func TestRewriteDockerAPIURL(t *testing.T) {
 			u: url.URL{
 				Host: "localhost.com",
 				Path: "/v2/base/some/random/path",
+			},
+		},
+		{
+			Name: "remote to localhost without repo",
+			in: input{
+				fromRepo: "base-images",
+				toRepo:   "base",
+				host:     "localhost.com",
+				tag:      "",
+				u: url.URL{
+					Host: "prince.azurecr.io",
+					Path: "/v2/other-string/some/random/path",
+				},
+			},
+			u: url.URL{
+				Host: "localhost.com",
+				Path: "/v2/base/v2/other-string/some/random/path",
 			},
 		},
 		{

@@ -60,7 +60,7 @@ func rewriteDockerAPIURL(u *url.URL, fromRepo, toRepo, host, tag string) {
 		from = "/v2/" + strings.Trim(fromRepo, "/") + "/"
 		to   = "/v2/" + strings.Trim(toRepo, "/") + "/"
 	)
-	u.Path = to + strings.TrimPrefix(u.Path, from)
+	u.Path = to + strings.TrimPrefix(strings.TrimPrefix(u.Path, from), "/")
 
 	// we reset the escaped encoding hint, because EscapedPath will produce a valid encoding.
 	u.RawPath = ""
@@ -95,7 +95,7 @@ func rewriteNonDockerAPIURL(u *url.URL, fromPrefix, toPrefix, host string) {
 	if toPrefix == "" {
 		to = "/"
 	}
-	u.Path = to + strings.TrimPrefix(u.Path, from)
+	u.Path = to + strings.TrimPrefix(strings.TrimPrefix(u.Path, from), "/")
 
 	// we reset the escaped encoding hint, because EscapedPath will produce a valid encoding.
 	u.RawPath = ""
