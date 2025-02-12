@@ -442,6 +442,16 @@ export class ProjectsService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${partialProject.id} not found.`);
         }
 
+        // In case we are altering the "enableDockerdAuthentication": require org write_settings permission, so users
+        // can't inadvertently share credentials an owner configured
+        if (
+            partialProject?.settings?.enableDockerdAuthentication !==
+                existingProject.settings?.enableDockerdAuthentication &&
+            partialProject?.settings?.enableDockerdAuthentication
+        ) {
+            await this.auth.checkPermissionOnOrganization(user.id, "write_settings", existingProject.teamId);
+        }
+
         // Merge settings so that clients don't need to pass previous value all the time
         // (not update setting field if undefined)
         if (partialProject.settings) {
