@@ -37,7 +37,7 @@ var proxyCmd = &cobra.Command{
 		}
 		authA, err := proxy.NewAuthorizerFromEnvVar(proxyOpts.AdditionalAuth)
 		if err != nil {
-			log.WithError(err).WithField("auth", proxyOpts.Auth).Fatal("cannot unmarshal auth")
+			log.WithError(err).WithField("additionalAuth", proxyOpts.AdditionalAuth).Fatal("cannot unmarshal additionalAuth")
 		}
 		authP = authP.AddIfNotExists(authA)
 

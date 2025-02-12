@@ -6,12 +6,14 @@ package supervisor
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -38,6 +40,9 @@ const (
 
 	logsDir             = "/workspace/.gitpod/logs"
 	dockerUpLogFilePath = logsDir + "/docker-up.log"
+
+	gitpodUserId  = 33333
+	gitpodGroupId = 33333
 )
 
 var (
@@ -55,6 +60,17 @@ func socketActivationForDocker(parentCtx context.Context, wg *sync.WaitGroup, te
 
 	if ctx.Err() != nil {
 		return
+	}
+
+	// insert credentials into docker config
+	credentialsWritten, err := insertCredentialsIntoConfig(cfg.GitpodImageAuth)
+	if err != nil {
+		log.WithError(err).Warn("authentication: cannot write credentials to config")
+	}
+	if credentialsWritten > 0 {
+		log.Info("authentication: successfully wrote credentials")
+	} else {
+		log.Info("authentication: no credentials provided")
 	}
 
 	logFile, err := openDockerUpLogFile()
@@ -284,4 +300,116 @@ func openDockerUpLogFile() (*os.File, error) {
 		return nil, xerrors.Errorf("cannot chown docker-up log file: %w", err)
 	}
 	return logFile, nil
+}
+
+func insertCredentialsIntoConfig(imageAuth string) (int, error) {
+	imageAuth = strings.TrimSpace(imageAuth)
+	if imageAuth == "" {
+		return 0, nil
+	}
+
+	authConfig := DockerConfig{
+		Auths: make(map[string]RegistryAuth),
+	}
+	authenticationPerHost := strings.Split(imageAuth, ",")
+	for _, hostCredentials := range authenticationPerHost {
+		parts := strings.SplitN(hostCredentials, ":", 2)
+		if len(parts) < 2 {
+			continue
+		}
+		host := parts[0]
+		if host == "docker.io" || strings.HasSuffix(host, ".docker.io") {
+			host = "https://index.docker.io/v1/"
+		}
+
+		authConfig.Auths[host] = RegistryAuth{
+			Auth: parts[1],
+		}
+	}
+	if len(authConfig.Auths) == 0 {
+		return 0, nil
+	}
+
+	err := insertDockerRegistryAuthentication(authConfig, gitpodUserId, gitpodGroupId)
+	if err != nil {
+		return 0, xerrors.Errorf("cannot append registry auth: %w", err)
+	}
+
+	return len(authConfig.Auths), nil
+}
+
+type RegistryAuth struct {
+	Auth string `json:"auth"`
+}
+
+type DockerConfig struct {
+	Auths map[string]RegistryAuth `json:"auths"`
+}
+
+// insertDockerRegistryAuthentication inserts the provided registry credentials to the existing Docker config file
+func insertDockerRegistryAuthentication(newConfig DockerConfig, uid, pid int) error {
+	userHome, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to determine user home directory: %w", err)
+	}
+
+	dockerDir := filepath.Join(userHome, ".docker")
+	if err := os.MkdirAll(dockerDir, 0744); err != nil {
+		return fmt.Errorf("failed to create docker config directory: %w", err)
+	}
+	if err := os.Chown(dockerDir, uid, pid); err != nil {
+		return fmt.Errorf("failed to change ownership of docker config directory: %w", err)
+	}
+	configPath := filepath.Join(dockerDir, "config.json")
+
+	// Read existing config if it exists
+	var rawConfig map[string]interface{}
+	existingBytes, err := os.ReadFile(configPath)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to read existing docker config: %w", err)
+	}
+
+	var configCreated bool
+	if len(existingBytes) > 0 {
+		if err := json.Unmarshal(existingBytes, &rawConfig); err != nil {
+			return fmt.Errorf("failed to parse existing docker config: %w", err)
+		}
+	} else {
+		configCreated = true
+		rawConfig = make(map[string]interface{})
+	}
+
+	// Get existing auths or create new
+	existingAuths := make(map[string]interface{})
+	if authsRaw, ok := rawConfig["auths"]; ok {
+		if authsMap, ok := authsRaw.(map[string]interface{}); ok {
+			existingAuths = authsMap
+		}
+	}
+
+	// Merge new auth entries
+	for registry, auth := range newConfig.Auths {
+		// We overwrite existing registry entries
+		existingAuths[registry] = auth
+	}
+
+	// Update auths in raw config while preserving other fields
+	rawConfig["auths"] = existingAuths
+
+	// Write merged config back to file
+	bytes, err := json.MarshalIndent(rawConfig, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal docker config: %w", err)
+	}
+
+	if err := os.WriteFile(configPath, bytes, 0644); err != nil {
+		return fmt.Errorf("failed to write docker config file: %w", err)
+	}
+	if configCreated {
+		if err := os.Chown(configPath, uid, pid); err != nil {
+			return fmt.Errorf("failed to change ownership of docker config file: %w", err)
+		}
+	}
+
+	return nil
 }

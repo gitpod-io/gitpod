@@ -5,6 +5,7 @@ packages:
       - go.mod
       - go.sum
       - "docker-up/**"
+      - "dockerd/**"
       - dependencies.sh
     deps:
       - components/common-go:lib

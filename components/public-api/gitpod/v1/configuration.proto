@@ -52,6 +52,8 @@ message WorkspaceSettings {
   string workspace_class = 1;
   repeated string restricted_workspace_classes = 2;
   repeated string restricted_editor_names = 3;
+  // Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+  bool enable_dockerd_authentication = 4;
 }
 
 service ConfigurationService {
@@ -131,6 +133,9 @@ message UpdateConfigurationRequest {
     repeated string restricted_editor_names = 4;
     // Specifies whether restricted_editor_names should be updated.
     optional bool update_restricted_editor_names = 5;
+
+    // Enable automatic authentication for docker daemon with all credentials specified in GITPOD_IMAGE_AUTH
+    optional bool enable_dockerd_authentication = 6;
   }
   string configuration_id = 1;
   optional string name = 2;

@@ -156,6 +156,9 @@ describe("EnvVarService", async () => {
                 appInstallationId: "noid",
             },
             member,
+            {
+                enableDockerdAuthentication: true,
+            },
         );
 
         es = container.get(EnvVarService);
