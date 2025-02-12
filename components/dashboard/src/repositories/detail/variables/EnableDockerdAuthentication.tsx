@@ -55,7 +55,7 @@ export const EnableDockerdAuthentication: FC<Props> = ({ configuration }) => {
                     <code>GITPOD_IMAGE_AUTH</code> environment variable.
                 </span>
 
-                <Alert type={"warning"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
+                <Alert type={"warning"} closable={false} showIcon={true} className="flex rounded p-2 mb-2 w-full">
                     By enabling this, credentials specified in <code>GITPOD_IMAGE_AUTH</code> will be visible inside all
                     workspaces on this project.
                 </Alert>

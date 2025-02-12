@@ -318,7 +318,7 @@ func insertCredentialsIntoConfig(imageAuth string) (int, error) {
 			continue
 		}
 		host := parts[0]
-		if strings.Contains(host, "docker.io") {
+		if host == "docker.io" || strings.HasSuffix(host, ".docker.io") {
 			host = "https://index.docker.io/v1/"
 		}
 

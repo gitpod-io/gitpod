@@ -211,14 +211,6 @@ export function isClusterMaintenanceError(err: any): boolean {
     );
 }
 
-/**
- * Context for creating the actual workspace spec.
- * This is meant to help make the actual spec generation stateless and testable.
- */
-interface CreateSpecContext {
-    project?: Project;
-}
-
 @injectable()
 export class WorkspaceStarter {
     static readonly STARTING_PHASES: WorkspaceInstancePhase[] = ["preparing", "building", "pending"];
@@ -653,8 +645,7 @@ export class WorkspaceStarter {
             );
 
             // create spec
-            const specCtx = await this.getCreateSpecContext(user, workspace);
-            const spec = await this.createSpec({ span }, specCtx, user, workspace, instance, envVars);
+            const spec = await this.createSpec({ span }, user, workspace, instance, envVars);
 
             // create start workspace request
             const metadata = await this.createMetadata(workspace);
@@ -1379,7 +1370,6 @@ export class WorkspaceStarter {
 
     private async createSpec(
         traceCtx: TraceContext,
-        specCtx: CreateSpecContext,
         user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
@@ -1996,14 +1986,6 @@ export class WorkspaceStarter {
         return {
             initializer: result,
         };
-    }
-
-    private async getCreateSpecContext(user: User, workspace: Workspace): Promise<CreateSpecContext> {
-        let project: Project | undefined;
-        if (workspace.projectId) {
-            project = await this.projectService.getProject(user.id, workspace.projectId, true);
-        }
-        return { project };
     }
 
     private toWorkspaceFeatureFlags(featureFlags: NamedWorkspaceFeatureFlag[]): WorkspaceFeatureFlag[] {
