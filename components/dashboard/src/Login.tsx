@@ -330,20 +330,6 @@ const RightProductDescriptionPanel = () => {
                         Automated, standardized development environments hosted by us in Gitpod’s infrastructure. Users
                         who joined before October 1, 2024 on non-Enterprise plans are considered Gitpod Classic users.
                     </p>
-                    <div className="border border-pk-border-base rounded-xl p-4 bg-pk-surface-secondary mt-5">
-                        <p className="text-gray-800 dark:text-gray-100">
-                            <b>Please note:</b> Gitpod Classic will discontinued in April 2025 and replaced by{" "}
-                            <a
-                                className="gp-link font-semibold"
-                                href="https://app.gitpod.io/login"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Gitpod Flex
-                            </a>
-                            .
-                        </p>
-                    </div>
                 </div>
                 <img src={GitpodClassicCard} alt="Gitpod Classic" className="w-full" />
             </div>
