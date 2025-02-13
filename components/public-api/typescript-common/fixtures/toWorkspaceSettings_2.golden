@@ -2,7 +2,8 @@
     "result": {
         "workspaceClass": "",
         "restrictedWorkspaceClasses": [],
-        "restrictedEditorNames": []
+        "restrictedEditorNames": [],
+        "enableDockerdAuthentication": false
     },
     "err": ""
 }
