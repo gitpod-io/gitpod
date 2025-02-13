@@ -188,7 +188,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
-        const members = await this.orgService.listMembers(ctxUserId(), req.organizationId);
+        const members = await this.orgService.listMembers(ctxUserId(), req.organizationId, true);
         //TODO pagination
         const response = new ListOrganizationMembersResponse();
         response.members = members.map((member) => this.apiConverter.toOrganizationMember(member));
@@ -218,7 +218,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             this.apiConverter.fromOrgMemberRole(req.role),
         );
         const member = await this.orgService
-            .listMembers(ctxUserId(), req.organizationId)
+            .listMembers(ctxUserId(), req.organizationId, true)
             .then((members) => members.find((member) => member.userId === req.userId));
         return new UpdateOrganizationMemberResponse({
             member: member && this.apiConverter.toOrganizationMember(member),
@@ -251,6 +251,20 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         const settings = await this.orgService.getSettings(ctxUserId(), req.organizationId);
         const response = new GetOrganizationSettingsResponse();
         response.settings = this.apiConverter.toOrganizationSettings(settings);
+
+        // resolve the avatar URL for the featured member in the welcome message
+        const onboardingWelcomeMessageFeaturedMemberId =
+            response.settings.onboardingSettings?.welcomeMessage?.featuredMemberId;
+        if (onboardingWelcomeMessageFeaturedMemberId) {
+            const member = await this.orgService
+                .getOrganizationMember(ctxUserId(), req.organizationId, onboardingWelcomeMessageFeaturedMemberId, true)
+                .catch(() => undefined);
+            if (member?.user.avatarUrl && response?.settings?.onboardingSettings?.welcomeMessage) {
+                response.settings.onboardingSettings.welcomeMessage.featuredMemberResolvedAvatarUrl =
+                    member.user.avatarUrl;
+            }
+        }
+
         return response;
     }
 
@@ -341,17 +355,44 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         }
 
         if (req.onboardingSettings && Object.keys(req.onboardingSettings).length > 0) {
+            update.onboardingSettings = {};
+
             if (!this.config.isDedicatedInstallation) {
                 throw new ApplicationError(
                     ErrorCodes.BAD_REQUEST,
                     "onboardingSettings can only be set on enterprise installations",
                 );
             }
-            if ((req.onboardingSettings.internalLink?.length ?? 0) > 255) {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "internalLink must be <= 255 characters");
+
+            if (req.onboardingSettings.welcomeMessage?.featuredMemberResolvedAvatarUrl) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    "featuredMemberResolvedAvatarUrl is not allowed to be set",
+                );
             }
 
-            if (req.onboardingSettings.recommendedRepositories) {
+            if (req.onboardingSettings.internalLink) {
+                if (req.onboardingSettings.internalLink.length > 255) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "internalLink must be <= 255 characters long");
+                }
+
+                update.onboardingSettings.internalLink = req.onboardingSettings.internalLink;
+            }
+
+            if (
+                !req.onboardingSettings.updateRecommendedRepositories &&
+                req.onboardingSettings.recommendedRepositories.length > 0
+            ) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    "recommendedRepositories can only be set when updateRecommendedRepositories is true",
+                );
+            }
+
+            if (
+                req.onboardingSettings.updateRecommendedRepositories &&
+                req.onboardingSettings.recommendedRepositories
+            ) {
                 if (req.onboardingSettings.recommendedRepositories.length > 3) {
                     throw new ApplicationError(
                         ErrorCodes.BAD_REQUEST,
@@ -368,9 +409,43 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
                         throw new ApplicationError(ErrorCodes.BAD_REQUEST, `repository ${configurationId} not found`);
                     }
                 }
+
+                update.onboardingSettings.recommendedRepositories = req.onboardingSettings.recommendedRepositories;
             }
 
-            update.onboardingSettings = req.onboardingSettings;
+            if (
+                req.onboardingSettings.welcomeMessage &&
+                Object.keys(req.onboardingSettings.welcomeMessage).length > 0
+            ) {
+                if (req.onboardingSettings.welcomeMessage.featuredMemberId) {
+                    const member = await this.orgService
+                        .getOrganizationMember(
+                            ctxUserId(),
+                            req.organizationId,
+                            req.onboardingSettings.welcomeMessage.featuredMemberId,
+                            true,
+                        )
+                        .catch(() => undefined);
+                    if (!member) {
+                        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "featuredMemberId not found");
+                    }
+                }
+
+                if (
+                    req.onboardingSettings.welcomeMessage.enabled &&
+                    req.onboardingSettings.welcomeMessage.message?.length === 0
+                ) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "welcomeMessage must not be empty when enabled");
+                }
+
+                update.onboardingSettings.welcomeMessage = req.onboardingSettings.welcomeMessage;
+            }
+
+            const existingOnboardingSettings = await this.orgService.getSettings(ctxUserId(), req.organizationId);
+            update.onboardingSettings = {
+                ...existingOnboardingSettings.onboardingSettings,
+                ...update.onboardingSettings,
+            };
         }
         if (req.annotateGitCommits !== undefined) {
             update.annotateGitCommits = req.annotateGitCommits;

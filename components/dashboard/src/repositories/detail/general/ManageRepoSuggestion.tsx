@@ -36,7 +36,6 @@ export const ManageRepoSuggestion: FC<Props> = ({ configuration }) => {
             await updateTeamSettings.mutateAsync(
                 {
                     onboardingSettings: {
-                        ...orgSettings?.onboardingSettings,
                         recommendedRepositories: [...newRepositories],
                     },
                 },
@@ -47,7 +46,7 @@ export const ManageRepoSuggestion: FC<Props> = ({ configuration }) => {
                 },
             );
         },
-        [orgSettings?.onboardingSettings, toast, updateTeamSettings],
+        [orgSettings?.onboardingSettings?.recommendedRepositories, toast, updateTeamSettings],
     );
 
     const isSuggested = orgSettings?.onboardingSettings?.recommendedRepositories?.includes(configuration.id);

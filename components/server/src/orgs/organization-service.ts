@@ -36,6 +36,7 @@ import { UsageService } from "./usage-service";
 import { CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
 import { CreateUserParams, UserAuthentication } from "../user/user-authentication";
 import isURL from "validator/lib/isURL";
+import { DBTeamMembership } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team-membership";
 
 @injectable()
 export class OrganizationService {
@@ -116,6 +117,32 @@ export class OrganizationService {
         );
 
         return result;
+    }
+
+    async getOrganizationMember(
+        userId: string,
+        orgId: string,
+        memberId: string,
+        skipPermissionCheck?: boolean,
+    ): Promise<DBTeamMembership & { user: User }> {
+        if (!skipPermissionCheck) {
+            await this.auth.checkPermissionOnOrganization(userId, "read_members", orgId);
+        }
+
+        const membership = await this.teamDB.findTeamMembership(memberId, orgId);
+        if (!membership) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization member ${memberId} not found`);
+        }
+
+        const user = await this.userDB.findUserById(memberId);
+        if (!user) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `User ${memberId} not found`);
+        }
+
+        return {
+            ...membership,
+            user,
+        };
     }
 
     async listOrganizationsByMember(userId: string, memberId: string): Promise<Organization[]> {
@@ -235,19 +262,38 @@ export class OrganizationService {
         }
     }
 
-    public async listMembers(userId: string, orgId: string): Promise<OrgMemberInfo[]> {
+    /**
+     * List members of an organization, excluding all deleted users and optionally the built-in installation admin user.
+     */
+    public async listMembers(
+        userId: string,
+        orgId: string,
+        excludeInstallationAdmin?: boolean,
+    ): Promise<OrgMemberInfo[]> {
         await this.auth.checkPermissionOnOrganization(userId, "read_members", orgId);
         const members = await this.teamDB.findMembersByTeam(orgId);
 
-        // TODO(at) remove this workaround once email addresses are persisted under `User.emails`.
-        // For now we're avoiding adding `getPrimaryEmail` as dependency to `gitpod-db` module.
-        for (const member of members) {
-            const user = await this.userDB.findUserById(member.userId);
-            if (user) {
-                member.primaryEmail = getPrimaryEmail(user);
-            }
-        }
-        return members;
+        const filteredMembers = await Promise.all(
+            members.map(async (member) => {
+                // TODO(at) remove this workaround once email addresses are persisted under `User.emails`.
+                // For now we're avoiding adding `getPrimaryEmail` as dependency to `gitpod-db` module.
+                const user = await this.userDB.findUserById(member.userId);
+                if (user) {
+                    if (user.markedDeleted) {
+                        return null;
+                    }
+                    if (excludeInstallationAdmin && user.id === BUILTIN_INSTLLATION_ADMIN_USER_ID) {
+                        return null;
+                    }
+
+                    member.primaryEmail = getPrimaryEmail(user);
+                }
+
+                return member;
+            }),
+        );
+
+        return filteredMembers.filter((m) => !!m);
     }
 
     public async getOrCreateInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {

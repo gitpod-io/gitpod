@@ -47,7 +47,8 @@ proto3.util.setEnumType(OrganizationRole, "gitpod.v1.OrganizationRole", [
 ]);
 
 /**
- * OrganizationPermissions define permissions that are restrictable using RoleRestrictions
+ * OrganizationPermissions define permissions that are restrictable using
+ * RoleRestrictions
  *
  * @generated from enum gitpod.v1.OrganizationPermission
  */
@@ -244,22 +245,43 @@ export class RoleRestrictionEntry extends Message<RoleRestrictionEntry> {
 }
 
 /**
+ * onboarding_settings are the settings for the organization's onboarding
+ *
  * @generated from message gitpod.v1.OnboardingSettings
  */
 export class OnboardingSettings extends Message<OnboardingSettings> {
   /**
-   * internal_link is the link to an internal onboarding page for the organization, possibly featuring a custom onboarding guide and other resources
+   * internal_link is the link to an internal onboarding page for the
+   * organization, possibly featuring a custom onboarding guide and other
+   * resources
    *
    * @generated from field: optional string internal_link = 1;
    */
   internalLink?: string;
 
   /**
-   * recommended_repositories are the repositories that are recommended for new org members
+   * recommended_repositories are the repositories that are recommended for new
+   * org members
    *
    * @generated from field: repeated string recommended_repositories = 2;
    */
   recommendedRepositories: string[] = [];
+
+  /**
+   * update_recommended_repositories specifies whether recommended_repositories
+   * should be updated.
+   * This field **will not** be specified in server responses.
+   *
+   * @generated from field: optional bool update_recommended_repositories = 3;
+   */
+  updateRecommendedRepositories?: boolean;
+
+  /**
+   * welcome_message is the welcome message for the organization
+   *
+   * @generated from field: optional gitpod.v1.OnboardingSettings.WelcomeMessage welcome_message = 4;
+   */
+  welcomeMessage?: OnboardingSettings_WelcomeMessage;
 
   constructor(data?: PartialMessage<OnboardingSettings>) {
     super();
@@ -271,6 +293,8 @@ export class OnboardingSettings extends Message<OnboardingSettings> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "internal_link", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 2, name: "recommended_repositories", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 3, name: "update_recommended_repositories", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 4, name: "welcome_message", kind: "message", T: OnboardingSettings_WelcomeMessage, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OnboardingSettings {
@@ -287,6 +311,71 @@ export class OnboardingSettings extends Message<OnboardingSettings> {
 
   static equals(a: OnboardingSettings | PlainMessage<OnboardingSettings> | undefined, b: OnboardingSettings | PlainMessage<OnboardingSettings> | undefined): boolean {
     return proto3.util.equals(OnboardingSettings, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.OnboardingSettings.WelcomeMessage
+ */
+export class OnboardingSettings_WelcomeMessage extends Message<OnboardingSettings_WelcomeMessage> {
+  /**
+   * enabled specifies whether the welcome message is enabled
+   *
+   * @generated from field: bool enabled = 1;
+   */
+  enabled = false;
+
+  /**
+   * message is the welcome message for the organization
+   *
+   * @generated from field: optional string message = 2;
+   */
+  message?: string;
+
+  /**
+   * featured_member_id is the ID of the member to show in the welcome message
+   *
+   * @generated from field: optional string featured_member_id = 4;
+   */
+  featuredMemberId?: string;
+
+  /**
+   * featured_member_resolved_avatar_url is the avatar URL that is resolved
+   * from the featured_member_id by the server
+   * This field **can not** be set in the request.
+   *
+   * @generated from field: optional string featured_member_resolved_avatar_url = 5;
+   */
+  featuredMemberResolvedAvatarUrl?: string;
+
+  constructor(data?: PartialMessage<OnboardingSettings_WelcomeMessage>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.OnboardingSettings.WelcomeMessage";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 4, name: "featured_member_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 5, name: "featured_member_resolved_avatar_url", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OnboardingSettings_WelcomeMessage {
+    return new OnboardingSettings_WelcomeMessage().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): OnboardingSettings_WelcomeMessage {
+    return new OnboardingSettings_WelcomeMessage().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): OnboardingSettings_WelcomeMessage {
+    return new OnboardingSettings_WelcomeMessage().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: OnboardingSettings_WelcomeMessage | PlainMessage<OnboardingSettings_WelcomeMessage> | undefined, b: OnboardingSettings_WelcomeMessage | PlainMessage<OnboardingSettings_WelcomeMessage> | undefined): boolean {
+    return proto3.util.equals(OnboardingSettings_WelcomeMessage, a, b);
   }
 }
 
@@ -335,7 +424,9 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
   roleRestrictions: RoleRestrictionEntry[] = [];
 
   /**
-   * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+   * max_parallel_running_workspaces is the maximum number of workspaces that a
+   * single user can run in parallel. 0 resets to the default, which depends on
+   * the org plan
    *
    * @generated from field: int32 max_parallel_running_workspaces = 9;
    */
@@ -575,7 +666,8 @@ export class TimeoutSettings extends Message<TimeoutSettings> {
   inactivity?: Duration;
 
   /**
-   * deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+   * deny_user_timeout specifies whether applying custom timeouts is denied for
+   * organization members
    *
    * @generated from field: optional bool deny_user_timeouts = 2;
    */
@@ -694,14 +786,17 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   roleRestrictions: RoleRestrictionEntry[] = [];
 
   /**
-   * update_role_restrictions specifies whether role_restrictions should be updated
+   * update_role_restrictions specifies whether role_restrictions should be
+   * updated
    *
    * @generated from field: optional bool update_role_restrictions = 13;
    */
   updateRoleRestrictions?: boolean;
 
   /**
-   * max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+   * max_parallel_running_workspaces is the maximum number of workspaces that a
+   * single user can run in parallel. 0 resets to the default, which depends on
+   * the org plan
    *
    * @generated from field: optional int32 max_parallel_running_workspaces = 15;
    */
@@ -715,7 +810,8 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   onboardingSettings?: OnboardingSettings;
 
   /**
-   * annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
+   * annotate_git_commits specifies whether to annotate git commits created in
+   * Gitpod workspaces with the gitpod host
    *
    * @generated from field: optional bool annotate_git_commits = 17;
    */
