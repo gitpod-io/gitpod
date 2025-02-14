@@ -34,7 +34,8 @@ enum OrganizationRole {
   ORGANIZATION_ROLE_COLLABORATOR = 3;
 }
 
-// OrganizationPermissions define permissions that are restrictable using RoleRestrictions
+// OrganizationPermissions define permissions that are restrictable using
+// RoleRestrictions
 enum OrganizationPermission {
   ORGANIZATION_PERMISSION_UNSPECIFIED = 0;
   ORGANIZATION_PERMISSION_START_ARBITRARY_REPOS = 1;
@@ -48,11 +49,40 @@ message RoleRestrictionEntry {
   repeated OrganizationPermission permissions = 2;
 }
 
+// onboarding_settings are the settings for the organization's onboarding
 message OnboardingSettings {
-  // internal_link is the link to an internal onboarding page for the organization, possibly featuring a custom onboarding guide and other resources
+  message WelcomeMessage {
+    // enabled specifies whether the welcome message is enabled
+    bool enabled = 1;
+
+    // message is the welcome message for the organization
+    optional string message = 2;
+
+    // featured_member_id is the ID of the member to show in the welcome message
+    optional string featured_member_id = 4;
+
+    // featured_member_resolved_avatar_url is the avatar URL that is resolved
+    // from the featured_member_id by the server
+    // This field **can not** be set in the request.
+    optional string featured_member_resolved_avatar_url = 5;
+  }
+
+  // internal_link is the link to an internal onboarding page for the
+  // organization, possibly featuring a custom onboarding guide and other
+  // resources
   optional string internal_link = 1;
-  // recommended_repositories are the repositories that are recommended for new org members
+
+  // recommended_repositories are the repositories that are recommended for new
+  // org members
   repeated string recommended_repositories = 2;
+
+  // update_recommended_repositories specifies whether recommended_repositories
+  // should be updated.
+  // This field **will not** be specified in server responses.
+  optional bool update_recommended_repositories = 3;
+
+  // welcome_message is the welcome message for the organization
+  optional WelcomeMessage welcome_message = 4;
 }
 
 message OrganizationSettings {
@@ -64,7 +94,9 @@ message OrganizationSettings {
   string default_role = 6;
   TimeoutSettings timeout_settings = 7;
   repeated RoleRestrictionEntry role_restrictions = 8;
-  // max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+  // max_parallel_running_workspaces is the maximum number of workspaces that a
+  // single user can run in parallel. 0 resets to the default, which depends on
+  // the org plan
   int32 max_parallel_running_workspaces = 9;
   OnboardingSettings onboarding_settings = 10;
   bool annotate_git_commits = 11;
@@ -146,7 +178,8 @@ message TimeoutSettings {
   // inactivity is the duration of inactivity after which a workspace is stopped
   optional google.protobuf.Duration inactivity = 1;
 
-  // deny_user_timeout specifies whether applying custom timeouts is denied for organization members
+  // deny_user_timeout specifies whether applying custom timeouts is denied for
+  // organization members
   optional bool deny_user_timeouts = 2;
 }
 
@@ -161,20 +194,22 @@ message UpdateOrganizationSettingsRequest {
 
   // allowed_workspace_classes are the IDs of classes, which can be used by
   // workspaces in an organization. Pass an empty array to allow all workspace
-  // classes
+  // classes.
+  // Only updates if update_allowed_workspace_classes is true.
   repeated string allowed_workspace_classes = 5;
 
   // restricted_editor_names updates the list of restricted editor names that
   // are not allowed to be used by workspaces in an organization. If empty, all
-  // editors are allowed. Only updates if update_restricted_editor_names is
-  // true.
+  // editors are allowed.
+  // Only updates if update_restricted_editor_names is true.
   repeated string restricted_editor_names = 6;
 
   // Specifies whether restricted_workspace_classes should be updated
   optional bool update_restricted_editor_names = 7;
 
   // pinned_editor_versions updates the pinned version for the corresponding
-  // editor
+  // editor.
+  // Only updates if update_pinned_editor_versions is true.
   map<string, string> pinned_editor_versions = 8;
 
   // Specifies whether pinned_editor_versions should be updated
@@ -186,19 +221,28 @@ message UpdateOrganizationSettingsRequest {
   // timeout_settings are the settings for workspace timeouts
   optional TimeoutSettings timeout_settings = 11;
 
+  // Only updates if update_role_restrictions is true.
   repeated RoleRestrictionEntry role_restrictions = 12;
 
-  // update_role_restrictions specifies whether role_restrictions should be updated
+  // update_role_restrictions specifies whether role_restrictions should be
+  // updated
   optional bool update_role_restrictions = 13;
 
-  // max_parallel_running_workspaces is the maximum number of workspaces that a single user can run in parallel. 0 resets to the default, which depends on the org plan
+  // max_parallel_running_workspaces is the maximum number of workspaces that a
+  // single user can run in parallel. 0 resets to the default, which depends on
+  // the org plan
   optional int32 max_parallel_running_workspaces = 15;
 
   // onboarding_settings are the settings for the organization's onboarding
   optional OnboardingSettings onboarding_settings = 16;
 
-  // annotate_git_commits specifies whether to annotate git commits created in Gitpod workspaces with the gitpod host
+  // annotate_git_commits specifies whether to annotate git commits created in
+  // Gitpod workspaces with the gitpod host
   optional bool annotate_git_commits = 17;
+
+  // update_role_restrictions specifies whether role_restrictions should be
+  // updated
+  optional bool update_allowed_workspace_classes = 18;
 }
 
 message UpdateOrganizationSettingsResponse {

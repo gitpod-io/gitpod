@@ -43,6 +43,7 @@
     "prom-client": "^14.2.0",
     "reflect-metadata": "^0.1.13",
     "slugify": "^1.6.5",
+    "ts-deepmerge": "^7.0.2",
     "the-big-username-blacklist": "^1.5.2",
     "typeorm": "0.2.38"
   },

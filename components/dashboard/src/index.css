@@ -95,7 +95,7 @@
         margin: 0 auto !important;
     }
     p {
-        @apply text-sm text-gray-400 dark:text-gray-600;
+        @apply text-sm text-pk-content-secondary;
     }
 
     .app-container {
@@ -118,7 +118,7 @@
     }
 
     code {
-        @apply bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-md text-sm font-mono font-medium;
+        @apply bg-gray-100 dark:bg-gray-800 text-pk-content-primary px-1.5 py-0.5 rounded-md text-sm font-mono font-medium;
     }
 
     textarea,

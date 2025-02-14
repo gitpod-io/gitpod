@@ -16,10 +16,6 @@ import { useOnboardingState } from "../dedicated-setup/use-needs-setup";
 import { getOrgSlugFromQuery } from "../data/organizations/orgs-query";
 import { storageAvailable } from "../utils";
 
-type Props = {
-    onSuccess: () => void;
-};
-
 function getOrgSlugFromPath(path: string) {
     // '/login/acme' => ['', 'login', 'acme']
     const pathSegments = path.split("/");
@@ -29,6 +25,9 @@ function getOrgSlugFromPath(path: string) {
     return pathSegments[2];
 }
 
+type Props = {
+    onSuccess: () => void;
+};
 export const SSOLoginForm: FC<Props> = ({ onSuccess }) => {
     const location = useLocation();
     const { data: onboardingState } = useOnboardingState();

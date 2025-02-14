@@ -4,42 +4,43 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
-import Header from "../components/Header";
-import { WorkspaceEntry } from "./WorkspaceEntry";
-import { ItemsList } from "../components/ItemsList";
-import Arrow from "../components/Arrow";
-import ConfirmationModal from "../components/ConfirmationModal";
-import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
-import { EmptyWorkspacesContent } from "./EmptyWorkspacesContent";
-import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
-import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-inactive-workspaces-mutation";
-import { useToast } from "../components/toasts/Toasts";
 import { Workspace, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { Button } from "@podkit/buttons/Button";
-import { VideoCarousel } from "./VideoCarousel";
-import { BlogBanners } from "./BlogBanners";
-import { Book, BookOpen, Building, ChevronRight, Code, Video } from "lucide-react";
-import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
-import PersonalizedContent from "./PersonalizedContent";
-import { useListenToWorkspacesWSMessages as useListenToWorkspacesStatusUpdates } from "../data/workspaces/listen-to-workspace-ws-messages";
-import { Subheading } from "@podkit/typography/Headings";
-import { useCurrentOrg } from "../data/organizations/orgs-query";
-import { Link } from "react-router-dom";
-import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
-import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "../components/Modal";
-import { VideoSection } from "../onboarding/VideoSection";
-import { trackVideoClick } from "../Analytics";
 import { cn } from "@podkit/lib/cn";
-import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
-import { useUserLoader } from "../hooks/use-user-loader";
-import Tooltip from "../components/Tooltip";
-import { useFeatureFlag } from "../data/featureflag-query";
-import { useInstallationConfiguration } from "../data/installation/installation-config-query";
-import { SuggestedOrgRepository, useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
-import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
+import { Subheading } from "@podkit/typography/Headings";
+import { Book, BookOpen, Building, ChevronRight, Code, Video } from "lucide-react";
+import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { trackVideoClick } from "../Analytics";
+import Arrow from "../components/Arrow";
+import ConfirmationModal from "../components/ConfirmationModal";
+import Header from "../components/Header";
+import { ItemsList } from "../components/ItemsList";
+import Modal, { ModalBaseFooter, ModalBody, ModalHeader } from "../components/Modal";
 import PillLabel from "../components/PillLabel";
+import { useToast } from "../components/toasts/Toasts";
+import Tooltip from "../components/Tooltip";
+import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+import { useFeatureFlag } from "../data/featureflag-query";
+import { useSuggestedRepositories } from "../data/git-providers/suggested-repositories-query";
+import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { SuggestedOrgRepository, useOrgSuggestedRepos } from "../data/organizations/suggested-repositories-query";
+import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-inactive-workspaces-mutation";
+import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
+import { useListenToWorkspacesWSMessages as useListenToWorkspacesStatusUpdates } from "../data/workspaces/listen-to-workspace-ws-messages";
+import { useUserLoader } from "../hooks/use-user-loader";
+import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
+import { VideoSection } from "../onboarding/VideoSection";
+import { OrganizationJoinModal } from "../teams/onboarding/OrganizationJoinModal";
+import { BlogBanners } from "./BlogBanners";
+import { EmptyWorkspacesContent } from "./EmptyWorkspacesContent";
+import PersonalizedContent from "./PersonalizedContent";
+import { VideoCarousel } from "./VideoCarousel";
+import { WorkspaceEntry } from "./WorkspaceEntry";
+import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 export const GETTING_STARTED_DISMISSAL_KEY = "workspace-list-getting-started";
 
@@ -181,6 +182,8 @@ const WorkspacesPage: FunctionComponent = () => {
     const handleVideoModalClose = useCallback(() => {
         setVideoModalVisible(false);
     }, []);
+
+    const welcomeMessage = orgSettings?.onboardingSettings?.welcomeMessage;
 
     return (
         <>
@@ -477,6 +480,10 @@ const WorkspacesPage: FunctionComponent = () => {
                 ) : (
                     <EmptyWorkspacesContent />
                 ))}
+
+            {isEnterpriseOnboardingEnabled && isDedicatedInstallation && welcomeMessage && user && (
+                <OrganizationJoinModal welcomeMessage={welcomeMessage} user={user} />
+            )}
         </>
     );
 };

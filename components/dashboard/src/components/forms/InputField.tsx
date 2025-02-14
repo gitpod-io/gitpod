@@ -16,16 +16,18 @@ type Props = {
     topMargin?: boolean;
     className?: string;
     disabled?: boolean;
+    labelHidden?: boolean;
 };
 
 export const InputField: FunctionComponent<Props> = memo(
-    ({ label, id, hint, error, topMargin = true, className, children, disabled = false }) => {
+    ({ label, id, hint, error, topMargin = true, className, children, disabled = false, labelHidden = false }) => {
         return (
             <div className={cn("flex flex-col space-y-2", { "mt-4": topMargin }, className)}>
                 {label && (
                     <label
                         className={cn(
                             "text-md font-semibold",
+                            { "sr-only": labelHidden },
                             disabled
                                 ? "text-gray-400 dark:text-gray-400"
                                 : error

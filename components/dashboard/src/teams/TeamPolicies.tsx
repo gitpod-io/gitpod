@@ -55,10 +55,7 @@ export default function TeamPoliciesPage() {
                 throw new Error("no organization settings change permission");
             }
             try {
-                await updateTeamSettings.mutateAsync({
-                    ...settings,
-                    ...newSettings,
-                });
+                await updateTeamSettings.mutateAsync(newSettings);
                 setWorkspaceTimeoutSettingError(undefined);
                 toast("Organization settings updated");
             } catch (error) {
@@ -69,7 +66,7 @@ export default function TeamPoliciesPage() {
                 console.error(error);
             }
         },
-        [updateTeamSettings, org?.id, isOwner, settings, toast],
+        [updateTeamSettings, org?.id, isOwner, toast],
     );
 
     useEffect(() => {
@@ -100,7 +97,7 @@ export default function TeamPoliciesPage() {
 
             handleUpdateTeamSettings({
                 timeoutSettings: {
-                    inactivity: workspaceTimeout ? converter.toDuration(workspaceTimeout) : undefined,
+                    inactivity: converter.toDurationOpt(workspaceTimeout),
                     denyUserTimeouts: !allowTimeoutChangeByMembers,
                 },
             });
@@ -185,7 +182,7 @@ export default function TeamPoliciesPage() {
                                     !isOwner ||
                                     !isPaidOrDedicated ||
                                     (workspaceTimeout ===
-                                        converter.toDurationString(settings?.timeoutSettings?.inactivity) &&
+                                        converter.toDurationStringOpt(settings?.timeoutSettings?.inactivity) &&
                                         allowTimeoutChangeByMembers === !settings?.timeoutSettings?.denyUserTimeouts)
                                 }
                             >

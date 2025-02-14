@@ -281,6 +281,18 @@ export interface OnboardingSettings {
      * the repository IDs of the repositories that are recommended for members to start with
      */
     recommendedRepositories?: string[];
+
+    /**
+     * the welcome message for new members of the organization
+     */
+    welcomeMessage?: WelcomeMessage;
+}
+
+export interface WelcomeMessage {
+    enabled?: boolean;
+    featuredMemberId?: string;
+    featuredMemberResolvedAvatarUrl?: string;
+    message?: string;
 }
 
 export type TeamMemberInfo = OrgMemberInfo;

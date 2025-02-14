@@ -46,22 +46,16 @@ import { validate as uuidValidate } from "uuid";
 import { ctxUserId } from "../util/request-context";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { EntitlementService } from "../billing/entitlement-service";
-import { Config } from "../config";
-import { ProjectsService } from "../projects/projects-service";
 
 @injectable()
 export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationServiceInterface> {
     constructor(
-        @inject(Config)
-        private readonly config: Config,
         @inject(OrganizationService)
         private readonly orgService: OrganizationService,
         @inject(PublicAPIConverter)
         private readonly apiConverter: PublicAPIConverter,
         @inject(EntitlementService)
         private readonly entitlementService: EntitlementService,
-        @inject(ProjectsService)
-        private readonly projectService: ProjectsService,
     ) {}
 
     async listOrganizationWorkspaceClasses(
@@ -251,6 +245,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         const settings = await this.orgService.getSettings(ctxUserId(), req.organizationId);
         const response = new GetOrganizationSettingsResponse();
         response.settings = this.apiConverter.toOrganizationSettings(settings);
+
         return response;
     }
 
@@ -271,13 +266,23 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
                 "updateRestrictedEditorNames is required to be true to update restrictedEditorNames",
             );
         }
+
+        if (!req.updateAllowedWorkspaceClasses && req.allowedWorkspaceClasses.length > 0) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "updateAllowedWorkspaceClasses is required to be true to update allowedWorkspaceClasses",
+            );
+        }
+        if (req.updateAllowedWorkspaceClasses) {
+            update.allowedWorkspaceClasses = req.allowedWorkspaceClasses;
+        }
+
         if (typeof req.workspaceSharingDisabled === "boolean") {
             update.workspaceSharingDisabled = req.workspaceSharingDisabled;
         }
         if (typeof req.defaultWorkspaceImage === "string") {
             update.defaultWorkspaceImage = req.defaultWorkspaceImage;
         }
-        update.allowedWorkspaceClasses = req.allowedWorkspaceClasses;
         if (req.updatePinnedEditorVersions) {
             update.pinnedEditorVersions = req.pinnedEditorVersions;
         }
@@ -340,38 +345,20 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             update.maxParallelRunningWorkspaces = req.maxParallelRunningWorkspaces;
         }
 
-        if (req.onboardingSettings && Object.keys(req.onboardingSettings).length > 0) {
-            if (!this.config.isDedicatedInstallation) {
+        if (req.onboardingSettings) {
+            update.onboardingSettings = this.apiConverter.fromOnboardingSettings(req.onboardingSettings);
+
+            if (
+                !req.onboardingSettings.updateRecommendedRepositories &&
+                req.onboardingSettings.recommendedRepositories.length > 0
+            ) {
                 throw new ApplicationError(
                     ErrorCodes.BAD_REQUEST,
-                    "onboardingSettings can only be set on enterprise installations",
+                    "recommendedRepositories can only be set when updateRecommendedRepositories is true",
                 );
             }
-            if ((req.onboardingSettings.internalLink?.length ?? 0) > 255) {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "internalLink must be <= 255 characters");
-            }
-
-            if (req.onboardingSettings.recommendedRepositories) {
-                if (req.onboardingSettings.recommendedRepositories.length > 3) {
-                    throw new ApplicationError(
-                        ErrorCodes.BAD_REQUEST,
-                        "there can't be more than 3 recommendedRepositories",
-                    );
-                }
-                for (const configurationId of req.onboardingSettings.recommendedRepositories) {
-                    if (!uuidValidate(configurationId)) {
-                        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "recommendedRepositories must be UUIDs");
-                    }
-
-                    const project = await this.projectService.getProject(ctxUserId(), configurationId);
-                    if (!project) {
-                        throw new ApplicationError(ErrorCodes.BAD_REQUEST, `repository ${configurationId} not found`);
-                    }
-                }
-            }
-
-            update.onboardingSettings = req.onboardingSettings;
         }
+
         if (req.annotateGitCommits !== undefined) {
             update.annotateGitCommits = req.annotateGitCommits;
         }

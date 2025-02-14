@@ -36,6 +36,7 @@ import { UsageService } from "./usage-service";
 import { CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
 import { CreateUserParams, UserAuthentication } from "../user/user-authentication";
 import isURL from "validator/lib/isURL";
+import { merge } from "ts-deepmerge";
 
 @injectable()
 export class OrganizationService {
@@ -550,18 +551,88 @@ export class OrganizationService {
             }
         }
 
-        if (settings.onboardingSettings?.internalLink) {
-            if (
-                !isURL(settings.onboardingSettings.internalLink ?? "", {
-                    require_protocol: true,
-                    host_blacklist: ["localhost", "127.0.0.1", "::1"],
-                })
-            ) {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid internal link");
+        if (settings.onboardingSettings) {
+            if (settings.onboardingSettings.internalLink) {
+                if (settings.onboardingSettings.internalLink.length > 255) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "internalLink must be <= 255 characters long");
+                }
+
+                if (
+                    !isURL(settings.onboardingSettings.internalLink, {
+                        require_protocol: true,
+                        host_blacklist: ["localhost", "127.0.0.1", "::1"],
+                    })
+                ) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid internal link");
+                }
+            }
+
+            if (settings.onboardingSettings.recommendedRepositories) {
+                if (settings.onboardingSettings.recommendedRepositories.length > 3) {
+                    throw new ApplicationError(
+                        ErrorCodes.BAD_REQUEST,
+                        "there can't be more than 3 recommendedRepositories",
+                    );
+                }
+                for (const configurationId of settings.onboardingSettings.recommendedRepositories) {
+                    const project = await this.projectsService.getProject(userId, configurationId);
+                    if (!project) {
+                        throw new ApplicationError(ErrorCodes.BAD_REQUEST, `repository ${configurationId} not found`);
+                    }
+                }
+            }
+
+            if (settings.onboardingSettings.welcomeMessage) {
+                const welcomeMessage = settings.onboardingSettings.welcomeMessage;
+
+                if (welcomeMessage.featuredMemberResolvedAvatarUrl) {
+                    throw new ApplicationError(
+                        ErrorCodes.BAD_REQUEST,
+                        "featuredMemberResolvedAvatarUrl is not allowed to be set",
+                    );
+                }
+
+                if (welcomeMessage.featuredMemberId) {
+                    const membership = await this.teamDB.findTeamMembership(welcomeMessage.featuredMemberId, orgId);
+                    if (!membership) {
+                        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "featuredMemberId is invalid");
+                    }
+                    const user = await this.userDB.findUserById(membership.userId);
+                    if (!user) {
+                        throw new ApplicationError(
+                            ErrorCodes.NOT_FOUND,
+                            `user for featuredMemberId ${membership.userId} not found`,
+                        );
+                    }
+                    welcomeMessage.featuredMemberResolvedAvatarUrl = user.avatarUrl;
+                }
+
+                if (welcomeMessage.enabled && (!welcomeMessage.message || welcomeMessage.message.length === 0)) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "welcomeMessage must not be empty when enabled");
+                }
             }
         }
 
-        return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings));
+        const mergeSettings = (
+            currentSettings: OrganizationSettings,
+            partialUpdate: Partial<OrganizationSettings>,
+        ): OrganizationSettings => {
+            // We want to deep-merge columns that are JSON shapes here.
+            // We ignore fields set to undefined, and don't merge arrays to match our API semantics
+            const settings = merge.withOptions(
+                { mergeArrays: false, allowUndefinedOverrides: false },
+                currentSettings,
+                partialUpdate,
+            );
+
+            // roleRestrictions is an exception: override if set
+            if (partialUpdate.roleRestrictions !== undefined) {
+                settings.roleRestrictions = partialUpdate.roleRestrictions;
+            }
+            return settings;
+        };
+
+        return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings, mergeSettings));
     }
 
     private async toSettings(settings: OrganizationSettings = {}): Promise<OrganizationSettings> {
@@ -604,6 +675,22 @@ export class OrganizationService {
         }
 
         return result;
+    }
+
+    /**
+     * To be notified when a project is deleted, so that we can remove it from the list of recommended repositories
+     */
+    public async onProjectDeletion(userId: string, organizationId: string, projectId: string): Promise<void> {
+        const orgSettings = await this.getSettings(userId, organizationId);
+        const repoRecommendations = orgSettings.onboardingSettings?.recommendedRepositories;
+        if (repoRecommendations) {
+            const updatedRepoRecommendations = repoRecommendations.filter((id) => id !== projectId);
+            if (updatedRepoRecommendations.length !== repoRecommendations.length) {
+                await this.updateSettings(userId, organizationId, {
+                    onboardingSettings: { recommendedRepositories: updatedRepoRecommendations },
+                });
+            }
+        }
     }
 
     public async listWorkspaceClasses(userId: string, orgId: string): Promise<SupportedWorkspaceClass[]> {
