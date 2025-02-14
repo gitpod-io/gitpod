@@ -55,10 +55,7 @@ export default function TeamPoliciesPage() {
                 throw new Error("no organization settings change permission");
             }
             try {
-                await updateTeamSettings.mutateAsync({
-                    ...settings,
-                    ...newSettings,
-                });
+                await updateTeamSettings.mutateAsync(newSettings);
                 setWorkspaceTimeoutSettingError(undefined);
                 toast("Organization settings updated");
             } catch (error) {
@@ -69,7 +66,7 @@ export default function TeamPoliciesPage() {
                 console.error(error);
             }
         },
-        [updateTeamSettings, org?.id, isOwner, settings, toast],
+        [updateTeamSettings, org?.id, isOwner, toast],
     );
 
     useEffect(() => {

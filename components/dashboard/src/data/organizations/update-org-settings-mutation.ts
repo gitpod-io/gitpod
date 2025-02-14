@@ -8,32 +8,16 @@ import { useMutation } from "@tanstack/react-query";
 import { useOrgSettingsQueryInvalidator } from "./org-settings-query";
 import { useCurrentOrg } from "./orgs-query";
 import { organizationClient } from "../../service/public-api";
-import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import {
+    OrganizationSettings,
+    UpdateOrganizationSettingsRequest,
+} from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useOrgWorkspaceClassesQueryInvalidator } from "./org-workspace-classes-query";
-import { PlainMessage } from "@bufbuild/protobuf";
 import { useOrgRepoSuggestionsInvalidator } from "./suggested-repositories-query";
+import { PartialMessage } from "@bufbuild/protobuf";
 
-export type UpdateOrganizationSettingsArgs = Partial<
-    Omit<
-        Pick<
-            PlainMessage<OrganizationSettings>,
-            | "workspaceSharingDisabled"
-            | "defaultWorkspaceImage"
-            | "allowedWorkspaceClasses"
-            | "pinnedEditorVersions"
-            | "restrictedEditorNames"
-            | "defaultRole"
-            | "timeoutSettings"
-            | "roleRestrictions"
-            | "maxParallelRunningWorkspaces"
-            | "annotateGitCommits"
-        >,
-        never
-    > & {
-        onboardingSettings?: Partial<PlainMessage<OrganizationSettings>["onboardingSettings"]>; // this enables us to not have to specify all of the onboarding settings on every update
-    }
->;
+export type UpdateOrganizationSettingsArgs = PartialMessage<UpdateOrganizationSettingsRequest>;
 
 export const useUpdateOrgSettingsMutation = () => {
     const org = useCurrentOrg().data;
@@ -43,43 +27,24 @@ export const useUpdateOrgSettingsMutation = () => {
     const organizationId = org?.id ?? "";
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
-        mutationFn: async ({
-            workspaceSharingDisabled,
-            defaultWorkspaceImage,
-            allowedWorkspaceClasses,
-            pinnedEditorVersions,
-            restrictedEditorNames,
-            defaultRole,
-            timeoutSettings,
-            roleRestrictions,
-            maxParallelRunningWorkspaces,
-            onboardingSettings,
-            annotateGitCommits,
-        }) => {
-            const settings = await organizationClient.updateOrganizationSettings({
-                organizationId,
-                workspaceSharingDisabled: workspaceSharingDisabled ?? false,
-                defaultWorkspaceImage,
-                allowedWorkspaceClasses,
-                updatePinnedEditorVersions: !!pinnedEditorVersions,
-                pinnedEditorVersions,
-                restrictedEditorNames,
-                updateRestrictedEditorNames: !!restrictedEditorNames,
-                defaultRole,
-                timeoutSettings,
-                roleRestrictions,
-                updateRoleRestrictions: !!roleRestrictions,
-                maxParallelRunningWorkspaces,
-                onboardingSettings: {
-                    ...onboardingSettings,
-                    updateRecommendedRepositories: !!onboardingSettings?.recommendedRepositories,
-                    welcomeMessage: {
-                        ...onboardingSettings?.welcomeMessage,
-                        featuredMemberResolvedAvatarUrl: undefined, // This field is not allowed to be set in the request.
-                    },
-                },
-                annotateGitCommits,
-            });
+        mutationFn: async (partialUpdate) => {
+            const update: PartialMessage<UpdateOrganizationSettingsRequest> = {
+                ...partialUpdate,
+            };
+            update.organizationId = organizationId;
+            update.updatePinnedEditorVersions = update.pinnedEditorVersions !== undefined;
+            update.updateRestrictedEditorNames = update.restrictedEditorNames !== undefined;
+            update.updateRoleRestrictions = update.roleRestrictions !== undefined;
+            update.updateAllowedWorkspaceClasses = update.allowedWorkspaceClasses !== undefined;
+            if (update.onboardingSettings) {
+                update.onboardingSettings.updateRecommendedRepositories =
+                    !!update.onboardingSettings.recommendedRepositories;
+                if (update.onboardingSettings.welcomeMessage) {
+                    update.onboardingSettings.welcomeMessage.featuredMemberResolvedAvatarUrl = undefined; // This field is not allowed to be set in the request.
+                }
+            }
+
+            const settings = await organizationClient.updateOrganizationSettings(update);
             return settings.settings!;
         },
         onSuccess: () => {
