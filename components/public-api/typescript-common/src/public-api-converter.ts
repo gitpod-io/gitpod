@@ -1612,9 +1612,10 @@ export class PublicAPIConverter {
      * `Duration.nanos` is ignored
      * @returns a string like "1h2m3s", valid time units are `s`, `m`, `h`
      */
-    toDurationString(duration?: PartialMessage<Duration>): string {
-        const seconds = duration?.seconds || 0;
+    toDurationString(duration: PartialMessage<Duration>): string {
+        const seconds = duration.seconds || 0;
         if (seconds === 0) {
+            // "" is our "default value" for durations on the server side
             return "";
         }
         const totalMilliseconds = Number(seconds) * 1000;
@@ -1628,6 +1629,13 @@ export class PublicAPIConverter {
         return `${hours > 0 ? hours + "h" : ""}${minutes > 0 ? minutes + "m" : ""}${
             secondsResult > 0 ? secondsResult + "s" : ""
         }`;
+    }
+
+    toDurationStringOpt(duration?: PartialMessage<Duration>): string | undefined {
+        if (duration === undefined) {
+            return undefined;
+        }
+        return this.toDurationString(duration);
     }
 
     toUser(from: UserProtocol): User {
@@ -1701,6 +1709,13 @@ export class PublicAPIConverter {
             seconds,
             nanos,
         });
+    }
+
+    toDurationOpt(from: string | undefined): Duration | undefined {
+        if (from === undefined) {
+            return undefined;
+        }
+        return this.toDuration(from);
     }
 
     toWorkspaceClass(cls: SupportedWorkspaceClass): WorkspaceClass {

@@ -97,7 +97,7 @@ export default function TeamPoliciesPage() {
 
             handleUpdateTeamSettings({
                 timeoutSettings: {
-                    inactivity: workspaceTimeout ? converter.toDuration(workspaceTimeout) : undefined,
+                    inactivity: converter.toDurationOpt(workspaceTimeout),
                     denyUserTimeouts: !allowTimeoutChangeByMembers,
                 },
             });
@@ -182,7 +182,7 @@ export default function TeamPoliciesPage() {
                                     !isOwner ||
                                     !isPaidOrDedicated ||
                                     (workspaceTimeout ===
-                                        converter.toDurationString(settings?.timeoutSettings?.inactivity) &&
+                                        converter.toDurationStringOpt(settings?.timeoutSettings?.inactivity) &&
                                         allowTimeoutChangeByMembers === !settings?.timeoutSettings?.denyUserTimeouts)
                                 }
                             >
