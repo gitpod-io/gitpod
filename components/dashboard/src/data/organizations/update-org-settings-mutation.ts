@@ -8,16 +8,13 @@ import { useMutation } from "@tanstack/react-query";
 import { useOrgSettingsQueryInvalidator } from "./org-settings-query";
 import { useCurrentOrg } from "./orgs-query";
 import { organizationClient } from "../../service/public-api";
-import {
-    OrganizationSettings,
-    UpdateOrganizationSettingsRequest,
-} from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useOrgWorkspaceClassesQueryInvalidator } from "./org-workspace-classes-query";
 import { useOrgRepoSuggestionsInvalidator } from "./suggested-repositories-query";
 import { PartialMessage } from "@bufbuild/protobuf";
 
-export type UpdateOrganizationSettingsArgs = PartialMessage<UpdateOrganizationSettingsRequest>;
+export type UpdateOrganizationSettingsArgs = PartialMessage<OrganizationSettings>;
 
 export const useUpdateOrgSettingsMutation = () => {
     const org = useCurrentOrg().data;
@@ -28,10 +25,9 @@ export const useUpdateOrgSettingsMutation = () => {
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
         mutationFn: async (partialUpdate) => {
-            const update: PartialMessage<UpdateOrganizationSettingsRequest> = {
+            const update: UpdateOrganizationSettingsArgs = {
                 ...partialUpdate,
             };
-            update.organizationId = organizationId;
             update.updatePinnedEditorVersions = update.pinnedEditorVersions !== undefined;
             update.updateRestrictedEditorNames = update.restrictedEditorNames !== undefined;
             update.updateRoleRestrictions = update.roleRestrictions !== undefined;
@@ -44,7 +40,10 @@ export const useUpdateOrgSettingsMutation = () => {
                 }
             }
 
-            const settings = await organizationClient.updateOrganizationSettings(update);
+            const settings = await organizationClient.updateOrganizationSettings({
+                organizationId: organizationId,
+                settings: update,
+            });
             return settings.settings!;
         },
         onSuccess: () => {

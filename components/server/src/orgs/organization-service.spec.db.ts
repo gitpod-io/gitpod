@@ -445,9 +445,10 @@ describe("OrganizationService", async () => {
         }
 
         await assertUpdateSettings(
-            "empty allowed workspace classes should allow all (null)",
+            "empty allowed workspace classes should allow all ([])",
             { allowedWorkspaceClasses: [] },
             {
+                allowedWorkspaceClasses: [],
                 workspaceSharingDisabled: true,
                 defaultWorkspaceImage: "ubuntu",
             },
@@ -468,10 +469,19 @@ describe("OrganizationService", async () => {
             "should reset default workspace image",
             { defaultWorkspaceImage: "" },
             {
+                allowedWorkspaceClasses: [],
                 workspaceSharingDisabled: true,
+                defaultWorkspaceImage: "",
             },
         );
-        await assertUpdateSettings("should enable workspace sharing", { workspaceSharingDisabled: false }, {});
+        await assertUpdateSettings(
+            "should enable workspace sharing",
+            { workspaceSharingDisabled: false },
+            {
+                allowedWorkspaceClasses: [],
+                defaultWorkspaceImage: "",
+            },
+        );
     });
 
     it("org-owned users can't create new organizations", async () => {

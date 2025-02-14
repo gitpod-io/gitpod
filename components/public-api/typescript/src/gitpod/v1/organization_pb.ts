@@ -384,41 +384,63 @@ export class OnboardingSettings_WelcomeMessage extends Message<OnboardingSetting
  */
 export class OrganizationSettings extends Message<OrganizationSettings> {
   /**
-   * @generated from field: bool workspace_sharing_disabled = 1;
+   * @generated from field: optional bool workspace_sharing_disabled = 1;
    */
-  workspaceSharingDisabled = false;
+  workspaceSharingDisabled?: boolean;
 
   /**
-   * @generated from field: string default_workspace_image = 2;
+   * pass empty string to reset to the installation default workspace image
+   *
+   * @generated from field: optional string default_workspace_image = 2;
    */
-  defaultWorkspaceImage = "";
+  defaultWorkspaceImage?: string;
 
   /**
+   * allowed_workspace_classes are the IDs of classes, which can be used by
+   * workspaces in an organization. Pass an empty array to allow all workspace
+   * classes.
+   * Only updates if update_allowed_workspace_classes is true.
+   *
    * @generated from field: repeated string allowed_workspace_classes = 3;
    */
   allowedWorkspaceClasses: string[] = [];
 
   /**
+   * restricted_editor_names updates the list of restricted editor names that
+   * are not allowed to be used by workspaces in an organization. If empty, all
+   * editors are allowed.
+   * Only updates if update_restricted_editor_names is true.
+   *
    * @generated from field: repeated string restricted_editor_names = 4;
    */
   restrictedEditorNames: string[] = [];
 
   /**
+   * pinned_editor_versions updates the pinned version for the corresponding
+   * editor.
+   * Only updates if update_pinned_editor_versions is true.
+   *
    * @generated from field: map<string, string> pinned_editor_versions = 5;
    */
   pinnedEditorVersions: { [key: string]: string } = {};
 
   /**
-   * @generated from field: string default_role = 6;
+   * default_role is the default role for new members in the organization
+   *
+   * @generated from field: optional string default_role = 6;
    */
-  defaultRole = "";
+  defaultRole?: string;
 
   /**
-   * @generated from field: gitpod.v1.TimeoutSettings timeout_settings = 7;
+   * timeout_settings are the settings for workspace timeouts
+   *
+   * @generated from field: optional gitpod.v1.TimeoutSettings timeout_settings = 7;
    */
   timeoutSettings?: TimeoutSettings;
 
   /**
+   * Only updates if update_role_restrictions is true.
+   *
    * @generated from field: repeated gitpod.v1.RoleRestrictionEntry role_restrictions = 8;
    */
   roleRestrictions: RoleRestrictionEntry[] = [];
@@ -428,19 +450,54 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
    * single user can run in parallel. 0 resets to the default, which depends on
    * the org plan
    *
-   * @generated from field: int32 max_parallel_running_workspaces = 9;
+   * @generated from field: optional int32 max_parallel_running_workspaces = 9;
    */
-  maxParallelRunningWorkspaces = 0;
+  maxParallelRunningWorkspaces?: number;
 
   /**
-   * @generated from field: gitpod.v1.OnboardingSettings onboarding_settings = 10;
+   * onboarding_settings are the settings for the organization's onboarding
+   *
+   * @generated from field: optional gitpod.v1.OnboardingSettings onboarding_settings = 10;
    */
   onboardingSettings?: OnboardingSettings;
 
   /**
-   * @generated from field: bool annotate_git_commits = 11;
+   * annotate_git_commits specifies whether to annotate git commits created in
+   * Gitpod workspaces with the gitpod host
+   *
+   * @generated from field: optional bool annotate_git_commits = 11;
    */
-  annotateGitCommits = false;
+  annotateGitCommits?: boolean;
+
+  /**
+   * update_role_restrictions specifies whether role_restrictions should be
+   * updated
+   *
+   * @generated from field: optional bool update_allowed_workspace_classes = 12;
+   */
+  updateAllowedWorkspaceClasses?: boolean;
+
+  /**
+   * Specifies whether restricted_workspace_classes should be updated
+   *
+   * @generated from field: optional bool update_restricted_editor_names = 13;
+   */
+  updateRestrictedEditorNames?: boolean;
+
+  /**
+   * Specifies whether pinned_editor_versions should be updated
+   *
+   * @generated from field: optional bool update_pinned_editor_versions = 14;
+   */
+  updatePinnedEditorVersions?: boolean;
+
+  /**
+   * update_role_restrictions specifies whether role_restrictions should be
+   * updated
+   *
+   * @generated from field: optional bool update_role_restrictions = 15;
+   */
+  updateRoleRestrictions?: boolean;
 
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
@@ -450,17 +507,21 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.OrganizationSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 2, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 3, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 4, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 5, name: "pinned_editor_versions", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
-    { no: 6, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 7, name: "timeout_settings", kind: "message", T: TimeoutSettings },
+    { no: 6, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 7, name: "timeout_settings", kind: "message", T: TimeoutSettings, opt: true },
     { no: 8, name: "role_restrictions", kind: "message", T: RoleRestrictionEntry, repeated: true },
-    { no: 9, name: "max_parallel_running_workspaces", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 10, name: "onboarding_settings", kind: "message", T: OnboardingSettings },
-    { no: 11, name: "annotate_git_commits", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 9, name: "max_parallel_running_workspaces", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 10, name: "onboarding_settings", kind: "message", T: OnboardingSettings, opt: true },
+    { no: 11, name: "annotate_git_commits", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 12, name: "update_allowed_workspace_classes", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 13, name: "update_restricted_editor_names", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 14, name: "update_pinned_editor_versions", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 15, name: "update_role_restrictions", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {
@@ -714,120 +775,11 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   organizationId = "";
 
   /**
-   * @generated from field: optional bool workspace_sharing_disabled = 3;
-   */
-  workspaceSharingDisabled?: boolean;
-
-  /**
-   * pass empty string to reset to the installation default workspace image
+   * settings to persist
    *
-   * @generated from field: optional string default_workspace_image = 4;
+   * @generated from field: gitpod.v1.OrganizationSettings settings = 19;
    */
-  defaultWorkspaceImage?: string;
-
-  /**
-   * allowed_workspace_classes are the IDs of classes, which can be used by
-   * workspaces in an organization. Pass an empty array to allow all workspace
-   * classes.
-   * Only updates if update_allowed_workspace_classes is true.
-   *
-   * @generated from field: repeated string allowed_workspace_classes = 5;
-   */
-  allowedWorkspaceClasses: string[] = [];
-
-  /**
-   * restricted_editor_names updates the list of restricted editor names that
-   * are not allowed to be used by workspaces in an organization. If empty, all
-   * editors are allowed.
-   * Only updates if update_restricted_editor_names is true.
-   *
-   * @generated from field: repeated string restricted_editor_names = 6;
-   */
-  restrictedEditorNames: string[] = [];
-
-  /**
-   * Specifies whether restricted_workspace_classes should be updated
-   *
-   * @generated from field: optional bool update_restricted_editor_names = 7;
-   */
-  updateRestrictedEditorNames?: boolean;
-
-  /**
-   * pinned_editor_versions updates the pinned version for the corresponding
-   * editor.
-   * Only updates if update_pinned_editor_versions is true.
-   *
-   * @generated from field: map<string, string> pinned_editor_versions = 8;
-   */
-  pinnedEditorVersions: { [key: string]: string } = {};
-
-  /**
-   * Specifies whether pinned_editor_versions should be updated
-   *
-   * @generated from field: optional bool update_pinned_editor_versions = 9;
-   */
-  updatePinnedEditorVersions?: boolean;
-
-  /**
-   * default_role is the default role for new members in the organization
-   *
-   * @generated from field: optional string default_role = 10;
-   */
-  defaultRole?: string;
-
-  /**
-   * timeout_settings are the settings for workspace timeouts
-   *
-   * @generated from field: optional gitpod.v1.TimeoutSettings timeout_settings = 11;
-   */
-  timeoutSettings?: TimeoutSettings;
-
-  /**
-   * Only updates if update_role_restrictions is true.
-   *
-   * @generated from field: repeated gitpod.v1.RoleRestrictionEntry role_restrictions = 12;
-   */
-  roleRestrictions: RoleRestrictionEntry[] = [];
-
-  /**
-   * update_role_restrictions specifies whether role_restrictions should be
-   * updated
-   *
-   * @generated from field: optional bool update_role_restrictions = 13;
-   */
-  updateRoleRestrictions?: boolean;
-
-  /**
-   * max_parallel_running_workspaces is the maximum number of workspaces that a
-   * single user can run in parallel. 0 resets to the default, which depends on
-   * the org plan
-   *
-   * @generated from field: optional int32 max_parallel_running_workspaces = 15;
-   */
-  maxParallelRunningWorkspaces?: number;
-
-  /**
-   * onboarding_settings are the settings for the organization's onboarding
-   *
-   * @generated from field: optional gitpod.v1.OnboardingSettings onboarding_settings = 16;
-   */
-  onboardingSettings?: OnboardingSettings;
-
-  /**
-   * annotate_git_commits specifies whether to annotate git commits created in
-   * Gitpod workspaces with the gitpod host
-   *
-   * @generated from field: optional bool annotate_git_commits = 17;
-   */
-  annotateGitCommits?: boolean;
-
-  /**
-   * update_role_restrictions specifies whether role_restrictions should be
-   * updated
-   *
-   * @generated from field: optional bool update_allowed_workspace_classes = 18;
-   */
-  updateAllowedWorkspaceClasses?: boolean;
+  settings?: OrganizationSettings;
 
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
@@ -838,21 +790,7 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   static readonly typeName = "gitpod.v1.UpdateOrganizationSettingsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 4, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 5, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 6, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
-    { no: 7, name: "update_restricted_editor_names", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 8, name: "pinned_editor_versions", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
-    { no: 9, name: "update_pinned_editor_versions", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 10, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 11, name: "timeout_settings", kind: "message", T: TimeoutSettings, opt: true },
-    { no: 12, name: "role_restrictions", kind: "message", T: RoleRestrictionEntry, repeated: true },
-    { no: 13, name: "update_role_restrictions", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 15, name: "max_parallel_running_workspaces", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
-    { no: 16, name: "onboarding_settings", kind: "message", T: OnboardingSettings, opt: true },
-    { no: 17, name: "annotate_git_commits", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
-    { no: 18, name: "update_allowed_workspace_classes", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 19, name: "settings", kind: "message", T: OrganizationSettings },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {
