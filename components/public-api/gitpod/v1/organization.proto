@@ -194,20 +194,22 @@ message UpdateOrganizationSettingsRequest {
 
   // allowed_workspace_classes are the IDs of classes, which can be used by
   // workspaces in an organization. Pass an empty array to allow all workspace
-  // classes
+  // classes.
+  // Only updates if update_allowed_workspace_classes is true.
   repeated string allowed_workspace_classes = 5;
 
   // restricted_editor_names updates the list of restricted editor names that
   // are not allowed to be used by workspaces in an organization. If empty, all
-  // editors are allowed. Only updates if update_restricted_editor_names is
-  // true.
+  // editors are allowed.
+  // Only updates if update_restricted_editor_names is true.
   repeated string restricted_editor_names = 6;
 
   // Specifies whether restricted_workspace_classes should be updated
   optional bool update_restricted_editor_names = 7;
 
   // pinned_editor_versions updates the pinned version for the corresponding
-  // editor
+  // editor.
+  // Only updates if update_pinned_editor_versions is true.
   map<string, string> pinned_editor_versions = 8;
 
   // Specifies whether pinned_editor_versions should be updated
@@ -219,6 +221,7 @@ message UpdateOrganizationSettingsRequest {
   // timeout_settings are the settings for workspace timeouts
   optional TimeoutSettings timeout_settings = 11;
 
+  // Only updates if update_role_restrictions is true.
   repeated RoleRestrictionEntry role_restrictions = 12;
 
   // update_role_restrictions specifies whether role_restrictions should be
@@ -236,6 +239,10 @@ message UpdateOrganizationSettingsRequest {
   // annotate_git_commits specifies whether to annotate git commits created in
   // Gitpod workspaces with the gitpod host
   optional bool annotate_git_commits = 17;
+
+  // update_role_restrictions specifies whether role_restrictions should be
+  // updated
+  optional bool update_allowed_workspace_classes = 18;
 }
 
 message UpdateOrganizationSettingsResponse {

@@ -728,7 +728,8 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   /**
    * allowed_workspace_classes are the IDs of classes, which can be used by
    * workspaces in an organization. Pass an empty array to allow all workspace
-   * classes
+   * classes.
+   * Only updates if update_allowed_workspace_classes is true.
    *
    * @generated from field: repeated string allowed_workspace_classes = 5;
    */
@@ -737,8 +738,8 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   /**
    * restricted_editor_names updates the list of restricted editor names that
    * are not allowed to be used by workspaces in an organization. If empty, all
-   * editors are allowed. Only updates if update_restricted_editor_names is
-   * true.
+   * editors are allowed.
+   * Only updates if update_restricted_editor_names is true.
    *
    * @generated from field: repeated string restricted_editor_names = 6;
    */
@@ -753,7 +754,8 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
 
   /**
    * pinned_editor_versions updates the pinned version for the corresponding
-   * editor
+   * editor.
+   * Only updates if update_pinned_editor_versions is true.
    *
    * @generated from field: map<string, string> pinned_editor_versions = 8;
    */
@@ -781,6 +783,8 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
   timeoutSettings?: TimeoutSettings;
 
   /**
+   * Only updates if update_role_restrictions is true.
+   *
    * @generated from field: repeated gitpod.v1.RoleRestrictionEntry role_restrictions = 12;
    */
   roleRestrictions: RoleRestrictionEntry[] = [];
@@ -817,6 +821,14 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
    */
   annotateGitCommits?: boolean;
 
+  /**
+   * update_role_restrictions specifies whether role_restrictions should be
+   * updated
+   *
+   * @generated from field: optional bool update_allowed_workspace_classes = 18;
+   */
+  updateAllowedWorkspaceClasses?: boolean;
+
   constructor(data?: PartialMessage<UpdateOrganizationSettingsRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -840,6 +852,7 @@ export class UpdateOrganizationSettingsRequest extends Message<UpdateOrganizatio
     { no: 15, name: "max_parallel_running_workspaces", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
     { no: 16, name: "onboarding_settings", kind: "message", T: OnboardingSettings, opt: true },
     { no: 17, name: "annotate_git_commits", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 18, name: "update_allowed_workspace_classes", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateOrganizationSettingsRequest {
