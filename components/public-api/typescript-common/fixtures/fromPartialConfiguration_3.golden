@@ -2,20 +2,20 @@
     "result": {
         "id": "123",
         "settings": {
-            "prebuilds": {
-                "enable": true,
-                "prebuildInterval": 5,
-                "cloneSettings": {
-                    "fullClone": false
-                }
-            },
             "workspaceClasses": {
                 "regular": "huge"
             },
             "restrictedWorkspaceClasses": [
                 "huge",
                 "large"
-            ]
+            ],
+            "prebuilds": {
+                "enable": true,
+                "prebuildInterval": 5,
+                "cloneSettings": {
+                    "fullClone": false
+                }
+            }
         }
     },
     "err": ""

@@ -22,7 +22,8 @@
                 "cls-1",
                 "cls-2"
             ],
-            "restrictedEditorNames": []
+            "restrictedEditorNames": [],
+            "enableDockerdAuthentication": false
         }
     },
     "err": ""
