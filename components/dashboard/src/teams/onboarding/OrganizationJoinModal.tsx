@@ -4,25 +4,38 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { OnboardingSettings_WelcomeMessage } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { Button } from "@podkit/buttons/Button";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "../../components/Modal";
 import { storageAvailable } from "../../utils";
 import { WelcomeMessagePreview } from "./WelcomeMessagePreview";
+import { User } from "@gitpod/public-api/lib/gitpod/v1/user_pb";
 
 type Props = {
-    orgSettings: OrganizationSettings;
+    user: User;
+    welcomeMessage: OnboardingSettings_WelcomeMessage;
 };
-export const OrganizationJoinModal = ({ orgSettings }: Props) => {
+export const OrganizationJoinModal = ({ welcomeMessage, user }: Props) => {
     const initialOrgOnboardingPending = useMemo(() => {
-        if (storageAvailable("localStorage")) {
-            return localStorage.getItem("newUserOnboardingPending") === "true";
+        if (!storageAvailable("localStorage")) {
+            return false;
         }
-    }, []);
-    const dismissOrgOnboardingPending = useCallback(() => {
+
+        const alreadyOnboarded = localStorage.getItem("newUserOnboardingDone") === "true";
+        if (alreadyOnboarded) {
+            return false;
+        }
+
+        // We want to show this message to users who just signed up, so we select the "new-ish" users here
+        const oneWeekSeconds = 7 * 24 * 60 * 60;
+        const userCreatedWithinLast7Days =
+            user.createdAt && user.createdAt.seconds >= Date.now() / 1000 - oneWeekSeconds;
+        return userCreatedWithinLast7Days;
+    }, [user.createdAt]);
+    const dismissOrgOnboarding = useCallback(() => {
         if (storageAvailable("localStorage")) {
-            localStorage.removeItem("newUserOnboardingPending");
+            localStorage.setItem("newUserOnboardingDone", "true");
         }
 
         setOrgOnboardingPending(false);
@@ -31,19 +44,19 @@ export const OrganizationJoinModal = ({ orgSettings }: Props) => {
 
     // if the org-wide welcome message is not enabled, prevent showing it in the future
     useEffect(() => {
-        if (!orgSettings?.onboardingSettings?.welcomeMessage?.enabled) {
-            dismissOrgOnboardingPending();
+        if (!welcomeMessage.enabled) {
+            dismissOrgOnboarding();
         }
-    }, [orgSettings?.onboardingSettings?.welcomeMessage?.enabled, dismissOrgOnboardingPending]);
+    }, [welcomeMessage.enabled, dismissOrgOnboarding]);
 
-    if (!orgSettings?.onboardingSettings?.welcomeMessage?.enabled) {
+    if (!welcomeMessage.enabled || !orgOnboardingPending) {
         return null;
     }
 
     return (
         <Modal
             visible={orgOnboardingPending}
-            onClose={dismissOrgOnboardingPending}
+            onClose={dismissOrgOnboarding}
             containerClassName="min-[576px]:max-w-[650px]"
         >
             <ModalHeader>Welcome to Gitpod</ModalHeader>
@@ -51,7 +64,7 @@ export const OrganizationJoinModal = ({ orgSettings }: Props) => {
                 <WelcomeMessagePreview hideHeader />
             </ModalBody>
             <ModalFooter>
-                <Button onClick={dismissOrgOnboardingPending}>Get Started</Button>
+                <Button onClick={dismissOrgOnboarding}>Get Started</Button>
             </ModalFooter>
         </Modal>
     );

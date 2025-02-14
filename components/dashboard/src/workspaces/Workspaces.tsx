@@ -183,6 +183,8 @@ const WorkspacesPage: FunctionComponent = () => {
         setVideoModalVisible(false);
     }, []);
 
+    const welcomeMessage = orgSettings?.onboardingSettings?.welcomeMessage;
+
     return (
         <>
             <Header
@@ -479,7 +481,9 @@ const WorkspacesPage: FunctionComponent = () => {
                     <EmptyWorkspacesContent />
                 ))}
 
-            {orgSettings && <OrganizationJoinModal orgSettings={orgSettings} />}
+            {isEnterpriseOnboardingEnabled && isDedicatedInstallation && welcomeMessage && user && (
+                <OrganizationJoinModal welcomeMessage={welcomeMessage} user={user} />
+            )}
         </>
     );
 };
