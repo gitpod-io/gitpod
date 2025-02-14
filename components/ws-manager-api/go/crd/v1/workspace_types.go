@@ -179,6 +179,34 @@ type WorkspaceImageInfo struct {
 	WorkspaceImageRef string `json:"workspaceImageRef,omitempty"`
 }
 
+type InitializerMetrics struct {
+	// +kubebuilder:validation:Optional
+	Git *InitializerStepMetric `json:"git"`
+
+	// +kubebuilder:validation:Optional
+	FileDownload *InitializerStepMetric `json:"fileDownload"`
+
+	// +kubebuilder:validation:Optional
+	Snapshot *InitializerStepMetric `json:"snapshot"`
+
+	// +kubebuilder:validation:Optional
+	Backup *InitializerStepMetric `json:"backup"`
+
+	// +kubebuilder:validation:Optional
+	Prebuild *InitializerStepMetric `json:"prebuild"`
+
+	// +kubebuilder:validation:Optional
+	Composite *InitializerStepMetric `json:"composite"`
+}
+
+type InitializerStepMetric struct {
+	// +kubebuilder:validation:Optional
+	Duration *metav1.Duration `json:"duration"`
+
+	// +kubebuilder:validation:Optional
+	Size uint64 `json:"size"`
+}
+
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	PodStarts int `json:"podStarts"`
@@ -215,6 +243,9 @@ type WorkspaceStatus struct {
 
 	// +kubebuilder:validation:Optional
 	ImageInfo *WorkspaceImageInfo `json:"imageInfo,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	InitializerMetrics *InitializerMetrics `json:"initializerMetrics,omitempty"`
 }
 
 func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {

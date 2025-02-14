@@ -5,6 +5,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
@@ -16,7 +18,14 @@ var contentInitializerCmd = &cobra.Command{
 	Short: "fork'ed by ws-daemon to initialize content",
 	Args:  cobra.ExactArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return content.RunInitializerChild()
+		stats, err := content.RunInitializerChild()
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf(content.FormatStatsBytes(stats))
+
+		return nil
 	},
 }
 

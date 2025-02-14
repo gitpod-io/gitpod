@@ -1,4 +1,4 @@
-// Copyright (c) 2024 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2025 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -70,12 +70,13 @@ func (mr *MockWorkspaceOperationsMockRecorder) DeleteWorkspace(arg0, arg1 interf
 }
 
 // InitWorkspace mocks base method.
-func (m *MockWorkspaceOperations) InitWorkspace(arg0 context.Context, arg1 InitOptions) (string, error) {
+func (m *MockWorkspaceOperations) InitWorkspace(arg0 context.Context, arg1 InitOptions) (*api.InitializerMetrics, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InitWorkspace", arg0, arg1)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(*api.InitializerMetrics)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // InitWorkspace indicates an expected call of InitWorkspace.
