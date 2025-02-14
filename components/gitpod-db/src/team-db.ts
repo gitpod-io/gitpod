@@ -42,7 +42,14 @@ export interface TeamDB extends TransactionalDB<TeamDB> {
     deleteTeam(teamId: string): Promise<void>;
 
     findOrgSettings(teamId: string): Promise<OrganizationSettings | undefined>;
-    setOrgSettings(teamId: string, settings: Partial<OrganizationSettings>): Promise<OrganizationSettings>;
+    setOrgSettings(
+        teamId: string,
+        settings: Partial<OrganizationSettings>,
+        merge: (
+            currentSettings: OrganizationSettings,
+            partialUpdate: Partial<OrganizationSettings>,
+        ) => OrganizationSettings,
+    ): Promise<OrganizationSettings>;
 
     hasActiveSSO(organizationId: string): Promise<boolean>;
 

@@ -394,18 +394,27 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         });
     }
 
-    public async setOrgSettings(orgId: string, settings: Partial<OrganizationSettings>): Promise<OrganizationSettings> {
-        const repo = await this.getOrgSettingsRepo();
-        const team = await repo.findOne({ where: { orgId, deleted: false } });
-        if (!team) {
-            return await repo.save({
-                ...settings,
-                orgId,
-            });
-        }
-        return await repo.save({
-            ...team,
-            ...settings,
+    public async setOrgSettings(
+        orgId: string,
+        partialUpdate: Partial<OrganizationSettings>,
+        merge: (
+            currentSettings: OrganizationSettings,
+            partialUpdate: Partial<OrganizationSettings>,
+        ) => OrganizationSettings,
+    ): Promise<OrganizationSettings> {
+        return this.transaction(async (db) => {
+            const teamDb = db as TeamDBImpl;
+            const repo = await teamDb.getOrgSettingsRepo();
+            const currentSettings = await repo.findOne({ where: { orgId, deleted: false } });
+            if (!currentSettings) {
+                return await repo.save({
+                    ...partialUpdate,
+                    orgId,
+                });
+            }
+
+            const settings = merge(currentSettings, partialUpdate);
+            return await repo.save(settings);
         });
     }
 

@@ -131,13 +131,13 @@ describe("ProjectsService", async () => {
         const organizationService = container.get(OrganizationService);
         const recommendations = await organizationService.updateSettings(owner.id, org.id, {
             onboardingSettings: {
-                recommendedRepositories: ["a", project.id, "b"],
+                recommendedRepositories: [project.id],
             },
         });
-        expect(recommendations.onboardingSettings?.recommendedRepositories).to.deep.equal(["a", project.id, "b"]);
+        expect(recommendations.onboardingSettings?.recommendedRepositories).to.deep.equal([project.id]);
         await withTestCtx(owner, () => ps.deleteProject(owner.id, project.id));
         const recommendationsAfterDelete = await organizationService.getSettings(owner.id, org.id);
-        expect(recommendationsAfterDelete.onboardingSettings?.recommendedRepositories).to.deep.equal(["a", "b"]);
+        expect(recommendationsAfterDelete.onboardingSettings?.recommendedRepositories).to.deep.equal([]);
     });
 
     it("should updateProject", async () => {

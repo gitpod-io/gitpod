@@ -56,6 +56,10 @@ import {
     Organization as ProtocolOrganization,
     OrgMemberPermission,
     OrgMemberRole,
+    RoleRestrictions,
+    TimeoutSettings as TimeoutSettingsProtocol,
+    OnboardingSettings as OnboardingSettingsProtocol,
+    WelcomeMessage as WelcomeMessageProtocol,
 } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import type { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { parseGoDurationToMs } from "@gitpod/gitpod-protocol/lib/util/timeutil";
@@ -113,11 +117,15 @@ import {
     OnboardingState,
 } from "@gitpod/public-api/lib/gitpod/v1/installation_pb";
 import {
+    OnboardingSettings,
+    OnboardingSettings_WelcomeMessage,
     Organization,
     OrganizationMember,
     OrganizationPermission,
     OrganizationRole,
     OrganizationSettings,
+    RoleRestrictionEntry,
+    TimeoutSettings,
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import {
     Prebuild,
@@ -1040,6 +1048,61 @@ export class PublicAPIConverter {
         }
     }
 
+    fromOrgMemberRoleString(role: string): OrgMemberRole {
+        switch (role) {
+            case "owner":
+            case "member":
+            case "collaborator":
+                return role;
+            default:
+                throw new Error("invalid org member role");
+        }
+    }
+
+    fromTimeoutSettings(timeoutSettings: TimeoutSettings): TimeoutSettingsProtocol {
+        const result: TimeoutSettingsProtocol = {
+            denyUserTimeouts: timeoutSettings.denyUserTimeouts,
+        };
+        if (timeoutSettings.inactivity) {
+            result.inactivity = this.toDurationString(timeoutSettings.inactivity);
+        }
+        return result;
+    }
+
+    fromRoleRestrictions(roleRestrictions: RoleRestrictionEntry[]): RoleRestrictions {
+        const result: RoleRestrictions = {};
+        for (const roleRestriction of roleRestrictions) {
+            const role = this.fromOrgMemberRole(roleRestriction.role);
+            const permissions = roleRestriction.permissions.map((p) => this.fromOrganizationPermission(p));
+            result[role] = permissions;
+        }
+        return result;
+    }
+
+    fromOnboardingSettings(onboardingSettings: OnboardingSettings): OnboardingSettingsProtocol {
+        const result: OnboardingSettingsProtocol = {
+            internalLink: onboardingSettings.internalLink,
+        };
+
+        if (onboardingSettings.welcomeMessage) {
+            result.welcomeMessage = this.fromWelcomeMessage(onboardingSettings.welcomeMessage);
+        }
+
+        if (onboardingSettings.updateRecommendedRepositories) {
+            result.recommendedRepositories = onboardingSettings.recommendedRepositories;
+        }
+
+        return result;
+    }
+
+    fromWelcomeMessage(welcomeMessage: OnboardingSettings_WelcomeMessage): WelcomeMessageProtocol {
+        return {
+            enabled: welcomeMessage.enabled,
+            message: welcomeMessage.message,
+            featuredMemberId: welcomeMessage.featuredMemberId,
+        };
+    }
+
     fromWorkspaceSettings(settings?: DeepPartial<WorkspaceSettings>) {
         const result: Partial<
             Pick<
@@ -1132,23 +1195,49 @@ export class PublicAPIConverter {
             pinnedEditorVersions: settings.pinnedEditorVersions || {},
             restrictedEditorNames: settings.restrictedEditorNames || [],
             defaultRole: settings.defaultRole || undefined,
-            timeoutSettings: {
-                inactivity: settings.timeoutSettings?.inactivity
-                    ? this.toDuration(settings.timeoutSettings?.inactivity)
-                    : undefined,
-                denyUserTimeouts: settings.timeoutSettings?.denyUserTimeouts,
-            },
-            roleRestrictions: Object.entries(settings.roleRestrictions ?? {}).map(([role, permissions]) => ({
-                role: this.toOrgMemberRole(role as OrgMemberRole),
-                permissions: permissions.map((permission) => this.toOrganizationPermission(permission)),
-            })),
+            timeoutSettings: settings.timeoutSettings ? this.toTimeoutSettings(settings.timeoutSettings) : undefined,
+            roleRestrictions: settings.roleRestrictions
+                ? this.toRoleRestrictions(settings.roleRestrictions)
+                : undefined,
             maxParallelRunningWorkspaces: settings.maxParallelRunningWorkspaces ?? 0,
-            onboardingSettings: {
-                internalLink: settings?.onboardingSettings?.internalLink ?? undefined,
-                welcomeMessage: settings?.onboardingSettings?.welcomeMessage ?? undefined,
-                recommendedRepositories: settings?.onboardingSettings?.recommendedRepositories ?? [],
-            },
+            onboardingSettings: settings?.onboardingSettings
+                ? this.toOnboardingSettings(settings.onboardingSettings)
+                : undefined,
             annotateGitCommits: settings.annotateGitCommits ?? false,
+        });
+    }
+
+    toTimeoutSettings(settings: TimeoutSettingsProtocol): TimeoutSettings {
+        return new TimeoutSettings({
+            inactivity: settings.inactivity ? this.toDuration(settings.inactivity) : undefined,
+            denyUserTimeouts: settings.denyUserTimeouts,
+        });
+    }
+
+    toRoleRestrictions(roleRestrictions: RoleRestrictions): RoleRestrictionEntry[] {
+        return Object.entries(roleRestrictions ?? {}).map(
+            ([role, permissions]) =>
+                new RoleRestrictionEntry({
+                    role: this.toOrgMemberRole(role as OrgMemberRole),
+                    permissions: permissions.map((permission) => this.toOrganizationPermission(permission)),
+                }),
+        );
+    }
+
+    toOnboardingSettings(settings: OnboardingSettingsProtocol): OnboardingSettings {
+        return new OnboardingSettings({
+            internalLink: settings.internalLink,
+            welcomeMessage: settings.welcomeMessage ? this.toWelcomeMessage(settings.welcomeMessage) : undefined,
+            recommendedRepositories: settings.recommendedRepositories,
+        });
+    }
+
+    toWelcomeMessage(settings: WelcomeMessageProtocol): OnboardingSettings_WelcomeMessage {
+        return new OnboardingSettings_WelcomeMessage({
+            enabled: settings.enabled,
+            message: settings.message,
+            featuredMemberId: settings.featuredMemberId,
+            featuredMemberResolvedAvatarUrl: settings.featuredMemberResolvedAvatarUrl,
         });
     }
 

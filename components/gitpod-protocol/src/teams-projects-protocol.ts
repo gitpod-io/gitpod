@@ -285,11 +285,14 @@ export interface OnboardingSettings {
     /**
      * the welcome message for new members of the organization
      */
-    welcomeMessage?: {
-        featuredMemberId?: string;
-        message?: string;
-        footer?: string;
-    };
+    welcomeMessage?: WelcomeMessage;
+}
+
+export interface WelcomeMessage {
+    enabled?: boolean;
+    featuredMemberId?: string;
+    featuredMemberResolvedAvatarUrl?: string;
+    message?: string;
 }
 
 export type TeamMemberInfo = OrgMemberInfo;
