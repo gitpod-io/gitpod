@@ -6006,41 +6006,91 @@ public final class OrganizationOuterClass {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
+     * <code>optional bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
+     * @return Whether the workspaceSharingDisabled field is set.
+     */
+    boolean hasWorkspaceSharingDisabled();
+    /**
+     * <code>optional bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
      * @return The workspaceSharingDisabled.
      */
     boolean getWorkspaceSharingDisabled();
 
     /**
-     * <code>string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+     * <pre>
+     * pass empty string to reset to the installation default workspace image
+     * </pre>
+     *
+     * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+     * @return Whether the defaultWorkspaceImage field is set.
+     */
+    boolean hasDefaultWorkspaceImage();
+    /**
+     * <pre>
+     * pass empty string to reset to the installation default workspace image
+     * </pre>
+     *
+     * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
      * @return The defaultWorkspaceImage.
      */
     java.lang.String getDefaultWorkspaceImage();
     /**
-     * <code>string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+     * <pre>
+     * pass empty string to reset to the installation default workspace image
+     * </pre>
+     *
+     * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
      * @return The bytes for defaultWorkspaceImage.
      */
     com.google.protobuf.ByteString
         getDefaultWorkspaceImageBytes();
 
     /**
+     * <pre>
+     * allowed_workspace_classes are the IDs of classes, which can be used by
+     * workspaces in an organization. Pass an empty array to allow all workspace
+     * classes.
+     * Only updates if update_allowed_workspace_classes is true.
+     * </pre>
+     *
      * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
      * @return A list containing the allowedWorkspaceClasses.
      */
     java.util.List<java.lang.String>
         getAllowedWorkspaceClassesList();
     /**
+     * <pre>
+     * allowed_workspace_classes are the IDs of classes, which can be used by
+     * workspaces in an organization. Pass an empty array to allow all workspace
+     * classes.
+     * Only updates if update_allowed_workspace_classes is true.
+     * </pre>
+     *
      * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
      * @return The count of allowedWorkspaceClasses.
      */
     int getAllowedWorkspaceClassesCount();
     /**
+     * <pre>
+     * allowed_workspace_classes are the IDs of classes, which can be used by
+     * workspaces in an organization. Pass an empty array to allow all workspace
+     * classes.
+     * Only updates if update_allowed_workspace_classes is true.
+     * </pre>
+     *
      * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
      * @param index The index of the element to return.
      * @return The allowedWorkspaceClasses at the given index.
      */
     java.lang.String getAllowedWorkspaceClasses(int index);
     /**
+     * <pre>
+     * allowed_workspace_classes are the IDs of classes, which can be used by
+     * workspaces in an organization. Pass an empty array to allow all workspace
+     * classes.
+     * Only updates if update_allowed_workspace_classes is true.
+     * </pre>
+     *
      * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
      * @param index The index of the value to return.
      * @return The bytes of the allowedWorkspaceClasses at the given index.
@@ -6049,23 +6099,51 @@ public final class OrganizationOuterClass {
         getAllowedWorkspaceClassesBytes(int index);
 
     /**
+     * <pre>
+     * restricted_editor_names updates the list of restricted editor names that
+     * are not allowed to be used by workspaces in an organization. If empty, all
+     * editors are allowed.
+     * Only updates if update_restricted_editor_names is true.
+     * </pre>
+     *
      * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
      * @return A list containing the restrictedEditorNames.
      */
     java.util.List<java.lang.String>
         getRestrictedEditorNamesList();
     /**
+     * <pre>
+     * restricted_editor_names updates the list of restricted editor names that
+     * are not allowed to be used by workspaces in an organization. If empty, all
+     * editors are allowed.
+     * Only updates if update_restricted_editor_names is true.
+     * </pre>
+     *
      * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
      * @return The count of restrictedEditorNames.
      */
     int getRestrictedEditorNamesCount();
     /**
+     * <pre>
+     * restricted_editor_names updates the list of restricted editor names that
+     * are not allowed to be used by workspaces in an organization. If empty, all
+     * editors are allowed.
+     * Only updates if update_restricted_editor_names is true.
+     * </pre>
+     *
      * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
      * @param index The index of the element to return.
      * @return The restrictedEditorNames at the given index.
      */
     java.lang.String getRestrictedEditorNames(int index);
     /**
+     * <pre>
+     * restricted_editor_names updates the list of restricted editor names that
+     * are not allowed to be used by workspaces in an organization. If empty, all
+     * editors are allowed.
+     * Only updates if update_restricted_editor_names is true.
+     * </pre>
+     *
      * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
      * @param index The index of the value to return.
      * @return The bytes of the restrictedEditorNames at the given index.
@@ -6074,10 +6152,22 @@ public final class OrganizationOuterClass {
         getRestrictedEditorNamesBytes(int index);
 
     /**
+     * <pre>
+     * pinned_editor_versions updates the pinned version for the corresponding
+     * editor.
+     * Only updates if update_pinned_editor_versions is true.
+     * </pre>
+     *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
      */
     int getPinnedEditorVersionsCount();
     /**
+     * <pre>
+     * pinned_editor_versions updates the pinned version for the corresponding
+     * editor.
+     * Only updates if update_pinned_editor_versions is true.
+     * </pre>
+     *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
      */
     boolean containsPinnedEditorVersions(
@@ -6089,11 +6179,23 @@ public final class OrganizationOuterClass {
     java.util.Map<java.lang.String, java.lang.String>
     getPinnedEditorVersions();
     /**
+     * <pre>
+     * pinned_editor_versions updates the pinned version for the corresponding
+     * editor.
+     * Only updates if update_pinned_editor_versions is true.
+     * </pre>
+     *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
      */
     java.util.Map<java.lang.String, java.lang.String>
     getPinnedEditorVersionsMap();
     /**
+     * <pre>
+     * pinned_editor_versions updates the pinned version for the corresponding
+     * editor.
+     * Only updates if update_pinned_editor_versions is true.
+     * </pre>
+     *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
      */
     /* nullable */
@@ -6102,57 +6204,112 @@ java.lang.String getPinnedEditorVersionsOrDefault(
         /* nullable */
 java.lang.String defaultValue);
     /**
+     * <pre>
+     * pinned_editor_versions updates the pinned version for the corresponding
+     * editor.
+     * Only updates if update_pinned_editor_versions is true.
+     * </pre>
+     *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
      */
     java.lang.String getPinnedEditorVersionsOrThrow(
         java.lang.String key);
 
     /**
-     * <code>string default_role = 6 [json_name = "defaultRole"];</code>
+     * <pre>
+     * default_role is the default role for new members in the organization
+     * </pre>
+     *
+     * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
+     * @return Whether the defaultRole field is set.
+     */
+    boolean hasDefaultRole();
+    /**
+     * <pre>
+     * default_role is the default role for new members in the organization
+     * </pre>
+     *
+     * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
      * @return The defaultRole.
      */
     java.lang.String getDefaultRole();
     /**
-     * <code>string default_role = 6 [json_name = "defaultRole"];</code>
+     * <pre>
+     * default_role is the default role for new members in the organization
+     * </pre>
+     *
+     * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
      * @return The bytes for defaultRole.
      */
     com.google.protobuf.ByteString
         getDefaultRoleBytes();
 
     /**
-     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
      * @return Whether the timeoutSettings field is set.
      */
     boolean hasTimeoutSettings();
     /**
-     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
      * @return The timeoutSettings.
      */
     io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getTimeoutSettings();
     /**
-     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
      */
     io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder();
 
     /**
+     * <pre>
+     * Only updates if update_role_restrictions is true.
+     * </pre>
+     *
      * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
      */
     java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry>
         getRoleRestrictionsList();
     /**
+     * <pre>
+     * Only updates if update_role_restrictions is true.
+     * </pre>
+     *
      * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
      */
     io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getRoleRestrictions(int index);
     /**
+     * <pre>
+     * Only updates if update_role_restrictions is true.
+     * </pre>
+     *
      * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
      */
     int getRoleRestrictionsCount();
     /**
+     * <pre>
+     * Only updates if update_role_restrictions is true.
+     * </pre>
+     *
      * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
      */
     java.util.List<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
         getRoleRestrictionsOrBuilderList();
     /**
+     * <pre>
+     * Only updates if update_role_restrictions is true.
+     * </pre>
+     *
      * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
      */
     io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
@@ -6165,31 +6322,149 @@ java.lang.String defaultValue);
      * the org plan
      * </pre>
      *
-     * <code>int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+     * <code>optional int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+     * @return Whether the maxParallelRunningWorkspaces field is set.
+     */
+    boolean hasMaxParallelRunningWorkspaces();
+    /**
+     * <pre>
+     * max_parallel_running_workspaces is the maximum number of workspaces that a
+     * single user can run in parallel. 0 resets to the default, which depends on
+     * the org plan
+     * </pre>
+     *
+     * <code>optional int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
      * @return The maxParallelRunningWorkspaces.
      */
     int getMaxParallelRunningWorkspaces();
 
     /**
-     * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+     * <pre>
+     * onboarding_settings are the settings for the organization's onboarding
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
      * @return Whether the onboardingSettings field is set.
      */
     boolean hasOnboardingSettings();
     /**
-     * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+     * <pre>
+     * onboarding_settings are the settings for the organization's onboarding
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
      * @return The onboardingSettings.
      */
     io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings getOnboardingSettings();
     /**
-     * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+     * <pre>
+     * onboarding_settings are the settings for the organization's onboarding
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
      */
     io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettingsOrBuilder getOnboardingSettingsOrBuilder();
 
     /**
-     * <code>bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
+     * <pre>
+     * annotate_git_commits specifies whether to annotate git commits created in
+     * Gitpod workspaces with the gitpod host
+     * </pre>
+     *
+     * <code>optional bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
+     * @return Whether the annotateGitCommits field is set.
+     */
+    boolean hasAnnotateGitCommits();
+    /**
+     * <pre>
+     * annotate_git_commits specifies whether to annotate git commits created in
+     * Gitpod workspaces with the gitpod host
+     * </pre>
+     *
+     * <code>optional bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
      * @return The annotateGitCommits.
      */
     boolean getAnnotateGitCommits();
+
+    /**
+     * <pre>
+     * update_role_restrictions specifies whether role_restrictions should be
+     * updated
+     * </pre>
+     *
+     * <code>optional bool update_allowed_workspace_classes = 12 [json_name = "updateAllowedWorkspaceClasses"];</code>
+     * @return Whether the updateAllowedWorkspaceClasses field is set.
+     */
+    boolean hasUpdateAllowedWorkspaceClasses();
+    /**
+     * <pre>
+     * update_role_restrictions specifies whether role_restrictions should be
+     * updated
+     * </pre>
+     *
+     * <code>optional bool update_allowed_workspace_classes = 12 [json_name = "updateAllowedWorkspaceClasses"];</code>
+     * @return The updateAllowedWorkspaceClasses.
+     */
+    boolean getUpdateAllowedWorkspaceClasses();
+
+    /**
+     * <pre>
+     * Specifies whether restricted_workspace_classes should be updated
+     * </pre>
+     *
+     * <code>optional bool update_restricted_editor_names = 13 [json_name = "updateRestrictedEditorNames"];</code>
+     * @return Whether the updateRestrictedEditorNames field is set.
+     */
+    boolean hasUpdateRestrictedEditorNames();
+    /**
+     * <pre>
+     * Specifies whether restricted_workspace_classes should be updated
+     * </pre>
+     *
+     * <code>optional bool update_restricted_editor_names = 13 [json_name = "updateRestrictedEditorNames"];</code>
+     * @return The updateRestrictedEditorNames.
+     */
+    boolean getUpdateRestrictedEditorNames();
+
+    /**
+     * <pre>
+     * Specifies whether pinned_editor_versions should be updated
+     * </pre>
+     *
+     * <code>optional bool update_pinned_editor_versions = 14 [json_name = "updatePinnedEditorVersions"];</code>
+     * @return Whether the updatePinnedEditorVersions field is set.
+     */
+    boolean hasUpdatePinnedEditorVersions();
+    /**
+     * <pre>
+     * Specifies whether pinned_editor_versions should be updated
+     * </pre>
+     *
+     * <code>optional bool update_pinned_editor_versions = 14 [json_name = "updatePinnedEditorVersions"];</code>
+     * @return The updatePinnedEditorVersions.
+     */
+    boolean getUpdatePinnedEditorVersions();
+
+    /**
+     * <pre>
+     * update_role_restrictions specifies whether role_restrictions should be
+     * updated
+     * </pre>
+     *
+     * <code>optional bool update_role_restrictions = 15 [json_name = "updateRoleRestrictions"];</code>
+     * @return Whether the updateRoleRestrictions field is set.
+     */
+    boolean hasUpdateRoleRestrictions();
+    /**
+     * <pre>
+     * update_role_restrictions specifies whether role_restrictions should be
+     * updated
+     * </pre>
+     *
+     * <code>optional bool update_role_restrictions = 15 [json_name = "updateRoleRestrictions"];</code>
+     * @return The updateRoleRestrictions.
+     */
+    boolean getUpdateRoleRestrictions();
   }
   /**
    * Protobuf type {@code gitpod.v1.OrganizationSettings}
@@ -6251,7 +6526,15 @@ java.lang.String defaultValue);
     public static final int WORKSPACE_SHARING_DISABLED_FIELD_NUMBER = 1;
     private boolean workspaceSharingDisabled_ = false;
     /**
-     * <code>bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
+     * <code>optional bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
+     * @return Whether the workspaceSharingDisabled field is set.
+     */
+    @java.lang.Override
+    public boolean hasWorkspaceSharingDisabled() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <code>optional bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
      * @return The workspaceSharingDisabled.
      */
     @java.lang.Override
@@ -6263,7 +6546,23 @@ java.lang.String defaultValue);
     @SuppressWarnings("serial")
     private volatile java.lang.Object defaultWorkspaceImage_ = "";
     /**
-     * <code>string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+     * <pre>
+     * pass empty string to reset to the installation default workspace image
+     * </pre>
+     *
+     * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+     * @return Whether the defaultWorkspaceImage field is set.
+     */
+    @java.lang.Override
+    public boolean hasDefaultWorkspaceImage() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <pre>
+     * pass empty string to reset to the installation default workspace image
+     * </pre>
+     *
+     * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
      * @return The defaultWorkspaceImage.
      */
     @java.lang.Override
@@ -6280,7 +6579,11 @@ java.lang.String defaultValue);
       }
     }
     /**
-     * <code>string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+     * <pre>
+     * pass empty string to reset to the installation default workspace image
+     * </pre>
+     *
+     * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
      * @return The bytes for defaultWorkspaceImage.
      */
     @java.lang.Override
@@ -6303,6 +6606,13 @@ java.lang.String defaultValue);
     private com.google.protobuf.LazyStringArrayList allowedWorkspaceClasses_ =
         com.google.protobuf.LazyStringArrayList.emptyList();
     /**
+     * <pre>
+     * allowed_workspace_classes are the IDs of classes, which can be used by
+     * workspaces in an organization. Pass an empty array to allow all workspace
+     * classes.
+     * Only updates if update_allowed_workspace_classes is true.
+     * </pre>
+     *
      * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
      * @return A list containing the allowedWorkspaceClasses.
      */
@@ -6311,6 +6621,13 @@ java.lang.String defaultValue);
       return allowedWorkspaceClasses_;
     }
     /**
+     * <pre>
+     * allowed_workspace_classes are the IDs of classes, which can be used by
+     * workspaces in an organization. Pass an empty array to allow all workspace
+     * classes.
+     * Only updates if update_allowed_workspace_classes is true.
+     * </pre>
+     *
      * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
      * @return The count of allowedWorkspaceClasses.
      */
@@ -6318,6 +6635,13 @@ java.lang.String defaultValue);
       return allowedWorkspaceClasses_.size();
     }
     /**
+     * <pre>
+     * allowed_workspace_classes are the IDs of classes, which can be used by
+     * workspaces in an organization. Pass an empty array to allow all workspace
+     * classes.
+     * Only updates if update_allowed_workspace_classes is true.
+     * </pre>
+     *
      * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
      * @param index The index of the element to return.
      * @return The allowedWorkspaceClasses at the given index.
@@ -6326,6 +6650,13 @@ java.lang.String defaultValue);
       return allowedWorkspaceClasses_.get(index);
     }
     /**
+     * <pre>
+     * allowed_workspace_classes are the IDs of classes, which can be used by
+     * workspaces in an organization. Pass an empty array to allow all workspace
+     * classes.
+     * Only updates if update_allowed_workspace_classes is true.
+     * </pre>
+     *
      * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
      * @param index The index of the value to return.
      * @return The bytes of the allowedWorkspaceClasses at the given index.
@@ -6340,6 +6671,13 @@ java.lang.String defaultValue);
     private com.google.protobuf.LazyStringArrayList restrictedEditorNames_ =
         com.google.protobuf.LazyStringArrayList.emptyList();
     /**
+     * <pre>
+     * restricted_editor_names updates the list of restricted editor names that
+     * are not allowed to be used by workspaces in an organization. If empty, all
+     * editors are allowed.
+     * Only updates if update_restricted_editor_names is true.
+     * </pre>
+     *
      * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
      * @return A list containing the restrictedEditorNames.
      */
@@ -6348,6 +6686,13 @@ java.lang.String defaultValue);
       return restrictedEditorNames_;
     }
     /**
+     * <pre>
+     * restricted_editor_names updates the list of restricted editor names that
+     * are not allowed to be used by workspaces in an organization. If empty, all
+     * editors are allowed.
+     * Only updates if update_restricted_editor_names is true.
+     * </pre>
+     *
      * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
      * @return The count of restrictedEditorNames.
      */
@@ -6355,6 +6700,13 @@ java.lang.String defaultValue);
       return restrictedEditorNames_.size();
     }
     /**
+     * <pre>
+     * restricted_editor_names updates the list of restricted editor names that
+     * are not allowed to be used by workspaces in an organization. If empty, all
+     * editors are allowed.
+     * Only updates if update_restricted_editor_names is true.
+     * </pre>
+     *
      * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
      * @param index The index of the element to return.
      * @return The restrictedEditorNames at the given index.
@@ -6363,6 +6715,13 @@ java.lang.String defaultValue);
       return restrictedEditorNames_.get(index);
     }
     /**
+     * <pre>
+     * restricted_editor_names updates the list of restricted editor names that
+     * are not allowed to be used by workspaces in an organization. If empty, all
+     * editors are allowed.
+     * Only updates if update_restricted_editor_names is true.
+     * </pre>
+     *
      * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
      * @param index The index of the value to return.
      * @return The bytes of the restrictedEditorNames at the given index.
@@ -6399,6 +6758,12 @@ java.lang.String defaultValue);
       return internalGetPinnedEditorVersions().getMap().size();
     }
     /**
+     * <pre>
+     * pinned_editor_versions updates the pinned version for the corresponding
+     * editor.
+     * Only updates if update_pinned_editor_versions is true.
+     * </pre>
+     *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
      */
     @java.lang.Override
@@ -6416,6 +6781,12 @@ java.lang.String defaultValue);
       return getPinnedEditorVersionsMap();
     }
     /**
+     * <pre>
+     * pinned_editor_versions updates the pinned version for the corresponding
+     * editor.
+     * Only updates if update_pinned_editor_versions is true.
+     * </pre>
+     *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
      */
     @java.lang.Override
@@ -6423,6 +6794,12 @@ java.lang.String defaultValue);
       return internalGetPinnedEditorVersions().getMap();
     }
     /**
+     * <pre>
+     * pinned_editor_versions updates the pinned version for the corresponding
+     * editor.
+     * Only updates if update_pinned_editor_versions is true.
+     * </pre>
+     *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
      */
     @java.lang.Override
@@ -6437,6 +6814,12 @@ java.lang.String defaultValue) {
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
     /**
+     * <pre>
+     * pinned_editor_versions updates the pinned version for the corresponding
+     * editor.
+     * Only updates if update_pinned_editor_versions is true.
+     * </pre>
+     *
      * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
      */
     @java.lang.Override
@@ -6455,7 +6838,23 @@ java.lang.String defaultValue) {
     @SuppressWarnings("serial")
     private volatile java.lang.Object defaultRole_ = "";
     /**
-     * <code>string default_role = 6 [json_name = "defaultRole"];</code>
+     * <pre>
+     * default_role is the default role for new members in the organization
+     * </pre>
+     *
+     * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
+     * @return Whether the defaultRole field is set.
+     */
+    @java.lang.Override
+    public boolean hasDefaultRole() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <pre>
+     * default_role is the default role for new members in the organization
+     * </pre>
+     *
+     * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
      * @return The defaultRole.
      */
     @java.lang.Override
@@ -6472,7 +6871,11 @@ java.lang.String defaultValue) {
       }
     }
     /**
-     * <code>string default_role = 6 [json_name = "defaultRole"];</code>
+     * <pre>
+     * default_role is the default role for new members in the organization
+     * </pre>
+     *
+     * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
      * @return The bytes for defaultRole.
      */
     @java.lang.Override
@@ -6493,15 +6896,23 @@ java.lang.String defaultValue) {
     public static final int TIMEOUT_SETTINGS_FIELD_NUMBER = 7;
     private io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings timeoutSettings_;
     /**
-     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
      * @return Whether the timeoutSettings field is set.
      */
     @java.lang.Override
     public boolean hasTimeoutSettings() {
-      return ((bitField0_ & 0x00000001) != 0);
+      return ((bitField0_ & 0x00000008) != 0);
     }
     /**
-     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
      * @return The timeoutSettings.
      */
     @java.lang.Override
@@ -6509,7 +6920,11 @@ java.lang.String defaultValue) {
       return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
     }
     /**
-     * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+     * <pre>
+     * timeout_settings are the settings for workspace timeouts
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
      */
     @java.lang.Override
     public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder() {
@@ -6520,6 +6935,10 @@ java.lang.String defaultValue) {
     @SuppressWarnings("serial")
     private java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> roleRestrictions_;
     /**
+     * <pre>
+     * Only updates if update_role_restrictions is true.
+     * </pre>
+     *
      * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
      */
     @java.lang.Override
@@ -6527,6 +6946,10 @@ java.lang.String defaultValue) {
       return roleRestrictions_;
     }
     /**
+     * <pre>
+     * Only updates if update_role_restrictions is true.
+     * </pre>
+     *
      * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
      */
     @java.lang.Override
@@ -6535,6 +6958,10 @@ java.lang.String defaultValue) {
       return roleRestrictions_;
     }
     /**
+     * <pre>
+     * Only updates if update_role_restrictions is true.
+     * </pre>
+     *
      * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
      */
     @java.lang.Override
@@ -6542,6 +6969,10 @@ java.lang.String defaultValue) {
       return roleRestrictions_.size();
     }
     /**
+     * <pre>
+     * Only updates if update_role_restrictions is true.
+     * </pre>
+     *
      * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
      */
     @java.lang.Override
@@ -6549,6 +6980,10 @@ java.lang.String defaultValue) {
       return roleRestrictions_.get(index);
     }
     /**
+     * <pre>
+     * Only updates if update_role_restrictions is true.
+     * </pre>
+     *
      * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
      */
     @java.lang.Override
@@ -6566,7 +7001,21 @@ java.lang.String defaultValue) {
      * the org plan
      * </pre>
      *
-     * <code>int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+     * <code>optional int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+     * @return Whether the maxParallelRunningWorkspaces field is set.
+     */
+    @java.lang.Override
+    public boolean hasMaxParallelRunningWorkspaces() {
+      return ((bitField0_ & 0x00000010) != 0);
+    }
+    /**
+     * <pre>
+     * max_parallel_running_workspaces is the maximum number of workspaces that a
+     * single user can run in parallel. 0 resets to the default, which depends on
+     * the org plan
+     * </pre>
+     *
+     * <code>optional int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
      * @return The maxParallelRunningWorkspaces.
      */
     @java.lang.Override
@@ -6577,15 +7026,23 @@ java.lang.String defaultValue) {
     public static final int ONBOARDING_SETTINGS_FIELD_NUMBER = 10;
     private io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings onboardingSettings_;
     /**
-     * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+     * <pre>
+     * onboarding_settings are the settings for the organization's onboarding
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
      * @return Whether the onboardingSettings field is set.
      */
     @java.lang.Override
     public boolean hasOnboardingSettings() {
-      return ((bitField0_ & 0x00000002) != 0);
+      return ((bitField0_ & 0x00000020) != 0);
     }
     /**
-     * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+     * <pre>
+     * onboarding_settings are the settings for the organization's onboarding
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
      * @return The onboardingSettings.
      */
     @java.lang.Override
@@ -6593,7 +7050,11 @@ java.lang.String defaultValue) {
       return onboardingSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.getDefaultInstance() : onboardingSettings_;
     }
     /**
-     * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+     * <pre>
+     * onboarding_settings are the settings for the organization's onboarding
+     * </pre>
+     *
+     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
      */
     @java.lang.Override
     public io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettingsOrBuilder getOnboardingSettingsOrBuilder() {
@@ -6603,12 +7064,142 @@ java.lang.String defaultValue) {
     public static final int ANNOTATE_GIT_COMMITS_FIELD_NUMBER = 11;
     private boolean annotateGitCommits_ = false;
     /**
-     * <code>bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
+     * <pre>
+     * annotate_git_commits specifies whether to annotate git commits created in
+     * Gitpod workspaces with the gitpod host
+     * </pre>
+     *
+     * <code>optional bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
+     * @return Whether the annotateGitCommits field is set.
+     */
+    @java.lang.Override
+    public boolean hasAnnotateGitCommits() {
+      return ((bitField0_ & 0x00000040) != 0);
+    }
+    /**
+     * <pre>
+     * annotate_git_commits specifies whether to annotate git commits created in
+     * Gitpod workspaces with the gitpod host
+     * </pre>
+     *
+     * <code>optional bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
      * @return The annotateGitCommits.
      */
     @java.lang.Override
     public boolean getAnnotateGitCommits() {
       return annotateGitCommits_;
+    }
+
+    public static final int UPDATE_ALLOWED_WORKSPACE_CLASSES_FIELD_NUMBER = 12;
+    private boolean updateAllowedWorkspaceClasses_ = false;
+    /**
+     * <pre>
+     * update_role_restrictions specifies whether role_restrictions should be
+     * updated
+     * </pre>
+     *
+     * <code>optional bool update_allowed_workspace_classes = 12 [json_name = "updateAllowedWorkspaceClasses"];</code>
+     * @return Whether the updateAllowedWorkspaceClasses field is set.
+     */
+    @java.lang.Override
+    public boolean hasUpdateAllowedWorkspaceClasses() {
+      return ((bitField0_ & 0x00000080) != 0);
+    }
+    /**
+     * <pre>
+     * update_role_restrictions specifies whether role_restrictions should be
+     * updated
+     * </pre>
+     *
+     * <code>optional bool update_allowed_workspace_classes = 12 [json_name = "updateAllowedWorkspaceClasses"];</code>
+     * @return The updateAllowedWorkspaceClasses.
+     */
+    @java.lang.Override
+    public boolean getUpdateAllowedWorkspaceClasses() {
+      return updateAllowedWorkspaceClasses_;
+    }
+
+    public static final int UPDATE_RESTRICTED_EDITOR_NAMES_FIELD_NUMBER = 13;
+    private boolean updateRestrictedEditorNames_ = false;
+    /**
+     * <pre>
+     * Specifies whether restricted_workspace_classes should be updated
+     * </pre>
+     *
+     * <code>optional bool update_restricted_editor_names = 13 [json_name = "updateRestrictedEditorNames"];</code>
+     * @return Whether the updateRestrictedEditorNames field is set.
+     */
+    @java.lang.Override
+    public boolean hasUpdateRestrictedEditorNames() {
+      return ((bitField0_ & 0x00000100) != 0);
+    }
+    /**
+     * <pre>
+     * Specifies whether restricted_workspace_classes should be updated
+     * </pre>
+     *
+     * <code>optional bool update_restricted_editor_names = 13 [json_name = "updateRestrictedEditorNames"];</code>
+     * @return The updateRestrictedEditorNames.
+     */
+    @java.lang.Override
+    public boolean getUpdateRestrictedEditorNames() {
+      return updateRestrictedEditorNames_;
+    }
+
+    public static final int UPDATE_PINNED_EDITOR_VERSIONS_FIELD_NUMBER = 14;
+    private boolean updatePinnedEditorVersions_ = false;
+    /**
+     * <pre>
+     * Specifies whether pinned_editor_versions should be updated
+     * </pre>
+     *
+     * <code>optional bool update_pinned_editor_versions = 14 [json_name = "updatePinnedEditorVersions"];</code>
+     * @return Whether the updatePinnedEditorVersions field is set.
+     */
+    @java.lang.Override
+    public boolean hasUpdatePinnedEditorVersions() {
+      return ((bitField0_ & 0x00000200) != 0);
+    }
+    /**
+     * <pre>
+     * Specifies whether pinned_editor_versions should be updated
+     * </pre>
+     *
+     * <code>optional bool update_pinned_editor_versions = 14 [json_name = "updatePinnedEditorVersions"];</code>
+     * @return The updatePinnedEditorVersions.
+     */
+    @java.lang.Override
+    public boolean getUpdatePinnedEditorVersions() {
+      return updatePinnedEditorVersions_;
+    }
+
+    public static final int UPDATE_ROLE_RESTRICTIONS_FIELD_NUMBER = 15;
+    private boolean updateRoleRestrictions_ = false;
+    /**
+     * <pre>
+     * update_role_restrictions specifies whether role_restrictions should be
+     * updated
+     * </pre>
+     *
+     * <code>optional bool update_role_restrictions = 15 [json_name = "updateRoleRestrictions"];</code>
+     * @return Whether the updateRoleRestrictions field is set.
+     */
+    @java.lang.Override
+    public boolean hasUpdateRoleRestrictions() {
+      return ((bitField0_ & 0x00000400) != 0);
+    }
+    /**
+     * <pre>
+     * update_role_restrictions specifies whether role_restrictions should be
+     * updated
+     * </pre>
+     *
+     * <code>optional bool update_role_restrictions = 15 [json_name = "updateRoleRestrictions"];</code>
+     * @return The updateRoleRestrictions.
+     */
+    @java.lang.Override
+    public boolean getUpdateRoleRestrictions() {
+      return updateRoleRestrictions_;
     }
 
     private byte memoizedIsInitialized = -1;
@@ -6625,10 +7216,10 @@ java.lang.String defaultValue) {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (workspaceSharingDisabled_ != false) {
+      if (((bitField0_ & 0x00000001) != 0)) {
         output.writeBool(1, workspaceSharingDisabled_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(defaultWorkspaceImage_)) {
+      if (((bitField0_ & 0x00000002) != 0)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 2, defaultWorkspaceImage_);
       }
       for (int i = 0; i < allowedWorkspaceClasses_.size(); i++) {
@@ -6643,23 +7234,35 @@ java.lang.String defaultValue) {
           internalGetPinnedEditorVersions(),
           PinnedEditorVersionsDefaultEntryHolder.defaultEntry,
           5);
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(defaultRole_)) {
+      if (((bitField0_ & 0x00000004) != 0)) {
         com.google.protobuf.GeneratedMessage.writeString(output, 6, defaultRole_);
       }
-      if (((bitField0_ & 0x00000001) != 0)) {
+      if (((bitField0_ & 0x00000008) != 0)) {
         output.writeMessage(7, getTimeoutSettings());
       }
       for (int i = 0; i < roleRestrictions_.size(); i++) {
         output.writeMessage(8, roleRestrictions_.get(i));
       }
-      if (maxParallelRunningWorkspaces_ != 0) {
+      if (((bitField0_ & 0x00000010) != 0)) {
         output.writeInt32(9, maxParallelRunningWorkspaces_);
       }
-      if (((bitField0_ & 0x00000002) != 0)) {
+      if (((bitField0_ & 0x00000020) != 0)) {
         output.writeMessage(10, getOnboardingSettings());
       }
-      if (annotateGitCommits_ != false) {
+      if (((bitField0_ & 0x00000040) != 0)) {
         output.writeBool(11, annotateGitCommits_);
+      }
+      if (((bitField0_ & 0x00000080) != 0)) {
+        output.writeBool(12, updateAllowedWorkspaceClasses_);
+      }
+      if (((bitField0_ & 0x00000100) != 0)) {
+        output.writeBool(13, updateRestrictedEditorNames_);
+      }
+      if (((bitField0_ & 0x00000200) != 0)) {
+        output.writeBool(14, updatePinnedEditorVersions_);
+      }
+      if (((bitField0_ & 0x00000400) != 0)) {
+        output.writeBool(15, updateRoleRestrictions_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -6670,11 +7273,11 @@ java.lang.String defaultValue) {
       if (size != -1) return size;
 
       size = 0;
-      if (workspaceSharingDisabled_ != false) {
+      if (((bitField0_ & 0x00000001) != 0)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(1, workspaceSharingDisabled_);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(defaultWorkspaceImage_)) {
+      if (((bitField0_ & 0x00000002) != 0)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(2, defaultWorkspaceImage_);
       }
       {
@@ -6703,10 +7306,10 @@ java.lang.String defaultValue) {
         size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(5, pinnedEditorVersions__);
       }
-      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(defaultRole_)) {
+      if (((bitField0_ & 0x00000004) != 0)) {
         size += com.google.protobuf.GeneratedMessage.computeStringSize(6, defaultRole_);
       }
-      if (((bitField0_ & 0x00000001) != 0)) {
+      if (((bitField0_ & 0x00000008) != 0)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(7, getTimeoutSettings());
       }
@@ -6714,17 +7317,33 @@ java.lang.String defaultValue) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(8, roleRestrictions_.get(i));
       }
-      if (maxParallelRunningWorkspaces_ != 0) {
+      if (((bitField0_ & 0x00000010) != 0)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(9, maxParallelRunningWorkspaces_);
       }
-      if (((bitField0_ & 0x00000002) != 0)) {
+      if (((bitField0_ & 0x00000020) != 0)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(10, getOnboardingSettings());
       }
-      if (annotateGitCommits_ != false) {
+      if (((bitField0_ & 0x00000040) != 0)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(11, annotateGitCommits_);
+      }
+      if (((bitField0_ & 0x00000080) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(12, updateAllowedWorkspaceClasses_);
+      }
+      if (((bitField0_ & 0x00000100) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(13, updateRestrictedEditorNames_);
+      }
+      if (((bitField0_ & 0x00000200) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(14, updatePinnedEditorVersions_);
+      }
+      if (((bitField0_ & 0x00000400) != 0)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(15, updateRoleRestrictions_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -6741,18 +7360,27 @@ java.lang.String defaultValue) {
       }
       io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings other = (io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings) obj;
 
-      if (getWorkspaceSharingDisabled()
-          != other.getWorkspaceSharingDisabled()) return false;
-      if (!getDefaultWorkspaceImage()
-          .equals(other.getDefaultWorkspaceImage())) return false;
+      if (hasWorkspaceSharingDisabled() != other.hasWorkspaceSharingDisabled()) return false;
+      if (hasWorkspaceSharingDisabled()) {
+        if (getWorkspaceSharingDisabled()
+            != other.getWorkspaceSharingDisabled()) return false;
+      }
+      if (hasDefaultWorkspaceImage() != other.hasDefaultWorkspaceImage()) return false;
+      if (hasDefaultWorkspaceImage()) {
+        if (!getDefaultWorkspaceImage()
+            .equals(other.getDefaultWorkspaceImage())) return false;
+      }
       if (!getAllowedWorkspaceClassesList()
           .equals(other.getAllowedWorkspaceClassesList())) return false;
       if (!getRestrictedEditorNamesList()
           .equals(other.getRestrictedEditorNamesList())) return false;
       if (!internalGetPinnedEditorVersions().equals(
           other.internalGetPinnedEditorVersions())) return false;
-      if (!getDefaultRole()
-          .equals(other.getDefaultRole())) return false;
+      if (hasDefaultRole() != other.hasDefaultRole()) return false;
+      if (hasDefaultRole()) {
+        if (!getDefaultRole()
+            .equals(other.getDefaultRole())) return false;
+      }
       if (hasTimeoutSettings() != other.hasTimeoutSettings()) return false;
       if (hasTimeoutSettings()) {
         if (!getTimeoutSettings()
@@ -6760,15 +7388,41 @@ java.lang.String defaultValue) {
       }
       if (!getRoleRestrictionsList()
           .equals(other.getRoleRestrictionsList())) return false;
-      if (getMaxParallelRunningWorkspaces()
-          != other.getMaxParallelRunningWorkspaces()) return false;
+      if (hasMaxParallelRunningWorkspaces() != other.hasMaxParallelRunningWorkspaces()) return false;
+      if (hasMaxParallelRunningWorkspaces()) {
+        if (getMaxParallelRunningWorkspaces()
+            != other.getMaxParallelRunningWorkspaces()) return false;
+      }
       if (hasOnboardingSettings() != other.hasOnboardingSettings()) return false;
       if (hasOnboardingSettings()) {
         if (!getOnboardingSettings()
             .equals(other.getOnboardingSettings())) return false;
       }
-      if (getAnnotateGitCommits()
-          != other.getAnnotateGitCommits()) return false;
+      if (hasAnnotateGitCommits() != other.hasAnnotateGitCommits()) return false;
+      if (hasAnnotateGitCommits()) {
+        if (getAnnotateGitCommits()
+            != other.getAnnotateGitCommits()) return false;
+      }
+      if (hasUpdateAllowedWorkspaceClasses() != other.hasUpdateAllowedWorkspaceClasses()) return false;
+      if (hasUpdateAllowedWorkspaceClasses()) {
+        if (getUpdateAllowedWorkspaceClasses()
+            != other.getUpdateAllowedWorkspaceClasses()) return false;
+      }
+      if (hasUpdateRestrictedEditorNames() != other.hasUpdateRestrictedEditorNames()) return false;
+      if (hasUpdateRestrictedEditorNames()) {
+        if (getUpdateRestrictedEditorNames()
+            != other.getUpdateRestrictedEditorNames()) return false;
+      }
+      if (hasUpdatePinnedEditorVersions() != other.hasUpdatePinnedEditorVersions()) return false;
+      if (hasUpdatePinnedEditorVersions()) {
+        if (getUpdatePinnedEditorVersions()
+            != other.getUpdatePinnedEditorVersions()) return false;
+      }
+      if (hasUpdateRoleRestrictions() != other.hasUpdateRoleRestrictions()) return false;
+      if (hasUpdateRoleRestrictions()) {
+        if (getUpdateRoleRestrictions()
+            != other.getUpdateRoleRestrictions()) return false;
+      }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -6780,11 +7434,15 @@ java.lang.String defaultValue) {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (37 * hash) + WORKSPACE_SHARING_DISABLED_FIELD_NUMBER;
-      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-          getWorkspaceSharingDisabled());
-      hash = (37 * hash) + DEFAULT_WORKSPACE_IMAGE_FIELD_NUMBER;
-      hash = (53 * hash) + getDefaultWorkspaceImage().hashCode();
+      if (hasWorkspaceSharingDisabled()) {
+        hash = (37 * hash) + WORKSPACE_SHARING_DISABLED_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getWorkspaceSharingDisabled());
+      }
+      if (hasDefaultWorkspaceImage()) {
+        hash = (37 * hash) + DEFAULT_WORKSPACE_IMAGE_FIELD_NUMBER;
+        hash = (53 * hash) + getDefaultWorkspaceImage().hashCode();
+      }
       if (getAllowedWorkspaceClassesCount() > 0) {
         hash = (37 * hash) + ALLOWED_WORKSPACE_CLASSES_FIELD_NUMBER;
         hash = (53 * hash) + getAllowedWorkspaceClassesList().hashCode();
@@ -6797,8 +7455,10 @@ java.lang.String defaultValue) {
         hash = (37 * hash) + PINNED_EDITOR_VERSIONS_FIELD_NUMBER;
         hash = (53 * hash) + internalGetPinnedEditorVersions().hashCode();
       }
-      hash = (37 * hash) + DEFAULT_ROLE_FIELD_NUMBER;
-      hash = (53 * hash) + getDefaultRole().hashCode();
+      if (hasDefaultRole()) {
+        hash = (37 * hash) + DEFAULT_ROLE_FIELD_NUMBER;
+        hash = (53 * hash) + getDefaultRole().hashCode();
+      }
       if (hasTimeoutSettings()) {
         hash = (37 * hash) + TIMEOUT_SETTINGS_FIELD_NUMBER;
         hash = (53 * hash) + getTimeoutSettings().hashCode();
@@ -6807,15 +7467,39 @@ java.lang.String defaultValue) {
         hash = (37 * hash) + ROLE_RESTRICTIONS_FIELD_NUMBER;
         hash = (53 * hash) + getRoleRestrictionsList().hashCode();
       }
-      hash = (37 * hash) + MAX_PARALLEL_RUNNING_WORKSPACES_FIELD_NUMBER;
-      hash = (53 * hash) + getMaxParallelRunningWorkspaces();
+      if (hasMaxParallelRunningWorkspaces()) {
+        hash = (37 * hash) + MAX_PARALLEL_RUNNING_WORKSPACES_FIELD_NUMBER;
+        hash = (53 * hash) + getMaxParallelRunningWorkspaces();
+      }
       if (hasOnboardingSettings()) {
         hash = (37 * hash) + ONBOARDING_SETTINGS_FIELD_NUMBER;
         hash = (53 * hash) + getOnboardingSettings().hashCode();
       }
-      hash = (37 * hash) + ANNOTATE_GIT_COMMITS_FIELD_NUMBER;
-      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-          getAnnotateGitCommits());
+      if (hasAnnotateGitCommits()) {
+        hash = (37 * hash) + ANNOTATE_GIT_COMMITS_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getAnnotateGitCommits());
+      }
+      if (hasUpdateAllowedWorkspaceClasses()) {
+        hash = (37 * hash) + UPDATE_ALLOWED_WORKSPACE_CLASSES_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getUpdateAllowedWorkspaceClasses());
+      }
+      if (hasUpdateRestrictedEditorNames()) {
+        hash = (37 * hash) + UPDATE_RESTRICTED_EDITOR_NAMES_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getUpdateRestrictedEditorNames());
+      }
+      if (hasUpdatePinnedEditorVersions()) {
+        hash = (37 * hash) + UPDATE_PINNED_EDITOR_VERSIONS_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getUpdatePinnedEditorVersions());
+      }
+      if (hasUpdateRoleRestrictions()) {
+        hash = (37 * hash) + UPDATE_ROLE_RESTRICTIONS_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getUpdateRoleRestrictions());
+      }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -7004,6 +7688,10 @@ java.lang.String defaultValue) {
           onboardingSettingsBuilder_ = null;
         }
         annotateGitCommits_ = false;
+        updateAllowedWorkspaceClasses_ = false;
+        updateRestrictedEditorNames_ = false;
+        updatePinnedEditorVersions_ = false;
+        updateRoleRestrictions_ = false;
         return this;
       }
 
@@ -7050,11 +7738,14 @@ java.lang.String defaultValue) {
 
       private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings result) {
         int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) != 0)) {
           result.workspaceSharingDisabled_ = workspaceSharingDisabled_;
+          to_bitField0_ |= 0x00000001;
         }
         if (((from_bitField0_ & 0x00000002) != 0)) {
           result.defaultWorkspaceImage_ = defaultWorkspaceImage_;
+          to_bitField0_ |= 0x00000002;
         }
         if (((from_bitField0_ & 0x00000004) != 0)) {
           allowedWorkspaceClasses_.makeImmutable();
@@ -7070,25 +7761,43 @@ java.lang.String defaultValue) {
         }
         if (((from_bitField0_ & 0x00000020) != 0)) {
           result.defaultRole_ = defaultRole_;
+          to_bitField0_ |= 0x00000004;
         }
-        int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000040) != 0)) {
           result.timeoutSettings_ = timeoutSettingsBuilder_ == null
               ? timeoutSettings_
               : timeoutSettingsBuilder_.build();
-          to_bitField0_ |= 0x00000001;
+          to_bitField0_ |= 0x00000008;
         }
         if (((from_bitField0_ & 0x00000100) != 0)) {
           result.maxParallelRunningWorkspaces_ = maxParallelRunningWorkspaces_;
+          to_bitField0_ |= 0x00000010;
         }
         if (((from_bitField0_ & 0x00000200) != 0)) {
           result.onboardingSettings_ = onboardingSettingsBuilder_ == null
               ? onboardingSettings_
               : onboardingSettingsBuilder_.build();
-          to_bitField0_ |= 0x00000002;
+          to_bitField0_ |= 0x00000020;
         }
         if (((from_bitField0_ & 0x00000400) != 0)) {
           result.annotateGitCommits_ = annotateGitCommits_;
+          to_bitField0_ |= 0x00000040;
+        }
+        if (((from_bitField0_ & 0x00000800) != 0)) {
+          result.updateAllowedWorkspaceClasses_ = updateAllowedWorkspaceClasses_;
+          to_bitField0_ |= 0x00000080;
+        }
+        if (((from_bitField0_ & 0x00001000) != 0)) {
+          result.updateRestrictedEditorNames_ = updateRestrictedEditorNames_;
+          to_bitField0_ |= 0x00000100;
+        }
+        if (((from_bitField0_ & 0x00002000) != 0)) {
+          result.updatePinnedEditorVersions_ = updatePinnedEditorVersions_;
+          to_bitField0_ |= 0x00000200;
+        }
+        if (((from_bitField0_ & 0x00004000) != 0)) {
+          result.updateRoleRestrictions_ = updateRoleRestrictions_;
+          to_bitField0_ |= 0x00000400;
         }
         result.bitField0_ |= to_bitField0_;
       }
@@ -7105,10 +7814,10 @@ java.lang.String defaultValue) {
 
       public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings other) {
         if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.getDefaultInstance()) return this;
-        if (other.getWorkspaceSharingDisabled() != false) {
+        if (other.hasWorkspaceSharingDisabled()) {
           setWorkspaceSharingDisabled(other.getWorkspaceSharingDisabled());
         }
-        if (!other.getDefaultWorkspaceImage().isEmpty()) {
+        if (other.hasDefaultWorkspaceImage()) {
           defaultWorkspaceImage_ = other.defaultWorkspaceImage_;
           bitField0_ |= 0x00000002;
           onChanged();
@@ -7136,7 +7845,7 @@ java.lang.String defaultValue) {
         internalGetMutablePinnedEditorVersions().mergeFrom(
             other.internalGetPinnedEditorVersions());
         bitField0_ |= 0x00000010;
-        if (!other.getDefaultRole().isEmpty()) {
+        if (other.hasDefaultRole()) {
           defaultRole_ = other.defaultRole_;
           bitField0_ |= 0x00000020;
           onChanged();
@@ -7170,14 +7879,26 @@ java.lang.String defaultValue) {
             }
           }
         }
-        if (other.getMaxParallelRunningWorkspaces() != 0) {
+        if (other.hasMaxParallelRunningWorkspaces()) {
           setMaxParallelRunningWorkspaces(other.getMaxParallelRunningWorkspaces());
         }
         if (other.hasOnboardingSettings()) {
           mergeOnboardingSettings(other.getOnboardingSettings());
         }
-        if (other.getAnnotateGitCommits() != false) {
+        if (other.hasAnnotateGitCommits()) {
           setAnnotateGitCommits(other.getAnnotateGitCommits());
+        }
+        if (other.hasUpdateAllowedWorkspaceClasses()) {
+          setUpdateAllowedWorkspaceClasses(other.getUpdateAllowedWorkspaceClasses());
+        }
+        if (other.hasUpdateRestrictedEditorNames()) {
+          setUpdateRestrictedEditorNames(other.getUpdateRestrictedEditorNames());
+        }
+        if (other.hasUpdatePinnedEditorVersions()) {
+          setUpdatePinnedEditorVersions(other.getUpdatePinnedEditorVersions());
+        }
+        if (other.hasUpdateRoleRestrictions()) {
+          setUpdateRoleRestrictions(other.getUpdateRoleRestrictions());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -7278,6 +7999,26 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000400;
                 break;
               } // case 88
+              case 96: {
+                updateAllowedWorkspaceClasses_ = input.readBool();
+                bitField0_ |= 0x00000800;
+                break;
+              } // case 96
+              case 104: {
+                updateRestrictedEditorNames_ = input.readBool();
+                bitField0_ |= 0x00001000;
+                break;
+              } // case 104
+              case 112: {
+                updatePinnedEditorVersions_ = input.readBool();
+                bitField0_ |= 0x00002000;
+                break;
+              } // case 112
+              case 120: {
+                updateRoleRestrictions_ = input.readBool();
+                bitField0_ |= 0x00004000;
+                break;
+              } // case 120
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -7297,7 +8038,15 @@ java.lang.String defaultValue) {
 
       private boolean workspaceSharingDisabled_ ;
       /**
-       * <code>bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
+       * <code>optional bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
+       * @return Whether the workspaceSharingDisabled field is set.
+       */
+      @java.lang.Override
+      public boolean hasWorkspaceSharingDisabled() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <code>optional bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
        * @return The workspaceSharingDisabled.
        */
       @java.lang.Override
@@ -7305,7 +8054,7 @@ java.lang.String defaultValue) {
         return workspaceSharingDisabled_;
       }
       /**
-       * <code>bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
+       * <code>optional bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
        * @param value The workspaceSharingDisabled to set.
        * @return This builder for chaining.
        */
@@ -7317,7 +8066,7 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
+       * <code>optional bool workspace_sharing_disabled = 1 [json_name = "workspaceSharingDisabled"];</code>
        * @return This builder for chaining.
        */
       public Builder clearWorkspaceSharingDisabled() {
@@ -7329,7 +8078,22 @@ java.lang.String defaultValue) {
 
       private java.lang.Object defaultWorkspaceImage_ = "";
       /**
-       * <code>string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+       * <pre>
+       * pass empty string to reset to the installation default workspace image
+       * </pre>
+       *
+       * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+       * @return Whether the defaultWorkspaceImage field is set.
+       */
+      public boolean hasDefaultWorkspaceImage() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <pre>
+       * pass empty string to reset to the installation default workspace image
+       * </pre>
+       *
+       * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
        * @return The defaultWorkspaceImage.
        */
       public java.lang.String getDefaultWorkspaceImage() {
@@ -7345,7 +8109,11 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+       * <pre>
+       * pass empty string to reset to the installation default workspace image
+       * </pre>
+       *
+       * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
        * @return The bytes for defaultWorkspaceImage.
        */
       public com.google.protobuf.ByteString
@@ -7362,7 +8130,11 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+       * <pre>
+       * pass empty string to reset to the installation default workspace image
+       * </pre>
+       *
+       * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
        * @param value The defaultWorkspaceImage to set.
        * @return This builder for chaining.
        */
@@ -7375,7 +8147,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+       * <pre>
+       * pass empty string to reset to the installation default workspace image
+       * </pre>
+       *
+       * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
        * @return This builder for chaining.
        */
       public Builder clearDefaultWorkspaceImage() {
@@ -7385,7 +8161,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
+       * <pre>
+       * pass empty string to reset to the installation default workspace image
+       * </pre>
+       *
+       * <code>optional string default_workspace_image = 2 [json_name = "defaultWorkspaceImage"];</code>
        * @param value The bytes for defaultWorkspaceImage to set.
        * @return This builder for chaining.
        */
@@ -7408,6 +8188,13 @@ java.lang.String defaultValue) {
         bitField0_ |= 0x00000004;
       }
       /**
+       * <pre>
+       * allowed_workspace_classes are the IDs of classes, which can be used by
+       * workspaces in an organization. Pass an empty array to allow all workspace
+       * classes.
+       * Only updates if update_allowed_workspace_classes is true.
+       * </pre>
+       *
        * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
        * @return A list containing the allowedWorkspaceClasses.
        */
@@ -7417,6 +8204,13 @@ java.lang.String defaultValue) {
         return allowedWorkspaceClasses_;
       }
       /**
+       * <pre>
+       * allowed_workspace_classes are the IDs of classes, which can be used by
+       * workspaces in an organization. Pass an empty array to allow all workspace
+       * classes.
+       * Only updates if update_allowed_workspace_classes is true.
+       * </pre>
+       *
        * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
        * @return The count of allowedWorkspaceClasses.
        */
@@ -7424,6 +8218,13 @@ java.lang.String defaultValue) {
         return allowedWorkspaceClasses_.size();
       }
       /**
+       * <pre>
+       * allowed_workspace_classes are the IDs of classes, which can be used by
+       * workspaces in an organization. Pass an empty array to allow all workspace
+       * classes.
+       * Only updates if update_allowed_workspace_classes is true.
+       * </pre>
+       *
        * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
        * @param index The index of the element to return.
        * @return The allowedWorkspaceClasses at the given index.
@@ -7432,6 +8233,13 @@ java.lang.String defaultValue) {
         return allowedWorkspaceClasses_.get(index);
       }
       /**
+       * <pre>
+       * allowed_workspace_classes are the IDs of classes, which can be used by
+       * workspaces in an organization. Pass an empty array to allow all workspace
+       * classes.
+       * Only updates if update_allowed_workspace_classes is true.
+       * </pre>
+       *
        * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
        * @param index The index of the value to return.
        * @return The bytes of the allowedWorkspaceClasses at the given index.
@@ -7441,6 +8249,13 @@ java.lang.String defaultValue) {
         return allowedWorkspaceClasses_.getByteString(index);
       }
       /**
+       * <pre>
+       * allowed_workspace_classes are the IDs of classes, which can be used by
+       * workspaces in an organization. Pass an empty array to allow all workspace
+       * classes.
+       * Only updates if update_allowed_workspace_classes is true.
+       * </pre>
+       *
        * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
        * @param index The index to set the value at.
        * @param value The allowedWorkspaceClasses to set.
@@ -7456,6 +8271,13 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * allowed_workspace_classes are the IDs of classes, which can be used by
+       * workspaces in an organization. Pass an empty array to allow all workspace
+       * classes.
+       * Only updates if update_allowed_workspace_classes is true.
+       * </pre>
+       *
        * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
        * @param value The allowedWorkspaceClasses to add.
        * @return This builder for chaining.
@@ -7470,6 +8292,13 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * allowed_workspace_classes are the IDs of classes, which can be used by
+       * workspaces in an organization. Pass an empty array to allow all workspace
+       * classes.
+       * Only updates if update_allowed_workspace_classes is true.
+       * </pre>
+       *
        * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
        * @param values The allowedWorkspaceClasses to add.
        * @return This builder for chaining.
@@ -7484,6 +8313,13 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * allowed_workspace_classes are the IDs of classes, which can be used by
+       * workspaces in an organization. Pass an empty array to allow all workspace
+       * classes.
+       * Only updates if update_allowed_workspace_classes is true.
+       * </pre>
+       *
        * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
        * @return This builder for chaining.
        */
@@ -7495,6 +8331,13 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * allowed_workspace_classes are the IDs of classes, which can be used by
+       * workspaces in an organization. Pass an empty array to allow all workspace
+       * classes.
+       * Only updates if update_allowed_workspace_classes is true.
+       * </pre>
+       *
        * <code>repeated string allowed_workspace_classes = 3 [json_name = "allowedWorkspaceClasses"];</code>
        * @param value The bytes of the allowedWorkspaceClasses to add.
        * @return This builder for chaining.
@@ -7519,6 +8362,13 @@ java.lang.String defaultValue) {
         bitField0_ |= 0x00000008;
       }
       /**
+       * <pre>
+       * restricted_editor_names updates the list of restricted editor names that
+       * are not allowed to be used by workspaces in an organization. If empty, all
+       * editors are allowed.
+       * Only updates if update_restricted_editor_names is true.
+       * </pre>
+       *
        * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
        * @return A list containing the restrictedEditorNames.
        */
@@ -7528,6 +8378,13 @@ java.lang.String defaultValue) {
         return restrictedEditorNames_;
       }
       /**
+       * <pre>
+       * restricted_editor_names updates the list of restricted editor names that
+       * are not allowed to be used by workspaces in an organization. If empty, all
+       * editors are allowed.
+       * Only updates if update_restricted_editor_names is true.
+       * </pre>
+       *
        * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
        * @return The count of restrictedEditorNames.
        */
@@ -7535,6 +8392,13 @@ java.lang.String defaultValue) {
         return restrictedEditorNames_.size();
       }
       /**
+       * <pre>
+       * restricted_editor_names updates the list of restricted editor names that
+       * are not allowed to be used by workspaces in an organization. If empty, all
+       * editors are allowed.
+       * Only updates if update_restricted_editor_names is true.
+       * </pre>
+       *
        * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
        * @param index The index of the element to return.
        * @return The restrictedEditorNames at the given index.
@@ -7543,6 +8407,13 @@ java.lang.String defaultValue) {
         return restrictedEditorNames_.get(index);
       }
       /**
+       * <pre>
+       * restricted_editor_names updates the list of restricted editor names that
+       * are not allowed to be used by workspaces in an organization. If empty, all
+       * editors are allowed.
+       * Only updates if update_restricted_editor_names is true.
+       * </pre>
+       *
        * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
        * @param index The index of the value to return.
        * @return The bytes of the restrictedEditorNames at the given index.
@@ -7552,6 +8423,13 @@ java.lang.String defaultValue) {
         return restrictedEditorNames_.getByteString(index);
       }
       /**
+       * <pre>
+       * restricted_editor_names updates the list of restricted editor names that
+       * are not allowed to be used by workspaces in an organization. If empty, all
+       * editors are allowed.
+       * Only updates if update_restricted_editor_names is true.
+       * </pre>
+       *
        * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
        * @param index The index to set the value at.
        * @param value The restrictedEditorNames to set.
@@ -7567,6 +8445,13 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * restricted_editor_names updates the list of restricted editor names that
+       * are not allowed to be used by workspaces in an organization. If empty, all
+       * editors are allowed.
+       * Only updates if update_restricted_editor_names is true.
+       * </pre>
+       *
        * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
        * @param value The restrictedEditorNames to add.
        * @return This builder for chaining.
@@ -7581,6 +8466,13 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * restricted_editor_names updates the list of restricted editor names that
+       * are not allowed to be used by workspaces in an organization. If empty, all
+       * editors are allowed.
+       * Only updates if update_restricted_editor_names is true.
+       * </pre>
+       *
        * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
        * @param values The restrictedEditorNames to add.
        * @return This builder for chaining.
@@ -7595,6 +8487,13 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * restricted_editor_names updates the list of restricted editor names that
+       * are not allowed to be used by workspaces in an organization. If empty, all
+       * editors are allowed.
+       * Only updates if update_restricted_editor_names is true.
+       * </pre>
+       *
        * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
        * @return This builder for chaining.
        */
@@ -7606,6 +8505,13 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * restricted_editor_names updates the list of restricted editor names that
+       * are not allowed to be used by workspaces in an organization. If empty, all
+       * editors are allowed.
+       * Only updates if update_restricted_editor_names is true.
+       * </pre>
+       *
        * <code>repeated string restricted_editor_names = 4 [json_name = "restrictedEditorNames"];</code>
        * @param value The bytes of the restrictedEditorNames to add.
        * @return This builder for chaining.
@@ -7648,6 +8554,12 @@ java.lang.String defaultValue) {
         return internalGetPinnedEditorVersions().getMap().size();
       }
       /**
+       * <pre>
+       * pinned_editor_versions updates the pinned version for the corresponding
+       * editor.
+       * Only updates if update_pinned_editor_versions is true.
+       * </pre>
+       *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
        */
       @java.lang.Override
@@ -7665,6 +8577,12 @@ java.lang.String defaultValue) {
         return getPinnedEditorVersionsMap();
       }
       /**
+       * <pre>
+       * pinned_editor_versions updates the pinned version for the corresponding
+       * editor.
+       * Only updates if update_pinned_editor_versions is true.
+       * </pre>
+       *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
        */
       @java.lang.Override
@@ -7672,6 +8590,12 @@ java.lang.String defaultValue) {
         return internalGetPinnedEditorVersions().getMap();
       }
       /**
+       * <pre>
+       * pinned_editor_versions updates the pinned version for the corresponding
+       * editor.
+       * Only updates if update_pinned_editor_versions is true.
+       * </pre>
+       *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
        */
       @java.lang.Override
@@ -7686,6 +8610,12 @@ java.lang.String defaultValue) {
         return map.containsKey(key) ? map.get(key) : defaultValue;
       }
       /**
+       * <pre>
+       * pinned_editor_versions updates the pinned version for the corresponding
+       * editor.
+       * Only updates if update_pinned_editor_versions is true.
+       * </pre>
+       *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
        */
       @java.lang.Override
@@ -7706,6 +8636,12 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * pinned_editor_versions updates the pinned version for the corresponding
+       * editor.
+       * Only updates if update_pinned_editor_versions is true.
+       * </pre>
+       *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
        */
       public Builder removePinnedEditorVersions(
@@ -7725,6 +8661,12 @@ java.lang.String defaultValue) {
         return internalGetMutablePinnedEditorVersions().getMutableMap();
       }
       /**
+       * <pre>
+       * pinned_editor_versions updates the pinned version for the corresponding
+       * editor.
+       * Only updates if update_pinned_editor_versions is true.
+       * </pre>
+       *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
        */
       public Builder putPinnedEditorVersions(
@@ -7738,6 +8680,12 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * pinned_editor_versions updates the pinned version for the corresponding
+       * editor.
+       * Only updates if update_pinned_editor_versions is true.
+       * </pre>
+       *
        * <code>map&lt;string, string&gt; pinned_editor_versions = 5 [json_name = "pinnedEditorVersions"];</code>
        */
       public Builder putAllPinnedEditorVersions(
@@ -7750,7 +8698,22 @@ java.lang.String defaultValue) {
 
       private java.lang.Object defaultRole_ = "";
       /**
-       * <code>string default_role = 6 [json_name = "defaultRole"];</code>
+       * <pre>
+       * default_role is the default role for new members in the organization
+       * </pre>
+       *
+       * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
+       * @return Whether the defaultRole field is set.
+       */
+      public boolean hasDefaultRole() {
+        return ((bitField0_ & 0x00000020) != 0);
+      }
+      /**
+       * <pre>
+       * default_role is the default role for new members in the organization
+       * </pre>
+       *
+       * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
        * @return The defaultRole.
        */
       public java.lang.String getDefaultRole() {
@@ -7766,7 +8729,11 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>string default_role = 6 [json_name = "defaultRole"];</code>
+       * <pre>
+       * default_role is the default role for new members in the organization
+       * </pre>
+       *
+       * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
        * @return The bytes for defaultRole.
        */
       public com.google.protobuf.ByteString
@@ -7783,7 +8750,11 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>string default_role = 6 [json_name = "defaultRole"];</code>
+       * <pre>
+       * default_role is the default role for new members in the organization
+       * </pre>
+       *
+       * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
        * @param value The defaultRole to set.
        * @return This builder for chaining.
        */
@@ -7796,7 +8767,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>string default_role = 6 [json_name = "defaultRole"];</code>
+       * <pre>
+       * default_role is the default role for new members in the organization
+       * </pre>
+       *
+       * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
        * @return This builder for chaining.
        */
       public Builder clearDefaultRole() {
@@ -7806,7 +8781,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>string default_role = 6 [json_name = "defaultRole"];</code>
+       * <pre>
+       * default_role is the default role for new members in the organization
+       * </pre>
+       *
+       * <code>optional string default_role = 6 [json_name = "defaultRole"];</code>
        * @param value The bytes for defaultRole to set.
        * @return This builder for chaining.
        */
@@ -7824,14 +8803,22 @@ java.lang.String defaultValue) {
       private com.google.protobuf.SingleFieldBuilder<
           io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder> timeoutSettingsBuilder_;
       /**
-       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
        * @return Whether the timeoutSettings field is set.
        */
       public boolean hasTimeoutSettings() {
         return ((bitField0_ & 0x00000040) != 0);
       }
       /**
-       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
        * @return The timeoutSettings.
        */
       public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getTimeoutSettings() {
@@ -7842,7 +8829,11 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
        */
       public Builder setTimeoutSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings value) {
         if (timeoutSettingsBuilder_ == null) {
@@ -7858,7 +8849,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
        */
       public Builder setTimeoutSettings(
           io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder builderForValue) {
@@ -7872,7 +8867,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
        */
       public Builder mergeTimeoutSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings value) {
         if (timeoutSettingsBuilder_ == null) {
@@ -7893,7 +8892,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
        */
       public Builder clearTimeoutSettings() {
         bitField0_ = (bitField0_ & ~0x00000040);
@@ -7906,7 +8909,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
        */
       public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder getTimeoutSettingsBuilder() {
         bitField0_ |= 0x00000040;
@@ -7914,7 +8921,11 @@ java.lang.String defaultValue) {
         return getTimeoutSettingsFieldBuilder().getBuilder();
       }
       /**
-       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
        */
       public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder() {
         if (timeoutSettingsBuilder_ != null) {
@@ -7925,7 +8936,11 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>.gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
+       * <pre>
+       * timeout_settings are the settings for workspace timeouts
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 7 [json_name = "timeoutSettings"];</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder>
@@ -7954,6 +8969,10 @@ java.lang.String defaultValue) {
           io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder> roleRestrictionsBuilder_;
 
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> getRoleRestrictionsList() {
@@ -7964,6 +8983,10 @@ java.lang.String defaultValue) {
         }
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public int getRoleRestrictionsCount() {
@@ -7974,6 +8997,10 @@ java.lang.String defaultValue) {
         }
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getRoleRestrictions(int index) {
@@ -7984,6 +9011,10 @@ java.lang.String defaultValue) {
         }
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public Builder setRoleRestrictions(
@@ -8001,6 +9032,10 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public Builder setRoleRestrictions(
@@ -8015,6 +9050,10 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public Builder addRoleRestrictions(io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry value) {
@@ -8031,6 +9070,10 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public Builder addRoleRestrictions(
@@ -8048,6 +9091,10 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public Builder addRoleRestrictions(
@@ -8062,6 +9109,10 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public Builder addRoleRestrictions(
@@ -8076,6 +9127,10 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public Builder addAllRoleRestrictions(
@@ -8091,6 +9146,10 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public Builder clearRoleRestrictions() {
@@ -8104,6 +9163,10 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public Builder removeRoleRestrictions(int index) {
@@ -8117,6 +9180,10 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder getRoleRestrictionsBuilder(
@@ -8124,6 +9191,10 @@ java.lang.String defaultValue) {
         return getRoleRestrictionsFieldBuilder().getBuilder(index);
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
@@ -8134,6 +9205,10 @@ java.lang.String defaultValue) {
         }
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public java.util.List<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
@@ -8145,6 +9220,10 @@ java.lang.String defaultValue) {
         }
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder addRoleRestrictionsBuilder() {
@@ -8152,6 +9231,10 @@ java.lang.String defaultValue) {
             io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.getDefaultInstance());
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder addRoleRestrictionsBuilder(
@@ -8160,6 +9243,10 @@ java.lang.String defaultValue) {
             index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.getDefaultInstance());
       }
       /**
+       * <pre>
+       * Only updates if update_role_restrictions is true.
+       * </pre>
+       *
        * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 8 [json_name = "roleRestrictions"];</code>
        */
       public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder>
@@ -8189,7 +9276,21 @@ java.lang.String defaultValue) {
        * the org plan
        * </pre>
        *
-       * <code>int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+       * <code>optional int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+       * @return Whether the maxParallelRunningWorkspaces field is set.
+       */
+      @java.lang.Override
+      public boolean hasMaxParallelRunningWorkspaces() {
+        return ((bitField0_ & 0x00000100) != 0);
+      }
+      /**
+       * <pre>
+       * max_parallel_running_workspaces is the maximum number of workspaces that a
+       * single user can run in parallel. 0 resets to the default, which depends on
+       * the org plan
+       * </pre>
+       *
+       * <code>optional int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
        * @return The maxParallelRunningWorkspaces.
        */
       @java.lang.Override
@@ -8203,7 +9304,7 @@ java.lang.String defaultValue) {
        * the org plan
        * </pre>
        *
-       * <code>int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+       * <code>optional int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
        * @param value The maxParallelRunningWorkspaces to set.
        * @return This builder for chaining.
        */
@@ -8221,7 +9322,7 @@ java.lang.String defaultValue) {
        * the org plan
        * </pre>
        *
-       * <code>int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
+       * <code>optional int32 max_parallel_running_workspaces = 9 [json_name = "maxParallelRunningWorkspaces"];</code>
        * @return This builder for chaining.
        */
       public Builder clearMaxParallelRunningWorkspaces() {
@@ -8235,14 +9336,22 @@ java.lang.String defaultValue) {
       private com.google.protobuf.SingleFieldBuilder<
           io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettingsOrBuilder> onboardingSettingsBuilder_;
       /**
-       * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+       * <pre>
+       * onboarding_settings are the settings for the organization's onboarding
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
        * @return Whether the onboardingSettings field is set.
        */
       public boolean hasOnboardingSettings() {
         return ((bitField0_ & 0x00000200) != 0);
       }
       /**
-       * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+       * <pre>
+       * onboarding_settings are the settings for the organization's onboarding
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
        * @return The onboardingSettings.
        */
       public io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings getOnboardingSettings() {
@@ -8253,7 +9362,11 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+       * <pre>
+       * onboarding_settings are the settings for the organization's onboarding
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
        */
       public Builder setOnboardingSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings value) {
         if (onboardingSettingsBuilder_ == null) {
@@ -8269,7 +9382,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+       * <pre>
+       * onboarding_settings are the settings for the organization's onboarding
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
        */
       public Builder setOnboardingSettings(
           io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.Builder builderForValue) {
@@ -8283,7 +9400,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+       * <pre>
+       * onboarding_settings are the settings for the organization's onboarding
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
        */
       public Builder mergeOnboardingSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings value) {
         if (onboardingSettingsBuilder_ == null) {
@@ -8304,7 +9425,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+       * <pre>
+       * onboarding_settings are the settings for the organization's onboarding
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
        */
       public Builder clearOnboardingSettings() {
         bitField0_ = (bitField0_ & ~0x00000200);
@@ -8317,7 +9442,11 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+       * <pre>
+       * onboarding_settings are the settings for the organization's onboarding
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
        */
       public io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.Builder getOnboardingSettingsBuilder() {
         bitField0_ |= 0x00000200;
@@ -8325,7 +9454,11 @@ java.lang.String defaultValue) {
         return getOnboardingSettingsFieldBuilder().getBuilder();
       }
       /**
-       * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+       * <pre>
+       * onboarding_settings are the settings for the organization's onboarding
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
        */
       public io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettingsOrBuilder getOnboardingSettingsOrBuilder() {
         if (onboardingSettingsBuilder_ != null) {
@@ -8336,7 +9469,11 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>.gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
+       * <pre>
+       * onboarding_settings are the settings for the organization's onboarding
+       * </pre>
+       *
+       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 10 [json_name = "onboardingSettings"];</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettingsOrBuilder>
@@ -8354,7 +9491,25 @@ java.lang.String defaultValue) {
 
       private boolean annotateGitCommits_ ;
       /**
-       * <code>bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
+       * <pre>
+       * annotate_git_commits specifies whether to annotate git commits created in
+       * Gitpod workspaces with the gitpod host
+       * </pre>
+       *
+       * <code>optional bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
+       * @return Whether the annotateGitCommits field is set.
+       */
+      @java.lang.Override
+      public boolean hasAnnotateGitCommits() {
+        return ((bitField0_ & 0x00000400) != 0);
+      }
+      /**
+       * <pre>
+       * annotate_git_commits specifies whether to annotate git commits created in
+       * Gitpod workspaces with the gitpod host
+       * </pre>
+       *
+       * <code>optional bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
        * @return The annotateGitCommits.
        */
       @java.lang.Override
@@ -8362,7 +9517,12 @@ java.lang.String defaultValue) {
         return annotateGitCommits_;
       }
       /**
-       * <code>bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
+       * <pre>
+       * annotate_git_commits specifies whether to annotate git commits created in
+       * Gitpod workspaces with the gitpod host
+       * </pre>
+       *
+       * <code>optional bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
        * @param value The annotateGitCommits to set.
        * @return This builder for chaining.
        */
@@ -8374,12 +9534,249 @@ java.lang.String defaultValue) {
         return this;
       }
       /**
-       * <code>bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
+       * <pre>
+       * annotate_git_commits specifies whether to annotate git commits created in
+       * Gitpod workspaces with the gitpod host
+       * </pre>
+       *
+       * <code>optional bool annotate_git_commits = 11 [json_name = "annotateGitCommits"];</code>
        * @return This builder for chaining.
        */
       public Builder clearAnnotateGitCommits() {
         bitField0_ = (bitField0_ & ~0x00000400);
         annotateGitCommits_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean updateAllowedWorkspaceClasses_ ;
+      /**
+       * <pre>
+       * update_role_restrictions specifies whether role_restrictions should be
+       * updated
+       * </pre>
+       *
+       * <code>optional bool update_allowed_workspace_classes = 12 [json_name = "updateAllowedWorkspaceClasses"];</code>
+       * @return Whether the updateAllowedWorkspaceClasses field is set.
+       */
+      @java.lang.Override
+      public boolean hasUpdateAllowedWorkspaceClasses() {
+        return ((bitField0_ & 0x00000800) != 0);
+      }
+      /**
+       * <pre>
+       * update_role_restrictions specifies whether role_restrictions should be
+       * updated
+       * </pre>
+       *
+       * <code>optional bool update_allowed_workspace_classes = 12 [json_name = "updateAllowedWorkspaceClasses"];</code>
+       * @return The updateAllowedWorkspaceClasses.
+       */
+      @java.lang.Override
+      public boolean getUpdateAllowedWorkspaceClasses() {
+        return updateAllowedWorkspaceClasses_;
+      }
+      /**
+       * <pre>
+       * update_role_restrictions specifies whether role_restrictions should be
+       * updated
+       * </pre>
+       *
+       * <code>optional bool update_allowed_workspace_classes = 12 [json_name = "updateAllowedWorkspaceClasses"];</code>
+       * @param value The updateAllowedWorkspaceClasses to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUpdateAllowedWorkspaceClasses(boolean value) {
+
+        updateAllowedWorkspaceClasses_ = value;
+        bitField0_ |= 0x00000800;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * update_role_restrictions specifies whether role_restrictions should be
+       * updated
+       * </pre>
+       *
+       * <code>optional bool update_allowed_workspace_classes = 12 [json_name = "updateAllowedWorkspaceClasses"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUpdateAllowedWorkspaceClasses() {
+        bitField0_ = (bitField0_ & ~0x00000800);
+        updateAllowedWorkspaceClasses_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean updateRestrictedEditorNames_ ;
+      /**
+       * <pre>
+       * Specifies whether restricted_workspace_classes should be updated
+       * </pre>
+       *
+       * <code>optional bool update_restricted_editor_names = 13 [json_name = "updateRestrictedEditorNames"];</code>
+       * @return Whether the updateRestrictedEditorNames field is set.
+       */
+      @java.lang.Override
+      public boolean hasUpdateRestrictedEditorNames() {
+        return ((bitField0_ & 0x00001000) != 0);
+      }
+      /**
+       * <pre>
+       * Specifies whether restricted_workspace_classes should be updated
+       * </pre>
+       *
+       * <code>optional bool update_restricted_editor_names = 13 [json_name = "updateRestrictedEditorNames"];</code>
+       * @return The updateRestrictedEditorNames.
+       */
+      @java.lang.Override
+      public boolean getUpdateRestrictedEditorNames() {
+        return updateRestrictedEditorNames_;
+      }
+      /**
+       * <pre>
+       * Specifies whether restricted_workspace_classes should be updated
+       * </pre>
+       *
+       * <code>optional bool update_restricted_editor_names = 13 [json_name = "updateRestrictedEditorNames"];</code>
+       * @param value The updateRestrictedEditorNames to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUpdateRestrictedEditorNames(boolean value) {
+
+        updateRestrictedEditorNames_ = value;
+        bitField0_ |= 0x00001000;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Specifies whether restricted_workspace_classes should be updated
+       * </pre>
+       *
+       * <code>optional bool update_restricted_editor_names = 13 [json_name = "updateRestrictedEditorNames"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUpdateRestrictedEditorNames() {
+        bitField0_ = (bitField0_ & ~0x00001000);
+        updateRestrictedEditorNames_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean updatePinnedEditorVersions_ ;
+      /**
+       * <pre>
+       * Specifies whether pinned_editor_versions should be updated
+       * </pre>
+       *
+       * <code>optional bool update_pinned_editor_versions = 14 [json_name = "updatePinnedEditorVersions"];</code>
+       * @return Whether the updatePinnedEditorVersions field is set.
+       */
+      @java.lang.Override
+      public boolean hasUpdatePinnedEditorVersions() {
+        return ((bitField0_ & 0x00002000) != 0);
+      }
+      /**
+       * <pre>
+       * Specifies whether pinned_editor_versions should be updated
+       * </pre>
+       *
+       * <code>optional bool update_pinned_editor_versions = 14 [json_name = "updatePinnedEditorVersions"];</code>
+       * @return The updatePinnedEditorVersions.
+       */
+      @java.lang.Override
+      public boolean getUpdatePinnedEditorVersions() {
+        return updatePinnedEditorVersions_;
+      }
+      /**
+       * <pre>
+       * Specifies whether pinned_editor_versions should be updated
+       * </pre>
+       *
+       * <code>optional bool update_pinned_editor_versions = 14 [json_name = "updatePinnedEditorVersions"];</code>
+       * @param value The updatePinnedEditorVersions to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUpdatePinnedEditorVersions(boolean value) {
+
+        updatePinnedEditorVersions_ = value;
+        bitField0_ |= 0x00002000;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * Specifies whether pinned_editor_versions should be updated
+       * </pre>
+       *
+       * <code>optional bool update_pinned_editor_versions = 14 [json_name = "updatePinnedEditorVersions"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUpdatePinnedEditorVersions() {
+        bitField0_ = (bitField0_ & ~0x00002000);
+        updatePinnedEditorVersions_ = false;
+        onChanged();
+        return this;
+      }
+
+      private boolean updateRoleRestrictions_ ;
+      /**
+       * <pre>
+       * update_role_restrictions specifies whether role_restrictions should be
+       * updated
+       * </pre>
+       *
+       * <code>optional bool update_role_restrictions = 15 [json_name = "updateRoleRestrictions"];</code>
+       * @return Whether the updateRoleRestrictions field is set.
+       */
+      @java.lang.Override
+      public boolean hasUpdateRoleRestrictions() {
+        return ((bitField0_ & 0x00004000) != 0);
+      }
+      /**
+       * <pre>
+       * update_role_restrictions specifies whether role_restrictions should be
+       * updated
+       * </pre>
+       *
+       * <code>optional bool update_role_restrictions = 15 [json_name = "updateRoleRestrictions"];</code>
+       * @return The updateRoleRestrictions.
+       */
+      @java.lang.Override
+      public boolean getUpdateRoleRestrictions() {
+        return updateRoleRestrictions_;
+      }
+      /**
+       * <pre>
+       * update_role_restrictions specifies whether role_restrictions should be
+       * updated
+       * </pre>
+       *
+       * <code>optional bool update_role_restrictions = 15 [json_name = "updateRoleRestrictions"];</code>
+       * @param value The updateRoleRestrictions to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUpdateRoleRestrictions(boolean value) {
+
+        updateRoleRestrictions_ = value;
+        bitField0_ |= 0x00004000;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * update_role_restrictions specifies whether role_restrictions should be
+       * updated
+       * </pre>
+       *
+       * <code>optional bool update_role_restrictions = 15 [json_name = "updateRoleRestrictions"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUpdateRoleRestrictions() {
+        bitField0_ = (bitField0_ & ~0x00004000);
+        updateRoleRestrictions_ = false;
         onChanged();
         return this;
       }
@@ -12334,465 +13731,31 @@ java.lang.String defaultValue) {
         getOrganizationIdBytes();
 
     /**
-     * <code>optional bool workspace_sharing_disabled = 3 [json_name = "workspaceSharingDisabled"];</code>
-     * @return Whether the workspaceSharingDisabled field is set.
-     */
-    boolean hasWorkspaceSharingDisabled();
-    /**
-     * <code>optional bool workspace_sharing_disabled = 3 [json_name = "workspaceSharingDisabled"];</code>
-     * @return The workspaceSharingDisabled.
-     */
-    boolean getWorkspaceSharingDisabled();
-
-    /**
      * <pre>
-     * pass empty string to reset to the installation default workspace image
+     * settings to persist
      * </pre>
      *
-     * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-     * @return Whether the defaultWorkspaceImage field is set.
+     * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
+     * @return Whether the settings field is set.
      */
-    boolean hasDefaultWorkspaceImage();
+    boolean hasSettings();
     /**
      * <pre>
-     * pass empty string to reset to the installation default workspace image
+     * settings to persist
      * </pre>
      *
-     * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-     * @return The defaultWorkspaceImage.
+     * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
+     * @return The settings.
      */
-    java.lang.String getDefaultWorkspaceImage();
+    io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings getSettings();
     /**
      * <pre>
-     * pass empty string to reset to the installation default workspace image
+     * settings to persist
      * </pre>
      *
-     * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-     * @return The bytes for defaultWorkspaceImage.
+     * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
      */
-    com.google.protobuf.ByteString
-        getDefaultWorkspaceImageBytes();
-
-    /**
-     * <pre>
-     * allowed_workspace_classes are the IDs of classes, which can be used by
-     * workspaces in an organization. Pass an empty array to allow all workspace
-     * classes.
-     * Only updates if update_allowed_workspace_classes is true.
-     * </pre>
-     *
-     * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-     * @return A list containing the allowedWorkspaceClasses.
-     */
-    java.util.List<java.lang.String>
-        getAllowedWorkspaceClassesList();
-    /**
-     * <pre>
-     * allowed_workspace_classes are the IDs of classes, which can be used by
-     * workspaces in an organization. Pass an empty array to allow all workspace
-     * classes.
-     * Only updates if update_allowed_workspace_classes is true.
-     * </pre>
-     *
-     * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-     * @return The count of allowedWorkspaceClasses.
-     */
-    int getAllowedWorkspaceClassesCount();
-    /**
-     * <pre>
-     * allowed_workspace_classes are the IDs of classes, which can be used by
-     * workspaces in an organization. Pass an empty array to allow all workspace
-     * classes.
-     * Only updates if update_allowed_workspace_classes is true.
-     * </pre>
-     *
-     * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-     * @param index The index of the element to return.
-     * @return The allowedWorkspaceClasses at the given index.
-     */
-    java.lang.String getAllowedWorkspaceClasses(int index);
-    /**
-     * <pre>
-     * allowed_workspace_classes are the IDs of classes, which can be used by
-     * workspaces in an organization. Pass an empty array to allow all workspace
-     * classes.
-     * Only updates if update_allowed_workspace_classes is true.
-     * </pre>
-     *
-     * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-     * @param index The index of the value to return.
-     * @return The bytes of the allowedWorkspaceClasses at the given index.
-     */
-    com.google.protobuf.ByteString
-        getAllowedWorkspaceClassesBytes(int index);
-
-    /**
-     * <pre>
-     * restricted_editor_names updates the list of restricted editor names that
-     * are not allowed to be used by workspaces in an organization. If empty, all
-     * editors are allowed.
-     * Only updates if update_restricted_editor_names is true.
-     * </pre>
-     *
-     * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-     * @return A list containing the restrictedEditorNames.
-     */
-    java.util.List<java.lang.String>
-        getRestrictedEditorNamesList();
-    /**
-     * <pre>
-     * restricted_editor_names updates the list of restricted editor names that
-     * are not allowed to be used by workspaces in an organization. If empty, all
-     * editors are allowed.
-     * Only updates if update_restricted_editor_names is true.
-     * </pre>
-     *
-     * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-     * @return The count of restrictedEditorNames.
-     */
-    int getRestrictedEditorNamesCount();
-    /**
-     * <pre>
-     * restricted_editor_names updates the list of restricted editor names that
-     * are not allowed to be used by workspaces in an organization. If empty, all
-     * editors are allowed.
-     * Only updates if update_restricted_editor_names is true.
-     * </pre>
-     *
-     * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-     * @param index The index of the element to return.
-     * @return The restrictedEditorNames at the given index.
-     */
-    java.lang.String getRestrictedEditorNames(int index);
-    /**
-     * <pre>
-     * restricted_editor_names updates the list of restricted editor names that
-     * are not allowed to be used by workspaces in an organization. If empty, all
-     * editors are allowed.
-     * Only updates if update_restricted_editor_names is true.
-     * </pre>
-     *
-     * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-     * @param index The index of the value to return.
-     * @return The bytes of the restrictedEditorNames at the given index.
-     */
-    com.google.protobuf.ByteString
-        getRestrictedEditorNamesBytes(int index);
-
-    /**
-     * <pre>
-     * Specifies whether restricted_workspace_classes should be updated
-     * </pre>
-     *
-     * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
-     * @return Whether the updateRestrictedEditorNames field is set.
-     */
-    boolean hasUpdateRestrictedEditorNames();
-    /**
-     * <pre>
-     * Specifies whether restricted_workspace_classes should be updated
-     * </pre>
-     *
-     * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
-     * @return The updateRestrictedEditorNames.
-     */
-    boolean getUpdateRestrictedEditorNames();
-
-    /**
-     * <pre>
-     * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
-     * Only updates if update_pinned_editor_versions is true.
-     * </pre>
-     *
-     * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-     */
-    int getPinnedEditorVersionsCount();
-    /**
-     * <pre>
-     * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
-     * Only updates if update_pinned_editor_versions is true.
-     * </pre>
-     *
-     * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-     */
-    boolean containsPinnedEditorVersions(
-        java.lang.String key);
-    /**
-     * Use {@link #getPinnedEditorVersionsMap()} instead.
-     */
-    @java.lang.Deprecated
-    java.util.Map<java.lang.String, java.lang.String>
-    getPinnedEditorVersions();
-    /**
-     * <pre>
-     * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
-     * Only updates if update_pinned_editor_versions is true.
-     * </pre>
-     *
-     * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-     */
-    java.util.Map<java.lang.String, java.lang.String>
-    getPinnedEditorVersionsMap();
-    /**
-     * <pre>
-     * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
-     * Only updates if update_pinned_editor_versions is true.
-     * </pre>
-     *
-     * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-     */
-    /* nullable */
-java.lang.String getPinnedEditorVersionsOrDefault(
-        java.lang.String key,
-        /* nullable */
-java.lang.String defaultValue);
-    /**
-     * <pre>
-     * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
-     * Only updates if update_pinned_editor_versions is true.
-     * </pre>
-     *
-     * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-     */
-    java.lang.String getPinnedEditorVersionsOrThrow(
-        java.lang.String key);
-
-    /**
-     * <pre>
-     * Specifies whether pinned_editor_versions should be updated
-     * </pre>
-     *
-     * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
-     * @return Whether the updatePinnedEditorVersions field is set.
-     */
-    boolean hasUpdatePinnedEditorVersions();
-    /**
-     * <pre>
-     * Specifies whether pinned_editor_versions should be updated
-     * </pre>
-     *
-     * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
-     * @return The updatePinnedEditorVersions.
-     */
-    boolean getUpdatePinnedEditorVersions();
-
-    /**
-     * <pre>
-     * default_role is the default role for new members in the organization
-     * </pre>
-     *
-     * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-     * @return Whether the defaultRole field is set.
-     */
-    boolean hasDefaultRole();
-    /**
-     * <pre>
-     * default_role is the default role for new members in the organization
-     * </pre>
-     *
-     * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-     * @return The defaultRole.
-     */
-    java.lang.String getDefaultRole();
-    /**
-     * <pre>
-     * default_role is the default role for new members in the organization
-     * </pre>
-     *
-     * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-     * @return The bytes for defaultRole.
-     */
-    com.google.protobuf.ByteString
-        getDefaultRoleBytes();
-
-    /**
-     * <pre>
-     * timeout_settings are the settings for workspace timeouts
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-     * @return Whether the timeoutSettings field is set.
-     */
-    boolean hasTimeoutSettings();
-    /**
-     * <pre>
-     * timeout_settings are the settings for workspace timeouts
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-     * @return The timeoutSettings.
-     */
-    io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getTimeoutSettings();
-    /**
-     * <pre>
-     * timeout_settings are the settings for workspace timeouts
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-     */
-    io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder();
-
-    /**
-     * <pre>
-     * Only updates if update_role_restrictions is true.
-     * </pre>
-     *
-     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-     */
-    java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry>
-        getRoleRestrictionsList();
-    /**
-     * <pre>
-     * Only updates if update_role_restrictions is true.
-     * </pre>
-     *
-     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-     */
-    io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getRoleRestrictions(int index);
-    /**
-     * <pre>
-     * Only updates if update_role_restrictions is true.
-     * </pre>
-     *
-     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-     */
-    int getRoleRestrictionsCount();
-    /**
-     * <pre>
-     * Only updates if update_role_restrictions is true.
-     * </pre>
-     *
-     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-     */
-    java.util.List<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
-        getRoleRestrictionsOrBuilderList();
-    /**
-     * <pre>
-     * Only updates if update_role_restrictions is true.
-     * </pre>
-     *
-     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-     */
-    io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
-        int index);
-
-    /**
-     * <pre>
-     * update_role_restrictions specifies whether role_restrictions should be
-     * updated
-     * </pre>
-     *
-     * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
-     * @return Whether the updateRoleRestrictions field is set.
-     */
-    boolean hasUpdateRoleRestrictions();
-    /**
-     * <pre>
-     * update_role_restrictions specifies whether role_restrictions should be
-     * updated
-     * </pre>
-     *
-     * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
-     * @return The updateRoleRestrictions.
-     */
-    boolean getUpdateRoleRestrictions();
-
-    /**
-     * <pre>
-     * max_parallel_running_workspaces is the maximum number of workspaces that a
-     * single user can run in parallel. 0 resets to the default, which depends on
-     * the org plan
-     * </pre>
-     *
-     * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
-     * @return Whether the maxParallelRunningWorkspaces field is set.
-     */
-    boolean hasMaxParallelRunningWorkspaces();
-    /**
-     * <pre>
-     * max_parallel_running_workspaces is the maximum number of workspaces that a
-     * single user can run in parallel. 0 resets to the default, which depends on
-     * the org plan
-     * </pre>
-     *
-     * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
-     * @return The maxParallelRunningWorkspaces.
-     */
-    int getMaxParallelRunningWorkspaces();
-
-    /**
-     * <pre>
-     * onboarding_settings are the settings for the organization's onboarding
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-     * @return Whether the onboardingSettings field is set.
-     */
-    boolean hasOnboardingSettings();
-    /**
-     * <pre>
-     * onboarding_settings are the settings for the organization's onboarding
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-     * @return The onboardingSettings.
-     */
-    io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings getOnboardingSettings();
-    /**
-     * <pre>
-     * onboarding_settings are the settings for the organization's onboarding
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-     */
-    io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettingsOrBuilder getOnboardingSettingsOrBuilder();
-
-    /**
-     * <pre>
-     * annotate_git_commits specifies whether to annotate git commits created in
-     * Gitpod workspaces with the gitpod host
-     * </pre>
-     *
-     * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
-     * @return Whether the annotateGitCommits field is set.
-     */
-    boolean hasAnnotateGitCommits();
-    /**
-     * <pre>
-     * annotate_git_commits specifies whether to annotate git commits created in
-     * Gitpod workspaces with the gitpod host
-     * </pre>
-     *
-     * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
-     * @return The annotateGitCommits.
-     */
-    boolean getAnnotateGitCommits();
-
-    /**
-     * <pre>
-     * update_role_restrictions specifies whether role_restrictions should be
-     * updated
-     * </pre>
-     *
-     * <code>optional bool update_allowed_workspace_classes = 18 [json_name = "updateAllowedWorkspaceClasses"];</code>
-     * @return Whether the updateAllowedWorkspaceClasses field is set.
-     */
-    boolean hasUpdateAllowedWorkspaceClasses();
-    /**
-     * <pre>
-     * update_role_restrictions specifies whether role_restrictions should be
-     * updated
-     * </pre>
-     *
-     * <code>optional bool update_allowed_workspace_classes = 18 [json_name = "updateAllowedWorkspaceClasses"];</code>
-     * @return The updateAllowedWorkspaceClasses.
-     */
-    boolean getUpdateAllowedWorkspaceClasses();
+    io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettingsOrBuilder getSettingsOrBuilder();
   }
   /**
    * Protobuf type {@code gitpod.v1.UpdateOrganizationSettingsRequest}
@@ -12817,13 +13780,6 @@ java.lang.String defaultValue);
     }
     private UpdateOrganizationSettingsRequest() {
       organizationId_ = "";
-      defaultWorkspaceImage_ = "";
-      allowedWorkspaceClasses_ =
-          com.google.protobuf.LazyStringArrayList.emptyList();
-      restrictedEditorNames_ =
-          com.google.protobuf.LazyStringArrayList.emptyList();
-      defaultRole_ = "";
-      roleRestrictions_ = java.util.Collections.emptyList();
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -12831,18 +13787,6 @@ java.lang.String defaultValue);
       return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor;
     }
 
-    @SuppressWarnings({"rawtypes"})
-    @java.lang.Override
-    protected com.google.protobuf.MapFieldReflectionAccessor internalGetMapFieldReflection(
-        int number) {
-      switch (number) {
-        case 8:
-          return internalGetPinnedEditorVersions();
-        default:
-          throw new RuntimeException(
-              "Invalid map field number: " + number);
-      }
-    }
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
@@ -12899,683 +13843,42 @@ java.lang.String defaultValue);
       }
     }
 
-    public static final int WORKSPACE_SHARING_DISABLED_FIELD_NUMBER = 3;
-    private boolean workspaceSharingDisabled_ = false;
+    public static final int SETTINGS_FIELD_NUMBER = 19;
+    private io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings settings_;
     /**
-     * <code>optional bool workspace_sharing_disabled = 3 [json_name = "workspaceSharingDisabled"];</code>
-     * @return Whether the workspaceSharingDisabled field is set.
+     * <pre>
+     * settings to persist
+     * </pre>
+     *
+     * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
+     * @return Whether the settings field is set.
      */
     @java.lang.Override
-    public boolean hasWorkspaceSharingDisabled() {
+    public boolean hasSettings() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
-     * <code>optional bool workspace_sharing_disabled = 3 [json_name = "workspaceSharingDisabled"];</code>
-     * @return The workspaceSharingDisabled.
+     * <pre>
+     * settings to persist
+     * </pre>
+     *
+     * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
+     * @return The settings.
      */
     @java.lang.Override
-    public boolean getWorkspaceSharingDisabled() {
-      return workspaceSharingDisabled_;
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings getSettings() {
+      return settings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.getDefaultInstance() : settings_;
     }
-
-    public static final int DEFAULT_WORKSPACE_IMAGE_FIELD_NUMBER = 4;
-    @SuppressWarnings("serial")
-    private volatile java.lang.Object defaultWorkspaceImage_ = "";
     /**
      * <pre>
-     * pass empty string to reset to the installation default workspace image
+     * settings to persist
      * </pre>
      *
-     * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-     * @return Whether the defaultWorkspaceImage field is set.
+     * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
      */
     @java.lang.Override
-    public boolean hasDefaultWorkspaceImage() {
-      return ((bitField0_ & 0x00000002) != 0);
-    }
-    /**
-     * <pre>
-     * pass empty string to reset to the installation default workspace image
-     * </pre>
-     *
-     * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-     * @return The defaultWorkspaceImage.
-     */
-    @java.lang.Override
-    public java.lang.String getDefaultWorkspaceImage() {
-      java.lang.Object ref = defaultWorkspaceImage_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        defaultWorkspaceImage_ = s;
-        return s;
-      }
-    }
-    /**
-     * <pre>
-     * pass empty string to reset to the installation default workspace image
-     * </pre>
-     *
-     * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-     * @return The bytes for defaultWorkspaceImage.
-     */
-    @java.lang.Override
-    public com.google.protobuf.ByteString
-        getDefaultWorkspaceImageBytes() {
-      java.lang.Object ref = defaultWorkspaceImage_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b =
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        defaultWorkspaceImage_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    public static final int ALLOWED_WORKSPACE_CLASSES_FIELD_NUMBER = 5;
-    @SuppressWarnings("serial")
-    private com.google.protobuf.LazyStringArrayList allowedWorkspaceClasses_ =
-        com.google.protobuf.LazyStringArrayList.emptyList();
-    /**
-     * <pre>
-     * allowed_workspace_classes are the IDs of classes, which can be used by
-     * workspaces in an organization. Pass an empty array to allow all workspace
-     * classes.
-     * Only updates if update_allowed_workspace_classes is true.
-     * </pre>
-     *
-     * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-     * @return A list containing the allowedWorkspaceClasses.
-     */
-    public com.google.protobuf.ProtocolStringList
-        getAllowedWorkspaceClassesList() {
-      return allowedWorkspaceClasses_;
-    }
-    /**
-     * <pre>
-     * allowed_workspace_classes are the IDs of classes, which can be used by
-     * workspaces in an organization. Pass an empty array to allow all workspace
-     * classes.
-     * Only updates if update_allowed_workspace_classes is true.
-     * </pre>
-     *
-     * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-     * @return The count of allowedWorkspaceClasses.
-     */
-    public int getAllowedWorkspaceClassesCount() {
-      return allowedWorkspaceClasses_.size();
-    }
-    /**
-     * <pre>
-     * allowed_workspace_classes are the IDs of classes, which can be used by
-     * workspaces in an organization. Pass an empty array to allow all workspace
-     * classes.
-     * Only updates if update_allowed_workspace_classes is true.
-     * </pre>
-     *
-     * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-     * @param index The index of the element to return.
-     * @return The allowedWorkspaceClasses at the given index.
-     */
-    public java.lang.String getAllowedWorkspaceClasses(int index) {
-      return allowedWorkspaceClasses_.get(index);
-    }
-    /**
-     * <pre>
-     * allowed_workspace_classes are the IDs of classes, which can be used by
-     * workspaces in an organization. Pass an empty array to allow all workspace
-     * classes.
-     * Only updates if update_allowed_workspace_classes is true.
-     * </pre>
-     *
-     * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-     * @param index The index of the value to return.
-     * @return The bytes of the allowedWorkspaceClasses at the given index.
-     */
-    public com.google.protobuf.ByteString
-        getAllowedWorkspaceClassesBytes(int index) {
-      return allowedWorkspaceClasses_.getByteString(index);
-    }
-
-    public static final int RESTRICTED_EDITOR_NAMES_FIELD_NUMBER = 6;
-    @SuppressWarnings("serial")
-    private com.google.protobuf.LazyStringArrayList restrictedEditorNames_ =
-        com.google.protobuf.LazyStringArrayList.emptyList();
-    /**
-     * <pre>
-     * restricted_editor_names updates the list of restricted editor names that
-     * are not allowed to be used by workspaces in an organization. If empty, all
-     * editors are allowed.
-     * Only updates if update_restricted_editor_names is true.
-     * </pre>
-     *
-     * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-     * @return A list containing the restrictedEditorNames.
-     */
-    public com.google.protobuf.ProtocolStringList
-        getRestrictedEditorNamesList() {
-      return restrictedEditorNames_;
-    }
-    /**
-     * <pre>
-     * restricted_editor_names updates the list of restricted editor names that
-     * are not allowed to be used by workspaces in an organization. If empty, all
-     * editors are allowed.
-     * Only updates if update_restricted_editor_names is true.
-     * </pre>
-     *
-     * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-     * @return The count of restrictedEditorNames.
-     */
-    public int getRestrictedEditorNamesCount() {
-      return restrictedEditorNames_.size();
-    }
-    /**
-     * <pre>
-     * restricted_editor_names updates the list of restricted editor names that
-     * are not allowed to be used by workspaces in an organization. If empty, all
-     * editors are allowed.
-     * Only updates if update_restricted_editor_names is true.
-     * </pre>
-     *
-     * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-     * @param index The index of the element to return.
-     * @return The restrictedEditorNames at the given index.
-     */
-    public java.lang.String getRestrictedEditorNames(int index) {
-      return restrictedEditorNames_.get(index);
-    }
-    /**
-     * <pre>
-     * restricted_editor_names updates the list of restricted editor names that
-     * are not allowed to be used by workspaces in an organization. If empty, all
-     * editors are allowed.
-     * Only updates if update_restricted_editor_names is true.
-     * </pre>
-     *
-     * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-     * @param index The index of the value to return.
-     * @return The bytes of the restrictedEditorNames at the given index.
-     */
-    public com.google.protobuf.ByteString
-        getRestrictedEditorNamesBytes(int index) {
-      return restrictedEditorNames_.getByteString(index);
-    }
-
-    public static final int UPDATE_RESTRICTED_EDITOR_NAMES_FIELD_NUMBER = 7;
-    private boolean updateRestrictedEditorNames_ = false;
-    /**
-     * <pre>
-     * Specifies whether restricted_workspace_classes should be updated
-     * </pre>
-     *
-     * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
-     * @return Whether the updateRestrictedEditorNames field is set.
-     */
-    @java.lang.Override
-    public boolean hasUpdateRestrictedEditorNames() {
-      return ((bitField0_ & 0x00000004) != 0);
-    }
-    /**
-     * <pre>
-     * Specifies whether restricted_workspace_classes should be updated
-     * </pre>
-     *
-     * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
-     * @return The updateRestrictedEditorNames.
-     */
-    @java.lang.Override
-    public boolean getUpdateRestrictedEditorNames() {
-      return updateRestrictedEditorNames_;
-    }
-
-    public static final int PINNED_EDITOR_VERSIONS_FIELD_NUMBER = 8;
-    private static final class PinnedEditorVersionsDefaultEntryHolder {
-      static final com.google.protobuf.MapEntry<
-          java.lang.String, java.lang.String> defaultEntry =
-              com.google.protobuf.MapEntry
-              .<java.lang.String, java.lang.String>newDefaultInstance(
-                  io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_descriptor,
-                  com.google.protobuf.WireFormat.FieldType.STRING,
-                  "",
-                  com.google.protobuf.WireFormat.FieldType.STRING,
-                  "");
-    }
-    @SuppressWarnings("serial")
-    private com.google.protobuf.MapField<
-        java.lang.String, java.lang.String> pinnedEditorVersions_;
-    private com.google.protobuf.MapField<java.lang.String, java.lang.String>
-    internalGetPinnedEditorVersions() {
-      if (pinnedEditorVersions_ == null) {
-        return com.google.protobuf.MapField.emptyMapField(
-            PinnedEditorVersionsDefaultEntryHolder.defaultEntry);
-      }
-      return pinnedEditorVersions_;
-    }
-    public int getPinnedEditorVersionsCount() {
-      return internalGetPinnedEditorVersions().getMap().size();
-    }
-    /**
-     * <pre>
-     * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
-     * Only updates if update_pinned_editor_versions is true.
-     * </pre>
-     *
-     * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-     */
-    @java.lang.Override
-    public boolean containsPinnedEditorVersions(
-        java.lang.String key) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      return internalGetPinnedEditorVersions().getMap().containsKey(key);
-    }
-    /**
-     * Use {@link #getPinnedEditorVersionsMap()} instead.
-     */
-    @java.lang.Override
-    @java.lang.Deprecated
-    public java.util.Map<java.lang.String, java.lang.String> getPinnedEditorVersions() {
-      return getPinnedEditorVersionsMap();
-    }
-    /**
-     * <pre>
-     * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
-     * Only updates if update_pinned_editor_versions is true.
-     * </pre>
-     *
-     * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-     */
-    @java.lang.Override
-    public java.util.Map<java.lang.String, java.lang.String> getPinnedEditorVersionsMap() {
-      return internalGetPinnedEditorVersions().getMap();
-    }
-    /**
-     * <pre>
-     * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
-     * Only updates if update_pinned_editor_versions is true.
-     * </pre>
-     *
-     * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-     */
-    @java.lang.Override
-    public /* nullable */
-java.lang.String getPinnedEditorVersionsOrDefault(
-        java.lang.String key,
-        /* nullable */
-java.lang.String defaultValue) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      java.util.Map<java.lang.String, java.lang.String> map =
-          internalGetPinnedEditorVersions().getMap();
-      return map.containsKey(key) ? map.get(key) : defaultValue;
-    }
-    /**
-     * <pre>
-     * pinned_editor_versions updates the pinned version for the corresponding
-     * editor.
-     * Only updates if update_pinned_editor_versions is true.
-     * </pre>
-     *
-     * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-     */
-    @java.lang.Override
-    public java.lang.String getPinnedEditorVersionsOrThrow(
-        java.lang.String key) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      java.util.Map<java.lang.String, java.lang.String> map =
-          internalGetPinnedEditorVersions().getMap();
-      if (!map.containsKey(key)) {
-        throw new java.lang.IllegalArgumentException();
-      }
-      return map.get(key);
-    }
-
-    public static final int UPDATE_PINNED_EDITOR_VERSIONS_FIELD_NUMBER = 9;
-    private boolean updatePinnedEditorVersions_ = false;
-    /**
-     * <pre>
-     * Specifies whether pinned_editor_versions should be updated
-     * </pre>
-     *
-     * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
-     * @return Whether the updatePinnedEditorVersions field is set.
-     */
-    @java.lang.Override
-    public boolean hasUpdatePinnedEditorVersions() {
-      return ((bitField0_ & 0x00000008) != 0);
-    }
-    /**
-     * <pre>
-     * Specifies whether pinned_editor_versions should be updated
-     * </pre>
-     *
-     * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
-     * @return The updatePinnedEditorVersions.
-     */
-    @java.lang.Override
-    public boolean getUpdatePinnedEditorVersions() {
-      return updatePinnedEditorVersions_;
-    }
-
-    public static final int DEFAULT_ROLE_FIELD_NUMBER = 10;
-    @SuppressWarnings("serial")
-    private volatile java.lang.Object defaultRole_ = "";
-    /**
-     * <pre>
-     * default_role is the default role for new members in the organization
-     * </pre>
-     *
-     * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-     * @return Whether the defaultRole field is set.
-     */
-    @java.lang.Override
-    public boolean hasDefaultRole() {
-      return ((bitField0_ & 0x00000010) != 0);
-    }
-    /**
-     * <pre>
-     * default_role is the default role for new members in the organization
-     * </pre>
-     *
-     * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-     * @return The defaultRole.
-     */
-    @java.lang.Override
-    public java.lang.String getDefaultRole() {
-      java.lang.Object ref = defaultRole_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        defaultRole_ = s;
-        return s;
-      }
-    }
-    /**
-     * <pre>
-     * default_role is the default role for new members in the organization
-     * </pre>
-     *
-     * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-     * @return The bytes for defaultRole.
-     */
-    @java.lang.Override
-    public com.google.protobuf.ByteString
-        getDefaultRoleBytes() {
-      java.lang.Object ref = defaultRole_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b =
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        defaultRole_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    public static final int TIMEOUT_SETTINGS_FIELD_NUMBER = 11;
-    private io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings timeoutSettings_;
-    /**
-     * <pre>
-     * timeout_settings are the settings for workspace timeouts
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-     * @return Whether the timeoutSettings field is set.
-     */
-    @java.lang.Override
-    public boolean hasTimeoutSettings() {
-      return ((bitField0_ & 0x00000020) != 0);
-    }
-    /**
-     * <pre>
-     * timeout_settings are the settings for workspace timeouts
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-     * @return The timeoutSettings.
-     */
-    @java.lang.Override
-    public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getTimeoutSettings() {
-      return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
-    }
-    /**
-     * <pre>
-     * timeout_settings are the settings for workspace timeouts
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-     */
-    @java.lang.Override
-    public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder() {
-      return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
-    }
-
-    public static final int ROLE_RESTRICTIONS_FIELD_NUMBER = 12;
-    @SuppressWarnings("serial")
-    private java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> roleRestrictions_;
-    /**
-     * <pre>
-     * Only updates if update_role_restrictions is true.
-     * </pre>
-     *
-     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-     */
-    @java.lang.Override
-    public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> getRoleRestrictionsList() {
-      return roleRestrictions_;
-    }
-    /**
-     * <pre>
-     * Only updates if update_role_restrictions is true.
-     * </pre>
-     *
-     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-     */
-    @java.lang.Override
-    public java.util.List<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
-        getRoleRestrictionsOrBuilderList() {
-      return roleRestrictions_;
-    }
-    /**
-     * <pre>
-     * Only updates if update_role_restrictions is true.
-     * </pre>
-     *
-     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-     */
-    @java.lang.Override
-    public int getRoleRestrictionsCount() {
-      return roleRestrictions_.size();
-    }
-    /**
-     * <pre>
-     * Only updates if update_role_restrictions is true.
-     * </pre>
-     *
-     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-     */
-    @java.lang.Override
-    public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getRoleRestrictions(int index) {
-      return roleRestrictions_.get(index);
-    }
-    /**
-     * <pre>
-     * Only updates if update_role_restrictions is true.
-     * </pre>
-     *
-     * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-     */
-    @java.lang.Override
-    public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
-        int index) {
-      return roleRestrictions_.get(index);
-    }
-
-    public static final int UPDATE_ROLE_RESTRICTIONS_FIELD_NUMBER = 13;
-    private boolean updateRoleRestrictions_ = false;
-    /**
-     * <pre>
-     * update_role_restrictions specifies whether role_restrictions should be
-     * updated
-     * </pre>
-     *
-     * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
-     * @return Whether the updateRoleRestrictions field is set.
-     */
-    @java.lang.Override
-    public boolean hasUpdateRoleRestrictions() {
-      return ((bitField0_ & 0x00000040) != 0);
-    }
-    /**
-     * <pre>
-     * update_role_restrictions specifies whether role_restrictions should be
-     * updated
-     * </pre>
-     *
-     * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
-     * @return The updateRoleRestrictions.
-     */
-    @java.lang.Override
-    public boolean getUpdateRoleRestrictions() {
-      return updateRoleRestrictions_;
-    }
-
-    public static final int MAX_PARALLEL_RUNNING_WORKSPACES_FIELD_NUMBER = 15;
-    private int maxParallelRunningWorkspaces_ = 0;
-    /**
-     * <pre>
-     * max_parallel_running_workspaces is the maximum number of workspaces that a
-     * single user can run in parallel. 0 resets to the default, which depends on
-     * the org plan
-     * </pre>
-     *
-     * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
-     * @return Whether the maxParallelRunningWorkspaces field is set.
-     */
-    @java.lang.Override
-    public boolean hasMaxParallelRunningWorkspaces() {
-      return ((bitField0_ & 0x00000080) != 0);
-    }
-    /**
-     * <pre>
-     * max_parallel_running_workspaces is the maximum number of workspaces that a
-     * single user can run in parallel. 0 resets to the default, which depends on
-     * the org plan
-     * </pre>
-     *
-     * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
-     * @return The maxParallelRunningWorkspaces.
-     */
-    @java.lang.Override
-    public int getMaxParallelRunningWorkspaces() {
-      return maxParallelRunningWorkspaces_;
-    }
-
-    public static final int ONBOARDING_SETTINGS_FIELD_NUMBER = 16;
-    private io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings onboardingSettings_;
-    /**
-     * <pre>
-     * onboarding_settings are the settings for the organization's onboarding
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-     * @return Whether the onboardingSettings field is set.
-     */
-    @java.lang.Override
-    public boolean hasOnboardingSettings() {
-      return ((bitField0_ & 0x00000100) != 0);
-    }
-    /**
-     * <pre>
-     * onboarding_settings are the settings for the organization's onboarding
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-     * @return The onboardingSettings.
-     */
-    @java.lang.Override
-    public io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings getOnboardingSettings() {
-      return onboardingSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.getDefaultInstance() : onboardingSettings_;
-    }
-    /**
-     * <pre>
-     * onboarding_settings are the settings for the organization's onboarding
-     * </pre>
-     *
-     * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-     */
-    @java.lang.Override
-    public io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettingsOrBuilder getOnboardingSettingsOrBuilder() {
-      return onboardingSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.getDefaultInstance() : onboardingSettings_;
-    }
-
-    public static final int ANNOTATE_GIT_COMMITS_FIELD_NUMBER = 17;
-    private boolean annotateGitCommits_ = false;
-    /**
-     * <pre>
-     * annotate_git_commits specifies whether to annotate git commits created in
-     * Gitpod workspaces with the gitpod host
-     * </pre>
-     *
-     * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
-     * @return Whether the annotateGitCommits field is set.
-     */
-    @java.lang.Override
-    public boolean hasAnnotateGitCommits() {
-      return ((bitField0_ & 0x00000200) != 0);
-    }
-    /**
-     * <pre>
-     * annotate_git_commits specifies whether to annotate git commits created in
-     * Gitpod workspaces with the gitpod host
-     * </pre>
-     *
-     * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
-     * @return The annotateGitCommits.
-     */
-    @java.lang.Override
-    public boolean getAnnotateGitCommits() {
-      return annotateGitCommits_;
-    }
-
-    public static final int UPDATE_ALLOWED_WORKSPACE_CLASSES_FIELD_NUMBER = 18;
-    private boolean updateAllowedWorkspaceClasses_ = false;
-    /**
-     * <pre>
-     * update_role_restrictions specifies whether role_restrictions should be
-     * updated
-     * </pre>
-     *
-     * <code>optional bool update_allowed_workspace_classes = 18 [json_name = "updateAllowedWorkspaceClasses"];</code>
-     * @return Whether the updateAllowedWorkspaceClasses field is set.
-     */
-    @java.lang.Override
-    public boolean hasUpdateAllowedWorkspaceClasses() {
-      return ((bitField0_ & 0x00000400) != 0);
-    }
-    /**
-     * <pre>
-     * update_role_restrictions specifies whether role_restrictions should be
-     * updated
-     * </pre>
-     *
-     * <code>optional bool update_allowed_workspace_classes = 18 [json_name = "updateAllowedWorkspaceClasses"];</code>
-     * @return The updateAllowedWorkspaceClasses.
-     */
-    @java.lang.Override
-    public boolean getUpdateAllowedWorkspaceClasses() {
-      return updateAllowedWorkspaceClasses_;
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettingsOrBuilder getSettingsOrBuilder() {
+      return settings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.getDefaultInstance() : settings_;
     }
 
     private byte memoizedIsInitialized = -1;
@@ -13596,52 +13899,7 @@ java.lang.String defaultValue) {
         com.google.protobuf.GeneratedMessage.writeString(output, 1, organizationId_);
       }
       if (((bitField0_ & 0x00000001) != 0)) {
-        output.writeBool(3, workspaceSharingDisabled_);
-      }
-      if (((bitField0_ & 0x00000002) != 0)) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 4, defaultWorkspaceImage_);
-      }
-      for (int i = 0; i < allowedWorkspaceClasses_.size(); i++) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 5, allowedWorkspaceClasses_.getRaw(i));
-      }
-      for (int i = 0; i < restrictedEditorNames_.size(); i++) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 6, restrictedEditorNames_.getRaw(i));
-      }
-      if (((bitField0_ & 0x00000004) != 0)) {
-        output.writeBool(7, updateRestrictedEditorNames_);
-      }
-      com.google.protobuf.GeneratedMessage
-        .serializeStringMapTo(
-          output,
-          internalGetPinnedEditorVersions(),
-          PinnedEditorVersionsDefaultEntryHolder.defaultEntry,
-          8);
-      if (((bitField0_ & 0x00000008) != 0)) {
-        output.writeBool(9, updatePinnedEditorVersions_);
-      }
-      if (((bitField0_ & 0x00000010) != 0)) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 10, defaultRole_);
-      }
-      if (((bitField0_ & 0x00000020) != 0)) {
-        output.writeMessage(11, getTimeoutSettings());
-      }
-      for (int i = 0; i < roleRestrictions_.size(); i++) {
-        output.writeMessage(12, roleRestrictions_.get(i));
-      }
-      if (((bitField0_ & 0x00000040) != 0)) {
-        output.writeBool(13, updateRoleRestrictions_);
-      }
-      if (((bitField0_ & 0x00000080) != 0)) {
-        output.writeInt32(15, maxParallelRunningWorkspaces_);
-      }
-      if (((bitField0_ & 0x00000100) != 0)) {
-        output.writeMessage(16, getOnboardingSettings());
-      }
-      if (((bitField0_ & 0x00000200) != 0)) {
-        output.writeBool(17, annotateGitCommits_);
-      }
-      if (((bitField0_ & 0x00000400) != 0)) {
-        output.writeBool(18, updateAllowedWorkspaceClasses_);
+        output.writeMessage(19, getSettings());
       }
       getUnknownFields().writeTo(output);
     }
@@ -13657,75 +13915,7 @@ java.lang.String defaultValue) {
       }
       if (((bitField0_ & 0x00000001) != 0)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(3, workspaceSharingDisabled_);
-      }
-      if (((bitField0_ & 0x00000002) != 0)) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(4, defaultWorkspaceImage_);
-      }
-      {
-        int dataSize = 0;
-        for (int i = 0; i < allowedWorkspaceClasses_.size(); i++) {
-          dataSize += computeStringSizeNoTag(allowedWorkspaceClasses_.getRaw(i));
-        }
-        size += dataSize;
-        size += 1 * getAllowedWorkspaceClassesList().size();
-      }
-      {
-        int dataSize = 0;
-        for (int i = 0; i < restrictedEditorNames_.size(); i++) {
-          dataSize += computeStringSizeNoTag(restrictedEditorNames_.getRaw(i));
-        }
-        size += dataSize;
-        size += 1 * getRestrictedEditorNamesList().size();
-      }
-      if (((bitField0_ & 0x00000004) != 0)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(7, updateRestrictedEditorNames_);
-      }
-      for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
-           : internalGetPinnedEditorVersions().getMap().entrySet()) {
-        com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
-        pinnedEditorVersions__ = PinnedEditorVersionsDefaultEntryHolder.defaultEntry.newBuilderForType()
-            .setKey(entry.getKey())
-            .setValue(entry.getValue())
-            .build();
-        size += com.google.protobuf.CodedOutputStream
-            .computeMessageSize(8, pinnedEditorVersions__);
-      }
-      if (((bitField0_ & 0x00000008) != 0)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(9, updatePinnedEditorVersions_);
-      }
-      if (((bitField0_ & 0x00000010) != 0)) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(10, defaultRole_);
-      }
-      if (((bitField0_ & 0x00000020) != 0)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(11, getTimeoutSettings());
-      }
-      for (int i = 0; i < roleRestrictions_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(12, roleRestrictions_.get(i));
-      }
-      if (((bitField0_ & 0x00000040) != 0)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(13, updateRoleRestrictions_);
-      }
-      if (((bitField0_ & 0x00000080) != 0)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(15, maxParallelRunningWorkspaces_);
-      }
-      if (((bitField0_ & 0x00000100) != 0)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(16, getOnboardingSettings());
-      }
-      if (((bitField0_ & 0x00000200) != 0)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(17, annotateGitCommits_);
-      }
-      if (((bitField0_ & 0x00000400) != 0)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(18, updateAllowedWorkspaceClasses_);
+          .computeMessageSize(19, getSettings());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -13744,68 +13934,10 @@ java.lang.String defaultValue) {
 
       if (!getOrganizationId()
           .equals(other.getOrganizationId())) return false;
-      if (hasWorkspaceSharingDisabled() != other.hasWorkspaceSharingDisabled()) return false;
-      if (hasWorkspaceSharingDisabled()) {
-        if (getWorkspaceSharingDisabled()
-            != other.getWorkspaceSharingDisabled()) return false;
-      }
-      if (hasDefaultWorkspaceImage() != other.hasDefaultWorkspaceImage()) return false;
-      if (hasDefaultWorkspaceImage()) {
-        if (!getDefaultWorkspaceImage()
-            .equals(other.getDefaultWorkspaceImage())) return false;
-      }
-      if (!getAllowedWorkspaceClassesList()
-          .equals(other.getAllowedWorkspaceClassesList())) return false;
-      if (!getRestrictedEditorNamesList()
-          .equals(other.getRestrictedEditorNamesList())) return false;
-      if (hasUpdateRestrictedEditorNames() != other.hasUpdateRestrictedEditorNames()) return false;
-      if (hasUpdateRestrictedEditorNames()) {
-        if (getUpdateRestrictedEditorNames()
-            != other.getUpdateRestrictedEditorNames()) return false;
-      }
-      if (!internalGetPinnedEditorVersions().equals(
-          other.internalGetPinnedEditorVersions())) return false;
-      if (hasUpdatePinnedEditorVersions() != other.hasUpdatePinnedEditorVersions()) return false;
-      if (hasUpdatePinnedEditorVersions()) {
-        if (getUpdatePinnedEditorVersions()
-            != other.getUpdatePinnedEditorVersions()) return false;
-      }
-      if (hasDefaultRole() != other.hasDefaultRole()) return false;
-      if (hasDefaultRole()) {
-        if (!getDefaultRole()
-            .equals(other.getDefaultRole())) return false;
-      }
-      if (hasTimeoutSettings() != other.hasTimeoutSettings()) return false;
-      if (hasTimeoutSettings()) {
-        if (!getTimeoutSettings()
-            .equals(other.getTimeoutSettings())) return false;
-      }
-      if (!getRoleRestrictionsList()
-          .equals(other.getRoleRestrictionsList())) return false;
-      if (hasUpdateRoleRestrictions() != other.hasUpdateRoleRestrictions()) return false;
-      if (hasUpdateRoleRestrictions()) {
-        if (getUpdateRoleRestrictions()
-            != other.getUpdateRoleRestrictions()) return false;
-      }
-      if (hasMaxParallelRunningWorkspaces() != other.hasMaxParallelRunningWorkspaces()) return false;
-      if (hasMaxParallelRunningWorkspaces()) {
-        if (getMaxParallelRunningWorkspaces()
-            != other.getMaxParallelRunningWorkspaces()) return false;
-      }
-      if (hasOnboardingSettings() != other.hasOnboardingSettings()) return false;
-      if (hasOnboardingSettings()) {
-        if (!getOnboardingSettings()
-            .equals(other.getOnboardingSettings())) return false;
-      }
-      if (hasAnnotateGitCommits() != other.hasAnnotateGitCommits()) return false;
-      if (hasAnnotateGitCommits()) {
-        if (getAnnotateGitCommits()
-            != other.getAnnotateGitCommits()) return false;
-      }
-      if (hasUpdateAllowedWorkspaceClasses() != other.hasUpdateAllowedWorkspaceClasses()) return false;
-      if (hasUpdateAllowedWorkspaceClasses()) {
-        if (getUpdateAllowedWorkspaceClasses()
-            != other.getUpdateAllowedWorkspaceClasses()) return false;
+      if (hasSettings() != other.hasSettings()) return false;
+      if (hasSettings()) {
+        if (!getSettings()
+            .equals(other.getSettings())) return false;
       }
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
@@ -13820,71 +13952,9 @@ java.lang.String defaultValue) {
       hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + ORGANIZATION_ID_FIELD_NUMBER;
       hash = (53 * hash) + getOrganizationId().hashCode();
-      if (hasWorkspaceSharingDisabled()) {
-        hash = (37 * hash) + WORKSPACE_SHARING_DISABLED_FIELD_NUMBER;
-        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-            getWorkspaceSharingDisabled());
-      }
-      if (hasDefaultWorkspaceImage()) {
-        hash = (37 * hash) + DEFAULT_WORKSPACE_IMAGE_FIELD_NUMBER;
-        hash = (53 * hash) + getDefaultWorkspaceImage().hashCode();
-      }
-      if (getAllowedWorkspaceClassesCount() > 0) {
-        hash = (37 * hash) + ALLOWED_WORKSPACE_CLASSES_FIELD_NUMBER;
-        hash = (53 * hash) + getAllowedWorkspaceClassesList().hashCode();
-      }
-      if (getRestrictedEditorNamesCount() > 0) {
-        hash = (37 * hash) + RESTRICTED_EDITOR_NAMES_FIELD_NUMBER;
-        hash = (53 * hash) + getRestrictedEditorNamesList().hashCode();
-      }
-      if (hasUpdateRestrictedEditorNames()) {
-        hash = (37 * hash) + UPDATE_RESTRICTED_EDITOR_NAMES_FIELD_NUMBER;
-        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-            getUpdateRestrictedEditorNames());
-      }
-      if (!internalGetPinnedEditorVersions().getMap().isEmpty()) {
-        hash = (37 * hash) + PINNED_EDITOR_VERSIONS_FIELD_NUMBER;
-        hash = (53 * hash) + internalGetPinnedEditorVersions().hashCode();
-      }
-      if (hasUpdatePinnedEditorVersions()) {
-        hash = (37 * hash) + UPDATE_PINNED_EDITOR_VERSIONS_FIELD_NUMBER;
-        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-            getUpdatePinnedEditorVersions());
-      }
-      if (hasDefaultRole()) {
-        hash = (37 * hash) + DEFAULT_ROLE_FIELD_NUMBER;
-        hash = (53 * hash) + getDefaultRole().hashCode();
-      }
-      if (hasTimeoutSettings()) {
-        hash = (37 * hash) + TIMEOUT_SETTINGS_FIELD_NUMBER;
-        hash = (53 * hash) + getTimeoutSettings().hashCode();
-      }
-      if (getRoleRestrictionsCount() > 0) {
-        hash = (37 * hash) + ROLE_RESTRICTIONS_FIELD_NUMBER;
-        hash = (53 * hash) + getRoleRestrictionsList().hashCode();
-      }
-      if (hasUpdateRoleRestrictions()) {
-        hash = (37 * hash) + UPDATE_ROLE_RESTRICTIONS_FIELD_NUMBER;
-        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-            getUpdateRoleRestrictions());
-      }
-      if (hasMaxParallelRunningWorkspaces()) {
-        hash = (37 * hash) + MAX_PARALLEL_RUNNING_WORKSPACES_FIELD_NUMBER;
-        hash = (53 * hash) + getMaxParallelRunningWorkspaces();
-      }
-      if (hasOnboardingSettings()) {
-        hash = (37 * hash) + ONBOARDING_SETTINGS_FIELD_NUMBER;
-        hash = (53 * hash) + getOnboardingSettings().hashCode();
-      }
-      if (hasAnnotateGitCommits()) {
-        hash = (37 * hash) + ANNOTATE_GIT_COMMITS_FIELD_NUMBER;
-        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-            getAnnotateGitCommits());
-      }
-      if (hasUpdateAllowedWorkspaceClasses()) {
-        hash = (37 * hash) + UPDATE_ALLOWED_WORKSPACE_CLASSES_FIELD_NUMBER;
-        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-            getUpdateAllowedWorkspaceClasses());
+      if (hasSettings()) {
+        hash = (37 * hash) + SETTINGS_FIELD_NUMBER;
+        hash = (53 * hash) + getSettings().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -13995,28 +14065,6 @@ java.lang.String defaultValue) {
         return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor;
       }
 
-      @SuppressWarnings({"rawtypes"})
-      protected com.google.protobuf.MapFieldReflectionAccessor internalGetMapFieldReflection(
-          int number) {
-        switch (number) {
-          case 8:
-            return internalGetPinnedEditorVersions();
-          default:
-            throw new RuntimeException(
-                "Invalid map field number: " + number);
-        }
-      }
-      @SuppressWarnings({"rawtypes"})
-      protected com.google.protobuf.MapFieldReflectionAccessor internalGetMutableMapFieldReflection(
-          int number) {
-        switch (number) {
-          case 8:
-            return internalGetMutablePinnedEditorVersions();
-          default:
-            throw new RuntimeException(
-                "Invalid map field number: " + number);
-        }
-      }
       @java.lang.Override
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
@@ -14038,9 +14086,7 @@ java.lang.String defaultValue) {
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage
                 .alwaysUseFieldBuilders) {
-          getTimeoutSettingsFieldBuilder();
-          getRoleRestrictionsFieldBuilder();
-          getOnboardingSettingsFieldBuilder();
+          getSettingsFieldBuilder();
         }
       }
       @java.lang.Override
@@ -14048,37 +14094,11 @@ java.lang.String defaultValue) {
         super.clear();
         bitField0_ = 0;
         organizationId_ = "";
-        workspaceSharingDisabled_ = false;
-        defaultWorkspaceImage_ = "";
-        allowedWorkspaceClasses_ =
-            com.google.protobuf.LazyStringArrayList.emptyList();
-        restrictedEditorNames_ =
-            com.google.protobuf.LazyStringArrayList.emptyList();
-        updateRestrictedEditorNames_ = false;
-        internalGetMutablePinnedEditorVersions().clear();
-        updatePinnedEditorVersions_ = false;
-        defaultRole_ = "";
-        timeoutSettings_ = null;
-        if (timeoutSettingsBuilder_ != null) {
-          timeoutSettingsBuilder_.dispose();
-          timeoutSettingsBuilder_ = null;
+        settings_ = null;
+        if (settingsBuilder_ != null) {
+          settingsBuilder_.dispose();
+          settingsBuilder_ = null;
         }
-        if (roleRestrictionsBuilder_ == null) {
-          roleRestrictions_ = java.util.Collections.emptyList();
-        } else {
-          roleRestrictions_ = null;
-          roleRestrictionsBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000400);
-        updateRoleRestrictions_ = false;
-        maxParallelRunningWorkspaces_ = 0;
-        onboardingSettings_ = null;
-        if (onboardingSettingsBuilder_ != null) {
-          onboardingSettingsBuilder_.dispose();
-          onboardingSettingsBuilder_ = null;
-        }
-        annotateGitCommits_ = false;
-        updateAllowedWorkspaceClasses_ = false;
         return this;
       }
 
@@ -14105,22 +14125,9 @@ java.lang.String defaultValue) {
       @java.lang.Override
       public io.gitpod.publicapi.v1.OrganizationOuterClass.UpdateOrganizationSettingsRequest buildPartial() {
         io.gitpod.publicapi.v1.OrganizationOuterClass.UpdateOrganizationSettingsRequest result = new io.gitpod.publicapi.v1.OrganizationOuterClass.UpdateOrganizationSettingsRequest(this);
-        buildPartialRepeatedFields(result);
         if (bitField0_ != 0) { buildPartial0(result); }
         onBuilt();
         return result;
-      }
-
-      private void buildPartialRepeatedFields(io.gitpod.publicapi.v1.OrganizationOuterClass.UpdateOrganizationSettingsRequest result) {
-        if (roleRestrictionsBuilder_ == null) {
-          if (((bitField0_ & 0x00000400) != 0)) {
-            roleRestrictions_ = java.util.Collections.unmodifiableList(roleRestrictions_);
-            bitField0_ = (bitField0_ & ~0x00000400);
-          }
-          result.roleRestrictions_ = roleRestrictions_;
-        } else {
-          result.roleRestrictions_ = roleRestrictionsBuilder_.build();
-        }
       }
 
       private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.UpdateOrganizationSettingsRequest result) {
@@ -14130,64 +14137,10 @@ java.lang.String defaultValue) {
         }
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.workspaceSharingDisabled_ = workspaceSharingDisabled_;
+          result.settings_ = settingsBuilder_ == null
+              ? settings_
+              : settingsBuilder_.build();
           to_bitField0_ |= 0x00000001;
-        }
-        if (((from_bitField0_ & 0x00000004) != 0)) {
-          result.defaultWorkspaceImage_ = defaultWorkspaceImage_;
-          to_bitField0_ |= 0x00000002;
-        }
-        if (((from_bitField0_ & 0x00000008) != 0)) {
-          allowedWorkspaceClasses_.makeImmutable();
-          result.allowedWorkspaceClasses_ = allowedWorkspaceClasses_;
-        }
-        if (((from_bitField0_ & 0x00000010) != 0)) {
-          restrictedEditorNames_.makeImmutable();
-          result.restrictedEditorNames_ = restrictedEditorNames_;
-        }
-        if (((from_bitField0_ & 0x00000020) != 0)) {
-          result.updateRestrictedEditorNames_ = updateRestrictedEditorNames_;
-          to_bitField0_ |= 0x00000004;
-        }
-        if (((from_bitField0_ & 0x00000040) != 0)) {
-          result.pinnedEditorVersions_ = internalGetPinnedEditorVersions();
-          result.pinnedEditorVersions_.makeImmutable();
-        }
-        if (((from_bitField0_ & 0x00000080) != 0)) {
-          result.updatePinnedEditorVersions_ = updatePinnedEditorVersions_;
-          to_bitField0_ |= 0x00000008;
-        }
-        if (((from_bitField0_ & 0x00000100) != 0)) {
-          result.defaultRole_ = defaultRole_;
-          to_bitField0_ |= 0x00000010;
-        }
-        if (((from_bitField0_ & 0x00000200) != 0)) {
-          result.timeoutSettings_ = timeoutSettingsBuilder_ == null
-              ? timeoutSettings_
-              : timeoutSettingsBuilder_.build();
-          to_bitField0_ |= 0x00000020;
-        }
-        if (((from_bitField0_ & 0x00000800) != 0)) {
-          result.updateRoleRestrictions_ = updateRoleRestrictions_;
-          to_bitField0_ |= 0x00000040;
-        }
-        if (((from_bitField0_ & 0x00001000) != 0)) {
-          result.maxParallelRunningWorkspaces_ = maxParallelRunningWorkspaces_;
-          to_bitField0_ |= 0x00000080;
-        }
-        if (((from_bitField0_ & 0x00002000) != 0)) {
-          result.onboardingSettings_ = onboardingSettingsBuilder_ == null
-              ? onboardingSettings_
-              : onboardingSettingsBuilder_.build();
-          to_bitField0_ |= 0x00000100;
-        }
-        if (((from_bitField0_ & 0x00004000) != 0)) {
-          result.annotateGitCommits_ = annotateGitCommits_;
-          to_bitField0_ |= 0x00000200;
-        }
-        if (((from_bitField0_ & 0x00008000) != 0)) {
-          result.updateAllowedWorkspaceClasses_ = updateAllowedWorkspaceClasses_;
-          to_bitField0_ |= 0x00000400;
         }
         result.bitField0_ |= to_bitField0_;
       }
@@ -14209,91 +14162,8 @@ java.lang.String defaultValue) {
           bitField0_ |= 0x00000001;
           onChanged();
         }
-        if (other.hasWorkspaceSharingDisabled()) {
-          setWorkspaceSharingDisabled(other.getWorkspaceSharingDisabled());
-        }
-        if (other.hasDefaultWorkspaceImage()) {
-          defaultWorkspaceImage_ = other.defaultWorkspaceImage_;
-          bitField0_ |= 0x00000004;
-          onChanged();
-        }
-        if (!other.allowedWorkspaceClasses_.isEmpty()) {
-          if (allowedWorkspaceClasses_.isEmpty()) {
-            allowedWorkspaceClasses_ = other.allowedWorkspaceClasses_;
-            bitField0_ |= 0x00000008;
-          } else {
-            ensureAllowedWorkspaceClassesIsMutable();
-            allowedWorkspaceClasses_.addAll(other.allowedWorkspaceClasses_);
-          }
-          onChanged();
-        }
-        if (!other.restrictedEditorNames_.isEmpty()) {
-          if (restrictedEditorNames_.isEmpty()) {
-            restrictedEditorNames_ = other.restrictedEditorNames_;
-            bitField0_ |= 0x00000010;
-          } else {
-            ensureRestrictedEditorNamesIsMutable();
-            restrictedEditorNames_.addAll(other.restrictedEditorNames_);
-          }
-          onChanged();
-        }
-        if (other.hasUpdateRestrictedEditorNames()) {
-          setUpdateRestrictedEditorNames(other.getUpdateRestrictedEditorNames());
-        }
-        internalGetMutablePinnedEditorVersions().mergeFrom(
-            other.internalGetPinnedEditorVersions());
-        bitField0_ |= 0x00000040;
-        if (other.hasUpdatePinnedEditorVersions()) {
-          setUpdatePinnedEditorVersions(other.getUpdatePinnedEditorVersions());
-        }
-        if (other.hasDefaultRole()) {
-          defaultRole_ = other.defaultRole_;
-          bitField0_ |= 0x00000100;
-          onChanged();
-        }
-        if (other.hasTimeoutSettings()) {
-          mergeTimeoutSettings(other.getTimeoutSettings());
-        }
-        if (roleRestrictionsBuilder_ == null) {
-          if (!other.roleRestrictions_.isEmpty()) {
-            if (roleRestrictions_.isEmpty()) {
-              roleRestrictions_ = other.roleRestrictions_;
-              bitField0_ = (bitField0_ & ~0x00000400);
-            } else {
-              ensureRoleRestrictionsIsMutable();
-              roleRestrictions_.addAll(other.roleRestrictions_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.roleRestrictions_.isEmpty()) {
-            if (roleRestrictionsBuilder_.isEmpty()) {
-              roleRestrictionsBuilder_.dispose();
-              roleRestrictionsBuilder_ = null;
-              roleRestrictions_ = other.roleRestrictions_;
-              bitField0_ = (bitField0_ & ~0x00000400);
-              roleRestrictionsBuilder_ =
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getRoleRestrictionsFieldBuilder() : null;
-            } else {
-              roleRestrictionsBuilder_.addAllMessages(other.roleRestrictions_);
-            }
-          }
-        }
-        if (other.hasUpdateRoleRestrictions()) {
-          setUpdateRoleRestrictions(other.getUpdateRoleRestrictions());
-        }
-        if (other.hasMaxParallelRunningWorkspaces()) {
-          setMaxParallelRunningWorkspaces(other.getMaxParallelRunningWorkspaces());
-        }
-        if (other.hasOnboardingSettings()) {
-          mergeOnboardingSettings(other.getOnboardingSettings());
-        }
-        if (other.hasAnnotateGitCommits()) {
-          setAnnotateGitCommits(other.getAnnotateGitCommits());
-        }
-        if (other.hasUpdateAllowedWorkspaceClasses()) {
-          setUpdateAllowedWorkspaceClasses(other.getUpdateAllowedWorkspaceClasses());
+        if (other.hasSettings()) {
+          mergeSettings(other.getSettings());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -14326,99 +14196,13 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000001;
                 break;
               } // case 10
-              case 24: {
-                workspaceSharingDisabled_ = input.readBool();
+              case 154: {
+                input.readMessage(
+                    getSettingsFieldBuilder().getBuilder(),
+                    extensionRegistry);
                 bitField0_ |= 0x00000002;
                 break;
-              } // case 24
-              case 34: {
-                defaultWorkspaceImage_ = input.readStringRequireUtf8();
-                bitField0_ |= 0x00000004;
-                break;
-              } // case 34
-              case 42: {
-                java.lang.String s = input.readStringRequireUtf8();
-                ensureAllowedWorkspaceClassesIsMutable();
-                allowedWorkspaceClasses_.add(s);
-                break;
-              } // case 42
-              case 50: {
-                java.lang.String s = input.readStringRequireUtf8();
-                ensureRestrictedEditorNamesIsMutable();
-                restrictedEditorNames_.add(s);
-                break;
-              } // case 50
-              case 56: {
-                updateRestrictedEditorNames_ = input.readBool();
-                bitField0_ |= 0x00000020;
-                break;
-              } // case 56
-              case 66: {
-                com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
-                pinnedEditorVersions__ = input.readMessage(
-                    PinnedEditorVersionsDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-                internalGetMutablePinnedEditorVersions().getMutableMap().put(
-                    pinnedEditorVersions__.getKey(), pinnedEditorVersions__.getValue());
-                bitField0_ |= 0x00000040;
-                break;
-              } // case 66
-              case 72: {
-                updatePinnedEditorVersions_ = input.readBool();
-                bitField0_ |= 0x00000080;
-                break;
-              } // case 72
-              case 82: {
-                defaultRole_ = input.readStringRequireUtf8();
-                bitField0_ |= 0x00000100;
-                break;
-              } // case 82
-              case 90: {
-                input.readMessage(
-                    getTimeoutSettingsFieldBuilder().getBuilder(),
-                    extensionRegistry);
-                bitField0_ |= 0x00000200;
-                break;
-              } // case 90
-              case 98: {
-                io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry m =
-                    input.readMessage(
-                        io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.parser(),
-                        extensionRegistry);
-                if (roleRestrictionsBuilder_ == null) {
-                  ensureRoleRestrictionsIsMutable();
-                  roleRestrictions_.add(m);
-                } else {
-                  roleRestrictionsBuilder_.addMessage(m);
-                }
-                break;
-              } // case 98
-              case 104: {
-                updateRoleRestrictions_ = input.readBool();
-                bitField0_ |= 0x00000800;
-                break;
-              } // case 104
-              case 120: {
-                maxParallelRunningWorkspaces_ = input.readInt32();
-                bitField0_ |= 0x00001000;
-                break;
-              } // case 120
-              case 130: {
-                input.readMessage(
-                    getOnboardingSettingsFieldBuilder().getBuilder(),
-                    extensionRegistry);
-                bitField0_ |= 0x00002000;
-                break;
-              } // case 130
-              case 136: {
-                annotateGitCommits_ = input.readBool();
-                bitField0_ |= 0x00004000;
-                break;
-              } // case 136
-              case 144: {
-                updateAllowedWorkspaceClasses_ = input.readBool();
-                bitField0_ |= 0x00008000;
-                break;
-              } // case 144
+              } // case 154
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -14528,1749 +14312,161 @@ java.lang.String defaultValue) {
         return this;
       }
 
-      private boolean workspaceSharingDisabled_ ;
+      private io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings settings_;
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettingsOrBuilder> settingsBuilder_;
       /**
-       * <code>optional bool workspace_sharing_disabled = 3 [json_name = "workspaceSharingDisabled"];</code>
-       * @return Whether the workspaceSharingDisabled field is set.
+       * <pre>
+       * settings to persist
+       * </pre>
+       *
+       * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
+       * @return Whether the settings field is set.
        */
-      @java.lang.Override
-      public boolean hasWorkspaceSharingDisabled() {
+      public boolean hasSettings() {
         return ((bitField0_ & 0x00000002) != 0);
       }
       /**
-       * <code>optional bool workspace_sharing_disabled = 3 [json_name = "workspaceSharingDisabled"];</code>
-       * @return The workspaceSharingDisabled.
+       * <pre>
+       * settings to persist
+       * </pre>
+       *
+       * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
+       * @return The settings.
        */
-      @java.lang.Override
-      public boolean getWorkspaceSharingDisabled() {
-        return workspaceSharingDisabled_;
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings getSettings() {
+        if (settingsBuilder_ == null) {
+          return settings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.getDefaultInstance() : settings_;
+        } else {
+          return settingsBuilder_.getMessage();
+        }
       }
       /**
-       * <code>optional bool workspace_sharing_disabled = 3 [json_name = "workspaceSharingDisabled"];</code>
-       * @param value The workspaceSharingDisabled to set.
-       * @return This builder for chaining.
+       * <pre>
+       * settings to persist
+       * </pre>
+       *
+       * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
        */
-      public Builder setWorkspaceSharingDisabled(boolean value) {
-
-        workspaceSharingDisabled_ = value;
+      public Builder setSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings value) {
+        if (settingsBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          settings_ = value;
+        } else {
+          settingsBuilder_.setMessage(value);
+        }
         bitField0_ |= 0x00000002;
         onChanged();
         return this;
       }
       /**
-       * <code>optional bool workspace_sharing_disabled = 3 [json_name = "workspaceSharingDisabled"];</code>
-       * @return This builder for chaining.
+       * <pre>
+       * settings to persist
+       * </pre>
+       *
+       * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
        */
-      public Builder clearWorkspaceSharingDisabled() {
+      public Builder setSettings(
+          io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.Builder builderForValue) {
+        if (settingsBuilder_ == null) {
+          settings_ = builderForValue.build();
+        } else {
+          settingsBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * settings to persist
+       * </pre>
+       *
+       * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
+       */
+      public Builder mergeSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings value) {
+        if (settingsBuilder_ == null) {
+          if (((bitField0_ & 0x00000002) != 0) &&
+            settings_ != null &&
+            settings_ != io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.getDefaultInstance()) {
+            getSettingsBuilder().mergeFrom(value);
+          } else {
+            settings_ = value;
+          }
+        } else {
+          settingsBuilder_.mergeFrom(value);
+        }
+        if (settings_ != null) {
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * settings to persist
+       * </pre>
+       *
+       * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
+       */
+      public Builder clearSettings() {
         bitField0_ = (bitField0_ & ~0x00000002);
-        workspaceSharingDisabled_ = false;
+        settings_ = null;
+        if (settingsBuilder_ != null) {
+          settingsBuilder_.dispose();
+          settingsBuilder_ = null;
+        }
         onChanged();
         return this;
       }
-
-      private java.lang.Object defaultWorkspaceImage_ = "";
       /**
        * <pre>
-       * pass empty string to reset to the installation default workspace image
+       * settings to persist
        * </pre>
        *
-       * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-       * @return Whether the defaultWorkspaceImage field is set.
+       * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
        */
-      public boolean hasDefaultWorkspaceImage() {
-        return ((bitField0_ & 0x00000004) != 0);
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.Builder getSettingsBuilder() {
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return getSettingsFieldBuilder().getBuilder();
       }
       /**
        * <pre>
-       * pass empty string to reset to the installation default workspace image
+       * settings to persist
        * </pre>
        *
-       * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-       * @return The defaultWorkspaceImage.
+       * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
        */
-      public java.lang.String getDefaultWorkspaceImage() {
-        java.lang.Object ref = defaultWorkspaceImage_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          defaultWorkspaceImage_ = s;
-          return s;
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettingsOrBuilder getSettingsOrBuilder() {
+        if (settingsBuilder_ != null) {
+          return settingsBuilder_.getMessageOrBuilder();
         } else {
-          return (java.lang.String) ref;
+          return settings_ == null ?
+              io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.getDefaultInstance() : settings_;
         }
       }
       /**
        * <pre>
-       * pass empty string to reset to the installation default workspace image
+       * settings to persist
        * </pre>
        *
-       * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-       * @return The bytes for defaultWorkspaceImage.
-       */
-      public com.google.protobuf.ByteString
-          getDefaultWorkspaceImageBytes() {
-        java.lang.Object ref = defaultWorkspaceImage_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b =
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          defaultWorkspaceImage_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <pre>
-       * pass empty string to reset to the installation default workspace image
-       * </pre>
-       *
-       * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-       * @param value The defaultWorkspaceImage to set.
-       * @return This builder for chaining.
-       */
-      public Builder setDefaultWorkspaceImage(
-          java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        defaultWorkspaceImage_ = value;
-        bitField0_ |= 0x00000004;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * pass empty string to reset to the installation default workspace image
-       * </pre>
-       *
-       * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearDefaultWorkspaceImage() {
-        defaultWorkspaceImage_ = getDefaultInstance().getDefaultWorkspaceImage();
-        bitField0_ = (bitField0_ & ~0x00000004);
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * pass empty string to reset to the installation default workspace image
-       * </pre>
-       *
-       * <code>optional string default_workspace_image = 4 [json_name = "defaultWorkspaceImage"];</code>
-       * @param value The bytes for defaultWorkspaceImage to set.
-       * @return This builder for chaining.
-       */
-      public Builder setDefaultWorkspaceImageBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        checkByteStringIsUtf8(value);
-        defaultWorkspaceImage_ = value;
-        bitField0_ |= 0x00000004;
-        onChanged();
-        return this;
-      }
-
-      private com.google.protobuf.LazyStringArrayList allowedWorkspaceClasses_ =
-          com.google.protobuf.LazyStringArrayList.emptyList();
-      private void ensureAllowedWorkspaceClassesIsMutable() {
-        if (!allowedWorkspaceClasses_.isModifiable()) {
-          allowedWorkspaceClasses_ = new com.google.protobuf.LazyStringArrayList(allowedWorkspaceClasses_);
-        }
-        bitField0_ |= 0x00000008;
-      }
-      /**
-       * <pre>
-       * allowed_workspace_classes are the IDs of classes, which can be used by
-       * workspaces in an organization. Pass an empty array to allow all workspace
-       * classes.
-       * Only updates if update_allowed_workspace_classes is true.
-       * </pre>
-       *
-       * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-       * @return A list containing the allowedWorkspaceClasses.
-       */
-      public com.google.protobuf.ProtocolStringList
-          getAllowedWorkspaceClassesList() {
-        allowedWorkspaceClasses_.makeImmutable();
-        return allowedWorkspaceClasses_;
-      }
-      /**
-       * <pre>
-       * allowed_workspace_classes are the IDs of classes, which can be used by
-       * workspaces in an organization. Pass an empty array to allow all workspace
-       * classes.
-       * Only updates if update_allowed_workspace_classes is true.
-       * </pre>
-       *
-       * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-       * @return The count of allowedWorkspaceClasses.
-       */
-      public int getAllowedWorkspaceClassesCount() {
-        return allowedWorkspaceClasses_.size();
-      }
-      /**
-       * <pre>
-       * allowed_workspace_classes are the IDs of classes, which can be used by
-       * workspaces in an organization. Pass an empty array to allow all workspace
-       * classes.
-       * Only updates if update_allowed_workspace_classes is true.
-       * </pre>
-       *
-       * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-       * @param index The index of the element to return.
-       * @return The allowedWorkspaceClasses at the given index.
-       */
-      public java.lang.String getAllowedWorkspaceClasses(int index) {
-        return allowedWorkspaceClasses_.get(index);
-      }
-      /**
-       * <pre>
-       * allowed_workspace_classes are the IDs of classes, which can be used by
-       * workspaces in an organization. Pass an empty array to allow all workspace
-       * classes.
-       * Only updates if update_allowed_workspace_classes is true.
-       * </pre>
-       *
-       * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-       * @param index The index of the value to return.
-       * @return The bytes of the allowedWorkspaceClasses at the given index.
-       */
-      public com.google.protobuf.ByteString
-          getAllowedWorkspaceClassesBytes(int index) {
-        return allowedWorkspaceClasses_.getByteString(index);
-      }
-      /**
-       * <pre>
-       * allowed_workspace_classes are the IDs of classes, which can be used by
-       * workspaces in an organization. Pass an empty array to allow all workspace
-       * classes.
-       * Only updates if update_allowed_workspace_classes is true.
-       * </pre>
-       *
-       * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-       * @param index The index to set the value at.
-       * @param value The allowedWorkspaceClasses to set.
-       * @return This builder for chaining.
-       */
-      public Builder setAllowedWorkspaceClasses(
-          int index, java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        ensureAllowedWorkspaceClassesIsMutable();
-        allowedWorkspaceClasses_.set(index, value);
-        bitField0_ |= 0x00000008;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * allowed_workspace_classes are the IDs of classes, which can be used by
-       * workspaces in an organization. Pass an empty array to allow all workspace
-       * classes.
-       * Only updates if update_allowed_workspace_classes is true.
-       * </pre>
-       *
-       * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-       * @param value The allowedWorkspaceClasses to add.
-       * @return This builder for chaining.
-       */
-      public Builder addAllowedWorkspaceClasses(
-          java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        ensureAllowedWorkspaceClassesIsMutable();
-        allowedWorkspaceClasses_.add(value);
-        bitField0_ |= 0x00000008;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * allowed_workspace_classes are the IDs of classes, which can be used by
-       * workspaces in an organization. Pass an empty array to allow all workspace
-       * classes.
-       * Only updates if update_allowed_workspace_classes is true.
-       * </pre>
-       *
-       * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-       * @param values The allowedWorkspaceClasses to add.
-       * @return This builder for chaining.
-       */
-      public Builder addAllAllowedWorkspaceClasses(
-          java.lang.Iterable<java.lang.String> values) {
-        ensureAllowedWorkspaceClassesIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, allowedWorkspaceClasses_);
-        bitField0_ |= 0x00000008;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * allowed_workspace_classes are the IDs of classes, which can be used by
-       * workspaces in an organization. Pass an empty array to allow all workspace
-       * classes.
-       * Only updates if update_allowed_workspace_classes is true.
-       * </pre>
-       *
-       * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearAllowedWorkspaceClasses() {
-        allowedWorkspaceClasses_ =
-          com.google.protobuf.LazyStringArrayList.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000008);;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * allowed_workspace_classes are the IDs of classes, which can be used by
-       * workspaces in an organization. Pass an empty array to allow all workspace
-       * classes.
-       * Only updates if update_allowed_workspace_classes is true.
-       * </pre>
-       *
-       * <code>repeated string allowed_workspace_classes = 5 [json_name = "allowedWorkspaceClasses"];</code>
-       * @param value The bytes of the allowedWorkspaceClasses to add.
-       * @return This builder for chaining.
-       */
-      public Builder addAllowedWorkspaceClassesBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        checkByteStringIsUtf8(value);
-        ensureAllowedWorkspaceClassesIsMutable();
-        allowedWorkspaceClasses_.add(value);
-        bitField0_ |= 0x00000008;
-        onChanged();
-        return this;
-      }
-
-      private com.google.protobuf.LazyStringArrayList restrictedEditorNames_ =
-          com.google.protobuf.LazyStringArrayList.emptyList();
-      private void ensureRestrictedEditorNamesIsMutable() {
-        if (!restrictedEditorNames_.isModifiable()) {
-          restrictedEditorNames_ = new com.google.protobuf.LazyStringArrayList(restrictedEditorNames_);
-        }
-        bitField0_ |= 0x00000010;
-      }
-      /**
-       * <pre>
-       * restricted_editor_names updates the list of restricted editor names that
-       * are not allowed to be used by workspaces in an organization. If empty, all
-       * editors are allowed.
-       * Only updates if update_restricted_editor_names is true.
-       * </pre>
-       *
-       * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-       * @return A list containing the restrictedEditorNames.
-       */
-      public com.google.protobuf.ProtocolStringList
-          getRestrictedEditorNamesList() {
-        restrictedEditorNames_.makeImmutable();
-        return restrictedEditorNames_;
-      }
-      /**
-       * <pre>
-       * restricted_editor_names updates the list of restricted editor names that
-       * are not allowed to be used by workspaces in an organization. If empty, all
-       * editors are allowed.
-       * Only updates if update_restricted_editor_names is true.
-       * </pre>
-       *
-       * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-       * @return The count of restrictedEditorNames.
-       */
-      public int getRestrictedEditorNamesCount() {
-        return restrictedEditorNames_.size();
-      }
-      /**
-       * <pre>
-       * restricted_editor_names updates the list of restricted editor names that
-       * are not allowed to be used by workspaces in an organization. If empty, all
-       * editors are allowed.
-       * Only updates if update_restricted_editor_names is true.
-       * </pre>
-       *
-       * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-       * @param index The index of the element to return.
-       * @return The restrictedEditorNames at the given index.
-       */
-      public java.lang.String getRestrictedEditorNames(int index) {
-        return restrictedEditorNames_.get(index);
-      }
-      /**
-       * <pre>
-       * restricted_editor_names updates the list of restricted editor names that
-       * are not allowed to be used by workspaces in an organization. If empty, all
-       * editors are allowed.
-       * Only updates if update_restricted_editor_names is true.
-       * </pre>
-       *
-       * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-       * @param index The index of the value to return.
-       * @return The bytes of the restrictedEditorNames at the given index.
-       */
-      public com.google.protobuf.ByteString
-          getRestrictedEditorNamesBytes(int index) {
-        return restrictedEditorNames_.getByteString(index);
-      }
-      /**
-       * <pre>
-       * restricted_editor_names updates the list of restricted editor names that
-       * are not allowed to be used by workspaces in an organization. If empty, all
-       * editors are allowed.
-       * Only updates if update_restricted_editor_names is true.
-       * </pre>
-       *
-       * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-       * @param index The index to set the value at.
-       * @param value The restrictedEditorNames to set.
-       * @return This builder for chaining.
-       */
-      public Builder setRestrictedEditorNames(
-          int index, java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        ensureRestrictedEditorNamesIsMutable();
-        restrictedEditorNames_.set(index, value);
-        bitField0_ |= 0x00000010;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * restricted_editor_names updates the list of restricted editor names that
-       * are not allowed to be used by workspaces in an organization. If empty, all
-       * editors are allowed.
-       * Only updates if update_restricted_editor_names is true.
-       * </pre>
-       *
-       * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-       * @param value The restrictedEditorNames to add.
-       * @return This builder for chaining.
-       */
-      public Builder addRestrictedEditorNames(
-          java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        ensureRestrictedEditorNamesIsMutable();
-        restrictedEditorNames_.add(value);
-        bitField0_ |= 0x00000010;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * restricted_editor_names updates the list of restricted editor names that
-       * are not allowed to be used by workspaces in an organization. If empty, all
-       * editors are allowed.
-       * Only updates if update_restricted_editor_names is true.
-       * </pre>
-       *
-       * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-       * @param values The restrictedEditorNames to add.
-       * @return This builder for chaining.
-       */
-      public Builder addAllRestrictedEditorNames(
-          java.lang.Iterable<java.lang.String> values) {
-        ensureRestrictedEditorNamesIsMutable();
-        com.google.protobuf.AbstractMessageLite.Builder.addAll(
-            values, restrictedEditorNames_);
-        bitField0_ |= 0x00000010;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * restricted_editor_names updates the list of restricted editor names that
-       * are not allowed to be used by workspaces in an organization. If empty, all
-       * editors are allowed.
-       * Only updates if update_restricted_editor_names is true.
-       * </pre>
-       *
-       * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearRestrictedEditorNames() {
-        restrictedEditorNames_ =
-          com.google.protobuf.LazyStringArrayList.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000010);;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * restricted_editor_names updates the list of restricted editor names that
-       * are not allowed to be used by workspaces in an organization. If empty, all
-       * editors are allowed.
-       * Only updates if update_restricted_editor_names is true.
-       * </pre>
-       *
-       * <code>repeated string restricted_editor_names = 6 [json_name = "restrictedEditorNames"];</code>
-       * @param value The bytes of the restrictedEditorNames to add.
-       * @return This builder for chaining.
-       */
-      public Builder addRestrictedEditorNamesBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        checkByteStringIsUtf8(value);
-        ensureRestrictedEditorNamesIsMutable();
-        restrictedEditorNames_.add(value);
-        bitField0_ |= 0x00000010;
-        onChanged();
-        return this;
-      }
-
-      private boolean updateRestrictedEditorNames_ ;
-      /**
-       * <pre>
-       * Specifies whether restricted_workspace_classes should be updated
-       * </pre>
-       *
-       * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
-       * @return Whether the updateRestrictedEditorNames field is set.
-       */
-      @java.lang.Override
-      public boolean hasUpdateRestrictedEditorNames() {
-        return ((bitField0_ & 0x00000020) != 0);
-      }
-      /**
-       * <pre>
-       * Specifies whether restricted_workspace_classes should be updated
-       * </pre>
-       *
-       * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
-       * @return The updateRestrictedEditorNames.
-       */
-      @java.lang.Override
-      public boolean getUpdateRestrictedEditorNames() {
-        return updateRestrictedEditorNames_;
-      }
-      /**
-       * <pre>
-       * Specifies whether restricted_workspace_classes should be updated
-       * </pre>
-       *
-       * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
-       * @param value The updateRestrictedEditorNames to set.
-       * @return This builder for chaining.
-       */
-      public Builder setUpdateRestrictedEditorNames(boolean value) {
-
-        updateRestrictedEditorNames_ = value;
-        bitField0_ |= 0x00000020;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * Specifies whether restricted_workspace_classes should be updated
-       * </pre>
-       *
-       * <code>optional bool update_restricted_editor_names = 7 [json_name = "updateRestrictedEditorNames"];</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearUpdateRestrictedEditorNames() {
-        bitField0_ = (bitField0_ & ~0x00000020);
-        updateRestrictedEditorNames_ = false;
-        onChanged();
-        return this;
-      }
-
-      private com.google.protobuf.MapField<
-          java.lang.String, java.lang.String> pinnedEditorVersions_;
-      private com.google.protobuf.MapField<java.lang.String, java.lang.String>
-          internalGetPinnedEditorVersions() {
-        if (pinnedEditorVersions_ == null) {
-          return com.google.protobuf.MapField.emptyMapField(
-              PinnedEditorVersionsDefaultEntryHolder.defaultEntry);
-        }
-        return pinnedEditorVersions_;
-      }
-      private com.google.protobuf.MapField<java.lang.String, java.lang.String>
-          internalGetMutablePinnedEditorVersions() {
-        if (pinnedEditorVersions_ == null) {
-          pinnedEditorVersions_ = com.google.protobuf.MapField.newMapField(
-              PinnedEditorVersionsDefaultEntryHolder.defaultEntry);
-        }
-        if (!pinnedEditorVersions_.isMutable()) {
-          pinnedEditorVersions_ = pinnedEditorVersions_.copy();
-        }
-        bitField0_ |= 0x00000040;
-        onChanged();
-        return pinnedEditorVersions_;
-      }
-      public int getPinnedEditorVersionsCount() {
-        return internalGetPinnedEditorVersions().getMap().size();
-      }
-      /**
-       * <pre>
-       * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
-       * Only updates if update_pinned_editor_versions is true.
-       * </pre>
-       *
-       * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-       */
-      @java.lang.Override
-      public boolean containsPinnedEditorVersions(
-          java.lang.String key) {
-        if (key == null) { throw new NullPointerException("map key"); }
-        return internalGetPinnedEditorVersions().getMap().containsKey(key);
-      }
-      /**
-       * Use {@link #getPinnedEditorVersionsMap()} instead.
-       */
-      @java.lang.Override
-      @java.lang.Deprecated
-      public java.util.Map<java.lang.String, java.lang.String> getPinnedEditorVersions() {
-        return getPinnedEditorVersionsMap();
-      }
-      /**
-       * <pre>
-       * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
-       * Only updates if update_pinned_editor_versions is true.
-       * </pre>
-       *
-       * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-       */
-      @java.lang.Override
-      public java.util.Map<java.lang.String, java.lang.String> getPinnedEditorVersionsMap() {
-        return internalGetPinnedEditorVersions().getMap();
-      }
-      /**
-       * <pre>
-       * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
-       * Only updates if update_pinned_editor_versions is true.
-       * </pre>
-       *
-       * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-       */
-      @java.lang.Override
-      public /* nullable */
-java.lang.String getPinnedEditorVersionsOrDefault(
-          java.lang.String key,
-          /* nullable */
-java.lang.String defaultValue) {
-        if (key == null) { throw new NullPointerException("map key"); }
-        java.util.Map<java.lang.String, java.lang.String> map =
-            internalGetPinnedEditorVersions().getMap();
-        return map.containsKey(key) ? map.get(key) : defaultValue;
-      }
-      /**
-       * <pre>
-       * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
-       * Only updates if update_pinned_editor_versions is true.
-       * </pre>
-       *
-       * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-       */
-      @java.lang.Override
-      public java.lang.String getPinnedEditorVersionsOrThrow(
-          java.lang.String key) {
-        if (key == null) { throw new NullPointerException("map key"); }
-        java.util.Map<java.lang.String, java.lang.String> map =
-            internalGetPinnedEditorVersions().getMap();
-        if (!map.containsKey(key)) {
-          throw new java.lang.IllegalArgumentException();
-        }
-        return map.get(key);
-      }
-      public Builder clearPinnedEditorVersions() {
-        bitField0_ = (bitField0_ & ~0x00000040);
-        internalGetMutablePinnedEditorVersions().getMutableMap()
-            .clear();
-        return this;
-      }
-      /**
-       * <pre>
-       * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
-       * Only updates if update_pinned_editor_versions is true.
-       * </pre>
-       *
-       * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-       */
-      public Builder removePinnedEditorVersions(
-          java.lang.String key) {
-        if (key == null) { throw new NullPointerException("map key"); }
-        internalGetMutablePinnedEditorVersions().getMutableMap()
-            .remove(key);
-        return this;
-      }
-      /**
-       * Use alternate mutation accessors instead.
-       */
-      @java.lang.Deprecated
-      public java.util.Map<java.lang.String, java.lang.String>
-          getMutablePinnedEditorVersions() {
-        bitField0_ |= 0x00000040;
-        return internalGetMutablePinnedEditorVersions().getMutableMap();
-      }
-      /**
-       * <pre>
-       * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
-       * Only updates if update_pinned_editor_versions is true.
-       * </pre>
-       *
-       * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-       */
-      public Builder putPinnedEditorVersions(
-          java.lang.String key,
-          java.lang.String value) {
-        if (key == null) { throw new NullPointerException("map key"); }
-        if (value == null) { throw new NullPointerException("map value"); }
-        internalGetMutablePinnedEditorVersions().getMutableMap()
-            .put(key, value);
-        bitField0_ |= 0x00000040;
-        return this;
-      }
-      /**
-       * <pre>
-       * pinned_editor_versions updates the pinned version for the corresponding
-       * editor.
-       * Only updates if update_pinned_editor_versions is true.
-       * </pre>
-       *
-       * <code>map&lt;string, string&gt; pinned_editor_versions = 8 [json_name = "pinnedEditorVersions"];</code>
-       */
-      public Builder putAllPinnedEditorVersions(
-          java.util.Map<java.lang.String, java.lang.String> values) {
-        internalGetMutablePinnedEditorVersions().getMutableMap()
-            .putAll(values);
-        bitField0_ |= 0x00000040;
-        return this;
-      }
-
-      private boolean updatePinnedEditorVersions_ ;
-      /**
-       * <pre>
-       * Specifies whether pinned_editor_versions should be updated
-       * </pre>
-       *
-       * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
-       * @return Whether the updatePinnedEditorVersions field is set.
-       */
-      @java.lang.Override
-      public boolean hasUpdatePinnedEditorVersions() {
-        return ((bitField0_ & 0x00000080) != 0);
-      }
-      /**
-       * <pre>
-       * Specifies whether pinned_editor_versions should be updated
-       * </pre>
-       *
-       * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
-       * @return The updatePinnedEditorVersions.
-       */
-      @java.lang.Override
-      public boolean getUpdatePinnedEditorVersions() {
-        return updatePinnedEditorVersions_;
-      }
-      /**
-       * <pre>
-       * Specifies whether pinned_editor_versions should be updated
-       * </pre>
-       *
-       * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
-       * @param value The updatePinnedEditorVersions to set.
-       * @return This builder for chaining.
-       */
-      public Builder setUpdatePinnedEditorVersions(boolean value) {
-
-        updatePinnedEditorVersions_ = value;
-        bitField0_ |= 0x00000080;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * Specifies whether pinned_editor_versions should be updated
-       * </pre>
-       *
-       * <code>optional bool update_pinned_editor_versions = 9 [json_name = "updatePinnedEditorVersions"];</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearUpdatePinnedEditorVersions() {
-        bitField0_ = (bitField0_ & ~0x00000080);
-        updatePinnedEditorVersions_ = false;
-        onChanged();
-        return this;
-      }
-
-      private java.lang.Object defaultRole_ = "";
-      /**
-       * <pre>
-       * default_role is the default role for new members in the organization
-       * </pre>
-       *
-       * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-       * @return Whether the defaultRole field is set.
-       */
-      public boolean hasDefaultRole() {
-        return ((bitField0_ & 0x00000100) != 0);
-      }
-      /**
-       * <pre>
-       * default_role is the default role for new members in the organization
-       * </pre>
-       *
-       * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-       * @return The defaultRole.
-       */
-      public java.lang.String getDefaultRole() {
-        java.lang.Object ref = defaultRole_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          defaultRole_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <pre>
-       * default_role is the default role for new members in the organization
-       * </pre>
-       *
-       * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-       * @return The bytes for defaultRole.
-       */
-      public com.google.protobuf.ByteString
-          getDefaultRoleBytes() {
-        java.lang.Object ref = defaultRole_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b =
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          defaultRole_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <pre>
-       * default_role is the default role for new members in the organization
-       * </pre>
-       *
-       * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-       * @param value The defaultRole to set.
-       * @return This builder for chaining.
-       */
-      public Builder setDefaultRole(
-          java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        defaultRole_ = value;
-        bitField0_ |= 0x00000100;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * default_role is the default role for new members in the organization
-       * </pre>
-       *
-       * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearDefaultRole() {
-        defaultRole_ = getDefaultInstance().getDefaultRole();
-        bitField0_ = (bitField0_ & ~0x00000100);
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * default_role is the default role for new members in the organization
-       * </pre>
-       *
-       * <code>optional string default_role = 10 [json_name = "defaultRole"];</code>
-       * @param value The bytes for defaultRole to set.
-       * @return This builder for chaining.
-       */
-      public Builder setDefaultRoleBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        checkByteStringIsUtf8(value);
-        defaultRole_ = value;
-        bitField0_ |= 0x00000100;
-        onChanged();
-        return this;
-      }
-
-      private io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings timeoutSettings_;
-      private com.google.protobuf.SingleFieldBuilder<
-          io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder> timeoutSettingsBuilder_;
-      /**
-       * <pre>
-       * timeout_settings are the settings for workspace timeouts
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-       * @return Whether the timeoutSettings field is set.
-       */
-      public boolean hasTimeoutSettings() {
-        return ((bitField0_ & 0x00000200) != 0);
-      }
-      /**
-       * <pre>
-       * timeout_settings are the settings for workspace timeouts
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-       * @return The timeoutSettings.
-       */
-      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings getTimeoutSettings() {
-        if (timeoutSettingsBuilder_ == null) {
-          return timeoutSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
-        } else {
-          return timeoutSettingsBuilder_.getMessage();
-        }
-      }
-      /**
-       * <pre>
-       * timeout_settings are the settings for workspace timeouts
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-       */
-      public Builder setTimeoutSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings value) {
-        if (timeoutSettingsBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          timeoutSettings_ = value;
-        } else {
-          timeoutSettingsBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000200;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * timeout_settings are the settings for workspace timeouts
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-       */
-      public Builder setTimeoutSettings(
-          io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder builderForValue) {
-        if (timeoutSettingsBuilder_ == null) {
-          timeoutSettings_ = builderForValue.build();
-        } else {
-          timeoutSettingsBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000200;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * timeout_settings are the settings for workspace timeouts
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-       */
-      public Builder mergeTimeoutSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings value) {
-        if (timeoutSettingsBuilder_ == null) {
-          if (((bitField0_ & 0x00000200) != 0) &&
-            timeoutSettings_ != null &&
-            timeoutSettings_ != io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance()) {
-            getTimeoutSettingsBuilder().mergeFrom(value);
-          } else {
-            timeoutSettings_ = value;
-          }
-        } else {
-          timeoutSettingsBuilder_.mergeFrom(value);
-        }
-        if (timeoutSettings_ != null) {
-          bitField0_ |= 0x00000200;
-          onChanged();
-        }
-        return this;
-      }
-      /**
-       * <pre>
-       * timeout_settings are the settings for workspace timeouts
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-       */
-      public Builder clearTimeoutSettings() {
-        bitField0_ = (bitField0_ & ~0x00000200);
-        timeoutSettings_ = null;
-        if (timeoutSettingsBuilder_ != null) {
-          timeoutSettingsBuilder_.dispose();
-          timeoutSettingsBuilder_ = null;
-        }
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * timeout_settings are the settings for workspace timeouts
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-       */
-      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder getTimeoutSettingsBuilder() {
-        bitField0_ |= 0x00000200;
-        onChanged();
-        return getTimeoutSettingsFieldBuilder().getBuilder();
-      }
-      /**
-       * <pre>
-       * timeout_settings are the settings for workspace timeouts
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
-       */
-      public io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder getTimeoutSettingsOrBuilder() {
-        if (timeoutSettingsBuilder_ != null) {
-          return timeoutSettingsBuilder_.getMessageOrBuilder();
-        } else {
-          return timeoutSettings_ == null ?
-              io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.getDefaultInstance() : timeoutSettings_;
-        }
-      }
-      /**
-       * <pre>
-       * timeout_settings are the settings for workspace timeouts
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.TimeoutSettings timeout_settings = 11 [json_name = "timeoutSettings"];</code>
+       * <code>.gitpod.v1.OrganizationSettings settings = 19 [json_name = "settings"];</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder>
-          getTimeoutSettingsFieldBuilder() {
-        if (timeoutSettingsBuilder_ == null) {
-          timeoutSettingsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.TimeoutSettingsOrBuilder>(
-                  getTimeoutSettings(),
+          io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettingsOrBuilder>
+          getSettingsFieldBuilder() {
+        if (settingsBuilder_ == null) {
+          settingsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.OrganizationSettingsOrBuilder>(
+                  getSettings(),
                   getParentForChildren(),
                   isClean());
-          timeoutSettings_ = null;
+          settings_ = null;
         }
-        return timeoutSettingsBuilder_;
-      }
-
-      private java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> roleRestrictions_ =
-        java.util.Collections.emptyList();
-      private void ensureRoleRestrictionsIsMutable() {
-        if (!((bitField0_ & 0x00000400) != 0)) {
-          roleRestrictions_ = new java.util.ArrayList<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry>(roleRestrictions_);
-          bitField0_ |= 0x00000400;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder> roleRestrictionsBuilder_;
-
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> getRoleRestrictionsList() {
-        if (roleRestrictionsBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(roleRestrictions_);
-        } else {
-          return roleRestrictionsBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public int getRoleRestrictionsCount() {
-        if (roleRestrictionsBuilder_ == null) {
-          return roleRestrictions_.size();
-        } else {
-          return roleRestrictionsBuilder_.getCount();
-        }
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry getRoleRestrictions(int index) {
-        if (roleRestrictionsBuilder_ == null) {
-          return roleRestrictions_.get(index);
-        } else {
-          return roleRestrictionsBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public Builder setRoleRestrictions(
-          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry value) {
-        if (roleRestrictionsBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureRoleRestrictionsIsMutable();
-          roleRestrictions_.set(index, value);
-          onChanged();
-        } else {
-          roleRestrictionsBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public Builder setRoleRestrictions(
-          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder builderForValue) {
-        if (roleRestrictionsBuilder_ == null) {
-          ensureRoleRestrictionsIsMutable();
-          roleRestrictions_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          roleRestrictionsBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public Builder addRoleRestrictions(io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry value) {
-        if (roleRestrictionsBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureRoleRestrictionsIsMutable();
-          roleRestrictions_.add(value);
-          onChanged();
-        } else {
-          roleRestrictionsBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public Builder addRoleRestrictions(
-          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry value) {
-        if (roleRestrictionsBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureRoleRestrictionsIsMutable();
-          roleRestrictions_.add(index, value);
-          onChanged();
-        } else {
-          roleRestrictionsBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public Builder addRoleRestrictions(
-          io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder builderForValue) {
-        if (roleRestrictionsBuilder_ == null) {
-          ensureRoleRestrictionsIsMutable();
-          roleRestrictions_.add(builderForValue.build());
-          onChanged();
-        } else {
-          roleRestrictionsBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public Builder addRoleRestrictions(
-          int index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder builderForValue) {
-        if (roleRestrictionsBuilder_ == null) {
-          ensureRoleRestrictionsIsMutable();
-          roleRestrictions_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          roleRestrictionsBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public Builder addAllRoleRestrictions(
-          java.lang.Iterable<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry> values) {
-        if (roleRestrictionsBuilder_ == null) {
-          ensureRoleRestrictionsIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, roleRestrictions_);
-          onChanged();
-        } else {
-          roleRestrictionsBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public Builder clearRoleRestrictions() {
-        if (roleRestrictionsBuilder_ == null) {
-          roleRestrictions_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000400);
-          onChanged();
-        } else {
-          roleRestrictionsBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public Builder removeRoleRestrictions(int index) {
-        if (roleRestrictionsBuilder_ == null) {
-          ensureRoleRestrictionsIsMutable();
-          roleRestrictions_.remove(index);
-          onChanged();
-        } else {
-          roleRestrictionsBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder getRoleRestrictionsBuilder(
-          int index) {
-        return getRoleRestrictionsFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder getRoleRestrictionsOrBuilder(
-          int index) {
-        if (roleRestrictionsBuilder_ == null) {
-          return roleRestrictions_.get(index);  } else {
-          return roleRestrictionsBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public java.util.List<? extends io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
-           getRoleRestrictionsOrBuilderList() {
-        if (roleRestrictionsBuilder_ != null) {
-          return roleRestrictionsBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(roleRestrictions_);
-        }
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder addRoleRestrictionsBuilder() {
-        return getRoleRestrictionsFieldBuilder().addBuilder(
-            io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.getDefaultInstance());
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder addRoleRestrictionsBuilder(
-          int index) {
-        return getRoleRestrictionsFieldBuilder().addBuilder(
-            index, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.getDefaultInstance());
-      }
-      /**
-       * <pre>
-       * Only updates if update_role_restrictions is true.
-       * </pre>
-       *
-       * <code>repeated .gitpod.v1.RoleRestrictionEntry role_restrictions = 12 [json_name = "roleRestrictions"];</code>
-       */
-      public java.util.List<io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder>
-           getRoleRestrictionsBuilderList() {
-        return getRoleRestrictionsFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>
-          getRoleRestrictionsFieldBuilder() {
-        if (roleRestrictionsBuilder_ == null) {
-          roleRestrictionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntry.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.RoleRestrictionEntryOrBuilder>(
-                  roleRestrictions_,
-                  ((bitField0_ & 0x00000400) != 0),
-                  getParentForChildren(),
-                  isClean());
-          roleRestrictions_ = null;
-        }
-        return roleRestrictionsBuilder_;
-      }
-
-      private boolean updateRoleRestrictions_ ;
-      /**
-       * <pre>
-       * update_role_restrictions specifies whether role_restrictions should be
-       * updated
-       * </pre>
-       *
-       * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
-       * @return Whether the updateRoleRestrictions field is set.
-       */
-      @java.lang.Override
-      public boolean hasUpdateRoleRestrictions() {
-        return ((bitField0_ & 0x00000800) != 0);
-      }
-      /**
-       * <pre>
-       * update_role_restrictions specifies whether role_restrictions should be
-       * updated
-       * </pre>
-       *
-       * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
-       * @return The updateRoleRestrictions.
-       */
-      @java.lang.Override
-      public boolean getUpdateRoleRestrictions() {
-        return updateRoleRestrictions_;
-      }
-      /**
-       * <pre>
-       * update_role_restrictions specifies whether role_restrictions should be
-       * updated
-       * </pre>
-       *
-       * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
-       * @param value The updateRoleRestrictions to set.
-       * @return This builder for chaining.
-       */
-      public Builder setUpdateRoleRestrictions(boolean value) {
-
-        updateRoleRestrictions_ = value;
-        bitField0_ |= 0x00000800;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * update_role_restrictions specifies whether role_restrictions should be
-       * updated
-       * </pre>
-       *
-       * <code>optional bool update_role_restrictions = 13 [json_name = "updateRoleRestrictions"];</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearUpdateRoleRestrictions() {
-        bitField0_ = (bitField0_ & ~0x00000800);
-        updateRoleRestrictions_ = false;
-        onChanged();
-        return this;
-      }
-
-      private int maxParallelRunningWorkspaces_ ;
-      /**
-       * <pre>
-       * max_parallel_running_workspaces is the maximum number of workspaces that a
-       * single user can run in parallel. 0 resets to the default, which depends on
-       * the org plan
-       * </pre>
-       *
-       * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
-       * @return Whether the maxParallelRunningWorkspaces field is set.
-       */
-      @java.lang.Override
-      public boolean hasMaxParallelRunningWorkspaces() {
-        return ((bitField0_ & 0x00001000) != 0);
-      }
-      /**
-       * <pre>
-       * max_parallel_running_workspaces is the maximum number of workspaces that a
-       * single user can run in parallel. 0 resets to the default, which depends on
-       * the org plan
-       * </pre>
-       *
-       * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
-       * @return The maxParallelRunningWorkspaces.
-       */
-      @java.lang.Override
-      public int getMaxParallelRunningWorkspaces() {
-        return maxParallelRunningWorkspaces_;
-      }
-      /**
-       * <pre>
-       * max_parallel_running_workspaces is the maximum number of workspaces that a
-       * single user can run in parallel. 0 resets to the default, which depends on
-       * the org plan
-       * </pre>
-       *
-       * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
-       * @param value The maxParallelRunningWorkspaces to set.
-       * @return This builder for chaining.
-       */
-      public Builder setMaxParallelRunningWorkspaces(int value) {
-
-        maxParallelRunningWorkspaces_ = value;
-        bitField0_ |= 0x00001000;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * max_parallel_running_workspaces is the maximum number of workspaces that a
-       * single user can run in parallel. 0 resets to the default, which depends on
-       * the org plan
-       * </pre>
-       *
-       * <code>optional int32 max_parallel_running_workspaces = 15 [json_name = "maxParallelRunningWorkspaces"];</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearMaxParallelRunningWorkspaces() {
-        bitField0_ = (bitField0_ & ~0x00001000);
-        maxParallelRunningWorkspaces_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings onboardingSettings_;
-      private com.google.protobuf.SingleFieldBuilder<
-          io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettingsOrBuilder> onboardingSettingsBuilder_;
-      /**
-       * <pre>
-       * onboarding_settings are the settings for the organization's onboarding
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-       * @return Whether the onboardingSettings field is set.
-       */
-      public boolean hasOnboardingSettings() {
-        return ((bitField0_ & 0x00002000) != 0);
-      }
-      /**
-       * <pre>
-       * onboarding_settings are the settings for the organization's onboarding
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-       * @return The onboardingSettings.
-       */
-      public io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings getOnboardingSettings() {
-        if (onboardingSettingsBuilder_ == null) {
-          return onboardingSettings_ == null ? io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.getDefaultInstance() : onboardingSettings_;
-        } else {
-          return onboardingSettingsBuilder_.getMessage();
-        }
-      }
-      /**
-       * <pre>
-       * onboarding_settings are the settings for the organization's onboarding
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-       */
-      public Builder setOnboardingSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings value) {
-        if (onboardingSettingsBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          onboardingSettings_ = value;
-        } else {
-          onboardingSettingsBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00002000;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * onboarding_settings are the settings for the organization's onboarding
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-       */
-      public Builder setOnboardingSettings(
-          io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.Builder builderForValue) {
-        if (onboardingSettingsBuilder_ == null) {
-          onboardingSettings_ = builderForValue.build();
-        } else {
-          onboardingSettingsBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00002000;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * onboarding_settings are the settings for the organization's onboarding
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-       */
-      public Builder mergeOnboardingSettings(io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings value) {
-        if (onboardingSettingsBuilder_ == null) {
-          if (((bitField0_ & 0x00002000) != 0) &&
-            onboardingSettings_ != null &&
-            onboardingSettings_ != io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.getDefaultInstance()) {
-            getOnboardingSettingsBuilder().mergeFrom(value);
-          } else {
-            onboardingSettings_ = value;
-          }
-        } else {
-          onboardingSettingsBuilder_.mergeFrom(value);
-        }
-        if (onboardingSettings_ != null) {
-          bitField0_ |= 0x00002000;
-          onChanged();
-        }
-        return this;
-      }
-      /**
-       * <pre>
-       * onboarding_settings are the settings for the organization's onboarding
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-       */
-      public Builder clearOnboardingSettings() {
-        bitField0_ = (bitField0_ & ~0x00002000);
-        onboardingSettings_ = null;
-        if (onboardingSettingsBuilder_ != null) {
-          onboardingSettingsBuilder_.dispose();
-          onboardingSettingsBuilder_ = null;
-        }
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * onboarding_settings are the settings for the organization's onboarding
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-       */
-      public io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.Builder getOnboardingSettingsBuilder() {
-        bitField0_ |= 0x00002000;
-        onChanged();
-        return getOnboardingSettingsFieldBuilder().getBuilder();
-      }
-      /**
-       * <pre>
-       * onboarding_settings are the settings for the organization's onboarding
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-       */
-      public io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettingsOrBuilder getOnboardingSettingsOrBuilder() {
-        if (onboardingSettingsBuilder_ != null) {
-          return onboardingSettingsBuilder_.getMessageOrBuilder();
-        } else {
-          return onboardingSettings_ == null ?
-              io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.getDefaultInstance() : onboardingSettings_;
-        }
-      }
-      /**
-       * <pre>
-       * onboarding_settings are the settings for the organization's onboarding
-       * </pre>
-       *
-       * <code>optional .gitpod.v1.OnboardingSettings onboarding_settings = 16 [json_name = "onboardingSettings"];</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettingsOrBuilder>
-          getOnboardingSettingsFieldBuilder() {
-        if (onboardingSettingsBuilder_ == null) {
-          onboardingSettingsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings, io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.Builder, io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettingsOrBuilder>(
-                  getOnboardingSettings(),
-                  getParentForChildren(),
-                  isClean());
-          onboardingSettings_ = null;
-        }
-        return onboardingSettingsBuilder_;
-      }
-
-      private boolean annotateGitCommits_ ;
-      /**
-       * <pre>
-       * annotate_git_commits specifies whether to annotate git commits created in
-       * Gitpod workspaces with the gitpod host
-       * </pre>
-       *
-       * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
-       * @return Whether the annotateGitCommits field is set.
-       */
-      @java.lang.Override
-      public boolean hasAnnotateGitCommits() {
-        return ((bitField0_ & 0x00004000) != 0);
-      }
-      /**
-       * <pre>
-       * annotate_git_commits specifies whether to annotate git commits created in
-       * Gitpod workspaces with the gitpod host
-       * </pre>
-       *
-       * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
-       * @return The annotateGitCommits.
-       */
-      @java.lang.Override
-      public boolean getAnnotateGitCommits() {
-        return annotateGitCommits_;
-      }
-      /**
-       * <pre>
-       * annotate_git_commits specifies whether to annotate git commits created in
-       * Gitpod workspaces with the gitpod host
-       * </pre>
-       *
-       * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
-       * @param value The annotateGitCommits to set.
-       * @return This builder for chaining.
-       */
-      public Builder setAnnotateGitCommits(boolean value) {
-
-        annotateGitCommits_ = value;
-        bitField0_ |= 0x00004000;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * annotate_git_commits specifies whether to annotate git commits created in
-       * Gitpod workspaces with the gitpod host
-       * </pre>
-       *
-       * <code>optional bool annotate_git_commits = 17 [json_name = "annotateGitCommits"];</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearAnnotateGitCommits() {
-        bitField0_ = (bitField0_ & ~0x00004000);
-        annotateGitCommits_ = false;
-        onChanged();
-        return this;
-      }
-
-      private boolean updateAllowedWorkspaceClasses_ ;
-      /**
-       * <pre>
-       * update_role_restrictions specifies whether role_restrictions should be
-       * updated
-       * </pre>
-       *
-       * <code>optional bool update_allowed_workspace_classes = 18 [json_name = "updateAllowedWorkspaceClasses"];</code>
-       * @return Whether the updateAllowedWorkspaceClasses field is set.
-       */
-      @java.lang.Override
-      public boolean hasUpdateAllowedWorkspaceClasses() {
-        return ((bitField0_ & 0x00008000) != 0);
-      }
-      /**
-       * <pre>
-       * update_role_restrictions specifies whether role_restrictions should be
-       * updated
-       * </pre>
-       *
-       * <code>optional bool update_allowed_workspace_classes = 18 [json_name = "updateAllowedWorkspaceClasses"];</code>
-       * @return The updateAllowedWorkspaceClasses.
-       */
-      @java.lang.Override
-      public boolean getUpdateAllowedWorkspaceClasses() {
-        return updateAllowedWorkspaceClasses_;
-      }
-      /**
-       * <pre>
-       * update_role_restrictions specifies whether role_restrictions should be
-       * updated
-       * </pre>
-       *
-       * <code>optional bool update_allowed_workspace_classes = 18 [json_name = "updateAllowedWorkspaceClasses"];</code>
-       * @param value The updateAllowedWorkspaceClasses to set.
-       * @return This builder for chaining.
-       */
-      public Builder setUpdateAllowedWorkspaceClasses(boolean value) {
-
-        updateAllowedWorkspaceClasses_ = value;
-        bitField0_ |= 0x00008000;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * update_role_restrictions specifies whether role_restrictions should be
-       * updated
-       * </pre>
-       *
-       * <code>optional bool update_allowed_workspace_classes = 18 [json_name = "updateAllowedWorkspaceClasses"];</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearUpdateAllowedWorkspaceClasses() {
-        bitField0_ = (bitField0_ & ~0x00008000);
-        updateAllowedWorkspaceClasses_ = false;
-        onChanged();
-        return this;
+        return settingsBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:gitpod.v1.UpdateOrganizationSettingsRequest)
@@ -31211,11 +29407,6 @@ java.lang.String defaultValue) {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_descriptor;
-  private static final
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_v1_UpdateOrganizationSettingsResponse_descriptor;
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -31373,187 +29564,168 @@ java.lang.String defaultValue) {
       "\n\n\010_messageB\025\n\023_featured_member_idB&\n$_f" +
       "eatured_member_resolved_avatar_urlB\020\n\016_i" +
       "nternal_linkB\"\n _update_recommended_repo" +
-      "sitoriesB\022\n\020_welcome_message\"\273\006\n\024Organiz" +
-      "ationSettings\022<\n\032workspace_sharing_disab" +
-      "led\030\001 \001(\010R\030workspaceSharingDisabled\0226\n\027d" +
-      "efault_workspace_image\030\002 \001(\tR\025defaultWor" +
-      "kspaceImage\022:\n\031allowed_workspace_classes" +
-      "\030\003 \003(\tR\027allowedWorkspaceClasses\0226\n\027restr" +
-      "icted_editor_names\030\004 \003(\tR\025restrictedEdit" +
-      "orNames\022o\n\026pinned_editor_versions\030\005 \003(\0132" +
-      "9.gitpod.v1.OrganizationSettings.PinnedE" +
-      "ditorVersionsEntryR\024pinnedEditorVersions" +
-      "\022!\n\014default_role\030\006 \001(\tR\013defaultRole\022E\n\020t" +
-      "imeout_settings\030\007 \001(\0132\032.gitpod.v1.Timeou" +
-      "tSettingsR\017timeoutSettings\022L\n\021role_restr" +
-      "ictions\030\010 \003(\0132\037.gitpod.v1.RoleRestrictio" +
-      "nEntryR\020roleRestrictions\022E\n\037max_parallel" +
-      "_running_workspaces\030\t \001(\005R\034maxParallelRu" +
-      "nningWorkspaces\022N\n\023onboarding_settings\030\n" +
-      " \001(\0132\035.gitpod.v1.OnboardingSettingsR\022onb" +
-      "oardingSettings\0220\n\024annotate_git_commits\030" +
-      "\013 \001(\010R\022annotateGitCommits\032G\n\031PinnedEdito" +
-      "rVersionsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005valu" +
-      "e\030\002 \001(\tR\005value:\0028\001\"\220\001\n\'ListOrganizationW" +
-      "orkspaceClassesRequest\022<\n\npagination\030\001 \001" +
-      "(\0132\034.gitpod.v1.PaginationRequestR\npagina" +
-      "tion\022\'\n\017organization_id\030\002 \001(\tR\016organizat" +
-      "ionId\"\261\001\n(ListOrganizationWorkspaceClass" +
-      "esResponse\022=\n\npagination\030\001 \001(\0132\035.gitpod." +
-      "v1.PaginationResponseR\npagination\022F\n\021wor" +
-      "kspace_classes\030\002 \003(\0132\031.gitpod.v1.Workspa" +
-      "ceClassR\020workspaceClasses\"f\n\031UpdateOrgan" +
-      "izationRequest\022\'\n\017organization_id\030\001 \001(\tR" +
-      "\016organizationId\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001" +
-      "B\007\n\005_name\"Y\n\032UpdateOrganizationResponse\022" +
-      ";\n\014organization\030\001 \001(\0132\027.gitpod.v1.Organi" +
-      "zationR\014organization\"\252\001\n\017TimeoutSettings" +
-      "\022>\n\ninactivity\030\001 \001(\0132\031.google.protobuf.D" +
-      "urationH\000R\ninactivity\210\001\001\0221\n\022deny_user_ti" +
-      "meouts\030\002 \001(\010H\001R\020denyUserTimeouts\210\001\001B\r\n\013_" +
-      "inactivityB\025\n\023_deny_user_timeouts\"\375\013\n!Up" +
-      "dateOrganizationSettingsRequest\022\'\n\017organ" +
-      "ization_id\030\001 \001(\tR\016organizationId\022A\n\032work" +
-      "space_sharing_disabled\030\003 \001(\010H\000R\030workspac" +
-      "eSharingDisabled\210\001\001\022;\n\027default_workspace" +
-      "_image\030\004 \001(\tH\001R\025defaultWorkspaceImage\210\001\001" +
-      "\022:\n\031allowed_workspace_classes\030\005 \003(\tR\027all" +
-      "owedWorkspaceClasses\0226\n\027restricted_edito" +
-      "r_names\030\006 \003(\tR\025restrictedEditorNames\022H\n\036" +
-      "update_restricted_editor_names\030\007 \001(\010H\002R\033" +
-      "updateRestrictedEditorNames\210\001\001\022|\n\026pinned" +
-      "_editor_versions\030\010 \003(\0132F.gitpod.v1.Updat" +
-      "eOrganizationSettingsRequest.PinnedEdito" +
-      "rVersionsEntryR\024pinnedEditorVersions\022F\n\035" +
-      "update_pinned_editor_versions\030\t \001(\010H\003R\032u" +
-      "pdatePinnedEditorVersions\210\001\001\022&\n\014default_" +
-      "role\030\n \001(\tH\004R\013defaultRole\210\001\001\022J\n\020timeout_" +
-      "settings\030\013 \001(\0132\032.gitpod.v1.TimeoutSettin" +
-      "gsH\005R\017timeoutSettings\210\001\001\022L\n\021role_restric" +
-      "tions\030\014 \003(\0132\037.gitpod.v1.RoleRestrictionE" +
-      "ntryR\020roleRestrictions\022=\n\030update_role_re" +
-      "strictions\030\r \001(\010H\006R\026updateRoleRestrictio" +
-      "ns\210\001\001\022J\n\037max_parallel_running_workspaces" +
-      "\030\017 \001(\005H\007R\034maxParallelRunningWorkspaces\210\001" +
-      "\001\022S\n\023onboarding_settings\030\020 \001(\0132\035.gitpod." +
-      "v1.OnboardingSettingsH\010R\022onboardingSetti" +
-      "ngs\210\001\001\0225\n\024annotate_git_commits\030\021 \001(\010H\tR\022" +
-      "annotateGitCommits\210\001\001\022L\n update_allowed_" +
-      "workspace_classes\030\022 \001(\010H\nR\035updateAllowed" +
-      "WorkspaceClasses\210\001\001\032G\n\031PinnedEditorVersi" +
-      "onsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(" +
-      "\tR\005value:\0028\001B\035\n\033_workspace_sharing_disab" +
-      "ledB\032\n\030_default_workspace_imageB!\n\037_upda" +
-      "te_restricted_editor_namesB \n\036_update_pi" +
-      "nned_editor_versionsB\017\n\r_default_roleB\023\n" +
-      "\021_timeout_settingsB\033\n\031_update_role_restr" +
-      "ictionsB\"\n _max_parallel_running_workspa" +
-      "cesB\026\n\024_onboarding_settingsB\027\n\025_annotate" +
-      "_git_commitsB#\n!_update_allowed_workspac" +
-      "e_classes\"a\n\"UpdateOrganizationSettingsR" +
-      "esponse\022;\n\010settings\030\001 \001(\0132\037.gitpod.v1.Or" +
-      "ganizationSettingsR\010settings\"I\n\036GetOrgan" +
-      "izationSettingsRequest\022\'\n\017organization_i" +
-      "d\030\001 \001(\tR\016organizationId\"^\n\037GetOrganizati" +
-      "onSettingsResponse\022;\n\010settings\030\001 \001(\0132\037.g" +
-      "itpod.v1.OrganizationSettingsR\010settings\"" +
-      "/\n\031CreateOrganizationRequest\022\022\n\004name\030\001 \001" +
-      "(\tR\004name\"Y\n\032CreateOrganizationResponse\022;" +
+      "sitoriesB\022\n\020_welcome_message\"\272\013\n\024Organiz" +
+      "ationSettings\022A\n\032workspace_sharing_disab" +
+      "led\030\001 \001(\010H\000R\030workspaceSharingDisabled\210\001\001" +
+      "\022;\n\027default_workspace_image\030\002 \001(\tH\001R\025def" +
+      "aultWorkspaceImage\210\001\001\022:\n\031allowed_workspa" +
+      "ce_classes\030\003 \003(\tR\027allowedWorkspaceClasse" +
+      "s\0226\n\027restricted_editor_names\030\004 \003(\tR\025rest" +
+      "rictedEditorNames\022o\n\026pinned_editor_versi" +
+      "ons\030\005 \003(\01329.gitpod.v1.OrganizationSettin" +
+      "gs.PinnedEditorVersionsEntryR\024pinnedEdit" +
+      "orVersions\022&\n\014default_role\030\006 \001(\tH\002R\013defa" +
+      "ultRole\210\001\001\022J\n\020timeout_settings\030\007 \001(\0132\032.g" +
+      "itpod.v1.TimeoutSettingsH\003R\017timeoutSetti" +
+      "ngs\210\001\001\022L\n\021role_restrictions\030\010 \003(\0132\037.gitp" +
+      "od.v1.RoleRestrictionEntryR\020roleRestrict" +
+      "ions\022J\n\037max_parallel_running_workspaces\030" +
+      "\t \001(\005H\004R\034maxParallelRunningWorkspaces\210\001\001" +
+      "\022S\n\023onboarding_settings\030\n \001(\0132\035.gitpod.v" +
+      "1.OnboardingSettingsH\005R\022onboardingSettin" +
+      "gs\210\001\001\0225\n\024annotate_git_commits\030\013 \001(\010H\006R\022a" +
+      "nnotateGitCommits\210\001\001\022L\n update_allowed_w" +
+      "orkspace_classes\030\014 \001(\010H\007R\035updateAllowedW" +
+      "orkspaceClasses\210\001\001\022H\n\036update_restricted_" +
+      "editor_names\030\r \001(\010H\010R\033updateRestrictedEd" +
+      "itorNames\210\001\001\022F\n\035update_pinned_editor_ver" +
+      "sions\030\016 \001(\010H\tR\032updatePinnedEditorVersion" +
+      "s\210\001\001\022=\n\030update_role_restrictions\030\017 \001(\010H\n" +
+      "R\026updateRoleRestrictions\210\001\001\032G\n\031PinnedEdi" +
+      "torVersionsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005va" +
+      "lue\030\002 \001(\tR\005value:\0028\001B\035\n\033_workspace_shari" +
+      "ng_disabledB\032\n\030_default_workspace_imageB" +
+      "\017\n\r_default_roleB\023\n\021_timeout_settingsB\"\n" +
+      " _max_parallel_running_workspacesB\026\n\024_on" +
+      "boarding_settingsB\027\n\025_annotate_git_commi" +
+      "tsB#\n!_update_allowed_workspace_classesB" +
+      "!\n\037_update_restricted_editor_namesB \n\036_u" +
+      "pdate_pinned_editor_versionsB\033\n\031_update_" +
+      "role_restrictions\"\220\001\n\'ListOrganizationWo" +
+      "rkspaceClassesRequest\022<\n\npagination\030\001 \001(" +
+      "\0132\034.gitpod.v1.PaginationRequestR\npaginat" +
+      "ion\022\'\n\017organization_id\030\002 \001(\tR\016organizati" +
+      "onId\"\261\001\n(ListOrganizationWorkspaceClasse" +
+      "sResponse\022=\n\npagination\030\001 \001(\0132\035.gitpod.v" +
+      "1.PaginationResponseR\npagination\022F\n\021work" +
+      "space_classes\030\002 \003(\0132\031.gitpod.v1.Workspac" +
+      "eClassR\020workspaceClasses\"f\n\031UpdateOrgani" +
+      "zationRequest\022\'\n\017organization_id\030\001 \001(\tR\016" +
+      "organizationId\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001B" +
+      "\007\n\005_name\"Y\n\032UpdateOrganizationResponse\022;" +
       "\n\014organization\030\001 \001(\0132\027.gitpod.v1.Organiz" +
-      "ationR\014organization\"A\n\026GetOrganizationRe" +
-      "quest\022\'\n\017organization_id\030\001 \001(\tR\016organiza" +
-      "tionId\"V\n\027GetOrganizationResponse\022;\n\014org" +
-      "anization\030\001 \001(\0132\027.gitpod.v1.Organization" +
-      "R\014organization\"\332\001\n\030ListOrganizationsRequ" +
-      "est\022<\n\npagination\030\001 \001(\0132\034.gitpod.v1.Pagi" +
-      "nationRequestR\npagination\022?\n\005scope\030\002 \001(\016" +
-      "2).gitpod.v1.ListOrganizationsRequest.Sc" +
-      "opeR\005scope\"?\n\005Scope\022\025\n\021SCOPE_UNSPECIFIED" +
-      "\020\000\022\020\n\014SCOPE_MEMBER\020\001\022\r\n\tSCOPE_ALL\020\002\"\231\001\n\031" +
-      "ListOrganizationsResponse\022=\n\rorganizatio" +
-      "ns\030\001 \003(\0132\027.gitpod.v1.OrganizationR\rorgan" +
-      "izations\022=\n\npagination\030\002 \001(\0132\035.gitpod.v1" +
-      ".PaginationResponseR\npagination\"D\n\031Delet" +
-      "eOrganizationRequest\022\'\n\017organization_id\030" +
-      "\001 \001(\tR\016organizationId\"\034\n\032DeleteOrganizat" +
-      "ionResponse\"K\n GetOrganizationInvitation" +
-      "Request\022\'\n\017organization_id\030\001 \001(\tR\016organi" +
-      "zationId\"H\n!GetOrganizationInvitationRes" +
-      "ponse\022#\n\rinvitation_id\030\001 \001(\tR\014invitation" +
-      "Id\">\n\027JoinOrganizationRequest\022#\n\rinvitat" +
-      "ion_id\030\001 \001(\tR\014invitationId\"C\n\030JoinOrgani" +
-      "zationResponse\022\'\n\017organization_id\030\001 \001(\tR" +
-      "\016organizationId\"M\n\"ResetOrganizationInvi" +
-      "tationRequest\022\'\n\017organization_id\030\001 \001(\tR\016" +
-      "organizationId\"J\n#ResetOrganizationInvit" +
-      "ationResponse\022#\n\rinvitation_id\030\001 \001(\tR\014in" +
-      "vitationId\"\207\001\n\036ListOrganizationMembersRe" +
-      "quest\022\'\n\017organization_id\030\001 \001(\tR\016organiza" +
-      "tionId\022<\n\npagination\030\002 \001(\0132\034.gitpod.v1.P" +
-      "aginationRequestR\npagination\"\231\001\n\037ListOrg" +
-      "anizationMembersResponse\0227\n\007members\030\001 \003(" +
-      "\0132\035.gitpod.v1.OrganizationMemberR\007member" +
-      "s\022=\n\npagination\030\002 \001(\0132\035.gitpod.v1.Pagina" +
-      "tionResponseR\npagination\"\242\001\n\037UpdateOrgan" +
-      "izationMemberRequest\022\'\n\017organization_id\030" +
-      "\001 \001(\tR\016organizationId\022\027\n\007user_id\030\002 \001(\tR\006" +
-      "userId\0224\n\004role\030\003 \001(\0162\033.gitpod.v1.Organiz" +
-      "ationRoleH\000R\004role\210\001\001B\007\n\005_role\"Y\n UpdateO" +
-      "rganizationMemberResponse\0225\n\006member\030\001 \001(" +
-      "\0132\035.gitpod.v1.OrganizationMemberR\006member" +
-      "\"c\n\037DeleteOrganizationMemberRequest\022\'\n\017o" +
-      "rganization_id\030\001 \001(\tR\016organizationId\022\027\n\007" +
-      "user_id\030\002 \001(\tR\006userId\"\"\n DeleteOrganizat" +
-      "ionMemberResponse*\224\001\n\020OrganizationRole\022!" +
-      "\n\035ORGANIZATION_ROLE_UNSPECIFIED\020\000\022\033\n\027ORG" +
-      "ANIZATION_ROLE_OWNER\020\001\022\034\n\030ORGANIZATION_R" +
-      "OLE_MEMBER\020\002\022\"\n\036ORGANIZATION_ROLE_COLLAB" +
-      "ORATOR\020\003*t\n\026OrganizationPermission\022\'\n#OR" +
-      "GANIZATION_PERMISSION_UNSPECIFIED\020\000\0221\n-O" +
-      "RGANIZATION_PERMISSION_START_ARBITRARY_R" +
-      "EPOS\020\0012\276\014\n\023OrganizationService\022c\n\022Create" +
-      "Organization\022$.gitpod.v1.CreateOrganizat" +
-      "ionRequest\032%.gitpod.v1.CreateOrganizatio" +
-      "nResponse\"\000\022Z\n\017GetOrganization\022!.gitpod." +
-      "v1.GetOrganizationRequest\032\".gitpod.v1.Ge" +
-      "tOrganizationResponse\"\000\022c\n\022UpdateOrganiz" +
-      "ation\022$.gitpod.v1.UpdateOrganizationRequ" +
-      "est\032%.gitpod.v1.UpdateOrganizationRespon" +
-      "se\"\000\022`\n\021ListOrganizations\022#.gitpod.v1.Li" +
-      "stOrganizationsRequest\032$.gitpod.v1.ListO" +
-      "rganizationsResponse\"\000\022c\n\022DeleteOrganiza" +
-      "tion\022$.gitpod.v1.DeleteOrganizationReque" +
-      "st\032%.gitpod.v1.DeleteOrganizationRespons" +
-      "e\"\000\022x\n\031GetOrganizationInvitation\022+.gitpo" +
-      "d.v1.GetOrganizationInvitationRequest\032,." +
-      "gitpod.v1.GetOrganizationInvitationRespo" +
-      "nse\"\000\022]\n\020JoinOrganization\022\".gitpod.v1.Jo" +
-      "inOrganizationRequest\032#.gitpod.v1.JoinOr" +
-      "ganizationResponse\"\000\022~\n\033ResetOrganizatio" +
-      "nInvitation\022-.gitpod.v1.ResetOrganizatio" +
-      "nInvitationRequest\032..gitpod.v1.ResetOrga" +
-      "nizationInvitationResponse\"\000\022r\n\027ListOrga" +
-      "nizationMembers\022).gitpod.v1.ListOrganiza" +
-      "tionMembersRequest\032*.gitpod.v1.ListOrgan" +
-      "izationMembersResponse\"\000\022u\n\030UpdateOrgani" +
-      "zationMember\022*.gitpod.v1.UpdateOrganizat" +
-      "ionMemberRequest\032+.gitpod.v1.UpdateOrgan" +
-      "izationMemberResponse\"\000\022u\n\030DeleteOrganiz" +
-      "ationMember\022*.gitpod.v1.DeleteOrganizati" +
-      "onMemberRequest\032+.gitpod.v1.DeleteOrgani" +
-      "zationMemberResponse\"\000\022r\n\027GetOrganizatio" +
-      "nSettings\022).gitpod.v1.GetOrganizationSet" +
-      "tingsRequest\032*.gitpod.v1.GetOrganization" +
-      "SettingsResponse\"\000\022{\n\032UpdateOrganization" +
-      "Settings\022,.gitpod.v1.UpdateOrganizationS" +
-      "ettingsRequest\032-.gitpod.v1.UpdateOrganiz" +
-      "ationSettingsResponse\"\000\022\215\001\n ListOrganiza" +
-      "tionWorkspaceClasses\0222.gitpod.v1.ListOrg" +
-      "anizationWorkspaceClassesRequest\0323.gitpo" +
-      "d.v1.ListOrganizationWorkspaceClassesRes" +
-      "ponse\"\000BQ\n\026io.gitpod.publicapi.v1Z7githu" +
-      "b.com/gitpod-io/gitpod/components/public" +
-      "-api/go/v1b\006proto3"
+      "ationR\014organization\"\252\001\n\017TimeoutSettings\022" +
+      ">\n\ninactivity\030\001 \001(\0132\031.google.protobuf.Du" +
+      "rationH\000R\ninactivity\210\001\001\0221\n\022deny_user_tim" +
+      "eouts\030\002 \001(\010H\001R\020denyUserTimeouts\210\001\001B\r\n\013_i" +
+      "nactivityB\025\n\023_deny_user_timeouts\"\211\001\n!Upd" +
+      "ateOrganizationSettingsRequest\022\'\n\017organi" +
+      "zation_id\030\001 \001(\tR\016organizationId\022;\n\010setti" +
+      "ngs\030\023 \001(\0132\037.gitpod.v1.OrganizationSettin" +
+      "gsR\010settings\"a\n\"UpdateOrganizationSettin" +
+      "gsResponse\022;\n\010settings\030\001 \001(\0132\037.gitpod.v1" +
+      ".OrganizationSettingsR\010settings\"I\n\036GetOr" +
+      "ganizationSettingsRequest\022\'\n\017organizatio" +
+      "n_id\030\001 \001(\tR\016organizationId\"^\n\037GetOrganiz" +
+      "ationSettingsResponse\022;\n\010settings\030\001 \001(\0132" +
+      "\037.gitpod.v1.OrganizationSettingsR\010settin" +
+      "gs\"/\n\031CreateOrganizationRequest\022\022\n\004name\030" +
+      "\001 \001(\tR\004name\"Y\n\032CreateOrganizationRespons" +
+      "e\022;\n\014organization\030\001 \001(\0132\027.gitpod.v1.Orga" +
+      "nizationR\014organization\"A\n\026GetOrganizatio" +
+      "nRequest\022\'\n\017organization_id\030\001 \001(\tR\016organ" +
+      "izationId\"V\n\027GetOrganizationResponse\022;\n\014" +
+      "organization\030\001 \001(\0132\027.gitpod.v1.Organizat" +
+      "ionR\014organization\"\332\001\n\030ListOrganizationsR" +
+      "equest\022<\n\npagination\030\001 \001(\0132\034.gitpod.v1.P" +
+      "aginationRequestR\npagination\022?\n\005scope\030\002 " +
+      "\001(\0162).gitpod.v1.ListOrganizationsRequest" +
+      ".ScopeR\005scope\"?\n\005Scope\022\025\n\021SCOPE_UNSPECIF" +
+      "IED\020\000\022\020\n\014SCOPE_MEMBER\020\001\022\r\n\tSCOPE_ALL\020\002\"\231" +
+      "\001\n\031ListOrganizationsResponse\022=\n\rorganiza" +
+      "tions\030\001 \003(\0132\027.gitpod.v1.OrganizationR\ror" +
+      "ganizations\022=\n\npagination\030\002 \001(\0132\035.gitpod" +
+      ".v1.PaginationResponseR\npagination\"D\n\031De" +
+      "leteOrganizationRequest\022\'\n\017organization_" +
+      "id\030\001 \001(\tR\016organizationId\"\034\n\032DeleteOrgani" +
+      "zationResponse\"K\n GetOrganizationInvitat" +
+      "ionRequest\022\'\n\017organization_id\030\001 \001(\tR\016org" +
+      "anizationId\"H\n!GetOrganizationInvitation" +
+      "Response\022#\n\rinvitation_id\030\001 \001(\tR\014invitat" +
+      "ionId\">\n\027JoinOrganizationRequest\022#\n\rinvi" +
+      "tation_id\030\001 \001(\tR\014invitationId\"C\n\030JoinOrg" +
+      "anizationResponse\022\'\n\017organization_id\030\001 \001" +
+      "(\tR\016organizationId\"M\n\"ResetOrganizationI" +
+      "nvitationRequest\022\'\n\017organization_id\030\001 \001(" +
+      "\tR\016organizationId\"J\n#ResetOrganizationIn" +
+      "vitationResponse\022#\n\rinvitation_id\030\001 \001(\tR" +
+      "\014invitationId\"\207\001\n\036ListOrganizationMember" +
+      "sRequest\022\'\n\017organization_id\030\001 \001(\tR\016organ" +
+      "izationId\022<\n\npagination\030\002 \001(\0132\034.gitpod.v" +
+      "1.PaginationRequestR\npagination\"\231\001\n\037List" +
+      "OrganizationMembersResponse\0227\n\007members\030\001" +
+      " \003(\0132\035.gitpod.v1.OrganizationMemberR\007mem" +
+      "bers\022=\n\npagination\030\002 \001(\0132\035.gitpod.v1.Pag" +
+      "inationResponseR\npagination\"\242\001\n\037UpdateOr" +
+      "ganizationMemberRequest\022\'\n\017organization_" +
+      "id\030\001 \001(\tR\016organizationId\022\027\n\007user_id\030\002 \001(" +
+      "\tR\006userId\0224\n\004role\030\003 \001(\0162\033.gitpod.v1.Orga" +
+      "nizationRoleH\000R\004role\210\001\001B\007\n\005_role\"Y\n Upda" +
+      "teOrganizationMemberResponse\0225\n\006member\030\001" +
+      " \001(\0132\035.gitpod.v1.OrganizationMemberR\006mem" +
+      "ber\"c\n\037DeleteOrganizationMemberRequest\022\'" +
+      "\n\017organization_id\030\001 \001(\tR\016organizationId\022" +
+      "\027\n\007user_id\030\002 \001(\tR\006userId\"\"\n DeleteOrgani" +
+      "zationMemberResponse*\224\001\n\020OrganizationRol" +
+      "e\022!\n\035ORGANIZATION_ROLE_UNSPECIFIED\020\000\022\033\n\027" +
+      "ORGANIZATION_ROLE_OWNER\020\001\022\034\n\030ORGANIZATIO" +
+      "N_ROLE_MEMBER\020\002\022\"\n\036ORGANIZATION_ROLE_COL" +
+      "LABORATOR\020\003*t\n\026OrganizationPermission\022\'\n" +
+      "#ORGANIZATION_PERMISSION_UNSPECIFIED\020\000\0221" +
+      "\n-ORGANIZATION_PERMISSION_START_ARBITRAR" +
+      "Y_REPOS\020\0012\276\014\n\023OrganizationService\022c\n\022Cre" +
+      "ateOrganization\022$.gitpod.v1.CreateOrgani" +
+      "zationRequest\032%.gitpod.v1.CreateOrganiza" +
+      "tionResponse\"\000\022Z\n\017GetOrganization\022!.gitp" +
+      "od.v1.GetOrganizationRequest\032\".gitpod.v1" +
+      ".GetOrganizationResponse\"\000\022c\n\022UpdateOrga" +
+      "nization\022$.gitpod.v1.UpdateOrganizationR" +
+      "equest\032%.gitpod.v1.UpdateOrganizationRes" +
+      "ponse\"\000\022`\n\021ListOrganizations\022#.gitpod.v1" +
+      ".ListOrganizationsRequest\032$.gitpod.v1.Li" +
+      "stOrganizationsResponse\"\000\022c\n\022DeleteOrgan" +
+      "ization\022$.gitpod.v1.DeleteOrganizationRe" +
+      "quest\032%.gitpod.v1.DeleteOrganizationResp" +
+      "onse\"\000\022x\n\031GetOrganizationInvitation\022+.gi" +
+      "tpod.v1.GetOrganizationInvitationRequest" +
+      "\032,.gitpod.v1.GetOrganizationInvitationRe" +
+      "sponse\"\000\022]\n\020JoinOrganization\022\".gitpod.v1" +
+      ".JoinOrganizationRequest\032#.gitpod.v1.Joi" +
+      "nOrganizationResponse\"\000\022~\n\033ResetOrganiza" +
+      "tionInvitation\022-.gitpod.v1.ResetOrganiza" +
+      "tionInvitationRequest\032..gitpod.v1.ResetO" +
+      "rganizationInvitationResponse\"\000\022r\n\027ListO" +
+      "rganizationMembers\022).gitpod.v1.ListOrgan" +
+      "izationMembersRequest\032*.gitpod.v1.ListOr" +
+      "ganizationMembersResponse\"\000\022u\n\030UpdateOrg" +
+      "anizationMember\022*.gitpod.v1.UpdateOrgani" +
+      "zationMemberRequest\032+.gitpod.v1.UpdateOr" +
+      "ganizationMemberResponse\"\000\022u\n\030DeleteOrga" +
+      "nizationMember\022*.gitpod.v1.DeleteOrganiz" +
+      "ationMemberRequest\032+.gitpod.v1.DeleteOrg" +
+      "anizationMemberResponse\"\000\022r\n\027GetOrganiza" +
+      "tionSettings\022).gitpod.v1.GetOrganization" +
+      "SettingsRequest\032*.gitpod.v1.GetOrganizat" +
+      "ionSettingsResponse\"\000\022{\n\032UpdateOrganizat" +
+      "ionSettings\022,.gitpod.v1.UpdateOrganizati" +
+      "onSettingsRequest\032-.gitpod.v1.UpdateOrga" +
+      "nizationSettingsResponse\"\000\022\215\001\n ListOrgan" +
+      "izationWorkspaceClasses\0222.gitpod.v1.List" +
+      "OrganizationWorkspaceClassesRequest\0323.gi" +
+      "tpod.v1.ListOrganizationWorkspaceClasses" +
+      "Response\"\000BQ\n\026io.gitpod.publicapi.v1Z7gi" +
+      "thub.com/gitpod-io/gitpod/components/pub" +
+      "lic-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -31598,7 +29770,7 @@ java.lang.String defaultValue) {
     internal_static_gitpod_v1_OrganizationSettings_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_OrganizationSettings_descriptor,
-        new java.lang.String[] { "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "PinnedEditorVersions", "DefaultRole", "TimeoutSettings", "RoleRestrictions", "MaxParallelRunningWorkspaces", "OnboardingSettings", "AnnotateGitCommits", });
+        new java.lang.String[] { "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "PinnedEditorVersions", "DefaultRole", "TimeoutSettings", "RoleRestrictions", "MaxParallelRunningWorkspaces", "OnboardingSettings", "AnnotateGitCommits", "UpdateAllowedWorkspaceClasses", "UpdateRestrictedEditorNames", "UpdatePinnedEditorVersions", "UpdateRoleRestrictions", });
     internal_static_gitpod_v1_OrganizationSettings_PinnedEditorVersionsEntry_descriptor =
       internal_static_gitpod_v1_OrganizationSettings_descriptor.getNestedTypes().get(0);
     internal_static_gitpod_v1_OrganizationSettings_PinnedEditorVersionsEntry_fieldAccessorTable = new
@@ -31640,13 +29812,7 @@ java.lang.String defaultValue) {
     internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor,
-        new java.lang.String[] { "OrganizationId", "WorkspaceSharingDisabled", "DefaultWorkspaceImage", "AllowedWorkspaceClasses", "RestrictedEditorNames", "UpdateRestrictedEditorNames", "PinnedEditorVersions", "UpdatePinnedEditorVersions", "DefaultRole", "TimeoutSettings", "RoleRestrictions", "UpdateRoleRestrictions", "MaxParallelRunningWorkspaces", "OnboardingSettings", "AnnotateGitCommits", "UpdateAllowedWorkspaceClasses", });
-    internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_descriptor =
-      internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_descriptor.getNestedTypes().get(0);
-    internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_gitpod_v1_UpdateOrganizationSettingsRequest_PinnedEditorVersionsEntry_descriptor,
-        new java.lang.String[] { "Key", "Value", });
+        new java.lang.String[] { "OrganizationId", "Settings", });
     internal_static_gitpod_v1_UpdateOrganizationSettingsResponse_descriptor =
       getDescriptor().getMessageTypes().get(11);
     internal_static_gitpod_v1_UpdateOrganizationSettingsResponse_fieldAccessorTable = new

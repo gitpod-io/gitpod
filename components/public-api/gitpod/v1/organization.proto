@@ -86,20 +86,62 @@ message OnboardingSettings {
 }
 
 message OrganizationSettings {
-  bool workspace_sharing_disabled = 1;
-  string default_workspace_image = 2;
+  optional bool workspace_sharing_disabled = 1;
+
+  // pass empty string to reset to the installation default workspace image
+  optional string default_workspace_image = 2;
+
+  // allowed_workspace_classes are the IDs of classes, which can be used by
+  // workspaces in an organization. Pass an empty array to allow all workspace
+  // classes.
+  // Only updates if update_allowed_workspace_classes is true.
   repeated string allowed_workspace_classes = 3;
+
+  // restricted_editor_names updates the list of restricted editor names that
+  // are not allowed to be used by workspaces in an organization. If empty, all
+  // editors are allowed.
+  // Only updates if update_restricted_editor_names is true.
   repeated string restricted_editor_names = 4;
+
+  // pinned_editor_versions updates the pinned version for the corresponding
+  // editor.
+  // Only updates if update_pinned_editor_versions is true.
   map<string, string> pinned_editor_versions = 5;
-  string default_role = 6;
-  TimeoutSettings timeout_settings = 7;
+
+  // default_role is the default role for new members in the organization
+  optional string default_role = 6;
+
+  // timeout_settings are the settings for workspace timeouts
+  optional TimeoutSettings timeout_settings = 7;
+
+  // Only updates if update_role_restrictions is true.
   repeated RoleRestrictionEntry role_restrictions = 8;
+
   // max_parallel_running_workspaces is the maximum number of workspaces that a
   // single user can run in parallel. 0 resets to the default, which depends on
   // the org plan
-  int32 max_parallel_running_workspaces = 9;
-  OnboardingSettings onboarding_settings = 10;
-  bool annotate_git_commits = 11;
+  optional int32 max_parallel_running_workspaces = 9;
+
+  // onboarding_settings are the settings for the organization's onboarding
+  optional OnboardingSettings onboarding_settings = 10;
+
+  // annotate_git_commits specifies whether to annotate git commits created in
+  // Gitpod workspaces with the gitpod host
+  optional bool annotate_git_commits = 11;
+
+  // update_role_restrictions specifies whether role_restrictions should be
+  // updated
+  optional bool update_allowed_workspace_classes = 12;
+
+  // Specifies whether restricted_workspace_classes should be updated
+  optional bool update_restricted_editor_names = 13;
+
+  // Specifies whether pinned_editor_versions should be updated
+  optional bool update_pinned_editor_versions = 14;
+
+  // update_role_restrictions specifies whether role_restrictions should be
+  // updated
+  optional bool update_role_restrictions = 15;
 }
 
 service OrganizationService {
@@ -187,62 +229,10 @@ message UpdateOrganizationSettingsRequest {
   // organization_id is the ID of the organization to update the settings for
   string organization_id = 1;
 
-  optional bool workspace_sharing_disabled = 3;
+  // fields 2-28 were prior used for what's now combined in OrganizationSettings
 
-  // pass empty string to reset to the installation default workspace image
-  optional string default_workspace_image = 4;
-
-  // allowed_workspace_classes are the IDs of classes, which can be used by
-  // workspaces in an organization. Pass an empty array to allow all workspace
-  // classes.
-  // Only updates if update_allowed_workspace_classes is true.
-  repeated string allowed_workspace_classes = 5;
-
-  // restricted_editor_names updates the list of restricted editor names that
-  // are not allowed to be used by workspaces in an organization. If empty, all
-  // editors are allowed.
-  // Only updates if update_restricted_editor_names is true.
-  repeated string restricted_editor_names = 6;
-
-  // Specifies whether restricted_workspace_classes should be updated
-  optional bool update_restricted_editor_names = 7;
-
-  // pinned_editor_versions updates the pinned version for the corresponding
-  // editor.
-  // Only updates if update_pinned_editor_versions is true.
-  map<string, string> pinned_editor_versions = 8;
-
-  // Specifies whether pinned_editor_versions should be updated
-  optional bool update_pinned_editor_versions = 9;
-
-  // default_role is the default role for new members in the organization
-  optional string default_role = 10;
-
-  // timeout_settings are the settings for workspace timeouts
-  optional TimeoutSettings timeout_settings = 11;
-
-  // Only updates if update_role_restrictions is true.
-  repeated RoleRestrictionEntry role_restrictions = 12;
-
-  // update_role_restrictions specifies whether role_restrictions should be
-  // updated
-  optional bool update_role_restrictions = 13;
-
-  // max_parallel_running_workspaces is the maximum number of workspaces that a
-  // single user can run in parallel. 0 resets to the default, which depends on
-  // the org plan
-  optional int32 max_parallel_running_workspaces = 15;
-
-  // onboarding_settings are the settings for the organization's onboarding
-  optional OnboardingSettings onboarding_settings = 16;
-
-  // annotate_git_commits specifies whether to annotate git commits created in
-  // Gitpod workspaces with the gitpod host
-  optional bool annotate_git_commits = 17;
-
-  // update_role_restrictions specifies whether role_restrictions should be
-  // updated
-  optional bool update_allowed_workspace_classes = 18;
+  // settings to persist
+  OrganizationSettings settings = 19;
 }
 
 message UpdateOrganizationSettingsResponse {
