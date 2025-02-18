@@ -39,7 +39,7 @@ var _ = Describe("WorkspaceController", func() {
 			defer mockCtrl.Finish()
 			ops := NewMockWorkspaceOperations(mockCtrl)
 
-			ops.EXPECT().InitWorkspace(gomock.Any(), gomock.Any()).Return("", nil).Times(1)
+			ops.EXPECT().InitWorkspace(gomock.Any(), gomock.Any()).Return(&csapi.InitializerMetrics{}, "", nil).Times(1)
 			workspaceCtrl.operations = ops
 
 			_ = createSecret(fmt.Sprintf("%s-tokens", name), secretsNamespace)

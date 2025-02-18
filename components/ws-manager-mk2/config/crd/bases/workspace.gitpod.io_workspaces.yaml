@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+# Copyright (c) 2025 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
@@ -202,8 +202,12 @@ spec:
                               description: The key to select.
                               type: string
                             name:
+                              default: ""
                               description: |-
                                 Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                               type: string
                             optional:
@@ -263,8 +267,12 @@ spec:
                                 be a valid secret key.
                               type: string
                             name:
+                              default: ""
                               description: |-
                                 Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                               type: string
                             optional:
@@ -329,8 +337,12 @@ spec:
                               description: The key to select.
                               type: string
                             name:
+                              default: ""
                               description: |-
                                 Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                               type: string
                             optional:
@@ -390,8 +402,12 @@ spec:
                                 be a valid secret key.
                               type: string
                             name:
+                              default: ""
                               description: |-
                                 Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
                                 More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                               type: string
                             optional:
@@ -530,6 +546,69 @@ spec:
                     type: integer
                 required:
                 - totalSize
+                type: object
+              initializerMetrics:
+                properties:
+                  backup:
+                    description: Backup contains metrics for the backup initializer
+                      step
+                    properties:
+                      duration:
+                        type: string
+                      size:
+                        format: int64
+                        type: integer
+                    type: object
+                  composite:
+                    description: Composite contains metrics for the composite initializer
+                      step
+                    properties:
+                      duration:
+                        type: string
+                      size:
+                        format: int64
+                        type: integer
+                    type: object
+                  fileDownload:
+                    description: FileDownload contains metrics for the file download
+                      initializer step
+                    properties:
+                      duration:
+                        type: string
+                      size:
+                        format: int64
+                        type: integer
+                    type: object
+                  git:
+                    description: Git contains metrics for the git initializer step
+                    properties:
+                      duration:
+                        type: string
+                      size:
+                        format: int64
+                        type: integer
+                    type: object
+                  prebuild:
+                    description: Prebuild contains metrics for the prebuild initializer
+                      step
+                    properties:
+                      duration:
+                        type: string
+                      size:
+                        format: int64
+                        type: integer
+                    type: object
+                  snapshot:
+                    description: |-
+                      Snapshot contains metrics for the snapshot initializer step
+                      This used for workspaces started from snapshots.
+                    properties:
+                      duration:
+                        type: string
+                      size:
+                        format: int64
+                        type: integer
+                    type: object
                 type: object
               lastActivity:
                 format: date-time

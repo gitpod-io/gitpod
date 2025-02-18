@@ -65,7 +65,7 @@ func registerConcurrentBackupMetrics(reg prometheus.Registerer, suffix string) (
 //go:generate sh -c "go install github.com/golang/mock/mockgen@v1.6.0 && mockgen -destination=mock.go -package=controller . WorkspaceOperations"
 type WorkspaceOperations interface {
 	// InitWorkspace initializes the workspace content
-	InitWorkspace(ctx context.Context, options InitOptions) (string, error)
+	InitWorkspace(ctx context.Context, options InitOptions) (*csapi.InitializerMetrics, string, error)
 	// BackupWorkspace backups the content of the workspace
 	BackupWorkspace(ctx context.Context, opts BackupOptions) (*csapi.GitStatus, error)
 	// DeleteWorkspace deletes the content of the workspace from disk
@@ -130,26 +130,26 @@ func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, 
 	}, nil
 }
 
-func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, options InitOptions) (string, error) {
+func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, options InitOptions) (*csapi.InitializerMetrics, string, error) {
 	ws, err := wso.provider.NewWorkspace(ctx, options.Meta.InstanceID, filepath.Join(wso.provider.Location, options.Meta.InstanceID),
 		wso.creator(options.Meta.Owner, options.Meta.WorkspaceID, options.Meta.InstanceID, options.Initializer, false, options.StorageQuota))
 
 	if err != nil {
-		return "bug: cannot add workspace to store", xerrors.Errorf("cannot add workspace to store: %w", err)
+		return nil, "bug: cannot add workspace to store", xerrors.Errorf("cannot add workspace to store: %w", err)
 	}
 
 	rs, ok := ws.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {
-		return "bug: workspace has no remote storage", xerrors.Errorf("workspace has no remote storage")
+		return nil, "bug: workspace has no remote storage", xerrors.Errorf("workspace has no remote storage")
 	}
 	ps, err := storage.NewPresignedAccess(&wso.config.Storage)
 	if err != nil {
-		return "bug: no presigned storage available", xerrors.Errorf("no presigned storage available: %w", err)
+		return nil, "bug: no presigned storage available", xerrors.Errorf("no presigned storage available: %w", err)
 	}
 
 	remoteContent, err := content.CollectRemoteContent(ctx, rs, ps, options.Meta.Owner, options.Initializer)
 	if err != nil {
-		return "remote content error", xerrors.Errorf("remote content error: %w", err)
+		return nil, "remote content error", xerrors.Errorf("remote content error: %w", err)
 	}
 
 	// Initialize workspace.
@@ -180,20 +180,20 @@ func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, option
 		glog.WithFields(ws.OWI()).Warnf("cannot ensure clean slate for workspace %s (this might break content init): %v", ws.InstanceID, err)
 	}
 
-	err = content.RunInitializer(ctx, ws.Location, options.Initializer, remoteContent, opts)
+	stats, err := content.RunInitializer(ctx, ws.Location, options.Initializer, remoteContent, opts)
 	if err != nil {
 		glog.WithFields(ws.OWI()).Infof("error running initializer %v", err)
-		return err.Error(), err
+		return nil, err.Error(), err
 	}
 
 	err = ws.Persist()
 	if err != nil {
-		return "cannot persist workspace", err
+		return nil, "cannot persist workspace", err
 	}
 
 	glog.WithFields(ws.OWI()).Debug("content init done")
 
-	return "", nil
+	return stats, "", nil
 }
 
 func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID string, init *csapi.WorkspaceInitializer, storageDisabled bool, storageQuota int) WorkspaceFactory {
