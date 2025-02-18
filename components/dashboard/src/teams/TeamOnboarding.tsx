@@ -54,7 +54,6 @@ export default function TeamOnboardingPage() {
             }
             try {
                 await updateTeamSettings.mutateAsync({
-                    ...settings,
                     ...newSettings,
                 });
                 toast("Organization settings updated");
@@ -66,7 +65,7 @@ export default function TeamOnboardingPage() {
                 console.error(error);
             }
         },
-        [updateTeamSettings, org?.id, isOwner, settings, toast],
+        [updateTeamSettings, org?.id, isOwner, toast],
     );
 
     const handleUpdateInternalLink = useCallback(

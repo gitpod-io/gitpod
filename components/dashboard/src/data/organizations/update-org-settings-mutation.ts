@@ -28,7 +28,7 @@ export const useUpdateOrgSettingsMutation = () => {
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
         mutationFn: async (partialUpdate) => {
-            const update: PartialMessage<UpdateOrganizationSettingsRequest> = {
+            const update: UpdateOrganizationSettingsArgs = {
                 ...partialUpdate,
             };
             update.organizationId = organizationId;

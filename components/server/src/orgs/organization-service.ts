@@ -37,6 +37,7 @@ import { CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
 import { CreateUserParams, UserAuthentication } from "../user/user-authentication";
 import isURL from "validator/lib/isURL";
 import { merge } from "ts-deepmerge";
+import { EntitlementService } from "../billing/entitlement-service";
 
 @injectable()
 export class OrganizationService {
@@ -54,6 +55,7 @@ export class OrganizationService {
         @inject(DefaultWorkspaceImageValidator)
         private readonly validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator,
         @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
+        @inject(EntitlementService) private readonly entitlementService: EntitlementService,
     ) {}
 
     async listOrganizations(
@@ -491,20 +493,17 @@ export class OrganizationService {
         settings: Partial<OrganizationSettings>,
     ): Promise<OrganizationSettings> {
         await this.auth.checkPermissionOnOrganization(userId, "write_settings", orgId);
+
         if (typeof settings.defaultWorkspaceImage === "string") {
             const defaultWorkspaceImage = settings.defaultWorkspaceImage.trim();
             if (defaultWorkspaceImage) {
                 await this.validateDefaultWorkspaceImage(userId, defaultWorkspaceImage, orgId);
-                settings = { ...settings, defaultWorkspaceImage };
-            } else {
-                settings = { ...settings, defaultWorkspaceImage: null };
             }
+            settings = { ...settings, defaultWorkspaceImage };
         }
+
         if (settings.allowedWorkspaceClasses) {
-            if (settings.allowedWorkspaceClasses.length === 0) {
-                // Pass an empty array to allow all workspace classes
-                settings.allowedWorkspaceClasses = null;
-            } else {
+            if (settings.allowedWorkspaceClasses.length > 0) {
                 const allClasses = await this.installationService.getInstallationWorkspaceClasses(userId);
                 const availableClasses = allClasses.filter((e) => settings.allowedWorkspaceClasses!.includes(e.id));
                 if (availableClasses.length !== settings.allowedWorkspaceClasses.length) {
@@ -548,6 +547,22 @@ export class OrganizationService {
                 WorkspaceTimeoutDuration.validate(settings.timeoutSettings.inactivity);
             } catch (error) {
                 throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid inactivity timeout: ${error.message}`);
+            }
+        }
+
+        if (settings.maxParallelRunningWorkspaces !== undefined) {
+            if (settings.maxParallelRunningWorkspaces < 0) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "maxParallelRunningWorkspaces must be >= 0");
+            }
+            const maxAllowance = await this.entitlementService.getMaxParallelWorkspaces(userId, orgId);
+            if (maxAllowance && settings.maxParallelRunningWorkspaces > maxAllowance) {
+                throw new ApplicationError(
+                    ErrorCodes.BAD_REQUEST,
+                    `maxParallelRunningWorkspaces must be <= ${maxAllowance}`,
+                );
+            }
+            if (!Number.isInteger(settings.maxParallelRunningWorkspaces)) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "maxParallelRunningWorkspaces must be an integer");
             }
         }
 
@@ -664,10 +679,7 @@ export class OrganizationService {
             result.defaultRole = settings.defaultRole;
         }
         if (settings.timeoutSettings) {
-            result.timeoutSettings = {
-                denyUserTimeouts: settings.timeoutSettings?.denyUserTimeouts,
-                inactivity: settings.timeoutSettings?.inactivity,
-            };
+            result.timeoutSettings = settings.timeoutSettings;
         }
         if (settings.roleRestrictions) {
             result.roleRestrictions = settings.roleRestrictions;

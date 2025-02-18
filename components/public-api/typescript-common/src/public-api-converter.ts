@@ -6,7 +6,7 @@
 
 import "reflect-metadata";
 
-import { Duration, PartialMessage, Timestamp, toPlainMessage } from "@bufbuild/protobuf";
+import { Duration, PartialMessage, PlainMessage, Timestamp, toPlainMessage } from "@bufbuild/protobuf";
 import { Code, ConnectError } from "@connectrpc/connect";
 import { GitpodServer } from "@gitpod/gitpod-protocol";
 import { BlockedRepository as ProtocolBlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
@@ -126,6 +126,7 @@ import {
     OrganizationSettings,
     RoleRestrictionEntry,
     TimeoutSettings,
+    UpdateOrganizationSettingsRequest,
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import {
     Prebuild,
@@ -188,6 +189,8 @@ import { InvalidGitpodYMLError, RepositoryNotFoundError, UnauthorizedRepositoryA
 const URL = require("url").URL || window.URL;
 
 export type PartialConfiguration = DeepPartial<Configuration> & Pick<Configuration, "id">;
+// Because we use duplicate types in the proto (*sight*), we use this type to unify handling of both (which use fields with the same names)
+type PlainOrganizationSettings = Omit<PlainMessage<UpdateOrganizationSettingsRequest>, "organizationId">;
 
 /**
  * Converter between gRPC and JSON-RPC types.
@@ -1059,7 +1062,45 @@ export class PublicAPIConverter {
         }
     }
 
-    fromTimeoutSettings(timeoutSettings: TimeoutSettings): TimeoutSettingsProtocol {
+    fromOrganizationSettings(settings: PlainOrganizationSettings): OrganizationSettingsProtocol {
+        const result: OrganizationSettingsProtocol = {
+            workspaceSharingDisabled: settings.workspaceSharingDisabled,
+            defaultWorkspaceImage: settings.defaultWorkspaceImage,
+            annotateGitCommits: settings.annotateGitCommits,
+            maxParallelRunningWorkspaces: settings.maxParallelRunningWorkspaces,
+        };
+
+        if (settings.updateRestrictedEditorNames) {
+            result.restrictedEditorNames = settings.restrictedEditorNames;
+        }
+
+        if (settings.updateAllowedWorkspaceClasses) {
+            result.allowedWorkspaceClasses = settings.allowedWorkspaceClasses;
+        }
+
+        if (settings.updatePinnedEditorVersions) {
+            result.pinnedEditorVersions = settings.pinnedEditorVersions;
+        }
+
+        if (settings.defaultRole) {
+            result.defaultRole = this.fromOrgMemberRoleString(settings.defaultRole);
+        }
+
+        if (settings.timeoutSettings) {
+            result.timeoutSettings = this.fromTimeoutSettings(settings.timeoutSettings);
+        }
+
+        if (settings.updateRoleRestrictions) {
+            result.roleRestrictions = this.fromRoleRestrictions(settings.roleRestrictions);
+        }
+
+        if (settings.onboardingSettings) {
+            result.onboardingSettings = this.fromOnboardingSettings(settings.onboardingSettings);
+        }
+        return result;
+    }
+
+    fromTimeoutSettings(timeoutSettings: PlainMessage<TimeoutSettings>): TimeoutSettingsProtocol {
         const result: TimeoutSettingsProtocol = {
             denyUserTimeouts: timeoutSettings.denyUserTimeouts,
         };
@@ -1069,7 +1110,7 @@ export class PublicAPIConverter {
         return result;
     }
 
-    fromRoleRestrictions(roleRestrictions: RoleRestrictionEntry[]): RoleRestrictions {
+    fromRoleRestrictions(roleRestrictions: PlainMessage<RoleRestrictionEntry>[]): RoleRestrictions {
         const result: RoleRestrictions = {};
         for (const roleRestriction of roleRestrictions) {
             const role = this.fromOrgMemberRole(roleRestriction.role);
@@ -1079,7 +1120,7 @@ export class PublicAPIConverter {
         return result;
     }
 
-    fromOnboardingSettings(onboardingSettings: OnboardingSettings): OnboardingSettingsProtocol {
+    fromOnboardingSettings(onboardingSettings: PlainMessage<OnboardingSettings>): OnboardingSettingsProtocol {
         const result: OnboardingSettingsProtocol = {
             internalLink: onboardingSettings.internalLink,
         };
@@ -1095,7 +1136,7 @@ export class PublicAPIConverter {
         return result;
     }
 
-    fromWelcomeMessage(welcomeMessage: OnboardingSettings_WelcomeMessage): WelcomeMessageProtocol {
+    fromWelcomeMessage(welcomeMessage: PlainMessage<OnboardingSettings_WelcomeMessage>): WelcomeMessageProtocol {
         return {
             enabled: welcomeMessage.enabled,
             message: welcomeMessage.message,
