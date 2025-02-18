@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2025 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -13,6 +13,7 @@
 import * as jspb from "google-protobuf";
 import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
+import * as google_protobuf_duration_pb from "google-protobuf/google/protobuf/duration_pb";
 
 export class MetadataFilter extends jspb.Message {
     getOwner(): string;
@@ -671,6 +672,11 @@ export class WorkspaceStatus extends jspb.Message {
     getAuth(): WorkspaceAuthentication | undefined;
     setAuth(value?: WorkspaceAuthentication): WorkspaceStatus;
 
+    hasInitializerMetrics(): boolean;
+    clearInitializerMetrics(): void;
+    getInitializerMetrics(): InitializerMetrics | undefined;
+    setInitializerMetrics(value?: InitializerMetrics): WorkspaceStatus;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceStatus.AsObject;
     static toObject(includeInstance: boolean, msg: WorkspaceStatus): WorkspaceStatus.AsObject;
@@ -693,6 +699,7 @@ export namespace WorkspaceStatus {
         repo?: content_service_api_initializer_pb.GitStatus.AsObject,
         runtime?: WorkspaceRuntimeInfo.AsObject,
         auth?: WorkspaceAuthentication.AsObject,
+        initializerMetrics?: InitializerMetrics.AsObject,
     }
 }
 
@@ -1308,6 +1315,85 @@ export namespace WorkspaceClass {
         displayName: string,
         description: string,
         creditsPerMinute: number,
+    }
+}
+
+export class InitializerMetric extends jspb.Message {
+
+    hasDuration(): boolean;
+    clearDuration(): void;
+    getDuration(): google_protobuf_duration_pb.Duration | undefined;
+    setDuration(value?: google_protobuf_duration_pb.Duration): InitializerMetric;
+    getSize(): number;
+    setSize(value: number): InitializerMetric;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): InitializerMetric.AsObject;
+    static toObject(includeInstance: boolean, msg: InitializerMetric): InitializerMetric.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: InitializerMetric, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): InitializerMetric;
+    static deserializeBinaryFromReader(message: InitializerMetric, reader: jspb.BinaryReader): InitializerMetric;
+}
+
+export namespace InitializerMetric {
+    export type AsObject = {
+        duration?: google_protobuf_duration_pb.Duration.AsObject,
+        size: number,
+    }
+}
+
+export class InitializerMetrics extends jspb.Message {
+
+    hasGit(): boolean;
+    clearGit(): void;
+    getGit(): InitializerMetric | undefined;
+    setGit(value?: InitializerMetric): InitializerMetrics;
+
+    hasFileDownload(): boolean;
+    clearFileDownload(): void;
+    getFileDownload(): InitializerMetric | undefined;
+    setFileDownload(value?: InitializerMetric): InitializerMetrics;
+
+    hasSnapshot(): boolean;
+    clearSnapshot(): void;
+    getSnapshot(): InitializerMetric | undefined;
+    setSnapshot(value?: InitializerMetric): InitializerMetrics;
+
+    hasBackup(): boolean;
+    clearBackup(): void;
+    getBackup(): InitializerMetric | undefined;
+    setBackup(value?: InitializerMetric): InitializerMetrics;
+
+    hasPrebuild(): boolean;
+    clearPrebuild(): void;
+    getPrebuild(): InitializerMetric | undefined;
+    setPrebuild(value?: InitializerMetric): InitializerMetrics;
+
+    hasComposite(): boolean;
+    clearComposite(): void;
+    getComposite(): InitializerMetric | undefined;
+    setComposite(value?: InitializerMetric): InitializerMetrics;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): InitializerMetrics.AsObject;
+    static toObject(includeInstance: boolean, msg: InitializerMetrics): InitializerMetrics.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: InitializerMetrics, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): InitializerMetrics;
+    static deserializeBinaryFromReader(message: InitializerMetrics, reader: jspb.BinaryReader): InitializerMetrics;
+}
+
+export namespace InitializerMetrics {
+    export type AsObject = {
+        git?: InitializerMetric.AsObject,
+        fileDownload?: InitializerMetric.AsObject,
+        snapshot?: InitializerMetric.AsObject,
+        backup?: InitializerMetric.AsObject,
+        prebuild?: InitializerMetric.AsObject,
+        composite?: InitializerMetric.AsObject,
     }
 }
 
