@@ -221,15 +221,15 @@ export interface Organization {
 
 export interface OrganizationSettings {
     workspaceSharingDisabled?: boolean;
-    // null or empty string to reset to default
-    defaultWorkspaceImage?: string | null;
+    // undefined or empty string to reset to default
+    defaultWorkspaceImage?: string;
 
     // empty array to allow all kind of workspace classes
-    allowedWorkspaceClasses?: string[] | null;
+    allowedWorkspaceClasses?: string[];
 
-    pinnedEditorVersions?: { [key: string]: string } | null;
+    pinnedEditorVersions?: { [key: string]: string };
 
-    restrictedEditorNames?: string[] | null;
+    restrictedEditorNames?: string[];
 
     // what role new members will get, default is "member"
     defaultRole?: OrgMemberRole;
