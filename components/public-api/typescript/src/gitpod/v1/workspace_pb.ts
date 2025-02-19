@@ -3989,6 +3989,13 @@ export class WorkspaceSession_Metrics extends Message<WorkspaceSession_Metrics> 
    */
   totalImageSize = protoInt64.zero;
 
+  /**
+   * initializer_metrics are all metrics exported from the content initializer on workspace start
+   *
+   * @generated from field: gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3;
+   */
+  initializerMetrics?: WorkspaceSession_InitializerMetrics;
+
   constructor(data?: PartialMessage<WorkspaceSession_Metrics>) {
     super();
     proto3.util.initPartial(data, this);
@@ -3999,6 +4006,7 @@ export class WorkspaceSession_Metrics extends Message<WorkspaceSession_Metrics> 
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_image_size", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 2, name: "total_image_size", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 3, name: "initializer_metrics", kind: "message", T: WorkspaceSession_InitializerMetrics },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession_Metrics {
@@ -4015,5 +4023,134 @@ export class WorkspaceSession_Metrics extends Message<WorkspaceSession_Metrics> 
 
   static equals(a: WorkspaceSession_Metrics | PlainMessage<WorkspaceSession_Metrics> | undefined, b: WorkspaceSession_Metrics | PlainMessage<WorkspaceSession_Metrics> | undefined): boolean {
     return proto3.util.equals(WorkspaceSession_Metrics, a, b);
+  }
+}
+
+/**
+ * Add these new message definitions
+ *
+ * @generated from message gitpod.v1.WorkspaceSession.InitializerMetric
+ */
+export class WorkspaceSession_InitializerMetric extends Message<WorkspaceSession_InitializerMetric> {
+  /**
+   * Duration in nanoseconds (standard protobuf duration)
+   *
+   * @generated from field: google.protobuf.Duration duration = 1;
+   */
+  duration?: Duration;
+
+  /**
+   * Size in bytes
+   *
+   * @generated from field: uint64 size = 2;
+   */
+  size = protoInt64.zero;
+
+  constructor(data?: PartialMessage<WorkspaceSession_InitializerMetric>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceSession.InitializerMetric";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "duration", kind: "message", T: Duration },
+    { no: 2, name: "size", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession_InitializerMetric {
+    return new WorkspaceSession_InitializerMetric().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSession_InitializerMetric {
+    return new WorkspaceSession_InitializerMetric().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSession_InitializerMetric {
+    return new WorkspaceSession_InitializerMetric().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceSession_InitializerMetric | PlainMessage<WorkspaceSession_InitializerMetric> | undefined, b: WorkspaceSession_InitializerMetric | PlainMessage<WorkspaceSession_InitializerMetric> | undefined): boolean {
+    return proto3.util.equals(WorkspaceSession_InitializerMetric, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.WorkspaceSession.InitializerMetrics
+ */
+export class WorkspaceSession_InitializerMetrics extends Message<WorkspaceSession_InitializerMetrics> {
+  /**
+   * Git contains metrics for the git initializer step
+   *
+   * @generated from field: gitpod.v1.WorkspaceSession.InitializerMetric git = 1;
+   */
+  git?: WorkspaceSession_InitializerMetric;
+
+  /**
+   * FileDownload contains metrics for the file download initializer step
+   *
+   * @generated from field: gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2;
+   */
+  fileDownload?: WorkspaceSession_InitializerMetric;
+
+  /**
+   * Snapshot contains metrics for the snapshot initializer step
+   * This used for workspaces started from snapshots.
+   *
+   * @generated from field: gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3;
+   */
+  snapshot?: WorkspaceSession_InitializerMetric;
+
+  /**
+   * Backup contains metrics for the backup initializer step
+   *
+   * @generated from field: gitpod.v1.WorkspaceSession.InitializerMetric backup = 4;
+   */
+  backup?: WorkspaceSession_InitializerMetric;
+
+  /**
+   * Prebuild contains metrics for the prebuild initializer step
+   *
+   * @generated from field: gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5;
+   */
+  prebuild?: WorkspaceSession_InitializerMetric;
+
+  /**
+   * Composite contains metrics for the composite initializer step
+   *
+   * @generated from field: gitpod.v1.WorkspaceSession.InitializerMetric composite = 6;
+   */
+  composite?: WorkspaceSession_InitializerMetric;
+
+  constructor(data?: PartialMessage<WorkspaceSession_InitializerMetrics>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.WorkspaceSession.InitializerMetrics";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "git", kind: "message", T: WorkspaceSession_InitializerMetric },
+    { no: 2, name: "file_download", kind: "message", T: WorkspaceSession_InitializerMetric },
+    { no: 3, name: "snapshot", kind: "message", T: WorkspaceSession_InitializerMetric },
+    { no: 4, name: "backup", kind: "message", T: WorkspaceSession_InitializerMetric },
+    { no: 5, name: "prebuild", kind: "message", T: WorkspaceSession_InitializerMetric },
+    { no: 6, name: "composite", kind: "message", T: WorkspaceSession_InitializerMetric },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceSession_InitializerMetrics {
+    return new WorkspaceSession_InitializerMetrics().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceSession_InitializerMetrics {
+    return new WorkspaceSession_InitializerMetrics().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceSession_InitializerMetrics {
+    return new WorkspaceSession_InitializerMetrics().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceSession_InitializerMetrics | PlainMessage<WorkspaceSession_InitializerMetrics> | undefined, b: WorkspaceSession_InitializerMetrics | PlainMessage<WorkspaceSession_InitializerMetrics> | undefined): boolean {
+    return proto3.util.equals(WorkspaceSession_InitializerMetrics, a, b);
   }
 }

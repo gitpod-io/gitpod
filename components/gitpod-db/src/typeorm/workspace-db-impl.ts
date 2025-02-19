@@ -63,7 +63,7 @@ import { TypeORM } from "./typeorm";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { DBProject } from "./entity/db-project";
 import { PrebuiltWorkspaceWithWorkspace } from "@gitpod/gitpod-protocol/src/protocol";
-import { DBWorkspaceInstanceMetrics } from "./entity/db-workspace-instance-metrics-db";
+import { DBWorkspaceInstanceMetrics } from "./entity/db-workspace-instance-metrics";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -471,6 +471,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         const sessions = await workspaceInstanceRepo
             .createQueryBuilder("wsi")
             .leftJoinAndMapOne("wsi.workspace", DBWorkspace, "ws", "ws.id = wsi.workspaceId")
+            .leftJoinAndMapOne("wsi.metrics", DBWorkspaceInstanceMetrics, "wsim", "wsim.instanceId = wsi.id")
             .where("ws.organizationId = :organizationId", { organizationId })
             .andWhere("wsi.creationTime >= :periodStart", { periodStart: periodStart.toISOString() })
             .andWhere("wsi.creationTime <= :periodEnd", { periodEnd: periodEnd.toISOString() })
@@ -479,13 +480,19 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .take(limit)
             .getMany();
 
-        const resultSessions: { instance: WorkspaceInstance; workspace: Workspace }[] = [];
+        const resultSessions: {
+            instance: WorkspaceInstance;
+            workspace: Workspace;
+            metrics?: WorkspaceInstanceMetrics;
+        }[] = [];
         for (const session of sessions) {
             resultSessions.push({
                 workspace: (session as any).workspace,
                 instance: session,
+                metrics: (session as any).metrics,
             });
             delete (session as any).workspace;
+            delete (session as any).metrics;
         }
         return resultSessions;
     }
