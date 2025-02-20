@@ -5,10 +5,12 @@
 package content
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -122,21 +124,22 @@ func CollectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 }
 
 // RunInitializer runs a content initializer in a user, PID and mount namespace to isolate it from ws-daemon
-func RunInitializer(ctx context.Context, destination string, initializer *csapi.WorkspaceInitializer, remoteContent map[string]storage.DownloadInfo, opts RunInitializerOpts) (err error) {
+func RunInitializer(ctx context.Context, destination string, initializer *csapi.WorkspaceInitializer, remoteContent map[string]storage.DownloadInfo, opts RunInitializerOpts) (*csapi.InitializerMetrics, error) {
 	//nolint:ineffassign,staticcheck
 	span, ctx := opentracing.StartSpanFromContext(ctx, "RunInitializer")
+	var err error
 	defer tracing.FinishSpan(span, &err)
 
 	// it's possible the destination folder doesn't exist yet, because the kubelet hasn't created it yet.
 	// If we fail to create the folder, it either already exists, or we'll fail when we try and mount it.
 	err = os.MkdirAll(destination, 0755)
 	if err != nil && !os.IsExist(err) {
-		return xerrors.Errorf("cannot mkdir destination: %w", err)
+		return nil, xerrors.Errorf("cannot mkdir destination: %w", err)
 	}
 
 	init, err := proto.Marshal(initializer)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if opts.GID == 0 {
@@ -148,13 +151,13 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 
 	tmpdir, err := os.MkdirTemp("", "content-init")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer os.RemoveAll(tmpdir)
 
 	err = os.MkdirAll(filepath.Join(tmpdir, "rootfs"), 0755)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	msg := msgInitContent{
@@ -169,11 +172,11 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	}
 	fc, err := json.MarshalIndent(msg, "", "  ")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = os.WriteFile(filepath.Join(tmpdir, "rootfs", "content.json"), fc, 0644)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	spec := specconv.Example()
@@ -226,11 +229,11 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 
 	fc, err = json.MarshalIndent(spec, "", "  ")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = os.WriteFile(filepath.Join(tmpdir, "config.json"), fc, 0644)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	args := []string{"--root", "state"}
@@ -243,7 +246,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	if opts.OWI.InstanceID == "" {
 		id, err := uuid.NewRandom()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		name = "init-rnd-" + id.String()
 	} else {
@@ -256,7 +259,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 
 	errIn, errOut, err := os.Pipe()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	errch := make(chan []byte, 1)
 	go func() {
@@ -286,27 +289,49 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 			// The program has exited with an exit code != 0. If it's FAIL_CONTENT_INITIALIZER_EXIT_CODE, it was deliberate.
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok && status.ExitStatus() == FAIL_CONTENT_INITIALIZER_EXIT_CODE {
 				log.WithError(err).WithFields(opts.OWI.Fields()).WithField("errmsgsize", len(errmsg)).WithField("exitCode", status.ExitStatus()).WithField("args", args).Error("content init failed")
-				return xerrors.Errorf(string(errmsg))
+				return nil, xerrors.Errorf(string(errmsg))
 			}
 		}
 
-		return err
+		return nil, err
 	}
 
+	stats := parseStats(&cmdOut)
+
+	return stats, nil
+}
+
+func parseStats(buf *bytes.Buffer) *csapi.InitializerMetrics {
+	scanner := bufio.NewScanner(buf)
+	for scanner.Scan() {
+		line := string(scanner.Bytes())
+		if !strings.HasPrefix(line, STATS_PREFIX) {
+			continue
+		}
+
+		b := strings.TrimSpace(strings.TrimPrefix(line, STATS_PREFIX))
+		var stats csapi.InitializerMetrics
+		err := json.Unmarshal([]byte(b), &stats)
+		if err != nil {
+			log.WithError(err).WithField("line", line).Error("cannot unmarshal stats")
+			return nil
+		}
+		return &stats
+	}
 	return nil
 }
 
 // RunInitializerChild is the function that's expected to run when we call `/proc/self/exe content-initializer`
-func RunInitializerChild() (err error) {
+func RunInitializerChild() (serializedStats []byte, err error) {
 	fc, err := os.ReadFile("/content.json")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var initmsg msgInitContent
 	err = json.Unmarshal(fc, &initmsg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Log = logrus.WithFields(initmsg.OWI)
 
@@ -323,7 +348,7 @@ func RunInitializerChild() (err error) {
 	var req csapi.WorkspaceInitializer
 	err = proto.Unmarshal(initmsg.Initializer, &req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	rs := &remoteContentStorage{RemoteContent: initmsg.RemoteContent}
@@ -331,7 +356,7 @@ func RunInitializerChild() (err error) {
 	dst := initmsg.Destination
 	initializer, err := wsinit.NewFromRequest(ctx, dst, rs, &req, wsinit.NewFromRequestOpts{ForceGitpodUserForGit: false})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	initSource, stats, err := wsinit.InitializeWorkspace(ctx, dst, rs,
@@ -341,23 +366,35 @@ func RunInitializerChild() (err error) {
 		wsinit.WithCleanSlate,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// some workspace content may have a `/dst/.gitpod` file or directory. That would break
 	// the workspace ready file placement (see https://github.com/gitpod-io/gitpod/issues/7694).
 	err = wsinit.EnsureCleanDotGitpodDirectory(ctx, dst)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Place the ready file to make Theia "open its gates"
 	err = wsinit.PlaceWorkspaceReadyFile(ctx, dst, initSource, stats, initmsg.UID, initmsg.GID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	// Serialize metrics, so we can pass them back to the caller
+	serializedStats, err = json.Marshal(stats)
+	if err != nil {
+		return nil, err
+	}
+
+	return serializedStats, nil
+}
+
+const STATS_PREFIX = "STATS:"
+
+func FormatStatsBytes(statsBytes []byte) string {
+	return fmt.Sprintf("%s %s\n", STATS_PREFIX, string(statsBytes))
 }
 
 var _ storage.DirectAccess = &remoteContentStorage{}

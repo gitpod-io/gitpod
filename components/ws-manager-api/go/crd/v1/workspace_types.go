@@ -179,6 +179,41 @@ type WorkspaceImageInfo struct {
 	WorkspaceImageRef string `json:"workspaceImageRef,omitempty"`
 }
 
+type InitializerMetrics struct {
+	// Git contains metrics for the git initializer step
+	// +kubebuilder:validation:Optional
+	Git *InitializerStepMetric `json:"git"`
+
+	// FileDownload contains metrics for the file download initializer step
+	// +kubebuilder:validation:Optional
+	FileDownload *InitializerStepMetric `json:"fileDownload"`
+
+	// Snapshot contains metrics for the snapshot initializer step
+	// This used for workspaces started from snapshots.
+	// +kubebuilder:validation:Optional
+	Snapshot *InitializerStepMetric `json:"snapshot"`
+
+	// Backup contains metrics for the backup initializer step
+	// +kubebuilder:validation:Optional
+	Backup *InitializerStepMetric `json:"backup"`
+
+	// Prebuild contains metrics for the prebuild initializer step
+	// +kubebuilder:validation:Optional
+	Prebuild *InitializerStepMetric `json:"prebuild"`
+
+	// Composite contains metrics for the composite initializer step
+	// +kubebuilder:validation:Optional
+	Composite *InitializerStepMetric `json:"composite"`
+}
+
+type InitializerStepMetric struct {
+	// +kubebuilder:validation:Optional
+	Duration *metav1.Duration `json:"duration"`
+
+	// +kubebuilder:validation:Optional
+	Size uint64 `json:"size"`
+}
+
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	PodStarts int `json:"podStarts"`
@@ -215,6 +250,9 @@ type WorkspaceStatus struct {
 
 	// +kubebuilder:validation:Optional
 	ImageInfo *WorkspaceImageInfo `json:"imageInfo,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	InitializerMetrics *InitializerMetrics `json:"initializerMetrics,omitempty"`
 }
 
 func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {

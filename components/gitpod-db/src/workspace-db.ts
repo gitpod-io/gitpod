@@ -23,6 +23,7 @@ import {
     WorkspaceSession,
     PrebuiltWorkspaceWithWorkspace,
     PrebuildWithStatus,
+    WorkspaceInstanceMetrics,
 } from "@gitpod/gitpod-protocol";
 
 export type MaybeWorkspace = Workspace | undefined;
@@ -196,4 +197,12 @@ export interface WorkspaceDB {
 
     storePrebuildInfo(prebuildInfo: PrebuildInfo): Promise<void>;
     findPrebuildInfos(prebuildIds: string[]): Promise<PrebuildInfo[]>;
+
+    storeMetrics(instanceId: string, metrics: WorkspaceInstanceMetrics): Promise<WorkspaceInstanceMetrics>;
+    getMetrics(instanceId: string): Promise<WorkspaceInstanceMetrics | undefined>;
+    updateMetrics(
+        instanceId: string,
+        update: WorkspaceInstanceMetrics,
+        merge: (current: WorkspaceInstanceMetrics, update: WorkspaceInstanceMetrics) => WorkspaceInstanceMetrics,
+    ): Promise<WorkspaceInstanceMetrics>;
 }

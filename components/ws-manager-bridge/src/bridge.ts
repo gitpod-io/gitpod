@@ -22,6 +22,8 @@ import {
     PortProtocol as WsManPortProtocol,
     DescribeClusterRequest,
     WorkspaceType,
+    InitializerMetrics,
+    InitializerMetric,
 } from "@gitpod/ws-manager/lib";
 import { scrubber, TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
@@ -38,6 +40,7 @@ import { performance } from "perf_hooks";
 import { WorkspaceInstanceController } from "./workspace-instance-controller";
 import { PrebuildUpdater } from "./prebuild-updater";
 import { RedisPublisher } from "@gitpod/gitpod-db/lib";
+import { merge } from "ts-deepmerge";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -332,11 +335,13 @@ export class WorkspaceManagerBridge implements Disposable {
             instance.status.podName = instance.status.podName || status.runtime?.podName;
             instance.status.nodeIp = instance.status.nodeIp || status.runtime?.nodeIp;
             instance.status.ownerToken = status.auth!.ownerToken;
+            // TODO(gpl): fade this our in favor of only using DBWorkspaceInstanceMetrics
             instance.status.metrics = {
                 image: {
                     totalSize: instance.status.metrics?.image?.totalSize || status.metadata.metrics?.image?.totalSize,
                     workspaceImageSize:
-                        instance.status.metrics?.image?.totalSize || status.metadata.metrics?.image?.workspaceImageSize,
+                        instance.status.metrics?.image?.workspaceImageSize ||
+                        status.metadata.metrics?.image?.workspaceImageSize,
                 },
             };
 
@@ -410,6 +415,14 @@ export class WorkspaceManagerBridge implements Disposable {
 
             // now notify all prebuild listeners about updates - and update DB if needed
             await this.prebuildUpdater.updatePrebuiltWorkspace({ span }, userId, status);
+
+            // store metrics
+            const instanceMetrics = mapInstanceMetrics(status);
+            if (instanceMetrics) {
+                await this.workspaceDB
+                    .trace(ctx)
+                    .updateMetrics(instance.id, instanceMetrics, mergeWorkspaceInstanceMetrics);
+            }
 
             // cleanup
             // important: call this after the DB update
@@ -500,4 +513,65 @@ function toWorkspaceType(type: WorkspaceType): protocol.WorkspaceType {
             return "prebuild";
     }
     throw new Error("invalid WorkspaceType: " + type);
+}
+
+function mergeWorkspaceInstanceMetrics(
+    current: protocol.WorkspaceInstanceMetrics,
+    update: protocol.WorkspaceInstanceMetrics,
+): protocol.WorkspaceInstanceMetrics {
+    const merged = merge.withOptions({ mergeArrays: false, allowUndefinedOverrides: false }, current, update);
+    return merged;
+}
+
+function mapInstanceMetrics(status: WorkspaceStatus.AsObject): protocol.WorkspaceInstanceMetrics | undefined {
+    let result: protocol.WorkspaceInstanceMetrics | undefined = undefined;
+
+    if (status.metadata?.metrics?.image) {
+        result = result || {};
+        result.image = {
+            totalSize: status.metadata.metrics.image.totalSize,
+            workspaceImageSize: status.metadata.metrics.image.workspaceImageSize,
+        };
+    }
+    if (status.initializerMetrics) {
+        result = result || {};
+        result.initializerMetrics = mapInitializerMetrics(status.initializerMetrics);
+    }
+
+    return result;
+}
+
+function mapInitializerMetrics(metrics: InitializerMetrics.AsObject): protocol.InitializerMetrics {
+    const result: protocol.InitializerMetrics = {};
+    if (metrics.git) {
+        result.git = mapInitializerMetric(metrics.git);
+    }
+    if (metrics.fileDownload) {
+        result.fileDownload = mapInitializerMetric(metrics.fileDownload);
+    }
+    if (metrics.snapshot) {
+        result.snapshot = mapInitializerMetric(metrics.snapshot);
+    }
+    if (metrics.backup) {
+        result.backup = mapInitializerMetric(metrics.backup);
+    }
+    if (metrics.prebuild) {
+        result.prebuild = mapInitializerMetric(metrics.prebuild);
+    }
+    if (metrics.composite) {
+        result.composite = mapInitializerMetric(metrics.composite);
+    }
+
+    return result;
+}
+
+function mapInitializerMetric(metric: InitializerMetric.AsObject | undefined): protocol.InitializerMetric | undefined {
+    if (!metric || !metric.duration) {
+        return undefined;
+    }
+
+    return {
+        duration: metric.duration.seconds * 1000 + metric.duration.nanos / 1000000,
+        size: metric.size,
+    };
 }

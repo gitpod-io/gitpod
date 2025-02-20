@@ -19,6 +19,7 @@ import {
     WorkspaceAndInstance,
     WorkspaceInfo,
     WorkspaceInstance,
+    WorkspaceInstanceMetrics,
     WorkspaceInstanceUser,
     WorkspaceSession,
     WorkspaceType,
@@ -62,6 +63,7 @@ import { TypeORM } from "./typeorm";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { DBProject } from "./entity/db-project";
 import { PrebuiltWorkspaceWithWorkspace } from "@gitpod/gitpod-protocol/src/protocol";
+import { DBWorkspaceInstanceMetrics } from "./entity/db-workspace-instance-metrics";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -107,6 +109,10 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         return (await this.getEntityManager()).getRepository<DBPrebuiltWorkspaceUpdatable>(
             DBPrebuiltWorkspaceUpdatable,
         );
+    }
+
+    private async getWorkspaceInstanceMetricsRepo(): Promise<Repository<DBWorkspaceInstanceMetrics>> {
+        return (await this.getEntityManager()).getRepository<DBWorkspaceInstanceMetrics>(DBWorkspaceInstanceMetrics);
     }
 
     public async connect(maxTries: number = 3, timeout: number = 2000): Promise<void> {
@@ -465,6 +471,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         const sessions = await workspaceInstanceRepo
             .createQueryBuilder("wsi")
             .leftJoinAndMapOne("wsi.workspace", DBWorkspace, "ws", "ws.id = wsi.workspaceId")
+            .leftJoinAndMapOne("wsi.metrics", DBWorkspaceInstanceMetrics, "wsim", "wsim.instanceId = wsi.id")
             .where("ws.organizationId = :organizationId", { organizationId })
             .andWhere("wsi.creationTime >= :periodStart", { periodStart: periodStart.toISOString() })
             .andWhere("wsi.creationTime <= :periodEnd", { periodEnd: periodEnd.toISOString() })
@@ -473,13 +480,19 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
             .take(limit)
             .getMany();
 
-        const resultSessions: { instance: WorkspaceInstance; workspace: Workspace }[] = [];
+        const resultSessions: {
+            instance: WorkspaceInstance;
+            workspace: Workspace;
+            metrics?: WorkspaceInstanceMetrics;
+        }[] = [];
         for (const session of sessions) {
             resultSessions.push({
                 workspace: (session as any).workspace,
                 instance: session,
+                metrics: (session as any).metrics,
             });
             delete (session as any).workspace;
+            delete (session as any).metrics;
         }
         return resultSessions;
     }
@@ -1142,6 +1155,36 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
 
         const res = await query.getMany();
         return res.map((r) => r.info);
+    }
+
+    async storeMetrics(instanceId: string, metrics: WorkspaceInstanceMetrics): Promise<WorkspaceInstanceMetrics> {
+        const repo = await this.getWorkspaceInstanceMetricsRepo();
+        const result = await repo.save({
+            instanceId,
+            metrics,
+        });
+        return result.metrics;
+    }
+
+    async getMetrics(instanceId: string): Promise<WorkspaceInstanceMetrics | undefined> {
+        const repo = await this.getWorkspaceInstanceMetricsRepo();
+        const dbMetrics = await repo.findOne({ where: { instanceId } });
+        return dbMetrics?.metrics;
+    }
+
+    async updateMetrics(
+        instanceId: string,
+        update: WorkspaceInstanceMetrics,
+        merge: (current: WorkspaceInstanceMetrics, update: WorkspaceInstanceMetrics) => WorkspaceInstanceMetrics,
+    ): Promise<WorkspaceInstanceMetrics> {
+        return await this.transaction(async (db) => {
+            const current = await db.getMetrics(instanceId);
+            if (!current) {
+                return await db.storeMetrics(instanceId, update);
+            }
+            const merged = merge(current, update);
+            return await db.storeMetrics(instanceId, merged);
+        });
     }
 }
 

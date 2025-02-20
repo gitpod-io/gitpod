@@ -939,6 +939,39 @@ message WorkspaceSession {
 
     // total_image_size is the total size of the image in bytes (includes Gitpod-specific layers like IDE)
     int64 total_image_size = 2;
+
+    // initializer_metrics are all metrics exported from the content initializer on workspace start
+    InitializerMetrics initializer_metrics = 3;
+  }
+
+  // Add these new message definitions
+  message InitializerMetric {
+    // Duration in nanoseconds (standard protobuf duration)
+    google.protobuf.Duration duration = 1;
+
+    // Size in bytes
+    uint64 size = 2;
+  }
+
+  message InitializerMetrics {
+    // Git contains metrics for the git initializer step
+    InitializerMetric git = 1;
+
+    // FileDownload contains metrics for the file download initializer step
+    InitializerMetric file_download = 2;
+
+    // Snapshot contains metrics for the snapshot initializer step
+    // This used for workspaces started from snapshots.
+    InitializerMetric snapshot = 3;
+
+    // Backup contains metrics for the backup initializer step
+    InitializerMetric backup = 4;
+
+    // Prebuild contains metrics for the prebuild initializer step
+    InitializerMetric prebuild = 5;
+
+    // Composite contains metrics for the composite initializer step
+    InitializerMetric composite = 6;
   }
 
   string id = 1;

@@ -21,11 +21,13 @@ func main() {
 	log.Init("content-initializer", "", true, false)
 	tracing.Init("content-initializer")
 
-	err := content.RunInitializerChild()
+	stats, err := content.RunInitializerChild()
 	if err != nil {
 		errfd := os.NewFile(uintptr(3), "errout")
 		_, _ = fmt.Fprintf(errfd, err.Error())
 
 		os.Exit(content.FAIL_CONTENT_INITIALIZER_EXIT_CODE)
 	}
+
+	fmt.Printf(content.FormatStatsBytes(stats))
 }

@@ -22,7 +22,7 @@ var debugRunInitializer = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dst := args[0]
 		log.WithField("dst", dst).Info("running content initializer")
-		return content.RunInitializer(context.Background(), dst, &api.WorkspaceInitializer{
+		_, err := content.RunInitializer(context.Background(), dst, &api.WorkspaceInitializer{
 			Spec: &api.WorkspaceInitializer_Git{
 				Git: &api.GitInitializer{
 					RemoteUri:        "https://github.com/gitpod-io/gitpod.git",
@@ -35,6 +35,7 @@ var debugRunInitializer = &cobra.Command{
 				},
 			},
 		}, make(map[string]storage.DownloadInfo), content.RunInitializerOpts{})
+		return err
 	},
 }
 

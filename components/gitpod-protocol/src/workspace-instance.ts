@@ -332,14 +332,43 @@ export interface ImageBuildLogInfo {
  * Holds metrics about the workspace instance
  */
 export interface WorkspaceInstanceMetrics {
-    image?: Partial<{
-        /**
-         * the total size of the image in bytes (includes Gitpod-specific layers like IDE)
-         */
-        totalSize: number;
-        /**
-         * the size of the workspace image in bytes
-         */
-        workspaceImageSize: number;
-    }>;
+    image?: ImageMetrics;
+
+    /**
+     * Metrics about the workspace initializer
+     */
+    initializerMetrics?: InitializerMetrics;
+}
+
+export interface ImageMetrics {
+    /**
+     * the total size of the image in bytes (includes Gitpod-specific layers like IDE)
+     */
+    totalSize?: number;
+
+    /**
+     * the size of the workspace image in bytes
+     */
+    workspaceImageSize?: number;
+}
+
+export interface InitializerMetrics {
+    git?: InitializerMetric;
+    fileDownload?: InitializerMetric;
+    snapshot?: InitializerMetric;
+    backup?: InitializerMetric;
+    prebuild?: InitializerMetric;
+    composite?: InitializerMetric;
+}
+
+export interface InitializerMetric {
+    /**
+     * Duration in milliseconds
+     */
+    duration: number;
+
+    /**
+     * Size in bytes
+     */
+    size: number;
 }

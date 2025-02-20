@@ -179,7 +179,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 		}
 
 		initStart := time.Now()
-		failure, initErr := wsc.operations.InitWorkspace(ctx, InitOptions{
+		stats, failure, initErr := wsc.operations.InitWorkspace(ctx, InitOptions{
 			Meta: WorkspaceMeta{
 				Owner:       ws.Spec.Ownership.Owner,
 				WorkspaceID: ws.Spec.Ownership.WorkspaceID,
@@ -190,16 +190,23 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 			StorageQuota: ws.Spec.StorageQuota,
 		})
 
+		initMetrics := initializerMetricsFromInitializerStats(stats)
 		err = retry.RetryOnConflict(retryParams, func() error {
 			if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {
 				return err
 			}
 
+			// persist init failure/success
 			if failure != "" {
 				log.Error(initErr, "could not initialize workspace", "name", ws.Name)
 				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionFalse, workspacev1.ReasonInitializationFailure, failure))
 			} else {
 				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionTrue, workspacev1.ReasonInitializationSuccess, ""))
+			}
+
+			// persist initializer metrics
+			if initMetrics != nil {
+				ws.Status.InitializerMetrics = initMetrics
 			}
 
 			return wsc.Status().Update(ctx, ws)
@@ -216,6 +223,50 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func initializerMetricsFromInitializerStats(stats *csapi.InitializerMetrics) *workspacev1.InitializerMetrics {
+	if stats == nil {
+		return nil
+	}
+
+	result := workspacev1.InitializerMetrics{}
+	for _, metric := range *stats {
+		switch metric.Type {
+		case "git":
+			result.Git = &workspacev1.InitializerStepMetric{
+				Duration: &metav1.Duration{Duration: metric.Duration},
+				Size:     metric.Size,
+			}
+		case "fileDownload":
+			result.FileDownload = &workspacev1.InitializerStepMetric{
+				Duration: &metav1.Duration{Duration: metric.Duration},
+				Size:     metric.Size,
+			}
+		case "snapshot":
+			result.Snapshot = &workspacev1.InitializerStepMetric{
+				Duration: &metav1.Duration{Duration: metric.Duration},
+				Size:     metric.Size,
+			}
+		case "fromBackup":
+			result.Backup = &workspacev1.InitializerStepMetric{
+				Duration: &metav1.Duration{Duration: metric.Duration},
+				Size:     metric.Size,
+			}
+		case "composite":
+			result.Composite = &workspacev1.InitializerStepMetric{
+				Duration: &metav1.Duration{Duration: metric.Duration},
+				Size:     metric.Size,
+			}
+		case "prebuild":
+			result.Composite = &workspacev1.InitializerStepMetric{
+				Duration: &metav1.Duration{Duration: metric.Duration},
+				Size:     metric.Size,
+			}
+		}
+	}
+
+	return &result
 }
 
 func (wsc *WorkspaceController) handleWorkspaceRunning(ctx context.Context, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
