@@ -112,7 +112,7 @@ export class SpiceDBClientProvider {
                 }
                 this.clientOptions = clientOptions;
                 // `createClient` will use the `DefaultClientOptions` to create client if the value on Feature Flag is not able to create a client
-                // but we will still write `previousClientOptionsString` here to avoid retry with that incorrect value again
+                // but we will still write `previousClientOptionsString` here to prevent retry loops.
                 this.previousClientOptionsString = customClientOptions;
             } catch (e) {
                 log.error("[spicedb] Failed to parse custom client options", e);
