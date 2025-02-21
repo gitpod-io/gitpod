@@ -31,6 +31,7 @@ import { WorkspaceClassesEnterpriseCallout } from "./policies/WorkspaceClassesEn
 import { EditorOptions } from "./policies/EditorOptions";
 import { RolePermissionsRestrictions } from "./policies/RoleRestrictions";
 import { OrgWorkspaceClassesOptions } from "./policies/OrgWorkspaceClassesOptions";
+import { useDefaultOrgTimeoutQuery } from "../data/organizations/default-org-timeout-query";
 
 export default function TeamPoliciesPage() {
     useDocumentTitle("Organization Settings - Policies");
@@ -45,6 +46,8 @@ export default function TeamPoliciesPage() {
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string | undefined>(undefined);
     const [allowTimeoutChangeByMembers, setAllowTimeoutChangeByMembers] = useState<boolean | undefined>(undefined);
     const [workspaceTimeoutSettingError, setWorkspaceTimeoutSettingError] = useState<string | undefined>(undefined);
+
+    const defaultOrgTimeout = useDefaultOrgTimeoutQuery();
 
     const handleUpdateTeamSettings = useCallback(
         async (newSettings: Partial<PlainMessage<OrganizationSettings>>, options?: { throwMutateError?: boolean }) => {
@@ -156,7 +159,9 @@ export default function TeamPoliciesPage() {
                                 hint={
                                     <span>
                                         Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
-                                        <span className="font-semibold">2h</span>
+                                        <span className="font-semibold">2h</span>. If not set, your organization's
+                                        default of <span className="font-semibold">{defaultOrgTimeout}</span> will be
+                                        used.
                                     </span>
                                 }
                             >
