@@ -4,43 +4,58 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useMemo, useState } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
 import { useListOrganizationMembers } from "../../data/organizations/members-query";
-
 import type { OnboardingSettings_WelcomeMessage } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
-import { Button } from "@podkit/buttons/Button";
-import { Popover, PopoverContent, PopoverTrigger } from "@podkit/popover/Popover";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { Command, CommandGroup, CommandInput, CommandItem } from "@podkit/command/Command";
-import { cn } from "@podkit/lib/cn";
+import { Combobox } from "../../prebuilds/configuration-input/Combobox";
+import { ComboboxSelectedItem } from "../../prebuilds/configuration-input/ComboboxSelectedItem";
 
 type Props = {
     settings: OnboardingSettings_WelcomeMessage | undefined;
     setFeaturedMemberId: (featuredMemberId: string | undefined) => void;
 };
 export const OrgMemberAvatarInput = ({ settings, setFeaturedMemberId }: Props) => {
-    const { data: members } = useListOrganizationMembers();
-    const [open, setOpen] = useState(false);
+    const { data: members, isLoading } = useListOrganizationMembers();
+    const [searchTerm, setSearchTerm] = useState("");
     const [avatarUrl, setAvatarUrl] = useState<string | undefined>(settings?.featuredMemberResolvedAvatarUrl);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [search, _setSearch] = useState<string | undefined>(undefined);
 
-    const allOptions = useMemo(
-        () => [{ userId: "disabled", fullName: "Disable image", avatarUrl: undefined }, ...(members ?? [])],
-        [members],
+    const selectedMember = useMemo(() => {
+        return members?.find((member) => member.avatarUrl === avatarUrl);
+    }, [members, avatarUrl]);
+
+    const handleSelectionChange = useCallback(
+        (selectedId: string) => {
+            const member = members?.find((m) => m.userId === selectedId);
+            setFeaturedMemberId(selectedId || undefined);
+            setAvatarUrl(member?.avatarUrl);
+        },
+        [members, setFeaturedMemberId],
     );
 
-    const filteredOptions = useMemo(() => {
-        return allOptions.filter((member) => {
-            const fullName = member.fullName.toLowerCase();
-            const searchTerms = search?.toLowerCase() ?? "";
-            return fullName.includes(searchTerms);
-        });
-    }, [allOptions, search]);
+    const getElements = useCallback(() => {
+        const resetFilterItem = {
+            id: "",
+            element: <SuggestedMemberOption member={{ fullName: "Disable image" }} />,
+            isSelectable: true,
+        };
 
-    const selectedMember = allOptions.find(
-        (member) => member.avatarUrl === avatarUrl || (avatarUrl === undefined && member.userId === "disabled"),
-    );
+        if (!members) {
+            return [resetFilterItem];
+        }
+
+        const filteredMembers = members.filter((member) =>
+            member.fullName.toLowerCase().includes(searchTerm.toLowerCase().trim()),
+        );
+
+        const result = filteredMembers.map((member) => ({
+            id: member.userId,
+            element: <SuggestedMemberOption member={member} />,
+            isSelectable: true,
+        }));
+        if (searchTerm.length === 0) result.unshift(resetFilterItem);
+
+        return result;
+    }, [members, searchTerm]);
 
     return (
         <div className="flex flex-col items-center gap-4">
@@ -50,54 +65,52 @@ export const OrgMemberAvatarInput = ({ settings, setFeaturedMemberId }: Props) =
                 <div className="w-16 h-16 rounded-full bg-[#EA71DE]" />
             )}
 
-            <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" aria-expanded={open} className="w-48 justify-between">
-                        {selectedMember?.fullName ?? "Select member..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-60 p-0">
-                    <Command shouldFilter={true}>
-                        <CommandInput
-                            // value={search}
-                            // onValueChange={(value) => setSearch(value)}
-                            className="h-9"
-                            placeholder="Search members..."
-                        />
-                        <CommandGroup>
-                            {filteredOptions.map((member) => (
-                                <CommandItem
-                                    key={member.userId}
-                                    value={member.userId}
-                                    onSelect={(newMemberId) => {
-                                        setFeaturedMemberId(newMemberId === "disabled" ? undefined : newMemberId);
-                                        setAvatarUrl(member.avatarUrl);
-                                        setOpen(false);
-                                    }}
-                                >
-                                    {member.avatarUrl ? (
-                                        <img
-                                            src={member.avatarUrl}
-                                            alt={member.fullName}
-                                            className="w-4 h-4 rounded-full"
-                                        />
-                                    ) : (
-                                        <div className="w-4 h-4 rounded-full bg-pk-surface-tertiary" />
-                                    )}
-                                    {member.fullName}
-                                    <Check
-                                        className={cn(
-                                            "ml-auto h-4 w-4",
-                                            selectedMember?.userId === member.userId ? "opacity-100" : "opacity-0",
-                                        )}
-                                    />
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </Command>
-                </PopoverContent>
-            </Popover>
+            <div className="w-48">
+                <Combobox
+                    getElements={getElements}
+                    initialValue={selectedMember?.userId}
+                    onSelectionChange={handleSelectionChange}
+                    disabled={isLoading}
+                    loading={isLoading}
+                    onSearchChange={setSearchTerm}
+                    dropDownClassName="text-pk-content-primary"
+                >
+                    <ComboboxSelectedItem
+                        htmlTitle="Member"
+                        title={<div className="truncate">{selectedMember?.fullName ?? "Select member..."}</div>}
+                        titleClassName="text-sm font-normal text-pk-content-primary"
+                        loading={isLoading}
+                        icon={
+                            selectedMember?.avatarUrl ? (
+                                <img src={selectedMember.avatarUrl} alt="" className="w-4 h-4 rounded-full" />
+                            ) : (
+                                <div className="w-4 h-4 rounded-full bg-pk-content-tertiary" />
+                            )
+                        }
+                    />
+                </Combobox>
+            </div>
+        </div>
+    );
+};
+
+type SuggestedMemberOptionProps = {
+    member: {
+        fullName: string;
+        avatarUrl?: string;
+    };
+};
+const SuggestedMemberOption: FC<SuggestedMemberOptionProps> = ({ member }) => {
+    const { fullName } = member;
+
+    return (
+        <div className="flex flex-row items-center overflow-hidden" title={fullName} aria-label={`Member: ${fullName}`}>
+            {member.avatarUrl ? (
+                <img src={member.avatarUrl} alt="" className="w-4 h-4 rounded-full mr-2" />
+            ) : (
+                <div className="w-4 h-4 rounded-full mr-2 bg-pk-content-tertiary" />
+            )}
+            {fullName && <span className="text-sm whitespace-nowrap">{fullName}</span>}
         </div>
     );
 };
