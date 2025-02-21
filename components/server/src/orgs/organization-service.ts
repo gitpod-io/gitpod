@@ -629,6 +629,14 @@ export class OrganizationService {
             if (partialUpdate.roleRestrictions !== undefined) {
                 settings.roleRestrictions = partialUpdate.roleRestrictions;
             }
+
+            if (partialUpdate.onboardingSettings?.welcomeMessage && settings.onboardingSettings?.welcomeMessage) {
+                if (!partialUpdate.onboardingSettings.welcomeMessage.featuredMemberId) {
+                    settings.onboardingSettings.welcomeMessage.featuredMemberId = undefined;
+                    settings.onboardingSettings.welcomeMessage.featuredMemberResolvedAvatarUrl = undefined;
+                }
+            }
+
             return settings;
         };
 
