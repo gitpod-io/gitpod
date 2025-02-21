@@ -26,7 +26,6 @@ import { RepositoryListItem } from "../repositories/list/RepoListItem";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@podkit/tables/Table";
 import { WelcomeMessageConfigurationField } from "./onboarding/WelcomeMessageConfigurationField";
-import { OrgMemberAvatarInput } from "./onboarding/OrgMemberAvatarInput";
 
 export type UpdateTeamSettingsOptions = {
     throwMutateError?: boolean;
@@ -44,9 +43,6 @@ export default function TeamOnboardingPage() {
     const { data: suggestedRepos, isLoading: isLoadingSuggestedRepos } = useOrgSuggestedRepos();
 
     const [internalLink, setInternalLink] = useState<string | undefined>(undefined);
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [featuredMemberId, setFeaturedMemberId] = useState<string | undefined>(undefined);
 
     const handleUpdateTeamSettings = useCallback(
         async (newSettings: UpdateOrganizationSettingsArgs, options?: UpdateTeamSettingsOptions) => {
@@ -166,11 +162,6 @@ export default function TeamOnboardingPage() {
                         </Table>
                     )}
                 </ConfigurationSettingsField>
-
-                <OrgMemberAvatarInput
-                    settings={settings?.onboardingSettings?.welcomeMessage}
-                    setFeaturedMemberId={setFeaturedMemberId}
-                />
 
                 <WelcomeMessageConfigurationField handleUpdateTeamSettings={handleUpdateTeamSettings} />
             </div>
