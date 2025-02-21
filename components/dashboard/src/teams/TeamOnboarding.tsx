@@ -26,6 +26,12 @@ import { RepositoryListItem } from "../repositories/list/RepoListItem";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { Table, TableHeader, TableRow, TableHead, TableBody } from "@podkit/tables/Table";
 import { WelcomeMessageConfigurationField } from "./onboarding/WelcomeMessageConfigurationField";
+import { OrgMemberAvatarInput } from "./onboarding/OrgMemberAvatarInput";
+import { Popover, PopoverContent, PopoverTrigger } from "@podkit/popover/Popover";
+import { Button } from "@podkit/buttons/Button";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@podkit/command/Command";
+import { cn } from "@podkit/lib/cn";
 
 export type UpdateTeamSettingsOptions = {
     throwMutateError?: boolean;
@@ -43,6 +49,9 @@ export default function TeamOnboardingPage() {
     const { data: suggestedRepos, isLoading: isLoadingSuggestedRepos } = useOrgSuggestedRepos();
 
     const [internalLink, setInternalLink] = useState<string | undefined>(undefined);
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [featuredMemberId, setFeaturedMemberId] = useState<string | undefined>(undefined);
 
     const handleUpdateTeamSettings = useCallback(
         async (newSettings: UpdateOrganizationSettingsArgs, options?: UpdateTeamSettingsOptions) => {
@@ -163,8 +172,181 @@ export default function TeamOnboardingPage() {
                     )}
                 </ConfigurationSettingsField>
 
+                <OrgMemberAvatarInput
+                    settings={settings?.onboardingSettings?.welcomeMessage}
+                    setFeaturedMemberId={setFeaturedMemberId}
+                />
+                <ComboboxDemo />
+
                 <WelcomeMessageConfigurationField handleUpdateTeamSettings={handleUpdateTeamSettings} />
             </div>
         </OrgSettingsPage>
+    );
+}
+
+const frameworks = [
+    {
+        value: "next.js",
+        label: "AAAANext.js",
+    },
+    {
+        value: "sveltekit",
+        label: "SvelteKit",
+    },
+    {
+        value: "nuxt.js",
+        label: "Nuxt.js",
+    },
+    {
+        value: "remix",
+        label: "Remix",
+    },
+    {
+        value: "astro",
+        label: "Astro",
+    },
+    {
+        value: "gatsby",
+        label: "Gatsby",
+    },
+    {
+        value: "angular",
+        label: "Angular",
+    },
+    {
+        value: "ember",
+        label: "Ember.js",
+    },
+    {
+        value: "qwik",
+        label: "Qwik",
+    },
+    {
+        value: "solid",
+        label: "SolidJS",
+    },
+    {
+        value: "vite",
+        label: "Vite",
+    },
+    {
+        value: "eleventy",
+        label: "Eleventy",
+    },
+    {
+        value: "redwood",
+        label: "RedwoodJS",
+    },
+    {
+        value: "fresh",
+        label: "Fresh",
+    },
+    {
+        value: "nest",
+        label: "NestJS",
+    },
+    {
+        value: "vue",
+        label: "Vue.js",
+    },
+    {
+        value: "create-react-app",
+        label: "Create React App",
+    },
+    {
+        value: "preact",
+        label: "Preact",
+    },
+    {
+        value: "gridsome",
+        label: "Gridsome",
+    },
+    {
+        value: "blitz",
+        label: "Blitz.js",
+    },
+    {
+        value: "hydrogen",
+        label: "Hydrogen",
+    },
+    {
+        value: "remix-indie",
+        label: "Remix Indie Stack",
+    },
+    {
+        value: "expo",
+        label: "Expo",
+    },
+    {
+        value: "docusaurus",
+        label: "Docusaurus",
+    },
+    {
+        value: "react-native",
+        label: "React Native",
+    },
+    {
+        value: "t3-app",
+        label: "Create T3 App",
+    },
+    {
+        value: "ionic",
+        label: "Ionic",
+    },
+    {
+        value: "vitepress",
+        label: "VitePress",
+    },
+    {
+        value: "nextra",
+        label: "Nextra",
+    },
+    {
+        value: "adonis",
+        label: "AdonisJS",
+    },
+];
+
+export function ComboboxDemo() {
+    const [open, setOpen] = useState(false);
+    const [value, setValue] = useState("");
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button variant="outline" role="combobox" aria-expanded={open} className="w-[200px] justify-between">
+                    {value ? frameworks.find((framework) => framework.value === value)?.label : "Select framework..."}
+                    <ChevronsUpDown className="opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0">
+                <Command>
+                    <CommandInput placeholder="Search framework..." className="h-9" />
+                    <CommandList>
+                        <CommandEmpty>No framework found.</CommandEmpty>
+                        <CommandGroup>
+                            {frameworks.map((framework) => (
+                                <CommandItem
+                                    key={framework.value}
+                                    value={framework.value}
+                                    onSelect={(currentValue) => {
+                                        setValue(currentValue === value ? "" : currentValue);
+                                        setOpen(false);
+                                    }}
+                                >
+                                    {framework.label}
+                                    <Check
+                                        className={cn(
+                                            "ml-auto",
+                                            value === framework.value ? "opacity-100" : "opacity-0",
+                                        )}
+                                    />
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
     );
 }
