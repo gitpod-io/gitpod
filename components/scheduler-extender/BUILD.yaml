@@ -1,0 +1,9 @@
+packages:
+  - name: docker
+    type: docker
+    config:
+      dockerfile: leeway.Dockerfile
+      buildArgs:
+        VERSION: ${schedulerExtenderVersion}
+      image:
+        - ${imageRepoBase}/scheduler-extender:${schedulerExtenderVersion}
