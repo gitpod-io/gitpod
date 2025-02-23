@@ -6,6 +6,8 @@ ARG VERSION
 
 FROM alpine as dependencies
 
+ENV TRIGGER_REBUILD=0
+
 RUN apk add -U wget
 
 RUN wget -O /jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 \
