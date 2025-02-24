@@ -62,10 +62,13 @@
 /components/proxy @gitpod-io/team-experience @gitpod-io/team-enterprise
 /components/public-api @gitpod-io/team-experience @gitpod-io/team-enterprise
 # Any team can make changes to the experimental package
+/components/ipfs/kubo @gitpod-io/team-experience @gitpod-io/team-enterprise
+/components/ipfs/ipfs-cluster @gitpod-io/team-experience @gitpod-io/team-enterprise
 /components/public-api/gitpod/experimental @gitpod-io/team-experience @gitpod-io/team-enterprise
 /components/public-api-server @gitpod-io/team-experience @gitpod-io/team-enterprise
 /components/registry-facade-api @gitpod-io/team-engine @gitpod-io/team-enterprise
 /components/registry-facade @gitpod-io/team-engine @gitpod-io/team-enterprise
+/components/scheduler-extender @gitpod-io/team-engine @gitpod-io/team-enterprise
 /components/server @gitpod-io/team-experience @gitpod-io/team-enterprise
 /components/server/src/ide-service.* @gitpod-io/team-experience @gitpod-io/team-enterprise
 /components/service-waiter @gitpod-io/team-experience @gitpod-io/team-enterprise
