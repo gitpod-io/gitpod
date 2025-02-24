@@ -4,8 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useMutation } from "@tanstack/react-query";
-import { useOrgSettingsQueryInvalidator } from "./org-settings-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getQueryKey, useOrgSettingsQueryInvalidator } from "./org-settings-query";
 import { useCurrentOrg } from "./orgs-query";
 import { organizationClient } from "../../service/public-api";
 import {
@@ -24,6 +24,8 @@ export const useUpdateOrgSettingsMutation = () => {
     const invalidateOrgSettings = useOrgSettingsQueryInvalidator();
     const invalidateWorkspaceClasses = useOrgWorkspaceClassesQueryInvalidator();
     const invalidateOrgRepoSuggestions = useOrgRepoSuggestionsInvalidator();
+
+    const queryClient = useQueryClient();
     const organizationId = org?.id ?? "";
 
     return useMutation<OrganizationSettings, Error, UpdateOrganizationSettingsArgs>({
@@ -47,10 +49,15 @@ export const useUpdateOrgSettingsMutation = () => {
             const settings = await organizationClient.updateOrganizationSettings(update);
             return settings.settings!;
         },
-        onSuccess: () => {
-            invalidateOrgSettings();
+        onSuccess: (settings) => {
             invalidateWorkspaceClasses();
             invalidateOrgRepoSuggestions();
+
+            if (settings) {
+                queryClient.setQueryData(getQueryKey(organizationId), settings);
+            } else {
+                invalidateOrgSettings();
+            }
         },
         onError: (err) => {
             if (!ErrorCode.isUserError((err as any)?.["code"])) {
