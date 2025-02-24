@@ -1137,11 +1137,18 @@ export class PublicAPIConverter {
     }
 
     fromWelcomeMessage(welcomeMessage: PlainMessage<OnboardingSettings_WelcomeMessage>): WelcomeMessageProtocol {
-        return {
-            enabled: welcomeMessage.enabled,
-            message: welcomeMessage.message,
-            featuredMemberId: welcomeMessage.featuredMemberId,
-        };
+        const result: WelcomeMessageProtocol = {};
+        if (welcomeMessage.enabled !== undefined) {
+            result.enabled = welcomeMessage.enabled;
+        }
+        if (welcomeMessage.message !== undefined) {
+            result.message = welcomeMessage.message;
+        }
+        if (welcomeMessage.featuredMemberId !== undefined) {
+            result.featuredMemberId = welcomeMessage.featuredMemberId;
+        }
+
+        return result;
     }
 
     fromWorkspaceSettings(settings?: DeepPartial<WorkspaceSettings>) {

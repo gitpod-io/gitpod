@@ -3709,7 +3709,16 @@ public final class OrganizationOuterClass {
        * enabled specifies whether the welcome message is enabled
        * </pre>
        *
-       * <code>bool enabled = 1 [json_name = "enabled"];</code>
+       * <code>optional bool enabled = 1 [json_name = "enabled"];</code>
+       * @return Whether the enabled field is set.
+       */
+      boolean hasEnabled();
+      /**
+       * <pre>
+       * enabled specifies whether the welcome message is enabled
+       * </pre>
+       *
+       * <code>optional bool enabled = 1 [json_name = "enabled"];</code>
        * @return The enabled.
        */
       boolean getEnabled();
@@ -3855,7 +3864,19 @@ public final class OrganizationOuterClass {
        * enabled specifies whether the welcome message is enabled
        * </pre>
        *
-       * <code>bool enabled = 1 [json_name = "enabled"];</code>
+       * <code>optional bool enabled = 1 [json_name = "enabled"];</code>
+       * @return Whether the enabled field is set.
+       */
+      @java.lang.Override
+      public boolean hasEnabled() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <pre>
+       * enabled specifies whether the welcome message is enabled
+       * </pre>
+       *
+       * <code>optional bool enabled = 1 [json_name = "enabled"];</code>
        * @return The enabled.
        */
       @java.lang.Override
@@ -3876,7 +3897,7 @@ public final class OrganizationOuterClass {
        */
       @java.lang.Override
       public boolean hasMessage() {
-        return ((bitField0_ & 0x00000001) != 0);
+        return ((bitField0_ & 0x00000002) != 0);
       }
       /**
        * <pre>
@@ -3935,7 +3956,7 @@ public final class OrganizationOuterClass {
        */
       @java.lang.Override
       public boolean hasFeaturedMemberId() {
-        return ((bitField0_ & 0x00000002) != 0);
+        return ((bitField0_ & 0x00000004) != 0);
       }
       /**
        * <pre>
@@ -3996,7 +4017,7 @@ public final class OrganizationOuterClass {
        */
       @java.lang.Override
       public boolean hasFeaturedMemberResolvedAvatarUrl() {
-        return ((bitField0_ & 0x00000004) != 0);
+        return ((bitField0_ & 0x00000008) != 0);
       }
       /**
        * <pre>
@@ -4060,16 +4081,16 @@ public final class OrganizationOuterClass {
       @java.lang.Override
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        if (enabled_ != false) {
+        if (((bitField0_ & 0x00000001) != 0)) {
           output.writeBool(1, enabled_);
         }
-        if (((bitField0_ & 0x00000001) != 0)) {
+        if (((bitField0_ & 0x00000002) != 0)) {
           com.google.protobuf.GeneratedMessage.writeString(output, 2, message_);
         }
-        if (((bitField0_ & 0x00000002) != 0)) {
+        if (((bitField0_ & 0x00000004) != 0)) {
           com.google.protobuf.GeneratedMessage.writeString(output, 4, featuredMemberId_);
         }
-        if (((bitField0_ & 0x00000004) != 0)) {
+        if (((bitField0_ & 0x00000008) != 0)) {
           com.google.protobuf.GeneratedMessage.writeString(output, 5, featuredMemberResolvedAvatarUrl_);
         }
         getUnknownFields().writeTo(output);
@@ -4081,17 +4102,17 @@ public final class OrganizationOuterClass {
         if (size != -1) return size;
 
         size = 0;
-        if (enabled_ != false) {
+        if (((bitField0_ & 0x00000001) != 0)) {
           size += com.google.protobuf.CodedOutputStream
             .computeBoolSize(1, enabled_);
         }
-        if (((bitField0_ & 0x00000001) != 0)) {
+        if (((bitField0_ & 0x00000002) != 0)) {
           size += com.google.protobuf.GeneratedMessage.computeStringSize(2, message_);
         }
-        if (((bitField0_ & 0x00000002) != 0)) {
+        if (((bitField0_ & 0x00000004) != 0)) {
           size += com.google.protobuf.GeneratedMessage.computeStringSize(4, featuredMemberId_);
         }
-        if (((bitField0_ & 0x00000004) != 0)) {
+        if (((bitField0_ & 0x00000008) != 0)) {
           size += com.google.protobuf.GeneratedMessage.computeStringSize(5, featuredMemberResolvedAvatarUrl_);
         }
         size += getUnknownFields().getSerializedSize();
@@ -4109,8 +4130,11 @@ public final class OrganizationOuterClass {
         }
         io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.WelcomeMessage other = (io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.WelcomeMessage) obj;
 
-        if (getEnabled()
-            != other.getEnabled()) return false;
+        if (hasEnabled() != other.hasEnabled()) return false;
+        if (hasEnabled()) {
+          if (getEnabled()
+              != other.getEnabled()) return false;
+        }
         if (hasMessage() != other.hasMessage()) return false;
         if (hasMessage()) {
           if (!getMessage()
@@ -4137,9 +4161,11 @@ public final class OrganizationOuterClass {
         }
         int hash = 41;
         hash = (19 * hash) + getDescriptor().hashCode();
-        hash = (37 * hash) + ENABLED_FIELD_NUMBER;
-        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-            getEnabled());
+        if (hasEnabled()) {
+          hash = (37 * hash) + ENABLED_FIELD_NUMBER;
+          hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+              getEnabled());
+        }
         if (hasMessage()) {
           hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
           hash = (53 * hash) + getMessage().hashCode();
@@ -4320,21 +4346,22 @@ public final class OrganizationOuterClass {
 
         private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.WelcomeMessage result) {
           int from_bitField0_ = bitField0_;
+          int to_bitField0_ = 0;
           if (((from_bitField0_ & 0x00000001) != 0)) {
             result.enabled_ = enabled_;
+            to_bitField0_ |= 0x00000001;
           }
-          int to_bitField0_ = 0;
           if (((from_bitField0_ & 0x00000002) != 0)) {
             result.message_ = message_;
-            to_bitField0_ |= 0x00000001;
+            to_bitField0_ |= 0x00000002;
           }
           if (((from_bitField0_ & 0x00000004) != 0)) {
             result.featuredMemberId_ = featuredMemberId_;
-            to_bitField0_ |= 0x00000002;
+            to_bitField0_ |= 0x00000004;
           }
           if (((from_bitField0_ & 0x00000008) != 0)) {
             result.featuredMemberResolvedAvatarUrl_ = featuredMemberResolvedAvatarUrl_;
-            to_bitField0_ |= 0x00000004;
+            to_bitField0_ |= 0x00000008;
           }
           result.bitField0_ |= to_bitField0_;
         }
@@ -4351,7 +4378,7 @@ public final class OrganizationOuterClass {
 
         public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.WelcomeMessage other) {
           if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.OnboardingSettings.WelcomeMessage.getDefaultInstance()) return this;
-          if (other.getEnabled() != false) {
+          if (other.hasEnabled()) {
             setEnabled(other.getEnabled());
           }
           if (other.hasMessage()) {
@@ -4438,7 +4465,19 @@ public final class OrganizationOuterClass {
          * enabled specifies whether the welcome message is enabled
          * </pre>
          *
-         * <code>bool enabled = 1 [json_name = "enabled"];</code>
+         * <code>optional bool enabled = 1 [json_name = "enabled"];</code>
+         * @return Whether the enabled field is set.
+         */
+        @java.lang.Override
+        public boolean hasEnabled() {
+          return ((bitField0_ & 0x00000001) != 0);
+        }
+        /**
+         * <pre>
+         * enabled specifies whether the welcome message is enabled
+         * </pre>
+         *
+         * <code>optional bool enabled = 1 [json_name = "enabled"];</code>
          * @return The enabled.
          */
         @java.lang.Override
@@ -4450,7 +4489,7 @@ public final class OrganizationOuterClass {
          * enabled specifies whether the welcome message is enabled
          * </pre>
          *
-         * <code>bool enabled = 1 [json_name = "enabled"];</code>
+         * <code>optional bool enabled = 1 [json_name = "enabled"];</code>
          * @param value The enabled to set.
          * @return This builder for chaining.
          */
@@ -4466,7 +4505,7 @@ public final class OrganizationOuterClass {
          * enabled specifies whether the welcome message is enabled
          * </pre>
          *
-         * <code>bool enabled = 1 [json_name = "enabled"];</code>
+         * <code>optional bool enabled = 1 [json_name = "enabled"];</code>
          * @return This builder for chaining.
          */
         public Builder clearEnabled() {
@@ -31516,208 +31555,209 @@ java.lang.String defaultValue) {
       "leRestrictionEntry\022/\n\004role\030\001 \001(\0162\033.gitpo" +
       "d.v1.OrganizationRoleR\004role\022C\n\013permissio" +
       "ns\030\002 \003(\0162!.gitpod.v1.OrganizationPermiss" +
-      "ionR\013permissions\"\211\005\n\022OnboardingSettings\022" +
+      "ionR\013permissions\"\232\005\n\022OnboardingSettings\022" +
       "(\n\rinternal_link\030\001 \001(\tH\000R\014internalLink\210\001" +
       "\001\0229\n\030recommended_repositories\030\002 \003(\tR\027rec" +
       "ommendedRepositories\022K\n\037update_recommend" +
       "ed_repositories\030\003 \001(\010H\001R\035updateRecommend" +
       "edRepositories\210\001\001\022Z\n\017welcome_message\030\004 \001" +
       "(\0132,.gitpod.v1.OnboardingSettings.Welcom" +
-      "eMessageH\002R\016welcomeMessage\210\001\001\032\232\002\n\016Welcom" +
-      "eMessage\022\030\n\007enabled\030\001 \001(\010R\007enabled\022\035\n\007me" +
-      "ssage\030\002 \001(\tH\000R\007message\210\001\001\0221\n\022featured_me" +
-      "mber_id\030\004 \001(\tH\001R\020featuredMemberId\210\001\001\022Q\n#" +
-      "featured_member_resolved_avatar_url\030\005 \001(" +
-      "\tH\002R\037featuredMemberResolvedAvatarUrl\210\001\001B" +
-      "\n\n\010_messageB\025\n\023_featured_member_idB&\n$_f" +
-      "eatured_member_resolved_avatar_urlB\020\n\016_i" +
-      "nternal_linkB\"\n _update_recommended_repo" +
-      "sitoriesB\022\n\020_welcome_message\"\224\010\n\024Organiz" +
-      "ationSettings\022A\n\032workspace_sharing_disab" +
-      "led\030\001 \001(\010H\000R\030workspaceSharingDisabled\210\001\001" +
-      "\022;\n\027default_workspace_image\030\002 \001(\tH\001R\025def" +
-      "aultWorkspaceImage\210\001\001\022:\n\031allowed_workspa" +
-      "ce_classes\030\003 \003(\tR\027allowedWorkspaceClasse" +
-      "s\0226\n\027restricted_editor_names\030\004 \003(\tR\025rest" +
-      "rictedEditorNames\022o\n\026pinned_editor_versi" +
-      "ons\030\005 \003(\01329.gitpod.v1.OrganizationSettin" +
-      "gs.PinnedEditorVersionsEntryR\024pinnedEdit" +
-      "orVersions\022&\n\014default_role\030\006 \001(\tH\002R\013defa" +
-      "ultRole\210\001\001\022J\n\020timeout_settings\030\007 \001(\0132\032.g" +
-      "itpod.v1.TimeoutSettingsH\003R\017timeoutSetti" +
-      "ngs\210\001\001\022L\n\021role_restrictions\030\010 \003(\0132\037.gitp" +
-      "od.v1.RoleRestrictionEntryR\020roleRestrict" +
-      "ions\022J\n\037max_parallel_running_workspaces\030" +
-      "\t \001(\005H\004R\034maxParallelRunningWorkspaces\210\001\001" +
-      "\022S\n\023onboarding_settings\030\n \001(\0132\035.gitpod.v" +
-      "1.OnboardingSettingsH\005R\022onboardingSettin" +
-      "gs\210\001\001\0225\n\024annotate_git_commits\030\013 \001(\010H\006R\022a" +
-      "nnotateGitCommits\210\001\001\032G\n\031PinnedEditorVers" +
-      "ionsEntry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001" +
-      "(\tR\005value:\0028\001B\035\n\033_workspace_sharing_disa" +
-      "bledB\032\n\030_default_workspace_imageB\017\n\r_def" +
-      "ault_roleB\023\n\021_timeout_settingsB\"\n _max_p" +
-      "arallel_running_workspacesB\026\n\024_onboardin" +
-      "g_settingsB\027\n\025_annotate_git_commits\"\220\001\n\'" +
-      "ListOrganizationWorkspaceClassesRequest\022" +
-      "<\n\npagination\030\001 \001(\0132\034.gitpod.v1.Paginati" +
-      "onRequestR\npagination\022\'\n\017organization_id" +
-      "\030\002 \001(\tR\016organizationId\"\261\001\n(ListOrganizat" +
-      "ionWorkspaceClassesResponse\022=\n\npaginatio" +
-      "n\030\001 \001(\0132\035.gitpod.v1.PaginationResponseR\n" +
-      "pagination\022F\n\021workspace_classes\030\002 \003(\0132\031." +
-      "gitpod.v1.WorkspaceClassR\020workspaceClass" +
-      "es\"f\n\031UpdateOrganizationRequest\022\'\n\017organ" +
-      "ization_id\030\001 \001(\tR\016organizationId\022\027\n\004name" +
-      "\030\002 \001(\tH\000R\004name\210\001\001B\007\n\005_name\"Y\n\032UpdateOrga" +
-      "nizationResponse\022;\n\014organization\030\001 \001(\0132\027" +
-      ".gitpod.v1.OrganizationR\014organization\"\252\001" +
-      "\n\017TimeoutSettings\022>\n\ninactivity\030\001 \001(\0132\031." +
-      "google.protobuf.DurationH\000R\ninactivity\210\001" +
-      "\001\0221\n\022deny_user_timeouts\030\002 \001(\010H\001R\020denyUse" +
-      "rTimeouts\210\001\001B\r\n\013_inactivityB\025\n\023_deny_use" +
-      "r_timeouts\"\375\013\n!UpdateOrganizationSetting" +
-      "sRequest\022\'\n\017organization_id\030\001 \001(\tR\016organ" +
-      "izationId\022A\n\032workspace_sharing_disabled\030" +
-      "\003 \001(\010H\000R\030workspaceSharingDisabled\210\001\001\022;\n\027" +
-      "default_workspace_image\030\004 \001(\tH\001R\025default" +
-      "WorkspaceImage\210\001\001\022:\n\031allowed_workspace_c" +
-      "lasses\030\005 \003(\tR\027allowedWorkspaceClasses\0226\n" +
-      "\027restricted_editor_names\030\006 \003(\tR\025restrict" +
-      "edEditorNames\022H\n\036update_restricted_edito" +
-      "r_names\030\007 \001(\010H\002R\033updateRestrictedEditorN" +
-      "ames\210\001\001\022|\n\026pinned_editor_versions\030\010 \003(\0132" +
-      "F.gitpod.v1.UpdateOrganizationSettingsRe" +
-      "quest.PinnedEditorVersionsEntryR\024pinnedE" +
-      "ditorVersions\022F\n\035update_pinned_editor_ve" +
-      "rsions\030\t \001(\010H\003R\032updatePinnedEditorVersio" +
-      "ns\210\001\001\022&\n\014default_role\030\n \001(\tH\004R\013defaultRo" +
-      "le\210\001\001\022J\n\020timeout_settings\030\013 \001(\0132\032.gitpod" +
-      ".v1.TimeoutSettingsH\005R\017timeoutSettings\210\001" +
-      "\001\022L\n\021role_restrictions\030\014 \003(\0132\037.gitpod.v1" +
-      ".RoleRestrictionEntryR\020roleRestrictions\022" +
-      "=\n\030update_role_restrictions\030\r \001(\010H\006R\026upd" +
-      "ateRoleRestrictions\210\001\001\022J\n\037max_parallel_r" +
-      "unning_workspaces\030\017 \001(\005H\007R\034maxParallelRu" +
-      "nningWorkspaces\210\001\001\022S\n\023onboarding_setting" +
-      "s\030\020 \001(\0132\035.gitpod.v1.OnboardingSettingsH\010" +
-      "R\022onboardingSettings\210\001\001\0225\n\024annotate_git_" +
-      "commits\030\021 \001(\010H\tR\022annotateGitCommits\210\001\001\022L" +
-      "\n update_allowed_workspace_classes\030\022 \001(\010" +
-      "H\nR\035updateAllowedWorkspaceClasses\210\001\001\032G\n\031" +
-      "PinnedEditorVersionsEntry\022\020\n\003key\030\001 \001(\tR\003" +
-      "key\022\024\n\005value\030\002 \001(\tR\005value:\0028\001B\035\n\033_worksp" +
-      "ace_sharing_disabledB\032\n\030_default_workspa" +
-      "ce_imageB!\n\037_update_restricted_editor_na" +
-      "mesB \n\036_update_pinned_editor_versionsB\017\n" +
-      "\r_default_roleB\023\n\021_timeout_settingsB\033\n\031_" +
-      "update_role_restrictionsB\"\n _max_paralle" +
-      "l_running_workspacesB\026\n\024_onboarding_sett" +
-      "ingsB\027\n\025_annotate_git_commitsB#\n!_update" +
-      "_allowed_workspace_classes\"a\n\"UpdateOrga" +
-      "nizationSettingsResponse\022;\n\010settings\030\001 \001" +
-      "(\0132\037.gitpod.v1.OrganizationSettingsR\010set" +
-      "tings\"I\n\036GetOrganizationSettingsRequest\022" +
+      "eMessageH\002R\016welcomeMessage\210\001\001\032\253\002\n\016Welcom" +
+      "eMessage\022\035\n\007enabled\030\001 \001(\010H\000R\007enabled\210\001\001\022" +
+      "\035\n\007message\030\002 \001(\tH\001R\007message\210\001\001\0221\n\022featur" +
+      "ed_member_id\030\004 \001(\tH\002R\020featuredMemberId\210\001" +
+      "\001\022Q\n#featured_member_resolved_avatar_url" +
+      "\030\005 \001(\tH\003R\037featuredMemberResolvedAvatarUr" +
+      "l\210\001\001B\n\n\010_enabledB\n\n\010_messageB\025\n\023_feature" +
+      "d_member_idB&\n$_featured_member_resolved" +
+      "_avatar_urlB\020\n\016_internal_linkB\"\n _update" +
+      "_recommended_repositoriesB\022\n\020_welcome_me" +
+      "ssage\"\224\010\n\024OrganizationSettings\022A\n\032worksp" +
+      "ace_sharing_disabled\030\001 \001(\010H\000R\030workspaceS" +
+      "haringDisabled\210\001\001\022;\n\027default_workspace_i" +
+      "mage\030\002 \001(\tH\001R\025defaultWorkspaceImage\210\001\001\022:" +
+      "\n\031allowed_workspace_classes\030\003 \003(\tR\027allow" +
+      "edWorkspaceClasses\0226\n\027restricted_editor_" +
+      "names\030\004 \003(\tR\025restrictedEditorNames\022o\n\026pi" +
+      "nned_editor_versions\030\005 \003(\01329.gitpod.v1.O" +
+      "rganizationSettings.PinnedEditorVersions" +
+      "EntryR\024pinnedEditorVersions\022&\n\014default_r" +
+      "ole\030\006 \001(\tH\002R\013defaultRole\210\001\001\022J\n\020timeout_s" +
+      "ettings\030\007 \001(\0132\032.gitpod.v1.TimeoutSetting" +
+      "sH\003R\017timeoutSettings\210\001\001\022L\n\021role_restrict" +
+      "ions\030\010 \003(\0132\037.gitpod.v1.RoleRestrictionEn" +
+      "tryR\020roleRestrictions\022J\n\037max_parallel_ru" +
+      "nning_workspaces\030\t \001(\005H\004R\034maxParallelRun" +
+      "ningWorkspaces\210\001\001\022S\n\023onboarding_settings" +
+      "\030\n \001(\0132\035.gitpod.v1.OnboardingSettingsH\005R" +
+      "\022onboardingSettings\210\001\001\0225\n\024annotate_git_c" +
+      "ommits\030\013 \001(\010H\006R\022annotateGitCommits\210\001\001\032G\n" +
+      "\031PinnedEditorVersionsEntry\022\020\n\003key\030\001 \001(\tR" +
+      "\003key\022\024\n\005value\030\002 \001(\tR\005value:\0028\001B\035\n\033_works" +
+      "pace_sharing_disabledB\032\n\030_default_worksp" +
+      "ace_imageB\017\n\r_default_roleB\023\n\021_timeout_s" +
+      "ettingsB\"\n _max_parallel_running_workspa" +
+      "cesB\026\n\024_onboarding_settingsB\027\n\025_annotate" +
+      "_git_commits\"\220\001\n\'ListOrganizationWorkspa" +
+      "ceClassesRequest\022<\n\npagination\030\001 \001(\0132\034.g" +
+      "itpod.v1.PaginationRequestR\npagination\022\'" +
+      "\n\017organization_id\030\002 \001(\tR\016organizationId\"" +
+      "\261\001\n(ListOrganizationWorkspaceClassesResp" +
+      "onse\022=\n\npagination\030\001 \001(\0132\035.gitpod.v1.Pag" +
+      "inationResponseR\npagination\022F\n\021workspace" +
+      "_classes\030\002 \003(\0132\031.gitpod.v1.WorkspaceClas" +
+      "sR\020workspaceClasses\"f\n\031UpdateOrganizatio" +
+      "nRequest\022\'\n\017organization_id\030\001 \001(\tR\016organ" +
+      "izationId\022\027\n\004name\030\002 \001(\tH\000R\004name\210\001\001B\007\n\005_n" +
+      "ame\"Y\n\032UpdateOrganizationResponse\022;\n\014org" +
+      "anization\030\001 \001(\0132\027.gitpod.v1.Organization" +
+      "R\014organization\"\252\001\n\017TimeoutSettings\022>\n\nin" +
+      "activity\030\001 \001(\0132\031.google.protobuf.Duratio" +
+      "nH\000R\ninactivity\210\001\001\0221\n\022deny_user_timeouts" +
+      "\030\002 \001(\010H\001R\020denyUserTimeouts\210\001\001B\r\n\013_inacti" +
+      "vityB\025\n\023_deny_user_timeouts\"\375\013\n!UpdateOr" +
+      "ganizationSettingsRequest\022\'\n\017organizatio" +
+      "n_id\030\001 \001(\tR\016organizationId\022A\n\032workspace_" +
+      "sharing_disabled\030\003 \001(\010H\000R\030workspaceShari" +
+      "ngDisabled\210\001\001\022;\n\027default_workspace_image" +
+      "\030\004 \001(\tH\001R\025defaultWorkspaceImage\210\001\001\022:\n\031al" +
+      "lowed_workspace_classes\030\005 \003(\tR\027allowedWo" +
+      "rkspaceClasses\0226\n\027restricted_editor_name" +
+      "s\030\006 \003(\tR\025restrictedEditorNames\022H\n\036update" +
+      "_restricted_editor_names\030\007 \001(\010H\002R\033update" +
+      "RestrictedEditorNames\210\001\001\022|\n\026pinned_edito" +
+      "r_versions\030\010 \003(\0132F.gitpod.v1.UpdateOrgan" +
+      "izationSettingsRequest.PinnedEditorVersi" +
+      "onsEntryR\024pinnedEditorVersions\022F\n\035update" +
+      "_pinned_editor_versions\030\t \001(\010H\003R\032updateP" +
+      "innedEditorVersions\210\001\001\022&\n\014default_role\030\n" +
+      " \001(\tH\004R\013defaultRole\210\001\001\022J\n\020timeout_settin" +
+      "gs\030\013 \001(\0132\032.gitpod.v1.TimeoutSettingsH\005R\017" +
+      "timeoutSettings\210\001\001\022L\n\021role_restrictions\030" +
+      "\014 \003(\0132\037.gitpod.v1.RoleRestrictionEntryR\020" +
+      "roleRestrictions\022=\n\030update_role_restrict" +
+      "ions\030\r \001(\010H\006R\026updateRoleRestrictions\210\001\001\022" +
+      "J\n\037max_parallel_running_workspaces\030\017 \001(\005" +
+      "H\007R\034maxParallelRunningWorkspaces\210\001\001\022S\n\023o" +
+      "nboarding_settings\030\020 \001(\0132\035.gitpod.v1.Onb" +
+      "oardingSettingsH\010R\022onboardingSettings\210\001\001" +
+      "\0225\n\024annotate_git_commits\030\021 \001(\010H\tR\022annota" +
+      "teGitCommits\210\001\001\022L\n update_allowed_worksp" +
+      "ace_classes\030\022 \001(\010H\nR\035updateAllowedWorksp" +
+      "aceClasses\210\001\001\032G\n\031PinnedEditorVersionsEnt" +
+      "ry\022\020\n\003key\030\001 \001(\tR\003key\022\024\n\005value\030\002 \001(\tR\005val" +
+      "ue:\0028\001B\035\n\033_workspace_sharing_disabledB\032\n" +
+      "\030_default_workspace_imageB!\n\037_update_res" +
+      "tricted_editor_namesB \n\036_update_pinned_e" +
+      "ditor_versionsB\017\n\r_default_roleB\023\n\021_time" +
+      "out_settingsB\033\n\031_update_role_restriction" +
+      "sB\"\n _max_parallel_running_workspacesB\026\n" +
+      "\024_onboarding_settingsB\027\n\025_annotate_git_c" +
+      "ommitsB#\n!_update_allowed_workspace_clas" +
+      "ses\"a\n\"UpdateOrganizationSettingsRespons" +
+      "e\022;\n\010settings\030\001 \001(\0132\037.gitpod.v1.Organiza" +
+      "tionSettingsR\010settings\"I\n\036GetOrganizatio" +
+      "nSettingsRequest\022\'\n\017organization_id\030\001 \001(" +
+      "\tR\016organizationId\"^\n\037GetOrganizationSett" +
+      "ingsResponse\022;\n\010settings\030\001 \001(\0132\037.gitpod." +
+      "v1.OrganizationSettingsR\010settings\"/\n\031Cre" +
+      "ateOrganizationRequest\022\022\n\004name\030\001 \001(\tR\004na" +
+      "me\"Y\n\032CreateOrganizationResponse\022;\n\014orga" +
+      "nization\030\001 \001(\0132\027.gitpod.v1.OrganizationR" +
+      "\014organization\"A\n\026GetOrganizationRequest\022" +
       "\'\n\017organization_id\030\001 \001(\tR\016organizationId" +
-      "\"^\n\037GetOrganizationSettingsResponse\022;\n\010s" +
-      "ettings\030\001 \001(\0132\037.gitpod.v1.OrganizationSe" +
-      "ttingsR\010settings\"/\n\031CreateOrganizationRe" +
-      "quest\022\022\n\004name\030\001 \001(\tR\004name\"Y\n\032CreateOrgan" +
-      "izationResponse\022;\n\014organization\030\001 \001(\0132\027." +
-      "gitpod.v1.OrganizationR\014organization\"A\n\026" +
-      "GetOrganizationRequest\022\'\n\017organization_i" +
-      "d\030\001 \001(\tR\016organizationId\"V\n\027GetOrganizati" +
-      "onResponse\022;\n\014organization\030\001 \001(\0132\027.gitpo" +
-      "d.v1.OrganizationR\014organization\"\332\001\n\030List" +
-      "OrganizationsRequest\022<\n\npagination\030\001 \001(\013" +
-      "2\034.gitpod.v1.PaginationRequestR\npaginati" +
-      "on\022?\n\005scope\030\002 \001(\0162).gitpod.v1.ListOrgani" +
-      "zationsRequest.ScopeR\005scope\"?\n\005Scope\022\025\n\021" +
-      "SCOPE_UNSPECIFIED\020\000\022\020\n\014SCOPE_MEMBER\020\001\022\r\n" +
-      "\tSCOPE_ALL\020\002\"\231\001\n\031ListOrganizationsRespon" +
-      "se\022=\n\rorganizations\030\001 \003(\0132\027.gitpod.v1.Or" +
-      "ganizationR\rorganizations\022=\n\npagination\030" +
-      "\002 \001(\0132\035.gitpod.v1.PaginationResponseR\npa" +
-      "gination\"D\n\031DeleteOrganizationRequest\022\'\n" +
-      "\017organization_id\030\001 \001(\tR\016organizationId\"\034" +
-      "\n\032DeleteOrganizationResponse\"K\n GetOrgan" +
-      "izationInvitationRequest\022\'\n\017organization" +
-      "_id\030\001 \001(\tR\016organizationId\"H\n!GetOrganiza" +
-      "tionInvitationResponse\022#\n\rinvitation_id\030" +
-      "\001 \001(\tR\014invitationId\">\n\027JoinOrganizationR" +
-      "equest\022#\n\rinvitation_id\030\001 \001(\tR\014invitatio" +
-      "nId\"C\n\030JoinOrganizationResponse\022\'\n\017organ" +
-      "ization_id\030\001 \001(\tR\016organizationId\"M\n\"Rese" +
-      "tOrganizationInvitationRequest\022\'\n\017organi" +
-      "zation_id\030\001 \001(\tR\016organizationId\"J\n#Reset" +
-      "OrganizationInvitationResponse\022#\n\rinvita" +
-      "tion_id\030\001 \001(\tR\014invitationId\"\207\001\n\036ListOrga" +
-      "nizationMembersRequest\022\'\n\017organization_i" +
-      "d\030\001 \001(\tR\016organizationId\022<\n\npagination\030\002 " +
-      "\001(\0132\034.gitpod.v1.PaginationRequestR\npagin" +
-      "ation\"\231\001\n\037ListOrganizationMembersRespons" +
-      "e\0227\n\007members\030\001 \003(\0132\035.gitpod.v1.Organizat" +
-      "ionMemberR\007members\022=\n\npagination\030\002 \001(\0132\035" +
-      ".gitpod.v1.PaginationResponseR\npaginatio" +
-      "n\"\242\001\n\037UpdateOrganizationMemberRequest\022\'\n" +
-      "\017organization_id\030\001 \001(\tR\016organizationId\022\027" +
-      "\n\007user_id\030\002 \001(\tR\006userId\0224\n\004role\030\003 \001(\0162\033." +
-      "gitpod.v1.OrganizationRoleH\000R\004role\210\001\001B\007\n" +
-      "\005_role\"Y\n UpdateOrganizationMemberRespon" +
-      "se\0225\n\006member\030\001 \001(\0132\035.gitpod.v1.Organizat" +
-      "ionMemberR\006member\"c\n\037DeleteOrganizationM" +
-      "emberRequest\022\'\n\017organization_id\030\001 \001(\tR\016o" +
-      "rganizationId\022\027\n\007user_id\030\002 \001(\tR\006userId\"\"" +
-      "\n DeleteOrganizationMemberResponse*\224\001\n\020O" +
-      "rganizationRole\022!\n\035ORGANIZATION_ROLE_UNS" +
-      "PECIFIED\020\000\022\033\n\027ORGANIZATION_ROLE_OWNER\020\001\022" +
-      "\034\n\030ORGANIZATION_ROLE_MEMBER\020\002\022\"\n\036ORGANIZ" +
-      "ATION_ROLE_COLLABORATOR\020\003*t\n\026Organizatio" +
-      "nPermission\022\'\n#ORGANIZATION_PERMISSION_U" +
-      "NSPECIFIED\020\000\0221\n-ORGANIZATION_PERMISSION_" +
-      "START_ARBITRARY_REPOS\020\0012\276\014\n\023Organization" +
-      "Service\022c\n\022CreateOrganization\022$.gitpod.v" +
-      "1.CreateOrganizationRequest\032%.gitpod.v1." +
-      "CreateOrganizationResponse\"\000\022Z\n\017GetOrgan" +
-      "ization\022!.gitpod.v1.GetOrganizationReque" +
-      "st\032\".gitpod.v1.GetOrganizationResponse\"\000" +
-      "\022c\n\022UpdateOrganization\022$.gitpod.v1.Updat" +
-      "eOrganizationRequest\032%.gitpod.v1.UpdateO" +
-      "rganizationResponse\"\000\022`\n\021ListOrganizatio" +
-      "ns\022#.gitpod.v1.ListOrganizationsRequest\032" +
-      "$.gitpod.v1.ListOrganizationsResponse\"\000\022" +
-      "c\n\022DeleteOrganization\022$.gitpod.v1.Delete" +
-      "OrganizationRequest\032%.gitpod.v1.DeleteOr" +
-      "ganizationResponse\"\000\022x\n\031GetOrganizationI" +
-      "nvitation\022+.gitpod.v1.GetOrganizationInv" +
-      "itationRequest\032,.gitpod.v1.GetOrganizati" +
-      "onInvitationResponse\"\000\022]\n\020JoinOrganizati" +
-      "on\022\".gitpod.v1.JoinOrganizationRequest\032#" +
-      ".gitpod.v1.JoinOrganizationResponse\"\000\022~\n" +
-      "\033ResetOrganizationInvitation\022-.gitpod.v1" +
-      ".ResetOrganizationInvitationRequest\032..gi" +
-      "tpod.v1.ResetOrganizationInvitationRespo" +
-      "nse\"\000\022r\n\027ListOrganizationMembers\022).gitpo" +
-      "d.v1.ListOrganizationMembersRequest\032*.gi" +
-      "tpod.v1.ListOrganizationMembersResponse\"" +
-      "\000\022u\n\030UpdateOrganizationMember\022*.gitpod.v" +
-      "1.UpdateOrganizationMemberRequest\032+.gitp" +
-      "od.v1.UpdateOrganizationMemberResponse\"\000" +
-      "\022u\n\030DeleteOrganizationMember\022*.gitpod.v1" +
-      ".DeleteOrganizationMemberRequest\032+.gitpo" +
-      "d.v1.DeleteOrganizationMemberResponse\"\000\022" +
-      "r\n\027GetOrganizationSettings\022).gitpod.v1.G" +
-      "etOrganizationSettingsRequest\032*.gitpod.v" +
-      "1.GetOrganizationSettingsResponse\"\000\022{\n\032U" +
-      "pdateOrganizationSettings\022,.gitpod.v1.Up" +
-      "dateOrganizationSettingsRequest\032-.gitpod" +
-      ".v1.UpdateOrganizationSettingsResponse\"\000" +
-      "\022\215\001\n ListOrganizationWorkspaceClasses\0222." +
-      "gitpod.v1.ListOrganizationWorkspaceClass" +
-      "esRequest\0323.gitpod.v1.ListOrganizationWo" +
-      "rkspaceClassesResponse\"\000BQ\n\026io.gitpod.pu" +
-      "blicapi.v1Z7github.com/gitpod-io/gitpod/" +
-      "components/public-api/go/v1b\006proto3"
+      "\"V\n\027GetOrganizationResponse\022;\n\014organizat" +
+      "ion\030\001 \001(\0132\027.gitpod.v1.OrganizationR\014orga" +
+      "nization\"\332\001\n\030ListOrganizationsRequest\022<\n" +
+      "\npagination\030\001 \001(\0132\034.gitpod.v1.Pagination" +
+      "RequestR\npagination\022?\n\005scope\030\002 \001(\0162).git" +
+      "pod.v1.ListOrganizationsRequest.ScopeR\005s" +
+      "cope\"?\n\005Scope\022\025\n\021SCOPE_UNSPECIFIED\020\000\022\020\n\014" +
+      "SCOPE_MEMBER\020\001\022\r\n\tSCOPE_ALL\020\002\"\231\001\n\031ListOr" +
+      "ganizationsResponse\022=\n\rorganizations\030\001 \003" +
+      "(\0132\027.gitpod.v1.OrganizationR\rorganizatio" +
+      "ns\022=\n\npagination\030\002 \001(\0132\035.gitpod.v1.Pagin" +
+      "ationResponseR\npagination\"D\n\031DeleteOrgan" +
+      "izationRequest\022\'\n\017organization_id\030\001 \001(\tR" +
+      "\016organizationId\"\034\n\032DeleteOrganizationRes" +
+      "ponse\"K\n GetOrganizationInvitationReques" +
+      "t\022\'\n\017organization_id\030\001 \001(\tR\016organization" +
+      "Id\"H\n!GetOrganizationInvitationResponse\022" +
+      "#\n\rinvitation_id\030\001 \001(\tR\014invitationId\">\n\027" +
+      "JoinOrganizationRequest\022#\n\rinvitation_id" +
+      "\030\001 \001(\tR\014invitationId\"C\n\030JoinOrganization" +
+      "Response\022\'\n\017organization_id\030\001 \001(\tR\016organ" +
+      "izationId\"M\n\"ResetOrganizationInvitation" +
+      "Request\022\'\n\017organization_id\030\001 \001(\tR\016organi" +
+      "zationId\"J\n#ResetOrganizationInvitationR" +
+      "esponse\022#\n\rinvitation_id\030\001 \001(\tR\014invitati" +
+      "onId\"\207\001\n\036ListOrganizationMembersRequest\022" +
+      "\'\n\017organization_id\030\001 \001(\tR\016organizationId" +
+      "\022<\n\npagination\030\002 \001(\0132\034.gitpod.v1.Paginat" +
+      "ionRequestR\npagination\"\231\001\n\037ListOrganizat" +
+      "ionMembersResponse\0227\n\007members\030\001 \003(\0132\035.gi" +
+      "tpod.v1.OrganizationMemberR\007members\022=\n\np" +
+      "agination\030\002 \001(\0132\035.gitpod.v1.PaginationRe" +
+      "sponseR\npagination\"\242\001\n\037UpdateOrganizatio" +
+      "nMemberRequest\022\'\n\017organization_id\030\001 \001(\tR" +
+      "\016organizationId\022\027\n\007user_id\030\002 \001(\tR\006userId" +
+      "\0224\n\004role\030\003 \001(\0162\033.gitpod.v1.OrganizationR" +
+      "oleH\000R\004role\210\001\001B\007\n\005_role\"Y\n UpdateOrganiz" +
+      "ationMemberResponse\0225\n\006member\030\001 \001(\0132\035.gi" +
+      "tpod.v1.OrganizationMemberR\006member\"c\n\037De" +
+      "leteOrganizationMemberRequest\022\'\n\017organiz" +
+      "ation_id\030\001 \001(\tR\016organizationId\022\027\n\007user_i" +
+      "d\030\002 \001(\tR\006userId\"\"\n DeleteOrganizationMem" +
+      "berResponse*\224\001\n\020OrganizationRole\022!\n\035ORGA" +
+      "NIZATION_ROLE_UNSPECIFIED\020\000\022\033\n\027ORGANIZAT" +
+      "ION_ROLE_OWNER\020\001\022\034\n\030ORGANIZATION_ROLE_ME" +
+      "MBER\020\002\022\"\n\036ORGANIZATION_ROLE_COLLABORATOR" +
+      "\020\003*t\n\026OrganizationPermission\022\'\n#ORGANIZA" +
+      "TION_PERMISSION_UNSPECIFIED\020\000\0221\n-ORGANIZ" +
+      "ATION_PERMISSION_START_ARBITRARY_REPOS\020\001" +
+      "2\276\014\n\023OrganizationService\022c\n\022CreateOrgani" +
+      "zation\022$.gitpod.v1.CreateOrganizationReq" +
+      "uest\032%.gitpod.v1.CreateOrganizationRespo" +
+      "nse\"\000\022Z\n\017GetOrganization\022!.gitpod.v1.Get" +
+      "OrganizationRequest\032\".gitpod.v1.GetOrgan" +
+      "izationResponse\"\000\022c\n\022UpdateOrganization\022" +
+      "$.gitpod.v1.UpdateOrganizationRequest\032%." +
+      "gitpod.v1.UpdateOrganizationResponse\"\000\022`" +
+      "\n\021ListOrganizations\022#.gitpod.v1.ListOrga" +
+      "nizationsRequest\032$.gitpod.v1.ListOrganiz" +
+      "ationsResponse\"\000\022c\n\022DeleteOrganization\022$" +
+      ".gitpod.v1.DeleteOrganizationRequest\032%.g" +
+      "itpod.v1.DeleteOrganizationResponse\"\000\022x\n" +
+      "\031GetOrganizationInvitation\022+.gitpod.v1.G" +
+      "etOrganizationInvitationRequest\032,.gitpod" +
+      ".v1.GetOrganizationInvitationResponse\"\000\022" +
+      "]\n\020JoinOrganization\022\".gitpod.v1.JoinOrga" +
+      "nizationRequest\032#.gitpod.v1.JoinOrganiza" +
+      "tionResponse\"\000\022~\n\033ResetOrganizationInvit" +
+      "ation\022-.gitpod.v1.ResetOrganizationInvit" +
+      "ationRequest\032..gitpod.v1.ResetOrganizati" +
+      "onInvitationResponse\"\000\022r\n\027ListOrganizati" +
+      "onMembers\022).gitpod.v1.ListOrganizationMe" +
+      "mbersRequest\032*.gitpod.v1.ListOrganizatio" +
+      "nMembersResponse\"\000\022u\n\030UpdateOrganization" +
+      "Member\022*.gitpod.v1.UpdateOrganizationMem" +
+      "berRequest\032+.gitpod.v1.UpdateOrganizatio" +
+      "nMemberResponse\"\000\022u\n\030DeleteOrganizationM" +
+      "ember\022*.gitpod.v1.DeleteOrganizationMemb" +
+      "erRequest\032+.gitpod.v1.DeleteOrganization" +
+      "MemberResponse\"\000\022r\n\027GetOrganizationSetti" +
+      "ngs\022).gitpod.v1.GetOrganizationSettingsR" +
+      "equest\032*.gitpod.v1.GetOrganizationSettin" +
+      "gsResponse\"\000\022{\n\032UpdateOrganizationSettin" +
+      "gs\022,.gitpod.v1.UpdateOrganizationSetting" +
+      "sRequest\032-.gitpod.v1.UpdateOrganizationS" +
+      "ettingsResponse\"\000\022\215\001\n ListOrganizationWo" +
+      "rkspaceClasses\0222.gitpod.v1.ListOrganizat" +
+      "ionWorkspaceClassesRequest\0323.gitpod.v1.L" +
+      "istOrganizationWorkspaceClassesResponse\"" +
+      "\000BQ\n\026io.gitpod.publicapi.v1Z7github.com/" +
+      "gitpod-io/gitpod/components/public-api/g" +
+      "o/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,

@@ -46,8 +46,8 @@ export const useUpdateOrgSettingsMutation = () => {
                 }
             }
 
-            const settings = await organizationClient.updateOrganizationSettings(update);
-            return settings.settings!;
+            const { settings } = await organizationClient.updateOrganizationSettings(update);
+            return settings!;
         },
         onSuccess: (settings) => {
             invalidateWorkspaceClasses();

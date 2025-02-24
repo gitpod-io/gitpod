@@ -38,6 +38,7 @@ import { CreateUserParams, UserAuthentication } from "../user/user-authenticatio
 import isURL from "validator/lib/isURL";
 import { merge } from "ts-deepmerge";
 import { EntitlementService } from "../billing/entitlement-service";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 @injectable()
 export class OrganizationService {
@@ -604,14 +605,6 @@ export class OrganizationService {
                         "featuredMemberResolvedAvatarUrl is not allowed to be set",
                     );
                 }
-
-                if (
-                    settings.onboardingSettings.welcomeMessage.enabled &&
-                    (!settings.onboardingSettings.welcomeMessage.message ||
-                        settings.onboardingSettings.welcomeMessage.message.length === 0)
-                ) {
-                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "welcomeMessage must not be empty when enabled");
-                }
             }
         }
 
@@ -632,11 +625,12 @@ export class OrganizationService {
                 settings.roleRestrictions = partialUpdate.roleRestrictions;
             }
 
-            if (partialUpdate.onboardingSettings?.welcomeMessage && settings.onboardingSettings?.welcomeMessage) {
-                if (!partialUpdate.onboardingSettings.welcomeMessage.featuredMemberId) {
-                    settings.onboardingSettings.welcomeMessage.featuredMemberId = undefined;
-                    settings.onboardingSettings.welcomeMessage.featuredMemberResolvedAvatarUrl = undefined;
-                }
+            if (
+                settings.onboardingSettings?.welcomeMessage?.enabled &&
+                (!settings.onboardingSettings?.welcomeMessage?.message ||
+                    settings.onboardingSettings?.welcomeMessage?.message.length === 0)
+            ) {
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "welcomeMessage must not be empty when enabled");
             }
 
             return settings;

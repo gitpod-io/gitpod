@@ -53,7 +53,7 @@ message RoleRestrictionEntry {
 message OnboardingSettings {
   message WelcomeMessage {
     // enabled specifies whether the welcome message is enabled
-    bool enabled = 1;
+    optional bool enabled = 1;
 
     // message is the welcome message for the organization
     optional string message = 2;
