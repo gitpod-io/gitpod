@@ -4,6 +4,6 @@ packages:
     config:
       dockerfile: leeway.Dockerfile
       buildArgs:
-        VERSION: ${ipfsClusterVersion}
+        VERSION: ${schedulerExtenderVersion}
       image:
-        - ${imageRepoBase}/ipfs/ipfs-cluster:${ipfsClusterVersion}
+        - ${imageRepoBase}/scheduler-extender:${schedulerExtenderVersion}
