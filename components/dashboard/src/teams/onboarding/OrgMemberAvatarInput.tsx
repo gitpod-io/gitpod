@@ -101,12 +101,12 @@ type SuggestedMemberOptionProps = {
     };
 };
 const SuggestedMemberOption: FC<SuggestedMemberOptionProps> = ({ member }) => {
-    const { fullName } = member;
+    const { fullName, avatarUrl } = member;
 
     return (
         <div className="flex flex-row items-center overflow-hidden" title={fullName} aria-label={`Member: ${fullName}`}>
-            {member.avatarUrl ? (
-                <img src={member.avatarUrl} alt="" className="w-4 h-4 rounded-full mr-2" />
+            {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="w-4 h-4 rounded-full mr-2" />
             ) : (
                 <div className="w-4 h-4 rounded-full mr-2 bg-pk-content-tertiary" />
             )}
