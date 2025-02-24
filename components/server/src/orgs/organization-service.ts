@@ -598,31 +598,18 @@ export class OrganizationService {
             }
 
             if (settings.onboardingSettings.welcomeMessage) {
-                const welcomeMessage = settings.onboardingSettings.welcomeMessage;
-
-                if (welcomeMessage.featuredMemberResolvedAvatarUrl) {
+                if (settings.onboardingSettings.welcomeMessage.featuredMemberResolvedAvatarUrl) {
                     throw new ApplicationError(
                         ErrorCodes.BAD_REQUEST,
                         "featuredMemberResolvedAvatarUrl is not allowed to be set",
                     );
                 }
 
-                if (welcomeMessage.featuredMemberId) {
-                    const membership = await this.teamDB.findTeamMembership(welcomeMessage.featuredMemberId, orgId);
-                    if (!membership) {
-                        throw new ApplicationError(ErrorCodes.BAD_REQUEST, "featuredMemberId is invalid");
-                    }
-                    const user = await this.userDB.findUserById(membership.userId);
-                    if (!user) {
-                        throw new ApplicationError(
-                            ErrorCodes.NOT_FOUND,
-                            `user for featuredMemberId ${membership.userId} not found`,
-                        );
-                    }
-                    welcomeMessage.featuredMemberResolvedAvatarUrl = user.avatarUrl;
-                }
-
-                if (welcomeMessage.enabled && (!welcomeMessage.message || welcomeMessage.message.length === 0)) {
+                if (
+                    settings.onboardingSettings.welcomeMessage.enabled &&
+                    (!settings.onboardingSettings.welcomeMessage.message ||
+                        settings.onboardingSettings.welcomeMessage.message.length === 0)
+                ) {
                     throw new ApplicationError(ErrorCodes.BAD_REQUEST, "welcomeMessage must not be empty when enabled");
                 }
             }
@@ -656,6 +643,45 @@ export class OrganizationService {
         };
 
         return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings, mergeSettings));
+    }
+
+    async getSettingsWithResolvedWelcomeMessage(userId: string, orgId: string): Promise<OrganizationSettings> {
+        const settings = await this.getSettings(userId, orgId);
+        return this.resolveWelcomeMessage(settings, orgId);
+    }
+
+    async updateSettingsWithResolvedWelcomeMessage(
+        userId: string,
+        orgId: string,
+        settings: Partial<OrganizationSettings>,
+    ): Promise<OrganizationSettings> {
+        const newSettings = await this.updateSettings(userId, orgId, settings);
+        return this.resolveWelcomeMessage(newSettings, orgId);
+    }
+
+    /**
+     * Resolves the welcome message by resolving the featured member avatar URL. This is not done in the `updateSettings` and `getSettings` methods
+     * because we don't need to pay the extra lookup cost for the avatar URL for most requests.
+     */
+    private async resolveWelcomeMessage(settings: OrganizationSettings, orgId: string): Promise<OrganizationSettings> {
+        if (settings.onboardingSettings?.welcomeMessage) {
+            const { welcomeMessage } = settings.onboardingSettings;
+            if (welcomeMessage.featuredMemberId) {
+                const membership = await this.teamDB.findTeamMembership(welcomeMessage.featuredMemberId, orgId);
+                if (!membership) {
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "featuredMemberId is invalid");
+                }
+                const user = await this.userDB.findUserById(membership.userId);
+                if (!user) {
+                    throw new ApplicationError(
+                        ErrorCodes.NOT_FOUND,
+                        `user for featuredMemberId ${membership.userId} not found`,
+                    );
+                }
+                welcomeMessage.featuredMemberResolvedAvatarUrl = user.avatarUrl;
+            }
+        }
+        return settings;
     }
 
     private async toSettings(settings: OrganizationSettings = {}): Promise<OrganizationSettings> {
