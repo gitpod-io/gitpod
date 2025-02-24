@@ -100,10 +100,10 @@ export class SpiceDBClientProvider {
                     clientOptions: new TrustedValue(clientOptions),
                 });
 
-                // close client after 10s to make sure most pending requests on the previous client are finished.
+                // close client after 2 minutes to make sure most pending requests on the previous client are finished.
                 setTimeout(() => {
                     this.closeClient(oldClient);
-                }, 10 * 1000);
+                }, 2 * 60 * 1000);
             }
             this.clientOptions = clientOptions;
             // `createClient` will use the `DefaultClientOptions` to create client if the value on Feature Flag is not able to create a client
