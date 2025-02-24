@@ -65,7 +65,7 @@ export function spiceDBConfigFromEnv(): SpiceDBClientConfig | undefined {
 }
 
 export class SpiceDBClientProvider {
-    private client: Client | undefined;
+    private client: Client | undefined = undefined;
     private previousClientOptionsString: string = DEFAULT_FEATURE_FLAG_VALUE;
     private clientOptions: grpc.ClientOptions;
 
@@ -74,54 +74,53 @@ export class SpiceDBClientProvider {
         private readonly interceptors: grpc.Interceptor[] = [],
     ) {
         this.clientOptions = DefaultClientOptions;
-        this.reconcileClientOptions()
-            .then(() => {})
-            .catch((e) => {
-                log.error("[spicedb] Failed to reconcile client options", e);
-            });
+        this.reconcileClientOptions();
     }
 
-    private async reconcileClientOptions() {
+    private reconcileClientOptions(): void {
         const doReconcileClientOptions = async () => {
-            try {
-                const customClientOptions = await getExperimentsClientForBackend().getValueAsync(
-                    "spicedb_client_options",
-                    DEFAULT_FEATURE_FLAG_VALUE,
-                    {},
-                );
-                if (customClientOptions === this.previousClientOptionsString) {
-                    return;
-                }
-                let clientOptions = DefaultClientOptions;
-                if (customClientOptions && customClientOptions != DEFAULT_FEATURE_FLAG_VALUE) {
-                    clientOptions = JSON.parse(customClientOptions);
-                }
-                if (this.client != null) {
-                    const newClient = this.createClient(clientOptions);
-                    const oldClient = this.client;
-                    this.client = newClient;
-
-                    log.info("[spicedb] Client options changes", {
-                        clientOptions: new TrustedValue(clientOptions),
-                    });
-
-                    // close client after 10s to make sure most pending requests on the previous client are finished.
-                    setTimeout(() => {
-                        this.closeClient(oldClient);
-                    }, 10 * 1000);
-                }
-                this.clientOptions = clientOptions;
-                // `createClient` will use the `DefaultClientOptions` to create client if the value on Feature Flag is not able to create a client
-                // but we will still write `previousClientOptionsString` here to prevent retry loops.
-                this.previousClientOptionsString = customClientOptions;
-            } catch (e) {
-                log.error("[spicedb] Failed to parse custom client options", e);
+            const customClientOptions = await getExperimentsClientForBackend().getValueAsync(
+                "spicedb_client_options",
+                DEFAULT_FEATURE_FLAG_VALUE,
+                {},
+            );
+            if (customClientOptions === this.previousClientOptionsString) {
+                return;
             }
+            let clientOptions = DefaultClientOptions;
+            if (customClientOptions && customClientOptions != DEFAULT_FEATURE_FLAG_VALUE) {
+                clientOptions = JSON.parse(customClientOptions);
+            }
+            if (this.client !== undefined) {
+                const newClient = this.createClient(clientOptions);
+                const oldClient = this.client;
+                this.client = newClient;
+
+                log.info("[spicedb] Client options changes", {
+                    clientOptions: new TrustedValue(clientOptions),
+                });
+
+                // close client after 10s to make sure most pending requests on the previous client are finished.
+                setTimeout(() => {
+                    this.closeClient(oldClient);
+                }, 10 * 1000);
+            }
+            this.clientOptions = clientOptions;
+            // `createClient` will use the `DefaultClientOptions` to create client if the value on Feature Flag is not able to create a client
+            // but we will still write `previousClientOptionsString` here to prevent retry loops.
+            this.previousClientOptionsString = customClientOptions;
         };
-        while (true) {
-            await doReconcileClientOptions();
-            await new Promise((resolve) => setTimeout(resolve, 60 * 1000));
-        }
+        // eslint-disable-next-line no-void
+        void (async () => {
+            while (true) {
+                try {
+                    await doReconcileClientOptions();
+                    await new Promise((resolve) => setTimeout(resolve, 60 * 1000));
+                } catch (e) {
+                    log.error("[spicedb] Failed to reconcile client options", e);
+                }
+            }
+        })();
     }
 
     private closeClient(client: Client) {
