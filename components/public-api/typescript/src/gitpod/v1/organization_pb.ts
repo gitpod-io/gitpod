@@ -380,7 +380,7 @@ export class OnboardingSettings_WelcomeMessage extends Message<OnboardingSetting
 }
 
 /**
- * KEEP ALIGNED WITH OrganizationSettings shape below!!!
+ * KEEP ALIGNED WITH UpdateOrganizationSettingsRequest shape below!!!
  *
  * @generated from message gitpod.v1.OrganizationSettings
  */

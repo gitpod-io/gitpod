@@ -479,7 +479,7 @@ func (x *OnboardingSettings) GetWelcomeMessage() *OnboardingSettings_WelcomeMess
 	return nil
 }
 
-// KEEP ALIGNED WITH OrganizationSettings shape below!!!
+// KEEP ALIGNED WITH UpdateOrganizationSettingsRequest shape below!!!
 type OrganizationSettings struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

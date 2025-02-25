@@ -85,7 +85,7 @@ message OnboardingSettings {
   optional WelcomeMessage welcome_message = 4;
 }
 
-// KEEP ALIGNED WITH OrganizationSettings shape below!!!
+// KEEP ALIGNED WITH UpdateOrganizationSettingsRequest shape below!!!
 message OrganizationSettings {
   optional bool workspace_sharing_disabled = 1;
   optional string default_workspace_image = 2;

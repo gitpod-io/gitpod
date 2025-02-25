@@ -6263,7 +6263,7 @@ java.lang.String defaultValue);
   }
   /**
    * <pre>
-   * KEEP ALIGNED WITH OrganizationSettings shape below!!!
+   * KEEP ALIGNED WITH UpdateOrganizationSettingsRequest shape below!!!
    * </pre>
    *
    * Protobuf type {@code gitpod.v1.OrganizationSettings}
@@ -7060,7 +7060,7 @@ java.lang.String defaultValue) {
     }
     /**
      * <pre>
-     * KEEP ALIGNED WITH OrganizationSettings shape below!!!
+     * KEEP ALIGNED WITH UpdateOrganizationSettingsRequest shape below!!!
      * </pre>
      *
      * Protobuf type {@code gitpod.v1.OrganizationSettings}
