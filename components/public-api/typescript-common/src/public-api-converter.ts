@@ -67,11 +67,16 @@ import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-c
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import {
     ConfigurationIdeConfig,
+    ImageMetrics,
+    InitializerMetric,
+    InitializerMetrics,
     PortProtocol,
     WorkspaceInstance,
     WorkspaceInstanceConditions,
+    WorkspaceInstanceMetrics,
     WorkspaceInstancePhase,
     WorkspaceInstancePort,
+    WorkspaceInstanceStatus,
 } from "@gitpod/gitpod-protocol/lib/workspace-instance";
 import {
     AuthProvider,
@@ -182,6 +187,8 @@ import {
     WorkspaceSession_WorkspaceContext,
     WorkspaceSession_WorkspaceContext_Repository,
     WorkspaceSession_WorkspaceContext_RefType,
+    WorkspaceSession_InitializerMetrics,
+    WorkspaceSession_InitializerMetric,
 } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { BigIntToJson } from "@gitpod/gitpod-protocol/lib/util/stringify";
 import { getPrebuildLogPath } from "./prebuild-utils";
@@ -221,18 +228,62 @@ export class PublicAPIConverter {
             result.stoppedTime = Timestamp.fromDate(new Date(arg.instance.stoppedTime));
         }
 
-        const { metrics } = arg.instance.status;
-        result.metrics = new WorkspaceSession_Metrics({
-            totalImageSize: metrics?.image?.totalSize ? BigInt(metrics.image.totalSize) : undefined,
-            workspaceImageSize: metrics?.image?.workspaceImageSize
-                ? BigInt(metrics.image.workspaceImageSize)
-                : undefined,
-        });
+        result.metrics = this.toWorkspaceSessionMetrics(arg.instance.status, arg.metrics);
 
         result.id = arg.instance.id;
         result.owner = owner;
         result.context = this.toWorkspaceSessionContext(arg.workspace.context);
 
+        return result;
+    }
+
+    toWorkspaceSessionMetrics(status: WorkspaceInstanceStatus, metrics: WorkspaceInstanceMetrics | undefined): WorkspaceSession_Metrics {
+        // TODO(gpl): Drop the `status` parameter and use `metrics` only once we rolled out the "metrics" table for long enough.
+        const image: ImageMetrics | undefined = status.metrics?.image || metrics?.image;
+
+        const data: PartialMessage<WorkspaceSession_Metrics> = { };
+        if (image?.totalSize) {
+            data.totalImageSize = BigInt(image.totalSize);
+        }
+        if (image?.workspaceImageSize) {
+            data.workspaceImageSize = BigInt(image.workspaceImageSize);
+        }
+
+        if (metrics?.initializerMetrics) {
+            data.initializerMetrics = this.toInitializerMetrics(metrics.initializerMetrics);
+        }
+
+        return new WorkspaceSession_Metrics(data);
+    }
+
+    toInitializerMetrics(metrics: InitializerMetrics): WorkspaceSession_InitializerMetrics {
+        const result = new WorkspaceSession_InitializerMetrics();
+        if (metrics.git) {
+            result.git = this.toInitializerMetric(metrics.git);
+        }
+        if (metrics.fileDownload) {
+            result.fileDownload = this.toInitializerMetric(metrics.fileDownload);
+        }
+        if (metrics.snapshot) {
+            result.snapshot = this.toInitializerMetric(metrics.snapshot);
+        }
+        if (metrics.backup) {
+            result.backup = this.toInitializerMetric(metrics.backup);
+        }
+        if (metrics.prebuild) {
+            result.prebuild = this.toInitializerMetric(metrics.prebuild);
+        }
+        if (metrics.composite) {
+            result.composite = this.toInitializerMetric(metrics.composite);
+        }
+
+        return result;
+    }
+
+    toInitializerMetric(metric: InitializerMetric): WorkspaceSession_InitializerMetric {
+        const result = new WorkspaceSession_InitializerMetric();
+        result.duration = this.toDurationFromMillis(metric.duration);
+        result.size = BigInt(metric.size);
         return result;
     }
 
@@ -1751,8 +1802,20 @@ export class PublicAPIConverter {
      */
     toDuration(from: string): Duration {
         const millis = parseGoDurationToMs(from);
-        const seconds = BigInt(Math.floor(millis / 1000));
-        const nanos = (millis % 1000) * 1000000;
+        return this.toDurationFromMillis(millis);
+    }
+
+    /**
+     * Converts a duration number in milliseconds to a Duration
+     * @param millis
+     * @returns a Duration where `seconds` and `nanos` combined result in the given `millis`
+     */
+    toDurationFromMillis(millis: number): Duration {
+        // we convert to BigInt directly, to avoid working with lossy Number
+        const nanosB = BigInt(Math.floor(millis * 1000000));
+        const seconds = nanosB / BigInt(1000000000);
+        const nanosRestB = nanosB % BigInt(1000000000);
+        const nanos = Number(nanosRestB);
         return new Duration({
             seconds,
             nanos,
