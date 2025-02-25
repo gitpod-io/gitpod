@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { isGitpodIo } from "../utils";
 import { OrganizationSettings } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Alert from "../components/Alert";
@@ -32,6 +31,7 @@ import { EditorOptions } from "./policies/EditorOptions";
 import { RolePermissionsRestrictions } from "./policies/RoleRestrictions";
 import { OrgWorkspaceClassesOptions } from "./policies/OrgWorkspaceClassesOptions";
 import { useDefaultOrgTimeoutQuery } from "../data/organizations/default-org-timeout-query";
+import { useInstallationConfiguration } from "../data/installation/installation-config-query";
 
 export default function TeamPoliciesPage() {
     useDocumentTitle("Organization Settings - Policies");
@@ -41,6 +41,9 @@ export default function TeamPoliciesPage() {
 
     const { data: settings, isLoading } = useOrgSettingsQuery();
     const updateTeamSettings = useUpdateOrgSettingsMutation();
+
+    const { data: installationConfig } = useInstallationConfiguration();
+    const isDedicatedInstallation = installationConfig?.isDedicatedInstallation ?? true; // we bias towards being on dedicated so the callout doesn't show when we're not sure
 
     const billingMode = useOrgBillingMode();
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string | undefined>(undefined);
@@ -210,7 +213,7 @@ export default function TeamPoliciesPage() {
                         handleUpdateTeamSettings={handleUpdateTeamSettings}
                     />
 
-                    {isGitpodIo() && <WorkspaceClassesEnterpriseCallout />}
+                    {!isDedicatedInstallation && <WorkspaceClassesEnterpriseCallout />}
 
                     <EditorOptions
                         isOwner={isOwner}
