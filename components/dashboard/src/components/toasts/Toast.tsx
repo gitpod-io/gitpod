@@ -71,7 +71,8 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
                 "relative flex justify-between items-start",
                 "w-full md:w-112 max-w-full",
                 "p-4 md:rounded-md",
-                "text-pk-content-invert-primary bg-pk-surface-invert",
+                "dark:bg-gray-100 bg-gray-700",
+                "dark:text-gray-500 text-gray-300", // colors taken from src/components/Alert.tsx "info" variant
                 "transition-transform animate-toast-in-right",
             )}
             onMouseEnter={onMouseEnter}
