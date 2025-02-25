@@ -38,7 +38,6 @@ import { CreateUserParams, UserAuthentication } from "../user/user-authenticatio
 import isURL from "validator/lib/isURL";
 import { merge } from "ts-deepmerge";
 import { EntitlementService } from "../billing/entitlement-service";
-import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 @injectable()
 export class OrganizationService {
@@ -608,6 +607,13 @@ export class OrganizationService {
             }
         }
 
+        const resolvedFeaturedMemberAvatarUrl = settings.onboardingSettings?.welcomeMessage?.featuredMemberId
+            ? await this.resolveMemberAvatarUrl(settings.onboardingSettings.welcomeMessage.featuredMemberId, orgId)
+            : undefined;
+        if (!resolvedFeaturedMemberAvatarUrl && settings.onboardingSettings?.welcomeMessage?.featuredMemberId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "featuredMemberId not found");
+        }
+
         const mergeSettings = (
             currentSettings: OrganizationSettings,
             partialUpdate: Partial<OrganizationSettings>,
@@ -625,57 +631,52 @@ export class OrganizationService {
                 settings.roleRestrictions = partialUpdate.roleRestrictions;
             }
 
-            if (
-                settings.onboardingSettings?.welcomeMessage?.enabled &&
-                (!settings.onboardingSettings?.welcomeMessage?.message ||
-                    settings.onboardingSettings?.welcomeMessage?.message.length === 0)
-            ) {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "welcomeMessage must not be empty when enabled");
-            }
-
             return settings;
         };
 
-        return this.toSettings(await this.teamDB.setOrgSettings(orgId, settings, mergeSettings));
-    }
+        const dbSettings = await this.teamDB.setOrgSettings(orgId, settings, mergeSettings);
+        if (settings.onboardingSettings?.welcomeMessage?.featuredMemberId) {
+            if (resolvedFeaturedMemberAvatarUrl && dbSettings.onboardingSettings?.welcomeMessage) {
+                dbSettings.onboardingSettings.welcomeMessage.featuredMemberResolvedAvatarUrl =
+                    resolvedFeaturedMemberAvatarUrl;
+            }
+        }
 
-    async getSettingsWithResolvedWelcomeMessage(userId: string, orgId: string): Promise<OrganizationSettings> {
-        const settings = await this.getSettings(userId, orgId);
-        return this.resolveWelcomeMessage(settings, orgId);
-    }
-
-    async updateSettingsWithResolvedWelcomeMessage(
-        userId: string,
-        orgId: string,
-        settings: Partial<OrganizationSettings>,
-    ): Promise<OrganizationSettings> {
-        const newSettings = await this.updateSettings(userId, orgId, settings);
-        return this.resolveWelcomeMessage(newSettings, orgId);
+        return this.toSettings(dbSettings);
     }
 
     /**
-     * Resolves the welcome message by resolving the featured member avatar URL. This is not done in the `updateSettings` and `getSettings` methods
-     * because we don't need to pay the extra lookup cost for the avatar URL for most requests.
+     * In addition to the `getSettings` method, this method also resolves the avatar URL for the featured member in the welcome message.
      */
-    private async resolveWelcomeMessage(settings: OrganizationSettings, orgId: string): Promise<OrganizationSettings> {
-        if (settings.onboardingSettings?.welcomeMessage) {
-            const { welcomeMessage } = settings.onboardingSettings;
-            if (welcomeMessage.featuredMemberId) {
-                const membership = await this.teamDB.findTeamMembership(welcomeMessage.featuredMemberId, orgId);
-                if (!membership) {
-                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "featuredMemberId is invalid");
-                }
-                const user = await this.userDB.findUserById(membership.userId);
-                if (!user) {
-                    throw new ApplicationError(
-                        ErrorCodes.NOT_FOUND,
-                        `user for featuredMemberId ${membership.userId} not found`,
-                    );
-                }
-                welcomeMessage.featuredMemberResolvedAvatarUrl = user.avatarUrl;
+    async getSettingsWithResolvedWelcomeMessage(userId: string, orgId: string): Promise<OrganizationSettings> {
+        const settings = await this.getSettings(userId, orgId);
+        if (settings.onboardingSettings?.welcomeMessage?.featuredMemberId) {
+            const featuredMemberAvatarUrl = await this.resolveMemberAvatarUrl(
+                settings.onboardingSettings.welcomeMessage.featuredMemberId,
+                orgId,
+            );
+            if (featuredMemberAvatarUrl) {
+                settings.onboardingSettings.welcomeMessage.featuredMemberResolvedAvatarUrl = featuredMemberAvatarUrl;
             }
         }
         return settings;
+    }
+
+    /**
+     * Resolves the avatar URL for a member of an organization.
+     * This is not done in methods like `getSettings` directly
+     * because we don't need to pay the extra lookup cost for the avatar URL for most requests.
+     */
+    private async resolveMemberAvatarUrl(userId: string, orgId: string): Promise<string | undefined> {
+        const membership = await this.teamDB.findTeamMembership(userId, orgId);
+        if (!membership) {
+            return undefined;
+        }
+        const user = await this.userDB.findUserById(membership.userId);
+        if (!user) {
+            return undefined;
+        }
+        return user.avatarUrl;
     }
 
     private async toSettings(settings: OrganizationSettings = {}): Promise<OrganizationSettings> {
