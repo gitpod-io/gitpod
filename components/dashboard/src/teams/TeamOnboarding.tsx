@@ -53,10 +53,7 @@ export default function TeamOnboardingPage() {
                 throw new Error("no organization settings change permission");
             }
             try {
-                await updateTeamSettings.mutateAsync({
-                    ...settings,
-                    ...newSettings,
-                });
+                await updateTeamSettings.mutateAsync(newSettings);
                 toast("Organization settings updated");
             } catch (error) {
                 if (options?.throwMutateError) {
@@ -66,7 +63,7 @@ export default function TeamOnboardingPage() {
                 console.error(error);
             }
         },
-        [updateTeamSettings, org?.id, isOwner, settings, toast],
+        [updateTeamSettings, org?.id, isOwner, toast],
     );
 
     const handleUpdateInternalLink = useCallback(

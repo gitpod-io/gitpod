@@ -321,9 +321,9 @@ export class OnboardingSettings_WelcomeMessage extends Message<OnboardingSetting
   /**
    * enabled specifies whether the welcome message is enabled
    *
-   * @generated from field: bool enabled = 1;
+   * @generated from field: optional bool enabled = 1;
    */
-  enabled = false;
+  enabled?: boolean;
 
   /**
    * message is the welcome message for the organization
@@ -356,7 +356,7 @@ export class OnboardingSettings_WelcomeMessage extends Message<OnboardingSetting
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.OnboardingSettings.WelcomeMessage";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 1, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 4, name: "featured_member_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 5, name: "featured_member_resolved_avatar_url", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
@@ -380,18 +380,20 @@ export class OnboardingSettings_WelcomeMessage extends Message<OnboardingSetting
 }
 
 /**
+ * KEEP ALIGNED WITH UpdateOrganizationSettingsRequest shape below!!!
+ *
  * @generated from message gitpod.v1.OrganizationSettings
  */
 export class OrganizationSettings extends Message<OrganizationSettings> {
   /**
-   * @generated from field: bool workspace_sharing_disabled = 1;
+   * @generated from field: optional bool workspace_sharing_disabled = 1;
    */
-  workspaceSharingDisabled = false;
+  workspaceSharingDisabled?: boolean;
 
   /**
-   * @generated from field: string default_workspace_image = 2;
+   * @generated from field: optional string default_workspace_image = 2;
    */
-  defaultWorkspaceImage = "";
+  defaultWorkspaceImage?: string;
 
   /**
    * @generated from field: repeated string allowed_workspace_classes = 3;
@@ -409,12 +411,12 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
   pinnedEditorVersions: { [key: string]: string } = {};
 
   /**
-   * @generated from field: string default_role = 6;
+   * @generated from field: optional string default_role = 6;
    */
-  defaultRole = "";
+  defaultRole?: string;
 
   /**
-   * @generated from field: gitpod.v1.TimeoutSettings timeout_settings = 7;
+   * @generated from field: optional gitpod.v1.TimeoutSettings timeout_settings = 7;
    */
   timeoutSettings?: TimeoutSettings;
 
@@ -428,19 +430,19 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
    * single user can run in parallel. 0 resets to the default, which depends on
    * the org plan
    *
-   * @generated from field: int32 max_parallel_running_workspaces = 9;
+   * @generated from field: optional int32 max_parallel_running_workspaces = 9;
    */
-  maxParallelRunningWorkspaces = 0;
+  maxParallelRunningWorkspaces?: number;
 
   /**
-   * @generated from field: gitpod.v1.OnboardingSettings onboarding_settings = 10;
+   * @generated from field: optional gitpod.v1.OnboardingSettings onboarding_settings = 10;
    */
   onboardingSettings?: OnboardingSettings;
 
   /**
-   * @generated from field: bool annotate_git_commits = 11;
+   * @generated from field: optional bool annotate_git_commits = 11;
    */
-  annotateGitCommits = false;
+  annotateGitCommits?: boolean;
 
   constructor(data?: PartialMessage<OrganizationSettings>) {
     super();
@@ -450,17 +452,17 @@ export class OrganizationSettings extends Message<OrganizationSettings> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.OrganizationSettings";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
-    { no: 2, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "workspace_sharing_disabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
+    { no: 2, name: "default_workspace_image", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 3, name: "allowed_workspace_classes", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 4, name: "restricted_editor_names", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 5, name: "pinned_editor_versions", kind: "map", K: 9 /* ScalarType.STRING */, V: {kind: "scalar", T: 9 /* ScalarType.STRING */} },
-    { no: 6, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 7, name: "timeout_settings", kind: "message", T: TimeoutSettings },
+    { no: 6, name: "default_role", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 7, name: "timeout_settings", kind: "message", T: TimeoutSettings, opt: true },
     { no: 8, name: "role_restrictions", kind: "message", T: RoleRestrictionEntry, repeated: true },
-    { no: 9, name: "max_parallel_running_workspaces", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 10, name: "onboarding_settings", kind: "message", T: OnboardingSettings },
-    { no: 11, name: "annotate_git_commits", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 9, name: "max_parallel_running_workspaces", kind: "scalar", T: 5 /* ScalarType.INT32 */, opt: true },
+    { no: 10, name: "onboarding_settings", kind: "message", T: OnboardingSettings, opt: true },
+    { no: 11, name: "annotate_git_commits", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OrganizationSettings {

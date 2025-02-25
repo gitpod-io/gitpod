@@ -4,8 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { PlainMessage } from "@bufbuild/protobuf";
-import type { OnboardingSettings_WelcomeMessage } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { SwitchInputField } from "@podkit/switch/Switch";
 import { Heading3, Subheading } from "@podkit/typography/Headings";
 import { useCallback, useState } from "react";
@@ -40,20 +38,20 @@ export const WelcomeMessageConfigurationField = ({ handleUpdateTeamSettings }: P
     const [welcomeMessageEditorOpen, setWelcomeMessageEditorOpen] = useState(false);
 
     const handleUpdateWelcomeMessage = useCallback(
-        async (newSettings: PlainMessage<OnboardingSettings_WelcomeMessage>, options?: UpdateTeamSettingsOptions) => {
+        async (
+            newSettings: NonNullable<UpdateOrganizationSettingsArgs["onboardingSettings"]>["welcomeMessage"],
+            options?: UpdateTeamSettingsOptions,
+        ) => {
             await handleUpdateTeamSettings(
                 {
                     onboardingSettings: {
-                        welcomeMessage: {
-                            ...settings?.onboardingSettings?.welcomeMessage,
-                            ...newSettings,
-                        },
+                        welcomeMessage: newSettings,
                     },
                 },
                 options,
             );
         },
-        [handleUpdateTeamSettings, settings?.onboardingSettings?.welcomeMessage],
+        [handleUpdateTeamSettings],
     );
 
     return (

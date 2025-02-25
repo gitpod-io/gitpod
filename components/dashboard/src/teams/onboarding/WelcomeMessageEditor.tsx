@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { PlainMessage } from "@bufbuild/protobuf";
 import type { OnboardingSettings_WelcomeMessage } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { Button } from "@podkit/buttons/Button";
 import { LoadingButton } from "@podkit/buttons/LoadingButton";
@@ -17,6 +16,7 @@ import { TextInput } from "../../components/forms/TextInputField";
 import { UpdateTeamSettingsOptions } from "../TeamOnboarding";
 import { OrgMemberAvatarInput } from "./OrgMemberAvatarInput";
 import { gitpodWelcomeSubheading } from "./WelcomeMessageConfigurationField";
+import { UpdateOrganizationSettingsArgs } from "../../data/organizations/update-org-settings-mutation";
 
 type Props = {
     settings: OnboardingSettings_WelcomeMessage | undefined;
@@ -24,7 +24,7 @@ type Props = {
     isOwner: boolean;
     isOpen: boolean;
     handleUpdateWelcomeMessage: (
-        newSettings: PlainMessage<OnboardingSettings_WelcomeMessage>,
+        newSettings: NonNullable<UpdateOrganizationSettingsArgs["onboardingSettings"]>["welcomeMessage"],
         options?: UpdateTeamSettingsOptions,
     ) => Promise<void>;
     setIsOpen: (isOpen: boolean) => void;
@@ -49,7 +49,6 @@ export const WelcomeMessageEditorModal = ({
                     {
                         message,
                         featuredMemberId,
-                        enabled: settings?.enabled ?? false,
                     },
                     {
                         throwMutateError: true,
@@ -61,7 +60,7 @@ export const WelcomeMessageEditorModal = ({
                 setError(error.message);
             }
         },
-        [handleUpdateWelcomeMessage, message, featuredMemberId, settings?.enabled, setIsOpen],
+        [handleUpdateWelcomeMessage, message, featuredMemberId, setIsOpen],
     );
 
     return (

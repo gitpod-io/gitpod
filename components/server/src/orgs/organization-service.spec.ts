@@ -20,6 +20,10 @@ import { IDEService } from "../ide-service";
 import { StripeService } from "../billing/stripe-service";
 import { UsageService } from "./usage-service";
 import { UserAuthentication } from "../user/user-authentication";
+import { EntitlementService, EntitlementServiceImpl } from "../billing/entitlement-service";
+import { EntitlementServiceUBP, LazyOrganizationService } from "../billing/entitlement-service-ubp";
+import { BillingModes } from "../billing/billing-mode";
+import { VerificationService } from "../auth/verification-service";
 
 const expect = chai.expect;
 
@@ -79,6 +83,16 @@ describe("OrganizationService", async () => {
             container.bind(StripeService).toConstantValue({} as any as StripeService);
             container.bind(UsageService).toConstantValue({} as any as UsageService);
             container.bind(UserAuthentication).toConstantValue({} as any as UserAuthentication);
+            container.bind(EntitlementServiceUBP).toSelf().inSingletonScope();
+            container.bind(EntitlementServiceImpl).toSelf().inSingletonScope();
+            container.bind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();
+            container.bind(BillingModes).toSelf().inSingletonScope();
+            container.bind(VerificationService).toSelf().inSingletonScope();
+            container.bind(LazyOrganizationService).toFactory((ctx) => {
+                return () => {
+                    return ctx.container.get<OrganizationService>(OrganizationService);
+                };
+            });
             os = container.get(OrganizationService);
         });
 

@@ -36,6 +36,6 @@ export function useOrgSettingsQuery() {
     );
 }
 
-function getQueryKey(organizationId?: string) {
+export function getQueryKey(organizationId?: string) {
     return ["getOrganizationSettings", organizationId || "undefined"];
 }

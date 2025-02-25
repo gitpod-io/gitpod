@@ -26,7 +26,7 @@ export const OrgMemberAvatarInput = ({ settings, setFeaturedMemberId }: Props) =
     const handleSelectionChange = useCallback(
         (selectedId: string) => {
             const member = members?.find((m) => m.userId === selectedId);
-            setFeaturedMemberId(selectedId || undefined);
+            setFeaturedMemberId(selectedId);
             setAvatarUrl(member?.avatarUrl);
         },
         [members, setFeaturedMemberId],

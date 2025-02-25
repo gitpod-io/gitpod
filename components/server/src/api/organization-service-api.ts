@@ -40,12 +40,11 @@ import {
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { OrganizationService } from "../orgs/organization-service";
-import { OrganizationSettings as ProtocolOrganizationSettings } from "@gitpod/gitpod-protocol";
+import { OrganizationSettings } from "@gitpod/gitpod-protocol";
 import { PaginationResponse } from "@gitpod/public-api/lib/gitpod/v1/pagination_pb";
 import { validate as uuidValidate } from "uuid";
 import { ctxUserId } from "../util/request-context";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { EntitlementService } from "../billing/entitlement-service";
 
 @injectable()
 export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationServiceInterface> {
@@ -54,8 +53,6 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         private readonly orgService: OrganizationService,
         @inject(PublicAPIConverter)
         private readonly apiConverter: PublicAPIConverter,
-        @inject(EntitlementService)
-        private readonly entitlementService: EntitlementService,
     ) {}
 
     async listOrganizationWorkspaceClasses(
@@ -242,7 +239,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
-        const settings = await this.orgService.getSettings(ctxUserId(), req.organizationId);
+        const settings = await this.orgService.getSettingsWithResolvedWelcomeMessage(ctxUserId(), req.organizationId);
         const response = new GetOrganizationSettingsResponse();
         response.settings = this.apiConverter.toOrganizationSettings(settings);
 
@@ -257,54 +254,29 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
-        const update: Partial<ProtocolOrganizationSettings> = {};
-        if (req.updateRestrictedEditorNames) {
-            update.restrictedEditorNames = req.restrictedEditorNames;
-        } else if (req.restrictedEditorNames.length > 0) {
+        if (req.restrictedEditorNames.length > 0 && !req.updateRestrictedEditorNames) {
             throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "updateRestrictedEditorNames is required to be true to update restrictedEditorNames",
             );
         }
 
-        if (!req.updateAllowedWorkspaceClasses && req.allowedWorkspaceClasses.length > 0) {
+        if (req.allowedWorkspaceClasses.length > 0 && !req.updateAllowedWorkspaceClasses) {
             throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "updateAllowedWorkspaceClasses is required to be true to update allowedWorkspaceClasses",
             );
         }
-        if (req.updateAllowedWorkspaceClasses) {
-            update.allowedWorkspaceClasses = req.allowedWorkspaceClasses;
-        }
 
-        if (typeof req.workspaceSharingDisabled === "boolean") {
-            update.workspaceSharingDisabled = req.workspaceSharingDisabled;
-        }
-        if (typeof req.defaultWorkspaceImage === "string") {
-            update.defaultWorkspaceImage = req.defaultWorkspaceImage;
-        }
-        if (req.updatePinnedEditorVersions) {
-            update.pinnedEditorVersions = req.pinnedEditorVersions;
-        }
-        if (typeof req.defaultRole === "string" && req.defaultRole !== "") {
-            switch (req.defaultRole) {
-                case "owner":
-                case "member":
-                case "collaborator":
-                    update.defaultRole = req.defaultRole;
-                    break;
-                default:
-                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invalid defaultRole");
-            }
-        }
-
-        if (typeof req.timeoutSettings?.denyUserTimeouts === "boolean") {
-            update.timeoutSettings = update.timeoutSettings || {};
-            update.timeoutSettings.denyUserTimeouts = req.timeoutSettings.denyUserTimeouts;
-        }
-        if (typeof req.timeoutSettings?.inactivity === "object") {
-            update.timeoutSettings = update.timeoutSettings || {};
-            update.timeoutSettings.inactivity = this.apiConverter.toDurationString(req.timeoutSettings.inactivity);
+        if (
+            req.pinnedEditorVersions &&
+            Object.keys(req.pinnedEditorVersions).length > 0 &&
+            !req.updatePinnedEditorVersions
+        ) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "updatePinnedEditorVersions is required to be true to update pinnedEditorVersions",
+            );
         }
 
         if (req.roleRestrictions.length > 0 && !req.updateRoleRestrictions) {
@@ -313,63 +285,32 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
                 "updateRoleRestrictions is required to be true when updating roleRestrictions",
             );
         }
-        if (req.updateRoleRestrictions) {
-            update.roleRestrictions = update.roleRestrictions ?? {};
-            for (const roleRestriction of req.roleRestrictions) {
-                const role = this.apiConverter.fromOrgMemberRole(roleRestriction.role);
-                const permissions = roleRestriction.permissions.map((p) =>
-                    this.apiConverter.fromOrganizationPermission(p),
-                );
-                update.roleRestrictions[role] = permissions;
-            }
-        }
-
-        if (typeof req.maxParallelRunningWorkspaces === "number") {
-            if (req.maxParallelRunningWorkspaces < 0) {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "maxParallelRunningWorkspaces must be >= 0");
-            }
-            const maxAllowance = await this.entitlementService.getMaxParallelWorkspaces(
-                ctxUserId(),
-                req.organizationId,
+        if (
+            req.onboardingSettings &&
+            req.onboardingSettings.recommendedRepositories.length > 0 &&
+            !req.onboardingSettings.updateRecommendedRepositories
+        ) {
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "recommendedRepositories can only be set when updateRecommendedRepositories is true",
             );
-            if (maxAllowance && req.maxParallelRunningWorkspaces > maxAllowance) {
-                throw new ApplicationError(
-                    ErrorCodes.BAD_REQUEST,
-                    `maxParallelRunningWorkspaces must be <= ${maxAllowance}`,
-                );
+        }
+
+        // convert to internal type, mapping any errors to BAD_REQUEST as it's only doing conversions anyway
+        let update: OrganizationSettings;
+        try {
+            update = this.apiConverter.fromOrganizationSettings(req);
+        } catch (err) {
+            let msg = "conversion error";
+            if (err.message) {
+                msg += ": " + err.message;
             }
-            if (!Number.isInteger(req.maxParallelRunningWorkspaces)) {
-                throw new ApplicationError(ErrorCodes.BAD_REQUEST, "maxParallelRunningWorkspaces must be an integer");
-            }
-
-            update.maxParallelRunningWorkspaces = req.maxParallelRunningWorkspaces;
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, msg);
         }
 
-        if (req.onboardingSettings) {
-            update.onboardingSettings = this.apiConverter.fromOnboardingSettings(req.onboardingSettings);
-
-            if (
-                !req.onboardingSettings.updateRecommendedRepositories &&
-                req.onboardingSettings.recommendedRepositories.length > 0
-            ) {
-                throw new ApplicationError(
-                    ErrorCodes.BAD_REQUEST,
-                    "recommendedRepositories can only be set when updateRecommendedRepositories is true",
-                );
-            }
-        }
-
-        if (req.annotateGitCommits !== undefined) {
-            update.annotateGitCommits = req.annotateGitCommits;
-        }
-
-        if (Object.keys(update).length === 0) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "nothing to update");
-        }
-
-        const settings = await this.orgService.updateSettings(ctxUserId(), req.organizationId, update);
+        const updatedSettings = await this.orgService.updateSettings(ctxUserId(), req.organizationId, update);
         return new UpdateOrganizationSettingsResponse({
-            settings: this.apiConverter.toOrganizationSettings(settings),
+            settings: this.apiConverter.toOrganizationSettings(updatedSettings),
         });
     }
 }
