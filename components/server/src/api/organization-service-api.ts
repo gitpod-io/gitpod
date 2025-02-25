@@ -308,11 +308,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, msg);
         }
 
-        const updatedSettings = await this.orgService.updateSettingsWithResolvedWelcomeMessage(
-            ctxUserId(),
-            req.organizationId,
-            update,
-        );
+        const updatedSettings = await this.orgService.updateSettings(ctxUserId(), req.organizationId, update);
         return new UpdateOrganizationSettingsResponse({
             settings: this.apiConverter.toOrganizationSettings(updatedSettings),
         });

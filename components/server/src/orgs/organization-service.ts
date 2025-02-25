@@ -635,10 +635,15 @@ export class OrganizationService {
         };
 
         const dbSettings = await this.teamDB.setOrgSettings(orgId, settings, mergeSettings);
-        if (settings.onboardingSettings?.welcomeMessage?.featuredMemberId) {
-            if (resolvedFeaturedMemberAvatarUrl && dbSettings.onboardingSettings?.welcomeMessage) {
-                dbSettings.onboardingSettings.welcomeMessage.featuredMemberResolvedAvatarUrl =
-                    resolvedFeaturedMemberAvatarUrl;
+        if (dbSettings.onboardingSettings?.welcomeMessage?.featuredMemberId) {
+            const avatarUrl =
+                resolvedFeaturedMemberAvatarUrl ??
+                (await this.resolveMemberAvatarUrl(
+                    dbSettings.onboardingSettings.welcomeMessage.featuredMemberId,
+                    orgId,
+                ));
+            if (avatarUrl && dbSettings.onboardingSettings?.welcomeMessage) {
+                dbSettings.onboardingSettings.welcomeMessage.featuredMemberResolvedAvatarUrl = avatarUrl;
             }
         }
 
