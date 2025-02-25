@@ -321,9 +321,9 @@ export class OnboardingSettings_WelcomeMessage extends Message<OnboardingSetting
   /**
    * enabled specifies whether the welcome message is enabled
    *
-   * @generated from field: bool enabled = 1;
+   * @generated from field: optional bool enabled = 1;
    */
-  enabled = false;
+  enabled?: boolean;
 
   /**
    * message is the welcome message for the organization
@@ -356,7 +356,7 @@ export class OnboardingSettings_WelcomeMessage extends Message<OnboardingSetting
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "gitpod.v1.OnboardingSettings.WelcomeMessage";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 1, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */, opt: true },
     { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 4, name: "featured_member_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 5, name: "featured_member_resolved_avatar_url", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },

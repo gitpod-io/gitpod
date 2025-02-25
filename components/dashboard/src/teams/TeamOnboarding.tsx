@@ -53,9 +53,7 @@ export default function TeamOnboardingPage() {
                 throw new Error("no organization settings change permission");
             }
             try {
-                await updateTeamSettings.mutateAsync({
-                    ...newSettings,
-                });
+                await updateTeamSettings.mutateAsync(newSettings);
                 toast("Organization settings updated");
             } catch (error) {
                 if (options?.throwMutateError) {

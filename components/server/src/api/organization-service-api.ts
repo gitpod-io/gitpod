@@ -239,7 +239,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
-        const settings = await this.orgService.getSettings(ctxUserId(), req.organizationId);
+        const settings = await this.orgService.getSettingsWithResolvedWelcomeMessage(ctxUserId(), req.organizationId);
         const response = new GetOrganizationSettingsResponse();
         response.settings = this.apiConverter.toOrganizationSettings(settings);
 
