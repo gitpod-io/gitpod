@@ -71,8 +71,7 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
                 "relative flex justify-between items-start",
                 "w-full md:w-112 max-w-full",
                 "p-4 md:rounded-md",
-                "bg-gray-800 dark:bg-gray-50",
-                "text-white dark:text-gray-800",
+                "text-pk-content-invert-primary bg-pk-surface-invert",
                 "transition-transform animate-toast-in-right",
             )}
             onMouseEnter={onMouseEnter}
@@ -80,8 +79,8 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
             role="alert"
             aria-labelledby={elId}
         >
-            <div className="flex-grow text-white dark:text-gray-800" id={elId}>
-                {typeof message === "string" ? <p>{message}</p> : message}
+            <div className="flex-grow" id={elId}>
+                {typeof message === "string" ? <span>{message}</span> : message}
             </div>
             <div>
                 <Button
@@ -89,7 +88,7 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
                     // TODO: Determine if we can lift this button style into a variant
                     className={cn(
                         "p-2 ml-2 -mt-1",
-                        "text-white hover:text-gray-300 dark:text-gray-800 dark:hover:text-gray-600",
+                        "text-pk-content-invert-primary hover:text-pk-content-invert-secondary",
                     )}
                     onClick={handleRemove}
                 >
