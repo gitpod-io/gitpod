@@ -30,6 +30,7 @@ Key areas of focus include:
   - ws-proxy: Handles routing and proxying of traffic to workspaces
   - gitpod-cli: Command-line interface for interacting with Gitpod workspaces
   - gitpod-db: Database layer for the Gitpod platform
+  - gitpod-protocol: Core type definitions and shared protocol library
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation
