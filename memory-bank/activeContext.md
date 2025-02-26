@@ -46,6 +46,9 @@ Key areas of focus include:
   - docker-up: Sets up and manages Docker within workspace containers
   - image-builder-bob: Builds and pushes workspace images during workspace startup
   - node-labeler: Manages node labels and annotations for workspace scheduling
+  - openvsx-proxy: Caching proxy service for the OpenVSX registry
+  - scheduler-extender: Extends Kubernetes scheduling capabilities for workspaces
+  - ipfs: Provides distributed content-addressable storage for container images
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation
