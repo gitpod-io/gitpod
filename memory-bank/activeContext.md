@@ -25,6 +25,9 @@ Key areas of focus include:
   - ide-service: Manages IDE configurations and resolves workspace IDE requirements
   - registry-facade: Modifies container images by adding layers for workspaces
   - image-builder-mk3: Builds custom workspace images from user-defined Dockerfiles
+  - server: Main backend service handling API requests and user management
+  - proxy: Main entry point for all HTTP and WebSocket traffic
+  - ws-proxy: Handles routing and proxying of traffic to workspaces
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation

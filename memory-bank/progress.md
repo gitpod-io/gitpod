@@ -6,7 +6,7 @@ We are in the early stages of our work with the Gitpod codebase. The current sta
 
 - **Memory Bank**: Initial setup complete with core files and component documentation
 - **Codebase Understanding**: Basic overview obtained, with detailed understanding of key components
-- **Component Documentation**: Documentation created for 9 key components
+- **Component Documentation**: Documentation created for 12 key components
 - **Development Environment**: Not yet configured
 - **Task Identification**: Not yet started
 
@@ -24,6 +24,9 @@ Our current contributions:
   - ide-service
   - registry-facade
   - image-builder-mk3
+  - server
+  - proxy
+  - ws-proxy
 
 The existing functionality of the Gitpod platform:
 
@@ -71,6 +74,7 @@ As we begin working with the codebase, we have not yet identified specific issue
 - Documentation of first set of key components (blobserve, content-service, dashboard, ws-manager-mk2)
 - Documentation of second set of key components (supervisor, ws-daemon)
 - Documentation of third set of key components (ide-service, registry-facade, image-builder-mk3)
+- Documentation of fourth set of key components (server, proxy, ws-proxy)
 
 ### Upcoming Milestones
 - Documentation of remaining key components
@@ -107,6 +111,9 @@ No specific blockers or dependencies have been identified yet. This section will
   - Documented ide-service component
   - Documented registry-facade component
   - Documented image-builder-mk3 component
+  - Documented server component
+  - Documented proxy component
+  - Documented ws-proxy component
 
 ## Next Evaluation Point
 
