@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { noPersistence } from "../../data/setup";
-import { Timestamp } from "@bufbuild/protobuf";
+import { Duration, Timestamp } from "@bufbuild/protobuf";
 
 const pageSize = 100;
 const maxPages = 100; // safety limit if something goes wrong with pagination
@@ -154,6 +154,16 @@ const displayTime = (timestamp?: Timestamp) => {
     return timestamp.toDate().toISOString();
 };
 
+const renderDuration = (duration?: Duration): string => {
+    if (!duration) {
+        return "";
+    }
+
+    let seconds = Number(duration.seconds);
+    seconds += duration.nanos / 1_000_000_000;
+    return seconds.toString(10);
+};
+
 export const transformSessionRecord = (session: WorkspaceSession) => {
     const initializerType = session.workspace?.spec?.initializer?.specs;
     const prebuildInitializer = initializerType?.find((i) => i.spec.case === "prebuild")?.spec.value as
@@ -190,6 +200,20 @@ export const transformSessionRecord = (session: WorkspaceSession) => {
         timeout: session.workspace?.spec?.timeout?.inactivity?.seconds,
         editor: session.workspace?.spec?.editor?.name,
         editorVersion: session.workspace?.spec?.editor?.version, // indicates whether user selected the stable or latest editor release channel
+
+        // initializer metrics
+        contentInitGitDuration: renderDuration(session.metrics?.initializerMetrics?.git?.duration),
+        contentInitGitSize: session.metrics?.initializerMetrics?.git?.size,
+        contentInitFileDownloadDuration: renderDuration(session.metrics?.initializerMetrics?.fileDownload?.duration),
+        contentInitFileDownloadSize: session.metrics?.initializerMetrics?.fileDownload?.size,
+        contentInitSnapshotDuration: renderDuration(session.metrics?.initializerMetrics?.snapshot?.duration),
+        contentInitSnapshotSize: session.metrics?.initializerMetrics?.snapshot?.size,
+        contentInitBackupDuration: renderDuration(session.metrics?.initializerMetrics?.backup?.duration),
+        contentInitBackupSize: session.metrics?.initializerMetrics?.backup?.size,
+        contentInitPrebuildDuration: renderDuration(session.metrics?.initializerMetrics?.prebuild?.duration),
+        contentInitPrebuildSize: session.metrics?.initializerMetrics?.prebuild?.size,
+        contentInitCompositeDuration: renderDuration(session.metrics?.initializerMetrics?.composite?.duration),
+        contentInitCompositeSize: session.metrics?.initializerMetrics?.composite?.size,
     };
 
     return row;
