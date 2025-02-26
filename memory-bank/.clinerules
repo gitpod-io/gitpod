@@ -73,10 +73,30 @@ This file captures important patterns, preferences, and project intelligence tha
 - **README.md**: Each component should have a README explaining its purpose
 - **API Documentation**: Generated from Protocol Buffer definitions
 - **Architecture Documentation**: System-level documentation in various formats
+- **Memory Bank Documentation**:
+  - Component-specific documentation is stored in `memory-bank/components/` directory
+  - Each component gets its own markdown file with detailed information about its purpose, architecture, and implementation
+  - API components (with "*-api" suffix) should NOT be documented separately as they are typically just interface definitions
+  - Component documentation should focus on the main service components that implement business logic
+  - Documentation follows a consistent structure with sections for Overview, Purpose, Architecture, Key Features, etc.
 
 ## Evolution of Project Decisions
 
 This section will be updated as I learn about how and why certain architectural and design decisions were made.
+
+### Memory Bank Organization
+
+- **Component Documentation**: The decision to create separate documentation files for each component in the `memory-bank/components/` directory was made to:
+  1. Provide a clear, organized structure for component documentation
+  2. Allow for detailed documentation of each component's purpose, architecture, and implementation
+  3. Make it easier to find information about specific components
+  4. Enable incremental updates to component documentation without affecting other files
+
+- **API Component Exclusion**: The decision to exclude "*-api" components from separate documentation was made because:
+  1. API components primarily contain interface definitions, not implementation logic
+  2. The interfaces are typically documented within the main service component that implements them
+  3. Documenting API components separately would create redundancy
+  4. The focus should be on documenting the service components that implement business logic
 
 ## User Preferences
 
