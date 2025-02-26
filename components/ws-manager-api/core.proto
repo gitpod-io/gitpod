@@ -764,30 +764,30 @@ message WorkspaceClass {
 
 // Add these new message definitions
 message InitializerMetric {
-    // Duration in nanoseconds (standard protobuf duration)
+    // duration in nanoseconds (standard protobuf duration)
     google.protobuf.Duration duration = 1;
 
-    // Size in bytes
+    // size in bytes
     uint64 size = 2;
 }
 
 message InitializerMetrics {
-	// Git contains metrics for the git initializer step
+	// git contains metrics for the git initializer step
     InitializerMetric git = 1;
 
-	// FileDownload contains metrics for the file download initializer step
+	// file_download contains metrics for the file download initializer step
     InitializerMetric file_download = 2;
 
-	// Snapshot contains metrics for the snapshot initializer step
+	// snapshot contains metrics for the snapshot initializer step
 	// This used for workspaces started from snapshots.
     InitializerMetric snapshot = 3;
 
-	// Backup contains metrics for the backup initializer step
+	// backup contains metrics for the backup initializer step
     InitializerMetric backup = 4;
 
-	// Prebuild contains metrics for the prebuild initializer step
+	// prebuild contains metrics for the prebuild initializer step
     InitializerMetric prebuild = 5;
 
-	// Composite contains metrics for the composite initializer step
+	// composite contains metrics for the composite initializer step
     InitializerMetric composite = 6;
 }
