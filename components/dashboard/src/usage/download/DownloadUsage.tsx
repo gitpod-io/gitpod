@@ -124,7 +124,7 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
         <div className="flex flex-row items-start justify-between space-x-2">
             <div>
                 <span>Usage export complete.</span>
-                <p className="dark:text-gray-500">
+                <p className="text-pk-content-invert-primary/90">
                     {readableSize} &middot; {formattedCount} {data.count !== 1 ? "entries" : "entry"} exported
                 </p>
             </div>
