@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInstance, PortVisibility, PortProtocol } from "./workspace-instance";
+import { WorkspaceInstance, PortVisibility, PortProtocol, WorkspaceInstanceMetrics } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
 import { Project } from "./teams-projects-protocol";
 import { createHash } from "crypto";
@@ -1390,6 +1390,7 @@ export namespace WorkspaceInstancePortsChangedEvent {
 export interface WorkspaceSession {
     workspace: Workspace;
     instance: WorkspaceInstance;
+    metrics?: WorkspaceInstanceMetrics;
 }
 export interface WorkspaceInfo {
     workspace: Workspace;

@@ -21,9 +21,11 @@ func main() {
 	log.Init("content-initializer", "", true, false)
 	tracing.Init("content-initializer")
 
-	err := content.RunInitializerChild()
+	statsFd := os.NewFile(content.RUN_INITIALIZER_CHILD_STATS_FD, "stats")
+
+	err := content.RunInitializerChild(statsFd)
 	if err != nil {
-		errfd := os.NewFile(uintptr(3), "errout")
+		errfd := os.NewFile(content.RUN_INITIALIZER_CHILD_ERROUT_FD, "errout")
 		_, _ = fmt.Fprintf(errfd, err.Error())
 
 		os.Exit(content.FAIL_CONTENT_INITIALIZER_EXIT_CODE)

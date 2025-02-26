@@ -9,10 +9,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -122,21 +123,22 @@ func CollectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 }
 
 // RunInitializer runs a content initializer in a user, PID and mount namespace to isolate it from ws-daemon
-func RunInitializer(ctx context.Context, destination string, initializer *csapi.WorkspaceInitializer, remoteContent map[string]storage.DownloadInfo, opts RunInitializerOpts) (err error) {
+func RunInitializer(ctx context.Context, destination string, initializer *csapi.WorkspaceInitializer, remoteContent map[string]storage.DownloadInfo, opts RunInitializerOpts) (*csapi.InitializerMetrics, error) {
 	//nolint:ineffassign,staticcheck
 	span, ctx := opentracing.StartSpanFromContext(ctx, "RunInitializer")
+	var err error
 	defer tracing.FinishSpan(span, &err)
 
 	// it's possible the destination folder doesn't exist yet, because the kubelet hasn't created it yet.
 	// If we fail to create the folder, it either already exists, or we'll fail when we try and mount it.
 	err = os.MkdirAll(destination, 0755)
 	if err != nil && !os.IsExist(err) {
-		return xerrors.Errorf("cannot mkdir destination: %w", err)
+		return nil, xerrors.Errorf("cannot mkdir destination: %w", err)
 	}
 
 	init, err := proto.Marshal(initializer)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if opts.GID == 0 {
@@ -148,13 +150,13 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 
 	tmpdir, err := os.MkdirTemp("", "content-init")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer os.RemoveAll(tmpdir)
 
 	err = os.MkdirAll(filepath.Join(tmpdir, "rootfs"), 0755)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	msg := msgInitContent{
@@ -169,11 +171,11 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	}
 	fc, err := json.MarshalIndent(msg, "", "  ")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = os.WriteFile(filepath.Join(tmpdir, "rootfs", "content.json"), fc, 0644)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	spec := specconv.Example()
@@ -226,11 +228,11 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 
 	fc, err = json.MarshalIndent(spec, "", "  ")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = os.WriteFile(filepath.Join(tmpdir, "config.json"), fc, 0644)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	args := []string{"--root", "state"}
@@ -243,26 +245,29 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	if opts.OWI.InstanceID == "" {
 		id, err := uuid.NewRandom()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		name = "init-rnd-" + id.String()
 	} else {
 		name = "init-ws-" + opts.OWI.InstanceID
 	}
 
-	args = append(args, "--log-format", "json", "run")
-	args = append(args, "--preserve-fds", "1")
-	args = append(args, name)
-
+	// pass a pipe "file" to the content init process as fd 3 to capture the error output
 	errIn, errOut, err := os.Pipe()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	errch := make(chan []byte, 1)
-	go func() {
-		errmsg, _ := ioutil.ReadAll(errIn)
-		errch <- errmsg
-	}()
+
+	// pass a pipe "file" to the content init process as fd 4 to capture the metrics output
+	statsIn, statsOut, err := os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+
+	args = append(args, "--log-format", "json", "run")
+	extraFiles := []*os.File{errOut, statsOut}
+	args = append(args, "--preserve-fds", strconv.Itoa(len(extraFiles)))
+	args = append(args, name)
 
 	var cmdOut bytes.Buffer
 	cmd := exec.Command("runc", args...)
@@ -270,34 +275,87 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	cmd.Stdout = &cmdOut
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
-	cmd.ExtraFiles = []*os.File{errOut}
+	cmd.ExtraFiles = extraFiles
 	err = cmd.Run()
 	log.FromBuffer(&cmdOut, log.WithFields(opts.OWI.Fields()))
-	errOut.Close()
 
-	var errmsg []byte
-	select {
-	case errmsg = <-errch:
-	case <-time.After(1 * time.Second):
-		errmsg = []byte("failed to read content initializer response")
-	}
+	// read contents of the extra files
+	errOut.Close()
+	statsOut.Close()
+	errmsg, statsBytes := waitForAndReadExtraFiles(errIn, statsIn)
 	if err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			// The program has exited with an exit code != 0. If it's FAIL_CONTENT_INITIALIZER_EXIT_CODE, it was deliberate.
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok && status.ExitStatus() == FAIL_CONTENT_INITIALIZER_EXIT_CODE {
 				log.WithError(err).WithFields(opts.OWI.Fields()).WithField("errmsgsize", len(errmsg)).WithField("exitCode", status.ExitStatus()).WithField("args", args).Error("content init failed")
-				return xerrors.Errorf(string(errmsg))
+				return nil, xerrors.Errorf(string(errmsg))
 			}
 		}
 
-		return err
+		return nil, err
 	}
 
-	return nil
+	stats := parseStats(statsBytes)
+	return stats, nil
 }
 
+// waitForAndReadExtraFiles tries to read the content of the extra files passed to the content initializer, and waits up to 1s to do so
+func waitForAndReadExtraFiles(errIn *os.File, statsIn *os.File) (errmsg []byte, statsBytes []byte) {
+	// read err
+	errch := make(chan []byte, 1)
+	go func() {
+		errmsg, _ := io.ReadAll(errIn)
+		errch <- errmsg
+	}()
+
+	// read stats
+	statsCh := make(chan []byte, 1)
+	go func() {
+		statsBytes, readErr := io.ReadAll(statsIn)
+		if readErr != nil {
+			log.WithError(readErr).Warn("cannot read stats")
+		}
+		log.WithField("statsBytes", log.TrustedValueWrap{Value: string(statsBytes)}).Debug("read stats")
+		statsCh <- statsBytes
+	}()
+
+	readFiles := 0
+	for {
+		select {
+		case errmsg = <-errch:
+			readFiles += 1
+		case statsBytes = <-statsCh:
+			readFiles += 1
+		case <-time.After(1 * time.Second):
+			if errmsg == nil {
+				errmsg = []byte("failed to read content initializer response")
+			}
+			return
+		}
+		if readFiles == 2 {
+			return
+		}
+	}
+}
+
+func parseStats(statsBytes []byte) *csapi.InitializerMetrics {
+	var stats csapi.InitializerMetrics
+	err := json.Unmarshal(statsBytes, &stats)
+	if err != nil {
+		log.WithError(err).WithField("bytes", log.TrustedValueWrap{Value: statsBytes}).Warn("cannot unmarshal stats")
+		return nil
+	}
+	return &stats
+}
+
+// RUN_INITIALIZER_CHILD_ERROUT_FD is the fileDescriptor of the "errout" file descriptor passed to the content initializer
+const RUN_INITIALIZER_CHILD_ERROUT_FD = 3
+
+// RUN_INITIALIZER_CHILD_STATS_FD is the fileDescriptor of the "stats" file descriptor passed to the content initializer
+const RUN_INITIALIZER_CHILD_STATS_FD = 4
+
 // RunInitializerChild is the function that's expected to run when we call `/proc/self/exe content-initializer`
-func RunInitializerChild() (err error) {
+func RunInitializerChild(statsFd *os.File) (err error) {
 	fc, err := os.ReadFile("/content.json")
 	if err != nil {
 		return err
@@ -357,7 +415,30 @@ func RunInitializerChild() (err error) {
 		return err
 	}
 
+	// Serialize metrics, so we can pass them back to the caller
+	if statsFd != nil {
+		defer statsFd.Close()
+		writeInitializerStats(statsFd, &stats)
+	} else {
+		log.Warn("no stats file descriptor provided")
+	}
+
 	return nil
+}
+
+func writeInitializerStats(statsFd *os.File, stats *csapi.InitializerMetrics) {
+	serializedStats, err := json.Marshal(stats)
+	if err != nil {
+		log.WithError(err).Warn("cannot serialize initializer stats")
+		return
+	}
+
+	log.WithField("stats", log.TrustedValueWrap{Value: string(serializedStats)}).Debug("writing initializer stats to fd")
+	_, writeErr := statsFd.Write(serializedStats)
+	if writeErr != nil {
+		log.WithError(writeErr).Warn("error writing initializer stats to fd")
+		return
+	}
 }
 
 var _ storage.DirectAccess = &remoteContentStorage{}

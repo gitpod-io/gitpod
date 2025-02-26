@@ -6,6 +6,7 @@ option go_package = "github.com/gitpod-io/gitpod/ws-manager/api";
 
 import "content-service-api/initializer.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 
 service WorkspaceManager {
     // getWorkspaces produces a list of running workspaces and their status
@@ -321,6 +322,9 @@ message WorkspaceStatus {
 
     // auth provides authentication information about the workspace. This info is primarily used by ws-proxy.
     WorkspaceAuthentication auth = 9;
+
+    // metrics contains metrics about the workspace
+    InitializerMetrics initializer_metrics = 11;
 }
 
 // IDEImage configures the IDE images a workspace will use
@@ -756,4 +760,34 @@ message WorkspaceClass {
 
     // The cost of running a workspace of this class per minute expressed in credits
     float credits_per_minute = 4;
+}
+
+// Add these new message definitions
+message InitializerMetric {
+    // duration in nanoseconds (standard protobuf duration)
+    google.protobuf.Duration duration = 1;
+
+    // size in bytes
+    uint64 size = 2;
+}
+
+message InitializerMetrics {
+	// git contains metrics for the git initializer step
+    InitializerMetric git = 1;
+
+	// file_download contains metrics for the file download initializer step
+    InitializerMetric file_download = 2;
+
+	// snapshot contains metrics for the snapshot initializer step
+	// This used for workspaces started from snapshots.
+    InitializerMetric snapshot = 3;
+
+	// backup contains metrics for the backup initializer step
+    InitializerMetric backup = 4;
+
+	// prebuild contains metrics for the prebuild initializer step
+    InitializerMetric prebuild = 5;
+
+	// composite contains metrics for the composite initializer step
+    InitializerMetric composite = 6;
 }

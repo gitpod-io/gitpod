@@ -63,7 +63,7 @@ export const Insights = () => {
                         "md:flex-row md:items-center md:space-x-4 md:space-y-0",
                     )}
                 >
-                    <DownloadUsage to={toDate} disabled={isLackingPermissions} />
+                    <DownloadInsights to={toDate} disabled={isLackingPermissions} />
                 </div>
 
                 <div
@@ -166,7 +166,7 @@ type DownloadUsageProps = {
     to: Timestamp;
     disabled?: boolean;
 };
-export const DownloadUsage = ({ to, disabled }: DownloadUsageProps) => {
+export const DownloadInsights = ({ to, disabled }: DownloadUsageProps) => {
     const { data: org } = useCurrentOrg();
     const { toast } = useToast();
     // When we start the download, we disable the button for a short time

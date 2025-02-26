@@ -258,6 +258,69 @@ describe("PublicAPIConverter", () => {
         });
     });
 
+    describe("toDurationFromMillis", () => {
+        it("should convert 0 milliseconds to 0 seconds and 0 nanos", () => {
+            const result = converter.toDurationFromMillis(0);
+            expect(result.seconds).to.equal(BigInt(0));
+            expect(result.nanos).to.equal(0);
+        });
+
+        it("should convert 999 milliseconds to 0 seconds and 999000000 nanos", () => {
+            const result = converter.toDurationFromMillis(999);
+            expect(result.seconds).to.equal(BigInt(0));
+            expect(result.nanos).to.equal(999000000);
+        });
+
+        it("should convert 1000 milliseconds to 1 second and 0 nanos", () => {
+            const result = converter.toDurationFromMillis(1000);
+            expect(result.seconds).to.equal(BigInt(1));
+            expect(result.nanos).to.equal(0);
+        });
+
+        it("should convert 1500 milliseconds to 1 second and 500000000 nanos", () => {
+            const result = converter.toDurationFromMillis(1500);
+            expect(result.seconds).to.equal(BigInt(1));
+            expect(result.nanos).to.equal(500000000);
+        });
+
+        it("should convert 123456789 milliseconds to 123456 seconds and 789000000 nanos", () => {
+            const result = converter.toDurationFromMillis(123456789);
+            expect(result.seconds).to.equal(BigInt(123456));
+            expect(result.nanos).to.equal(789000000);
+        });
+
+        it("should convert 987654321 milliseconds to 987654 seconds and 321000000 nanos", () => {
+            const result = converter.toDurationFromMillis(987654321);
+            expect(result.seconds).to.equal(BigInt(987654));
+            expect(result.nanos).to.equal(321000000);
+        });
+
+        it("should convert 1001 milliseconds to 1 second and 1000000 nanos", () => {
+            const result = converter.toDurationFromMillis(1001);
+            expect(result.seconds).to.equal(BigInt(1));
+            expect(result.nanos).to.equal(1000000);
+        });
+
+        it("should convert 2001 milliseconds to 2 seconds and 1000000 nanos", () => {
+            const result = converter.toDurationFromMillis(2001);
+            expect(result.seconds).to.equal(BigInt(2));
+            expect(result.nanos).to.equal(1000000);
+        });
+
+        it("should convert 2011.506776 milliseconds to 2 seconds and 11506776 nanos", () => {
+            const result = converter.toDurationFromMillis(2011.506776);
+            expect(result.seconds).to.equal(BigInt(2));
+            expect(result.nanos).to.equal(11506776);
+        });
+
+        it("should convert 2011.50677699 milliseconds to 2 seconds and 11506776 nanos", () => {
+            const result = converter.toDurationFromMillis(2011.50677699);
+            expect(result.seconds).to.equal(BigInt(2));
+            expect(result.nanos).to.equal(11506776);
+        });
+    });
+
+
     describe("toDurationString", () => {
         it("should convert with empty string", () => {
             expect(converter.toDurationString(new Duration())).to.equal("");

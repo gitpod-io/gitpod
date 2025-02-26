@@ -939,6 +939,48 @@ message WorkspaceSession {
 
     // total_image_size is the total size of the image in bytes (includes Gitpod-specific layers like IDE)
     int64 total_image_size = 2;
+
+    // initializer_metrics are all metrics exported from the content initializer on workspace start
+    InitializerMetrics initializer_metrics = 3;
+  }
+
+  // Add these new message definitions
+  message InitializerMetric {
+    // duration in seconds
+    google.protobuf.Duration duration = 1;
+
+    // size in bytes
+    uint64 size = 2;
+  }
+
+  message InitializerMetrics {
+    // git contains metrics for the git initializer step
+    // This is set whenever a `git clone` is issued (mostly on first workspace start)
+    InitializerMetric git = 1;
+
+    // file_download contains metrics for the file download initializer step
+    // This is set for injecting "additionalFiles" into the workspace.
+    InitializerMetric file_download = 2;
+
+    // snapshot contains metrics for the snapshot initializer step
+    // This used for workspaces started from snapshots.
+    InitializerMetric snapshot = 3;
+
+    // backup contains metrics for the backup initializer step
+    // This is set on subsequent workspace starts, when the file system is restored from backup.
+    InitializerMetric backup = 4;
+
+    // prebuild contains metrics for the prebuild initializer step
+    // This is set if the workspace is based on a prebuild.
+    InitializerMetric prebuild = 5;
+
+    // composite contains metrics for the composite initializer step
+    // This reports the total if multiple steps are run to initialize the workspace content.
+    // Examples are:
+    //  - "additionalFiles" injected into the workspace
+    //  - "additionalRepositories" configured
+    //  - incremental Prebuilds
+    InitializerMetric composite = 6;
   }
 
   string id = 1;

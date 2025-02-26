@@ -62215,6 +62215,33 @@ java.lang.String defaultValue) {
        * @return The totalImageSize.
        */
       long getTotalImageSize();
+
+      /**
+       * <pre>
+       * initializer_metrics are all metrics exported from the content initializer on workspace start
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+       * @return Whether the initializerMetrics field is set.
+       */
+      boolean hasInitializerMetrics();
+      /**
+       * <pre>
+       * initializer_metrics are all metrics exported from the content initializer on workspace start
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+       * @return The initializerMetrics.
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics getInitializerMetrics();
+      /**
+       * <pre>
+       * initializer_metrics are all metrics exported from the content initializer on workspace start
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricsOrBuilder getInitializerMetricsOrBuilder();
     }
     /**
      * Protobuf type {@code gitpod.v1.WorkspaceSession.Metrics}
@@ -62253,6 +62280,7 @@ java.lang.String defaultValue) {
                 io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.Builder.class);
       }
 
+      private int bitField0_;
       public static final int WORKSPACE_IMAGE_SIZE_FIELD_NUMBER = 1;
       private long workspaceImageSize_ = 0L;
       /**
@@ -62283,6 +62311,44 @@ java.lang.String defaultValue) {
         return totalImageSize_;
       }
 
+      public static final int INITIALIZER_METRICS_FIELD_NUMBER = 3;
+      private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics initializerMetrics_;
+      /**
+       * <pre>
+       * initializer_metrics are all metrics exported from the content initializer on workspace start
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+       * @return Whether the initializerMetrics field is set.
+       */
+      @java.lang.Override
+      public boolean hasInitializerMetrics() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <pre>
+       * initializer_metrics are all metrics exported from the content initializer on workspace start
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+       * @return The initializerMetrics.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics getInitializerMetrics() {
+        return initializerMetrics_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.getDefaultInstance() : initializerMetrics_;
+      }
+      /**
+       * <pre>
+       * initializer_metrics are all metrics exported from the content initializer on workspace start
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricsOrBuilder getInitializerMetricsOrBuilder() {
+        return initializerMetrics_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.getDefaultInstance() : initializerMetrics_;
+      }
+
       private byte memoizedIsInitialized = -1;
       @java.lang.Override
       public final boolean isInitialized() {
@@ -62303,6 +62369,9 @@ java.lang.String defaultValue) {
         if (totalImageSize_ != 0L) {
           output.writeInt64(2, totalImageSize_);
         }
+        if (((bitField0_ & 0x00000001) != 0)) {
+          output.writeMessage(3, getInitializerMetrics());
+        }
         getUnknownFields().writeTo(output);
       }
 
@@ -62319,6 +62388,10 @@ java.lang.String defaultValue) {
         if (totalImageSize_ != 0L) {
           size += com.google.protobuf.CodedOutputStream
             .computeInt64Size(2, totalImageSize_);
+        }
+        if (((bitField0_ & 0x00000001) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(3, getInitializerMetrics());
         }
         size += getUnknownFields().getSerializedSize();
         memoizedSize = size;
@@ -62339,6 +62412,11 @@ java.lang.String defaultValue) {
             != other.getWorkspaceImageSize()) return false;
         if (getTotalImageSize()
             != other.getTotalImageSize()) return false;
+        if (hasInitializerMetrics() != other.hasInitializerMetrics()) return false;
+        if (hasInitializerMetrics()) {
+          if (!getInitializerMetrics()
+              .equals(other.getInitializerMetrics())) return false;
+        }
         if (!getUnknownFields().equals(other.getUnknownFields())) return false;
         return true;
       }
@@ -62356,6 +62434,10 @@ java.lang.String defaultValue) {
         hash = (37 * hash) + TOTAL_IMAGE_SIZE_FIELD_NUMBER;
         hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
             getTotalImageSize());
+        if (hasInitializerMetrics()) {
+          hash = (37 * hash) + INITIALIZER_METRICS_FIELD_NUMBER;
+          hash = (53 * hash) + getInitializerMetrics().hashCode();
+        }
         hash = (29 * hash) + getUnknownFields().hashCode();
         memoizedHashCode = hash;
         return hash;
@@ -62475,13 +62557,19 @@ java.lang.String defaultValue) {
 
         // Construct using io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics.newBuilder()
         private Builder() {
-
+          maybeForceBuilderInitialization();
         }
 
         private Builder(
             com.google.protobuf.GeneratedMessage.BuilderParent parent) {
           super(parent);
-
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessage
+                  .alwaysUseFieldBuilders) {
+            getInitializerMetricsFieldBuilder();
+          }
         }
         @java.lang.Override
         public Builder clear() {
@@ -62489,6 +62577,11 @@ java.lang.String defaultValue) {
           bitField0_ = 0;
           workspaceImageSize_ = 0L;
           totalImageSize_ = 0L;
+          initializerMetrics_ = null;
+          if (initializerMetricsBuilder_ != null) {
+            initializerMetricsBuilder_.dispose();
+            initializerMetricsBuilder_ = null;
+          }
           return this;
         }
 
@@ -62528,6 +62621,14 @@ java.lang.String defaultValue) {
           if (((from_bitField0_ & 0x00000002) != 0)) {
             result.totalImageSize_ = totalImageSize_;
           }
+          int to_bitField0_ = 0;
+          if (((from_bitField0_ & 0x00000004) != 0)) {
+            result.initializerMetrics_ = initializerMetricsBuilder_ == null
+                ? initializerMetrics_
+                : initializerMetricsBuilder_.build();
+            to_bitField0_ |= 0x00000001;
+          }
+          result.bitField0_ |= to_bitField0_;
         }
 
         @java.lang.Override
@@ -62547,6 +62648,9 @@ java.lang.String defaultValue) {
           }
           if (other.getTotalImageSize() != 0L) {
             setTotalImageSize(other.getTotalImageSize());
+          }
+          if (other.hasInitializerMetrics()) {
+            mergeInitializerMetrics(other.getInitializerMetrics());
           }
           this.mergeUnknownFields(other.getUnknownFields());
           onChanged();
@@ -62584,6 +62688,13 @@ java.lang.String defaultValue) {
                   bitField0_ |= 0x00000002;
                   break;
                 } // case 16
+                case 26: {
+                  input.readMessage(
+                      getInitializerMetricsFieldBuilder().getBuilder(),
+                      extensionRegistry);
+                  bitField0_ |= 0x00000004;
+                  break;
+                } // case 26
                 default: {
                   if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                     done = true; // was an endgroup tag
@@ -62689,6 +62800,163 @@ java.lang.String defaultValue) {
           return this;
         }
 
+        private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics initializerMetrics_;
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricsOrBuilder> initializerMetricsBuilder_;
+        /**
+         * <pre>
+         * initializer_metrics are all metrics exported from the content initializer on workspace start
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+         * @return Whether the initializerMetrics field is set.
+         */
+        public boolean hasInitializerMetrics() {
+          return ((bitField0_ & 0x00000004) != 0);
+        }
+        /**
+         * <pre>
+         * initializer_metrics are all metrics exported from the content initializer on workspace start
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+         * @return The initializerMetrics.
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics getInitializerMetrics() {
+          if (initializerMetricsBuilder_ == null) {
+            return initializerMetrics_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.getDefaultInstance() : initializerMetrics_;
+          } else {
+            return initializerMetricsBuilder_.getMessage();
+          }
+        }
+        /**
+         * <pre>
+         * initializer_metrics are all metrics exported from the content initializer on workspace start
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+         */
+        public Builder setInitializerMetrics(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics value) {
+          if (initializerMetricsBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            initializerMetrics_ = value;
+          } else {
+            initializerMetricsBuilder_.setMessage(value);
+          }
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * initializer_metrics are all metrics exported from the content initializer on workspace start
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+         */
+        public Builder setInitializerMetrics(
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.Builder builderForValue) {
+          if (initializerMetricsBuilder_ == null) {
+            initializerMetrics_ = builderForValue.build();
+          } else {
+            initializerMetricsBuilder_.setMessage(builderForValue.build());
+          }
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * initializer_metrics are all metrics exported from the content initializer on workspace start
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+         */
+        public Builder mergeInitializerMetrics(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics value) {
+          if (initializerMetricsBuilder_ == null) {
+            if (((bitField0_ & 0x00000004) != 0) &&
+              initializerMetrics_ != null &&
+              initializerMetrics_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.getDefaultInstance()) {
+              getInitializerMetricsBuilder().mergeFrom(value);
+            } else {
+              initializerMetrics_ = value;
+            }
+          } else {
+            initializerMetricsBuilder_.mergeFrom(value);
+          }
+          if (initializerMetrics_ != null) {
+            bitField0_ |= 0x00000004;
+            onChanged();
+          }
+          return this;
+        }
+        /**
+         * <pre>
+         * initializer_metrics are all metrics exported from the content initializer on workspace start
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+         */
+        public Builder clearInitializerMetrics() {
+          bitField0_ = (bitField0_ & ~0x00000004);
+          initializerMetrics_ = null;
+          if (initializerMetricsBuilder_ != null) {
+            initializerMetricsBuilder_.dispose();
+            initializerMetricsBuilder_ = null;
+          }
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * initializer_metrics are all metrics exported from the content initializer on workspace start
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.Builder getInitializerMetricsBuilder() {
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return getInitializerMetricsFieldBuilder().getBuilder();
+        }
+        /**
+         * <pre>
+         * initializer_metrics are all metrics exported from the content initializer on workspace start
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricsOrBuilder getInitializerMetricsOrBuilder() {
+          if (initializerMetricsBuilder_ != null) {
+            return initializerMetricsBuilder_.getMessageOrBuilder();
+          } else {
+            return initializerMetrics_ == null ?
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.getDefaultInstance() : initializerMetrics_;
+          }
+        }
+        /**
+         * <pre>
+         * initializer_metrics are all metrics exported from the content initializer on workspace start
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetrics initializer_metrics = 3 [json_name = "initializerMetrics"];</code>
+         */
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricsOrBuilder>
+            getInitializerMetricsFieldBuilder() {
+          if (initializerMetricsBuilder_ == null) {
+            initializerMetricsBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricsOrBuilder>(
+                    getInitializerMetrics(),
+                    getParentForChildren(),
+                    isClean());
+            initializerMetrics_ = null;
+          }
+          return initializerMetricsBuilder_;
+        }
+
         // @@protoc_insertion_point(builder_scope:gitpod.v1.WorkspaceSession.Metrics)
       }
 
@@ -62735,6 +63003,2817 @@ java.lang.String defaultValue) {
 
       @java.lang.Override
       public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.Metrics getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
+    public interface InitializerMetricOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:gitpod.v1.WorkspaceSession.InitializerMetric)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <pre>
+       * duration in seconds
+       * </pre>
+       *
+       * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+       * @return Whether the duration field is set.
+       */
+      boolean hasDuration();
+      /**
+       * <pre>
+       * duration in seconds
+       * </pre>
+       *
+       * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+       * @return The duration.
+       */
+      com.google.protobuf.Duration getDuration();
+      /**
+       * <pre>
+       * duration in seconds
+       * </pre>
+       *
+       * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+       */
+      com.google.protobuf.DurationOrBuilder getDurationOrBuilder();
+
+      /**
+       * <pre>
+       * size in bytes
+       * </pre>
+       *
+       * <code>uint64 size = 2 [json_name = "size"];</code>
+       * @return The size.
+       */
+      long getSize();
+    }
+    /**
+     * <pre>
+     * Add these new message definitions
+     * </pre>
+     *
+     * Protobuf type {@code gitpod.v1.WorkspaceSession.InitializerMetric}
+     */
+    public static final class InitializerMetric extends
+        com.google.protobuf.GeneratedMessage implements
+        // @@protoc_insertion_point(message_implements:gitpod.v1.WorkspaceSession.InitializerMetric)
+        InitializerMetricOrBuilder {
+    private static final long serialVersionUID = 0L;
+      static {
+        com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+          com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+          /* major= */ 4,
+          /* minor= */ 27,
+          /* patch= */ 2,
+          /* suffix= */ "",
+          InitializerMetric.class.getName());
+      }
+      // Use InitializerMetric.newBuilder() to construct.
+      private InitializerMetric(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+        super(builder);
+      }
+      private InitializerMetric() {
+      }
+
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_InitializerMetric_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_InitializerMetric_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder.class);
+      }
+
+      private int bitField0_;
+      public static final int DURATION_FIELD_NUMBER = 1;
+      private com.google.protobuf.Duration duration_;
+      /**
+       * <pre>
+       * duration in seconds
+       * </pre>
+       *
+       * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+       * @return Whether the duration field is set.
+       */
+      @java.lang.Override
+      public boolean hasDuration() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <pre>
+       * duration in seconds
+       * </pre>
+       *
+       * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+       * @return The duration.
+       */
+      @java.lang.Override
+      public com.google.protobuf.Duration getDuration() {
+        return duration_ == null ? com.google.protobuf.Duration.getDefaultInstance() : duration_;
+      }
+      /**
+       * <pre>
+       * duration in seconds
+       * </pre>
+       *
+       * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+       */
+      @java.lang.Override
+      public com.google.protobuf.DurationOrBuilder getDurationOrBuilder() {
+        return duration_ == null ? com.google.protobuf.Duration.getDefaultInstance() : duration_;
+      }
+
+      public static final int SIZE_FIELD_NUMBER = 2;
+      private long size_ = 0L;
+      /**
+       * <pre>
+       * size in bytes
+       * </pre>
+       *
+       * <code>uint64 size = 2 [json_name = "size"];</code>
+       * @return The size.
+       */
+      @java.lang.Override
+      public long getSize() {
+        return size_;
+      }
+
+      private byte memoizedIsInitialized = -1;
+      @java.lang.Override
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      @java.lang.Override
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        if (((bitField0_ & 0x00000001) != 0)) {
+          output.writeMessage(1, getDuration());
+        }
+        if (size_ != 0L) {
+          output.writeUInt64(2, size_);
+        }
+        getUnknownFields().writeTo(output);
+      }
+
+      @java.lang.Override
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (((bitField0_ & 0x00000001) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(1, getDuration());
+        }
+        if (size_ != 0L) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeUInt64Size(2, size_);
+        }
+        size += getUnknownFields().getSerializedSize();
+        memoizedSize = size;
+        return size;
+      }
+
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric)) {
+          return super.equals(obj);
+        }
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric other = (io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric) obj;
+
+        if (hasDuration() != other.hasDuration()) return false;
+        if (hasDuration()) {
+          if (!getDuration()
+              .equals(other.getDuration())) return false;
+        }
+        if (getSize()
+            != other.getSize()) return false;
+        if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+        return true;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        if (hasDuration()) {
+          hash = (37 * hash) + DURATION_FIELD_NUMBER;
+          hash = (53 * hash) + getDuration().hashCode();
+        }
+        hash = (37 * hash) + SIZE_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+            getSize());
+        hash = (29 * hash) + getUnknownFields().hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      @java.lang.Override
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      @java.lang.Override
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * <pre>
+       * Add these new message definitions
+       * </pre>
+       *
+       * Protobuf type {@code gitpod.v1.WorkspaceSession.InitializerMetric}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:gitpod.v1.WorkspaceSession.InitializerMetric)
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_InitializerMetric_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_InitializerMetric_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder.class);
+        }
+
+        // Construct using io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.newBuilder()
+        private Builder() {
+          maybeForceBuilderInitialization();
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          super(parent);
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessage
+                  .alwaysUseFieldBuilders) {
+            getDurationFieldBuilder();
+          }
+        }
+        @java.lang.Override
+        public Builder clear() {
+          super.clear();
+          bitField0_ = 0;
+          duration_ = null;
+          if (durationBuilder_ != null) {
+            durationBuilder_.dispose();
+            durationBuilder_ = null;
+          }
+          size_ = 0L;
+          return this;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_InitializerMetric_descriptor;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getDefaultInstanceForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance();
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric build() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric buildPartial() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric result = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric(this);
+          if (bitField0_ != 0) { buildPartial0(result); }
+          onBuilt();
+          return result;
+        }
+
+        private void buildPartial0(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric result) {
+          int from_bitField0_ = bitField0_;
+          int to_bitField0_ = 0;
+          if (((from_bitField0_ & 0x00000001) != 0)) {
+            result.duration_ = durationBuilder_ == null
+                ? duration_
+                : durationBuilder_.build();
+            to_bitField0_ |= 0x00000001;
+          }
+          if (((from_bitField0_ & 0x00000002) != 0)) {
+            result.size_ = size_;
+          }
+          result.bitField0_ |= to_bitField0_;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric) {
+            return mergeFrom((io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric other) {
+          if (other == io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance()) return this;
+          if (other.hasDuration()) {
+            mergeDuration(other.getDuration());
+          }
+          if (other.getSize() != 0L) {
+            setSize(other.getSize());
+          }
+          this.mergeUnknownFields(other.getUnknownFields());
+          onChanged();
+          return this;
+        }
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          if (extensionRegistry == null) {
+            throw new java.lang.NullPointerException();
+          }
+          try {
+            boolean done = false;
+            while (!done) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  done = true;
+                  break;
+                case 10: {
+                  input.readMessage(
+                      getDurationFieldBuilder().getBuilder(),
+                      extensionRegistry);
+                  bitField0_ |= 0x00000001;
+                  break;
+                } // case 10
+                case 16: {
+                  size_ = input.readUInt64();
+                  bitField0_ |= 0x00000002;
+                  break;
+                } // case 16
+                default: {
+                  if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                    done = true; // was an endgroup tag
+                  }
+                  break;
+                } // default:
+              } // switch (tag)
+            } // while (!done)
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.unwrapIOException();
+          } finally {
+            onChanged();
+          } // finally
+          return this;
+        }
+        private int bitField0_;
+
+        private com.google.protobuf.Duration duration_;
+        private com.google.protobuf.SingleFieldBuilder<
+            com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder> durationBuilder_;
+        /**
+         * <pre>
+         * duration in seconds
+         * </pre>
+         *
+         * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+         * @return Whether the duration field is set.
+         */
+        public boolean hasDuration() {
+          return ((bitField0_ & 0x00000001) != 0);
+        }
+        /**
+         * <pre>
+         * duration in seconds
+         * </pre>
+         *
+         * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+         * @return The duration.
+         */
+        public com.google.protobuf.Duration getDuration() {
+          if (durationBuilder_ == null) {
+            return duration_ == null ? com.google.protobuf.Duration.getDefaultInstance() : duration_;
+          } else {
+            return durationBuilder_.getMessage();
+          }
+        }
+        /**
+         * <pre>
+         * duration in seconds
+         * </pre>
+         *
+         * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+         */
+        public Builder setDuration(com.google.protobuf.Duration value) {
+          if (durationBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            duration_ = value;
+          } else {
+            durationBuilder_.setMessage(value);
+          }
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * duration in seconds
+         * </pre>
+         *
+         * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+         */
+        public Builder setDuration(
+            com.google.protobuf.Duration.Builder builderForValue) {
+          if (durationBuilder_ == null) {
+            duration_ = builderForValue.build();
+          } else {
+            durationBuilder_.setMessage(builderForValue.build());
+          }
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * duration in seconds
+         * </pre>
+         *
+         * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+         */
+        public Builder mergeDuration(com.google.protobuf.Duration value) {
+          if (durationBuilder_ == null) {
+            if (((bitField0_ & 0x00000001) != 0) &&
+              duration_ != null &&
+              duration_ != com.google.protobuf.Duration.getDefaultInstance()) {
+              getDurationBuilder().mergeFrom(value);
+            } else {
+              duration_ = value;
+            }
+          } else {
+            durationBuilder_.mergeFrom(value);
+          }
+          if (duration_ != null) {
+            bitField0_ |= 0x00000001;
+            onChanged();
+          }
+          return this;
+        }
+        /**
+         * <pre>
+         * duration in seconds
+         * </pre>
+         *
+         * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+         */
+        public Builder clearDuration() {
+          bitField0_ = (bitField0_ & ~0x00000001);
+          duration_ = null;
+          if (durationBuilder_ != null) {
+            durationBuilder_.dispose();
+            durationBuilder_ = null;
+          }
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * duration in seconds
+         * </pre>
+         *
+         * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+         */
+        public com.google.protobuf.Duration.Builder getDurationBuilder() {
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return getDurationFieldBuilder().getBuilder();
+        }
+        /**
+         * <pre>
+         * duration in seconds
+         * </pre>
+         *
+         * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+         */
+        public com.google.protobuf.DurationOrBuilder getDurationOrBuilder() {
+          if (durationBuilder_ != null) {
+            return durationBuilder_.getMessageOrBuilder();
+          } else {
+            return duration_ == null ?
+                com.google.protobuf.Duration.getDefaultInstance() : duration_;
+          }
+        }
+        /**
+         * <pre>
+         * duration in seconds
+         * </pre>
+         *
+         * <code>.google.protobuf.Duration duration = 1 [json_name = "duration"];</code>
+         */
+        private com.google.protobuf.SingleFieldBuilder<
+            com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder>
+            getDurationFieldBuilder() {
+          if (durationBuilder_ == null) {
+            durationBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+                com.google.protobuf.Duration, com.google.protobuf.Duration.Builder, com.google.protobuf.DurationOrBuilder>(
+                    getDuration(),
+                    getParentForChildren(),
+                    isClean());
+            duration_ = null;
+          }
+          return durationBuilder_;
+        }
+
+        private long size_ ;
+        /**
+         * <pre>
+         * size in bytes
+         * </pre>
+         *
+         * <code>uint64 size = 2 [json_name = "size"];</code>
+         * @return The size.
+         */
+        @java.lang.Override
+        public long getSize() {
+          return size_;
+        }
+        /**
+         * <pre>
+         * size in bytes
+         * </pre>
+         *
+         * <code>uint64 size = 2 [json_name = "size"];</code>
+         * @param value The size to set.
+         * @return This builder for chaining.
+         */
+        public Builder setSize(long value) {
+
+          size_ = value;
+          bitField0_ |= 0x00000002;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * size in bytes
+         * </pre>
+         *
+         * <code>uint64 size = 2 [json_name = "size"];</code>
+         * @return This builder for chaining.
+         */
+        public Builder clearSize() {
+          bitField0_ = (bitField0_ & ~0x00000002);
+          size_ = 0L;
+          onChanged();
+          return this;
+        }
+
+        // @@protoc_insertion_point(builder_scope:gitpod.v1.WorkspaceSession.InitializerMetric)
+      }
+
+      // @@protoc_insertion_point(class_scope:gitpod.v1.WorkspaceSession.InitializerMetric)
+      private static final io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric();
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<InitializerMetric>
+          PARSER = new com.google.protobuf.AbstractParser<InitializerMetric>() {
+        @java.lang.Override
+        public InitializerMetric parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          Builder builder = newBuilder();
+          try {
+            builder.mergeFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(builder.buildPartial());
+          } catch (com.google.protobuf.UninitializedMessageException e) {
+            throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+          } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(e)
+                .setUnfinishedMessage(builder.buildPartial());
+          }
+          return builder.buildPartial();
+        }
+      };
+
+      public static com.google.protobuf.Parser<InitializerMetric> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<InitializerMetric> getParserForType() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
+    public interface InitializerMetricsOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:gitpod.v1.WorkspaceSession.InitializerMetrics)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <pre>
+       * git contains metrics for the git initializer step
+       * This is set whenever a `git clone` is issued (mostly on first workspace start)
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+       * @return Whether the git field is set.
+       */
+      boolean hasGit();
+      /**
+       * <pre>
+       * git contains metrics for the git initializer step
+       * This is set whenever a `git clone` is issued (mostly on first workspace start)
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+       * @return The git.
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getGit();
+      /**
+       * <pre>
+       * git contains metrics for the git initializer step
+       * This is set whenever a `git clone` is issued (mostly on first workspace start)
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getGitOrBuilder();
+
+      /**
+       * <pre>
+       * file_download contains metrics for the file download initializer step
+       * This is set for injecting "additionalFiles" into the workspace.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+       * @return Whether the fileDownload field is set.
+       */
+      boolean hasFileDownload();
+      /**
+       * <pre>
+       * file_download contains metrics for the file download initializer step
+       * This is set for injecting "additionalFiles" into the workspace.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+       * @return The fileDownload.
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getFileDownload();
+      /**
+       * <pre>
+       * file_download contains metrics for the file download initializer step
+       * This is set for injecting "additionalFiles" into the workspace.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getFileDownloadOrBuilder();
+
+      /**
+       * <pre>
+       * snapshot contains metrics for the snapshot initializer step
+       * This used for workspaces started from snapshots.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+       * @return Whether the snapshot field is set.
+       */
+      boolean hasSnapshot();
+      /**
+       * <pre>
+       * snapshot contains metrics for the snapshot initializer step
+       * This used for workspaces started from snapshots.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+       * @return The snapshot.
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getSnapshot();
+      /**
+       * <pre>
+       * snapshot contains metrics for the snapshot initializer step
+       * This used for workspaces started from snapshots.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getSnapshotOrBuilder();
+
+      /**
+       * <pre>
+       * backup contains metrics for the backup initializer step
+       * This is set on subsequent workspace starts, when the file system is restored from backup.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+       * @return Whether the backup field is set.
+       */
+      boolean hasBackup();
+      /**
+       * <pre>
+       * backup contains metrics for the backup initializer step
+       * This is set on subsequent workspace starts, when the file system is restored from backup.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+       * @return The backup.
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getBackup();
+      /**
+       * <pre>
+       * backup contains metrics for the backup initializer step
+       * This is set on subsequent workspace starts, when the file system is restored from backup.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getBackupOrBuilder();
+
+      /**
+       * <pre>
+       * prebuild contains metrics for the prebuild initializer step
+       * This is set if the workspace is based on a prebuild.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+       * @return Whether the prebuild field is set.
+       */
+      boolean hasPrebuild();
+      /**
+       * <pre>
+       * prebuild contains metrics for the prebuild initializer step
+       * This is set if the workspace is based on a prebuild.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+       * @return The prebuild.
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getPrebuild();
+      /**
+       * <pre>
+       * prebuild contains metrics for the prebuild initializer step
+       * This is set if the workspace is based on a prebuild.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getPrebuildOrBuilder();
+
+      /**
+       * <pre>
+       * composite contains metrics for the composite initializer step
+       * This reports the total if multiple steps are run to initialize the workspace content.
+       * Examples are:
+       * - "additionalFiles" injected into the workspace
+       * - "additionalRepositories" configured
+       * - incremental Prebuilds
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+       * @return Whether the composite field is set.
+       */
+      boolean hasComposite();
+      /**
+       * <pre>
+       * composite contains metrics for the composite initializer step
+       * This reports the total if multiple steps are run to initialize the workspace content.
+       * Examples are:
+       * - "additionalFiles" injected into the workspace
+       * - "additionalRepositories" configured
+       * - incremental Prebuilds
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+       * @return The composite.
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getComposite();
+      /**
+       * <pre>
+       * composite contains metrics for the composite initializer step
+       * This reports the total if multiple steps are run to initialize the workspace content.
+       * Examples are:
+       * - "additionalFiles" injected into the workspace
+       * - "additionalRepositories" configured
+       * - incremental Prebuilds
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+       */
+      io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getCompositeOrBuilder();
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.WorkspaceSession.InitializerMetrics}
+     */
+    public static final class InitializerMetrics extends
+        com.google.protobuf.GeneratedMessage implements
+        // @@protoc_insertion_point(message_implements:gitpod.v1.WorkspaceSession.InitializerMetrics)
+        InitializerMetricsOrBuilder {
+    private static final long serialVersionUID = 0L;
+      static {
+        com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+          com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+          /* major= */ 4,
+          /* minor= */ 27,
+          /* patch= */ 2,
+          /* suffix= */ "",
+          InitializerMetrics.class.getName());
+      }
+      // Use InitializerMetrics.newBuilder() to construct.
+      private InitializerMetrics(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+        super(builder);
+      }
+      private InitializerMetrics() {
+      }
+
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_InitializerMetrics_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_InitializerMetrics_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.Builder.class);
+      }
+
+      private int bitField0_;
+      public static final int GIT_FIELD_NUMBER = 1;
+      private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric git_;
+      /**
+       * <pre>
+       * git contains metrics for the git initializer step
+       * This is set whenever a `git clone` is issued (mostly on first workspace start)
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+       * @return Whether the git field is set.
+       */
+      @java.lang.Override
+      public boolean hasGit() {
+        return ((bitField0_ & 0x00000001) != 0);
+      }
+      /**
+       * <pre>
+       * git contains metrics for the git initializer step
+       * This is set whenever a `git clone` is issued (mostly on first workspace start)
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+       * @return The git.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getGit() {
+        return git_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : git_;
+      }
+      /**
+       * <pre>
+       * git contains metrics for the git initializer step
+       * This is set whenever a `git clone` is issued (mostly on first workspace start)
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getGitOrBuilder() {
+        return git_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : git_;
+      }
+
+      public static final int FILE_DOWNLOAD_FIELD_NUMBER = 2;
+      private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric fileDownload_;
+      /**
+       * <pre>
+       * file_download contains metrics for the file download initializer step
+       * This is set for injecting "additionalFiles" into the workspace.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+       * @return Whether the fileDownload field is set.
+       */
+      @java.lang.Override
+      public boolean hasFileDownload() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <pre>
+       * file_download contains metrics for the file download initializer step
+       * This is set for injecting "additionalFiles" into the workspace.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+       * @return The fileDownload.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getFileDownload() {
+        return fileDownload_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : fileDownload_;
+      }
+      /**
+       * <pre>
+       * file_download contains metrics for the file download initializer step
+       * This is set for injecting "additionalFiles" into the workspace.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getFileDownloadOrBuilder() {
+        return fileDownload_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : fileDownload_;
+      }
+
+      public static final int SNAPSHOT_FIELD_NUMBER = 3;
+      private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric snapshot_;
+      /**
+       * <pre>
+       * snapshot contains metrics for the snapshot initializer step
+       * This used for workspaces started from snapshots.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+       * @return Whether the snapshot field is set.
+       */
+      @java.lang.Override
+      public boolean hasSnapshot() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <pre>
+       * snapshot contains metrics for the snapshot initializer step
+       * This used for workspaces started from snapshots.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+       * @return The snapshot.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getSnapshot() {
+        return snapshot_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : snapshot_;
+      }
+      /**
+       * <pre>
+       * snapshot contains metrics for the snapshot initializer step
+       * This used for workspaces started from snapshots.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getSnapshotOrBuilder() {
+        return snapshot_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : snapshot_;
+      }
+
+      public static final int BACKUP_FIELD_NUMBER = 4;
+      private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric backup_;
+      /**
+       * <pre>
+       * backup contains metrics for the backup initializer step
+       * This is set on subsequent workspace starts, when the file system is restored from backup.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+       * @return Whether the backup field is set.
+       */
+      @java.lang.Override
+      public boolean hasBackup() {
+        return ((bitField0_ & 0x00000008) != 0);
+      }
+      /**
+       * <pre>
+       * backup contains metrics for the backup initializer step
+       * This is set on subsequent workspace starts, when the file system is restored from backup.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+       * @return The backup.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getBackup() {
+        return backup_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : backup_;
+      }
+      /**
+       * <pre>
+       * backup contains metrics for the backup initializer step
+       * This is set on subsequent workspace starts, when the file system is restored from backup.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getBackupOrBuilder() {
+        return backup_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : backup_;
+      }
+
+      public static final int PREBUILD_FIELD_NUMBER = 5;
+      private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric prebuild_;
+      /**
+       * <pre>
+       * prebuild contains metrics for the prebuild initializer step
+       * This is set if the workspace is based on a prebuild.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+       * @return Whether the prebuild field is set.
+       */
+      @java.lang.Override
+      public boolean hasPrebuild() {
+        return ((bitField0_ & 0x00000010) != 0);
+      }
+      /**
+       * <pre>
+       * prebuild contains metrics for the prebuild initializer step
+       * This is set if the workspace is based on a prebuild.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+       * @return The prebuild.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getPrebuild() {
+        return prebuild_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : prebuild_;
+      }
+      /**
+       * <pre>
+       * prebuild contains metrics for the prebuild initializer step
+       * This is set if the workspace is based on a prebuild.
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getPrebuildOrBuilder() {
+        return prebuild_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : prebuild_;
+      }
+
+      public static final int COMPOSITE_FIELD_NUMBER = 6;
+      private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric composite_;
+      /**
+       * <pre>
+       * composite contains metrics for the composite initializer step
+       * This reports the total if multiple steps are run to initialize the workspace content.
+       * Examples are:
+       * - "additionalFiles" injected into the workspace
+       * - "additionalRepositories" configured
+       * - incremental Prebuilds
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+       * @return Whether the composite field is set.
+       */
+      @java.lang.Override
+      public boolean hasComposite() {
+        return ((bitField0_ & 0x00000020) != 0);
+      }
+      /**
+       * <pre>
+       * composite contains metrics for the composite initializer step
+       * This reports the total if multiple steps are run to initialize the workspace content.
+       * Examples are:
+       * - "additionalFiles" injected into the workspace
+       * - "additionalRepositories" configured
+       * - incremental Prebuilds
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+       * @return The composite.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getComposite() {
+        return composite_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : composite_;
+      }
+      /**
+       * <pre>
+       * composite contains metrics for the composite initializer step
+       * This reports the total if multiple steps are run to initialize the workspace content.
+       * Examples are:
+       * - "additionalFiles" injected into the workspace
+       * - "additionalRepositories" configured
+       * - incremental Prebuilds
+       * </pre>
+       *
+       * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getCompositeOrBuilder() {
+        return composite_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : composite_;
+      }
+
+      private byte memoizedIsInitialized = -1;
+      @java.lang.Override
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      @java.lang.Override
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        if (((bitField0_ & 0x00000001) != 0)) {
+          output.writeMessage(1, getGit());
+        }
+        if (((bitField0_ & 0x00000002) != 0)) {
+          output.writeMessage(2, getFileDownload());
+        }
+        if (((bitField0_ & 0x00000004) != 0)) {
+          output.writeMessage(3, getSnapshot());
+        }
+        if (((bitField0_ & 0x00000008) != 0)) {
+          output.writeMessage(4, getBackup());
+        }
+        if (((bitField0_ & 0x00000010) != 0)) {
+          output.writeMessage(5, getPrebuild());
+        }
+        if (((bitField0_ & 0x00000020) != 0)) {
+          output.writeMessage(6, getComposite());
+        }
+        getUnknownFields().writeTo(output);
+      }
+
+      @java.lang.Override
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (((bitField0_ & 0x00000001) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(1, getGit());
+        }
+        if (((bitField0_ & 0x00000002) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(2, getFileDownload());
+        }
+        if (((bitField0_ & 0x00000004) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(3, getSnapshot());
+        }
+        if (((bitField0_ & 0x00000008) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(4, getBackup());
+        }
+        if (((bitField0_ & 0x00000010) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(5, getPrebuild());
+        }
+        if (((bitField0_ & 0x00000020) != 0)) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(6, getComposite());
+        }
+        size += getUnknownFields().getSerializedSize();
+        memoizedSize = size;
+        return size;
+      }
+
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics)) {
+          return super.equals(obj);
+        }
+        io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics other = (io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics) obj;
+
+        if (hasGit() != other.hasGit()) return false;
+        if (hasGit()) {
+          if (!getGit()
+              .equals(other.getGit())) return false;
+        }
+        if (hasFileDownload() != other.hasFileDownload()) return false;
+        if (hasFileDownload()) {
+          if (!getFileDownload()
+              .equals(other.getFileDownload())) return false;
+        }
+        if (hasSnapshot() != other.hasSnapshot()) return false;
+        if (hasSnapshot()) {
+          if (!getSnapshot()
+              .equals(other.getSnapshot())) return false;
+        }
+        if (hasBackup() != other.hasBackup()) return false;
+        if (hasBackup()) {
+          if (!getBackup()
+              .equals(other.getBackup())) return false;
+        }
+        if (hasPrebuild() != other.hasPrebuild()) return false;
+        if (hasPrebuild()) {
+          if (!getPrebuild()
+              .equals(other.getPrebuild())) return false;
+        }
+        if (hasComposite() != other.hasComposite()) return false;
+        if (hasComposite()) {
+          if (!getComposite()
+              .equals(other.getComposite())) return false;
+        }
+        if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+        return true;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptor().hashCode();
+        if (hasGit()) {
+          hash = (37 * hash) + GIT_FIELD_NUMBER;
+          hash = (53 * hash) + getGit().hashCode();
+        }
+        if (hasFileDownload()) {
+          hash = (37 * hash) + FILE_DOWNLOAD_FIELD_NUMBER;
+          hash = (53 * hash) + getFileDownload().hashCode();
+        }
+        if (hasSnapshot()) {
+          hash = (37 * hash) + SNAPSHOT_FIELD_NUMBER;
+          hash = (53 * hash) + getSnapshot().hashCode();
+        }
+        if (hasBackup()) {
+          hash = (37 * hash) + BACKUP_FIELD_NUMBER;
+          hash = (53 * hash) + getBackup().hashCode();
+        }
+        if (hasPrebuild()) {
+          hash = (37 * hash) + PREBUILD_FIELD_NUMBER;
+          hash = (53 * hash) + getPrebuild().hashCode();
+        }
+        if (hasComposite()) {
+          hash = (37 * hash) + COMPOSITE_FIELD_NUMBER;
+          hash = (53 * hash) + getComposite().hashCode();
+        }
+        hash = (29 * hash) + getUnknownFields().hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input);
+      }
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessage
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      @java.lang.Override
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      @java.lang.Override
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code gitpod.v1.WorkspaceSession.InitializerMetrics}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:gitpod.v1.WorkspaceSession.InitializerMetrics)
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricsOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_InitializerMetrics_descriptor;
+        }
+
+        @java.lang.Override
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_InitializerMetrics_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.class, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.Builder.class);
+        }
+
+        // Construct using io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.newBuilder()
+        private Builder() {
+          maybeForceBuilderInitialization();
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          super(parent);
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessage
+                  .alwaysUseFieldBuilders) {
+            getGitFieldBuilder();
+            getFileDownloadFieldBuilder();
+            getSnapshotFieldBuilder();
+            getBackupFieldBuilder();
+            getPrebuildFieldBuilder();
+            getCompositeFieldBuilder();
+          }
+        }
+        @java.lang.Override
+        public Builder clear() {
+          super.clear();
+          bitField0_ = 0;
+          git_ = null;
+          if (gitBuilder_ != null) {
+            gitBuilder_.dispose();
+            gitBuilder_ = null;
+          }
+          fileDownload_ = null;
+          if (fileDownloadBuilder_ != null) {
+            fileDownloadBuilder_.dispose();
+            fileDownloadBuilder_ = null;
+          }
+          snapshot_ = null;
+          if (snapshotBuilder_ != null) {
+            snapshotBuilder_.dispose();
+            snapshotBuilder_ = null;
+          }
+          backup_ = null;
+          if (backupBuilder_ != null) {
+            backupBuilder_.dispose();
+            backupBuilder_ = null;
+          }
+          prebuild_ = null;
+          if (prebuildBuilder_ != null) {
+            prebuildBuilder_.dispose();
+            prebuildBuilder_ = null;
+          }
+          composite_ = null;
+          if (compositeBuilder_ != null) {
+            compositeBuilder_.dispose();
+            compositeBuilder_ = null;
+          }
+          return this;
+        }
+
+        @java.lang.Override
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.internal_static_gitpod_v1_WorkspaceSession_InitializerMetrics_descriptor;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics getDefaultInstanceForType() {
+          return io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.getDefaultInstance();
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics build() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        @java.lang.Override
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics buildPartial() {
+          io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics result = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics(this);
+          if (bitField0_ != 0) { buildPartial0(result); }
+          onBuilt();
+          return result;
+        }
+
+        private void buildPartial0(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics result) {
+          int from_bitField0_ = bitField0_;
+          int to_bitField0_ = 0;
+          if (((from_bitField0_ & 0x00000001) != 0)) {
+            result.git_ = gitBuilder_ == null
+                ? git_
+                : gitBuilder_.build();
+            to_bitField0_ |= 0x00000001;
+          }
+          if (((from_bitField0_ & 0x00000002) != 0)) {
+            result.fileDownload_ = fileDownloadBuilder_ == null
+                ? fileDownload_
+                : fileDownloadBuilder_.build();
+            to_bitField0_ |= 0x00000002;
+          }
+          if (((from_bitField0_ & 0x00000004) != 0)) {
+            result.snapshot_ = snapshotBuilder_ == null
+                ? snapshot_
+                : snapshotBuilder_.build();
+            to_bitField0_ |= 0x00000004;
+          }
+          if (((from_bitField0_ & 0x00000008) != 0)) {
+            result.backup_ = backupBuilder_ == null
+                ? backup_
+                : backupBuilder_.build();
+            to_bitField0_ |= 0x00000008;
+          }
+          if (((from_bitField0_ & 0x00000010) != 0)) {
+            result.prebuild_ = prebuildBuilder_ == null
+                ? prebuild_
+                : prebuildBuilder_.build();
+            to_bitField0_ |= 0x00000010;
+          }
+          if (((from_bitField0_ & 0x00000020) != 0)) {
+            result.composite_ = compositeBuilder_ == null
+                ? composite_
+                : compositeBuilder_.build();
+            to_bitField0_ |= 0x00000020;
+          }
+          result.bitField0_ |= to_bitField0_;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics) {
+            return mergeFrom((io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics other) {
+          if (other == io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics.getDefaultInstance()) return this;
+          if (other.hasGit()) {
+            mergeGit(other.getGit());
+          }
+          if (other.hasFileDownload()) {
+            mergeFileDownload(other.getFileDownload());
+          }
+          if (other.hasSnapshot()) {
+            mergeSnapshot(other.getSnapshot());
+          }
+          if (other.hasBackup()) {
+            mergeBackup(other.getBackup());
+          }
+          if (other.hasPrebuild()) {
+            mergePrebuild(other.getPrebuild());
+          }
+          if (other.hasComposite()) {
+            mergeComposite(other.getComposite());
+          }
+          this.mergeUnknownFields(other.getUnknownFields());
+          onChanged();
+          return this;
+        }
+
+        @java.lang.Override
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        @java.lang.Override
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          if (extensionRegistry == null) {
+            throw new java.lang.NullPointerException();
+          }
+          try {
+            boolean done = false;
+            while (!done) {
+              int tag = input.readTag();
+              switch (tag) {
+                case 0:
+                  done = true;
+                  break;
+                case 10: {
+                  input.readMessage(
+                      getGitFieldBuilder().getBuilder(),
+                      extensionRegistry);
+                  bitField0_ |= 0x00000001;
+                  break;
+                } // case 10
+                case 18: {
+                  input.readMessage(
+                      getFileDownloadFieldBuilder().getBuilder(),
+                      extensionRegistry);
+                  bitField0_ |= 0x00000002;
+                  break;
+                } // case 18
+                case 26: {
+                  input.readMessage(
+                      getSnapshotFieldBuilder().getBuilder(),
+                      extensionRegistry);
+                  bitField0_ |= 0x00000004;
+                  break;
+                } // case 26
+                case 34: {
+                  input.readMessage(
+                      getBackupFieldBuilder().getBuilder(),
+                      extensionRegistry);
+                  bitField0_ |= 0x00000008;
+                  break;
+                } // case 34
+                case 42: {
+                  input.readMessage(
+                      getPrebuildFieldBuilder().getBuilder(),
+                      extensionRegistry);
+                  bitField0_ |= 0x00000010;
+                  break;
+                } // case 42
+                case 50: {
+                  input.readMessage(
+                      getCompositeFieldBuilder().getBuilder(),
+                      extensionRegistry);
+                  bitField0_ |= 0x00000020;
+                  break;
+                } // case 50
+                default: {
+                  if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                    done = true; // was an endgroup tag
+                  }
+                  break;
+                } // default:
+              } // switch (tag)
+            } // while (!done)
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.unwrapIOException();
+          } finally {
+            onChanged();
+          } // finally
+          return this;
+        }
+        private int bitField0_;
+
+        private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric git_;
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder> gitBuilder_;
+        /**
+         * <pre>
+         * git contains metrics for the git initializer step
+         * This is set whenever a `git clone` is issued (mostly on first workspace start)
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+         * @return Whether the git field is set.
+         */
+        public boolean hasGit() {
+          return ((bitField0_ & 0x00000001) != 0);
+        }
+        /**
+         * <pre>
+         * git contains metrics for the git initializer step
+         * This is set whenever a `git clone` is issued (mostly on first workspace start)
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+         * @return The git.
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getGit() {
+          if (gitBuilder_ == null) {
+            return git_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : git_;
+          } else {
+            return gitBuilder_.getMessage();
+          }
+        }
+        /**
+         * <pre>
+         * git contains metrics for the git initializer step
+         * This is set whenever a `git clone` is issued (mostly on first workspace start)
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+         */
+        public Builder setGit(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (gitBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            git_ = value;
+          } else {
+            gitBuilder_.setMessage(value);
+          }
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * git contains metrics for the git initializer step
+         * This is set whenever a `git clone` is issued (mostly on first workspace start)
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+         */
+        public Builder setGit(
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder builderForValue) {
+          if (gitBuilder_ == null) {
+            git_ = builderForValue.build();
+          } else {
+            gitBuilder_.setMessage(builderForValue.build());
+          }
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * git contains metrics for the git initializer step
+         * This is set whenever a `git clone` is issued (mostly on first workspace start)
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+         */
+        public Builder mergeGit(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (gitBuilder_ == null) {
+            if (((bitField0_ & 0x00000001) != 0) &&
+              git_ != null &&
+              git_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance()) {
+              getGitBuilder().mergeFrom(value);
+            } else {
+              git_ = value;
+            }
+          } else {
+            gitBuilder_.mergeFrom(value);
+          }
+          if (git_ != null) {
+            bitField0_ |= 0x00000001;
+            onChanged();
+          }
+          return this;
+        }
+        /**
+         * <pre>
+         * git contains metrics for the git initializer step
+         * This is set whenever a `git clone` is issued (mostly on first workspace start)
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+         */
+        public Builder clearGit() {
+          bitField0_ = (bitField0_ & ~0x00000001);
+          git_ = null;
+          if (gitBuilder_ != null) {
+            gitBuilder_.dispose();
+            gitBuilder_ = null;
+          }
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * git contains metrics for the git initializer step
+         * This is set whenever a `git clone` is issued (mostly on first workspace start)
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder getGitBuilder() {
+          bitField0_ |= 0x00000001;
+          onChanged();
+          return getGitFieldBuilder().getBuilder();
+        }
+        /**
+         * <pre>
+         * git contains metrics for the git initializer step
+         * This is set whenever a `git clone` is issued (mostly on first workspace start)
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getGitOrBuilder() {
+          if (gitBuilder_ != null) {
+            return gitBuilder_.getMessageOrBuilder();
+          } else {
+            return git_ == null ?
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : git_;
+          }
+        }
+        /**
+         * <pre>
+         * git contains metrics for the git initializer step
+         * This is set whenever a `git clone` is issued (mostly on first workspace start)
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric git = 1 [json_name = "git"];</code>
+         */
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>
+            getGitFieldBuilder() {
+          if (gitBuilder_ == null) {
+            gitBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>(
+                    getGit(),
+                    getParentForChildren(),
+                    isClean());
+            git_ = null;
+          }
+          return gitBuilder_;
+        }
+
+        private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric fileDownload_;
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder> fileDownloadBuilder_;
+        /**
+         * <pre>
+         * file_download contains metrics for the file download initializer step
+         * This is set for injecting "additionalFiles" into the workspace.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+         * @return Whether the fileDownload field is set.
+         */
+        public boolean hasFileDownload() {
+          return ((bitField0_ & 0x00000002) != 0);
+        }
+        /**
+         * <pre>
+         * file_download contains metrics for the file download initializer step
+         * This is set for injecting "additionalFiles" into the workspace.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+         * @return The fileDownload.
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getFileDownload() {
+          if (fileDownloadBuilder_ == null) {
+            return fileDownload_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : fileDownload_;
+          } else {
+            return fileDownloadBuilder_.getMessage();
+          }
+        }
+        /**
+         * <pre>
+         * file_download contains metrics for the file download initializer step
+         * This is set for injecting "additionalFiles" into the workspace.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+         */
+        public Builder setFileDownload(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (fileDownloadBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            fileDownload_ = value;
+          } else {
+            fileDownloadBuilder_.setMessage(value);
+          }
+          bitField0_ |= 0x00000002;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * file_download contains metrics for the file download initializer step
+         * This is set for injecting "additionalFiles" into the workspace.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+         */
+        public Builder setFileDownload(
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder builderForValue) {
+          if (fileDownloadBuilder_ == null) {
+            fileDownload_ = builderForValue.build();
+          } else {
+            fileDownloadBuilder_.setMessage(builderForValue.build());
+          }
+          bitField0_ |= 0x00000002;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * file_download contains metrics for the file download initializer step
+         * This is set for injecting "additionalFiles" into the workspace.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+         */
+        public Builder mergeFileDownload(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (fileDownloadBuilder_ == null) {
+            if (((bitField0_ & 0x00000002) != 0) &&
+              fileDownload_ != null &&
+              fileDownload_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance()) {
+              getFileDownloadBuilder().mergeFrom(value);
+            } else {
+              fileDownload_ = value;
+            }
+          } else {
+            fileDownloadBuilder_.mergeFrom(value);
+          }
+          if (fileDownload_ != null) {
+            bitField0_ |= 0x00000002;
+            onChanged();
+          }
+          return this;
+        }
+        /**
+         * <pre>
+         * file_download contains metrics for the file download initializer step
+         * This is set for injecting "additionalFiles" into the workspace.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+         */
+        public Builder clearFileDownload() {
+          bitField0_ = (bitField0_ & ~0x00000002);
+          fileDownload_ = null;
+          if (fileDownloadBuilder_ != null) {
+            fileDownloadBuilder_.dispose();
+            fileDownloadBuilder_ = null;
+          }
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * file_download contains metrics for the file download initializer step
+         * This is set for injecting "additionalFiles" into the workspace.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder getFileDownloadBuilder() {
+          bitField0_ |= 0x00000002;
+          onChanged();
+          return getFileDownloadFieldBuilder().getBuilder();
+        }
+        /**
+         * <pre>
+         * file_download contains metrics for the file download initializer step
+         * This is set for injecting "additionalFiles" into the workspace.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getFileDownloadOrBuilder() {
+          if (fileDownloadBuilder_ != null) {
+            return fileDownloadBuilder_.getMessageOrBuilder();
+          } else {
+            return fileDownload_ == null ?
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : fileDownload_;
+          }
+        }
+        /**
+         * <pre>
+         * file_download contains metrics for the file download initializer step
+         * This is set for injecting "additionalFiles" into the workspace.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric file_download = 2 [json_name = "fileDownload"];</code>
+         */
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>
+            getFileDownloadFieldBuilder() {
+          if (fileDownloadBuilder_ == null) {
+            fileDownloadBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>(
+                    getFileDownload(),
+                    getParentForChildren(),
+                    isClean());
+            fileDownload_ = null;
+          }
+          return fileDownloadBuilder_;
+        }
+
+        private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric snapshot_;
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder> snapshotBuilder_;
+        /**
+         * <pre>
+         * snapshot contains metrics for the snapshot initializer step
+         * This used for workspaces started from snapshots.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+         * @return Whether the snapshot field is set.
+         */
+        public boolean hasSnapshot() {
+          return ((bitField0_ & 0x00000004) != 0);
+        }
+        /**
+         * <pre>
+         * snapshot contains metrics for the snapshot initializer step
+         * This used for workspaces started from snapshots.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+         * @return The snapshot.
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getSnapshot() {
+          if (snapshotBuilder_ == null) {
+            return snapshot_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : snapshot_;
+          } else {
+            return snapshotBuilder_.getMessage();
+          }
+        }
+        /**
+         * <pre>
+         * snapshot contains metrics for the snapshot initializer step
+         * This used for workspaces started from snapshots.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+         */
+        public Builder setSnapshot(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (snapshotBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            snapshot_ = value;
+          } else {
+            snapshotBuilder_.setMessage(value);
+          }
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * snapshot contains metrics for the snapshot initializer step
+         * This used for workspaces started from snapshots.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+         */
+        public Builder setSnapshot(
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder builderForValue) {
+          if (snapshotBuilder_ == null) {
+            snapshot_ = builderForValue.build();
+          } else {
+            snapshotBuilder_.setMessage(builderForValue.build());
+          }
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * snapshot contains metrics for the snapshot initializer step
+         * This used for workspaces started from snapshots.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+         */
+        public Builder mergeSnapshot(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (snapshotBuilder_ == null) {
+            if (((bitField0_ & 0x00000004) != 0) &&
+              snapshot_ != null &&
+              snapshot_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance()) {
+              getSnapshotBuilder().mergeFrom(value);
+            } else {
+              snapshot_ = value;
+            }
+          } else {
+            snapshotBuilder_.mergeFrom(value);
+          }
+          if (snapshot_ != null) {
+            bitField0_ |= 0x00000004;
+            onChanged();
+          }
+          return this;
+        }
+        /**
+         * <pre>
+         * snapshot contains metrics for the snapshot initializer step
+         * This used for workspaces started from snapshots.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+         */
+        public Builder clearSnapshot() {
+          bitField0_ = (bitField0_ & ~0x00000004);
+          snapshot_ = null;
+          if (snapshotBuilder_ != null) {
+            snapshotBuilder_.dispose();
+            snapshotBuilder_ = null;
+          }
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * snapshot contains metrics for the snapshot initializer step
+         * This used for workspaces started from snapshots.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder getSnapshotBuilder() {
+          bitField0_ |= 0x00000004;
+          onChanged();
+          return getSnapshotFieldBuilder().getBuilder();
+        }
+        /**
+         * <pre>
+         * snapshot contains metrics for the snapshot initializer step
+         * This used for workspaces started from snapshots.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getSnapshotOrBuilder() {
+          if (snapshotBuilder_ != null) {
+            return snapshotBuilder_.getMessageOrBuilder();
+          } else {
+            return snapshot_ == null ?
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : snapshot_;
+          }
+        }
+        /**
+         * <pre>
+         * snapshot contains metrics for the snapshot initializer step
+         * This used for workspaces started from snapshots.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric snapshot = 3 [json_name = "snapshot"];</code>
+         */
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>
+            getSnapshotFieldBuilder() {
+          if (snapshotBuilder_ == null) {
+            snapshotBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>(
+                    getSnapshot(),
+                    getParentForChildren(),
+                    isClean());
+            snapshot_ = null;
+          }
+          return snapshotBuilder_;
+        }
+
+        private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric backup_;
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder> backupBuilder_;
+        /**
+         * <pre>
+         * backup contains metrics for the backup initializer step
+         * This is set on subsequent workspace starts, when the file system is restored from backup.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+         * @return Whether the backup field is set.
+         */
+        public boolean hasBackup() {
+          return ((bitField0_ & 0x00000008) != 0);
+        }
+        /**
+         * <pre>
+         * backup contains metrics for the backup initializer step
+         * This is set on subsequent workspace starts, when the file system is restored from backup.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+         * @return The backup.
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getBackup() {
+          if (backupBuilder_ == null) {
+            return backup_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : backup_;
+          } else {
+            return backupBuilder_.getMessage();
+          }
+        }
+        /**
+         * <pre>
+         * backup contains metrics for the backup initializer step
+         * This is set on subsequent workspace starts, when the file system is restored from backup.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+         */
+        public Builder setBackup(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (backupBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            backup_ = value;
+          } else {
+            backupBuilder_.setMessage(value);
+          }
+          bitField0_ |= 0x00000008;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * backup contains metrics for the backup initializer step
+         * This is set on subsequent workspace starts, when the file system is restored from backup.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+         */
+        public Builder setBackup(
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder builderForValue) {
+          if (backupBuilder_ == null) {
+            backup_ = builderForValue.build();
+          } else {
+            backupBuilder_.setMessage(builderForValue.build());
+          }
+          bitField0_ |= 0x00000008;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * backup contains metrics for the backup initializer step
+         * This is set on subsequent workspace starts, when the file system is restored from backup.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+         */
+        public Builder mergeBackup(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (backupBuilder_ == null) {
+            if (((bitField0_ & 0x00000008) != 0) &&
+              backup_ != null &&
+              backup_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance()) {
+              getBackupBuilder().mergeFrom(value);
+            } else {
+              backup_ = value;
+            }
+          } else {
+            backupBuilder_.mergeFrom(value);
+          }
+          if (backup_ != null) {
+            bitField0_ |= 0x00000008;
+            onChanged();
+          }
+          return this;
+        }
+        /**
+         * <pre>
+         * backup contains metrics for the backup initializer step
+         * This is set on subsequent workspace starts, when the file system is restored from backup.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+         */
+        public Builder clearBackup() {
+          bitField0_ = (bitField0_ & ~0x00000008);
+          backup_ = null;
+          if (backupBuilder_ != null) {
+            backupBuilder_.dispose();
+            backupBuilder_ = null;
+          }
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * backup contains metrics for the backup initializer step
+         * This is set on subsequent workspace starts, when the file system is restored from backup.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder getBackupBuilder() {
+          bitField0_ |= 0x00000008;
+          onChanged();
+          return getBackupFieldBuilder().getBuilder();
+        }
+        /**
+         * <pre>
+         * backup contains metrics for the backup initializer step
+         * This is set on subsequent workspace starts, when the file system is restored from backup.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getBackupOrBuilder() {
+          if (backupBuilder_ != null) {
+            return backupBuilder_.getMessageOrBuilder();
+          } else {
+            return backup_ == null ?
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : backup_;
+          }
+        }
+        /**
+         * <pre>
+         * backup contains metrics for the backup initializer step
+         * This is set on subsequent workspace starts, when the file system is restored from backup.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric backup = 4 [json_name = "backup"];</code>
+         */
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>
+            getBackupFieldBuilder() {
+          if (backupBuilder_ == null) {
+            backupBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>(
+                    getBackup(),
+                    getParentForChildren(),
+                    isClean());
+            backup_ = null;
+          }
+          return backupBuilder_;
+        }
+
+        private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric prebuild_;
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder> prebuildBuilder_;
+        /**
+         * <pre>
+         * prebuild contains metrics for the prebuild initializer step
+         * This is set if the workspace is based on a prebuild.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+         * @return Whether the prebuild field is set.
+         */
+        public boolean hasPrebuild() {
+          return ((bitField0_ & 0x00000010) != 0);
+        }
+        /**
+         * <pre>
+         * prebuild contains metrics for the prebuild initializer step
+         * This is set if the workspace is based on a prebuild.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+         * @return The prebuild.
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getPrebuild() {
+          if (prebuildBuilder_ == null) {
+            return prebuild_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : prebuild_;
+          } else {
+            return prebuildBuilder_.getMessage();
+          }
+        }
+        /**
+         * <pre>
+         * prebuild contains metrics for the prebuild initializer step
+         * This is set if the workspace is based on a prebuild.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+         */
+        public Builder setPrebuild(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (prebuildBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            prebuild_ = value;
+          } else {
+            prebuildBuilder_.setMessage(value);
+          }
+          bitField0_ |= 0x00000010;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * prebuild contains metrics for the prebuild initializer step
+         * This is set if the workspace is based on a prebuild.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+         */
+        public Builder setPrebuild(
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder builderForValue) {
+          if (prebuildBuilder_ == null) {
+            prebuild_ = builderForValue.build();
+          } else {
+            prebuildBuilder_.setMessage(builderForValue.build());
+          }
+          bitField0_ |= 0x00000010;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * prebuild contains metrics for the prebuild initializer step
+         * This is set if the workspace is based on a prebuild.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+         */
+        public Builder mergePrebuild(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (prebuildBuilder_ == null) {
+            if (((bitField0_ & 0x00000010) != 0) &&
+              prebuild_ != null &&
+              prebuild_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance()) {
+              getPrebuildBuilder().mergeFrom(value);
+            } else {
+              prebuild_ = value;
+            }
+          } else {
+            prebuildBuilder_.mergeFrom(value);
+          }
+          if (prebuild_ != null) {
+            bitField0_ |= 0x00000010;
+            onChanged();
+          }
+          return this;
+        }
+        /**
+         * <pre>
+         * prebuild contains metrics for the prebuild initializer step
+         * This is set if the workspace is based on a prebuild.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+         */
+        public Builder clearPrebuild() {
+          bitField0_ = (bitField0_ & ~0x00000010);
+          prebuild_ = null;
+          if (prebuildBuilder_ != null) {
+            prebuildBuilder_.dispose();
+            prebuildBuilder_ = null;
+          }
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * prebuild contains metrics for the prebuild initializer step
+         * This is set if the workspace is based on a prebuild.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder getPrebuildBuilder() {
+          bitField0_ |= 0x00000010;
+          onChanged();
+          return getPrebuildFieldBuilder().getBuilder();
+        }
+        /**
+         * <pre>
+         * prebuild contains metrics for the prebuild initializer step
+         * This is set if the workspace is based on a prebuild.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getPrebuildOrBuilder() {
+          if (prebuildBuilder_ != null) {
+            return prebuildBuilder_.getMessageOrBuilder();
+          } else {
+            return prebuild_ == null ?
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : prebuild_;
+          }
+        }
+        /**
+         * <pre>
+         * prebuild contains metrics for the prebuild initializer step
+         * This is set if the workspace is based on a prebuild.
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric prebuild = 5 [json_name = "prebuild"];</code>
+         */
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>
+            getPrebuildFieldBuilder() {
+          if (prebuildBuilder_ == null) {
+            prebuildBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>(
+                    getPrebuild(),
+                    getParentForChildren(),
+                    isClean());
+            prebuild_ = null;
+          }
+          return prebuildBuilder_;
+        }
+
+        private io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric composite_;
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder> compositeBuilder_;
+        /**
+         * <pre>
+         * composite contains metrics for the composite initializer step
+         * This reports the total if multiple steps are run to initialize the workspace content.
+         * Examples are:
+         * - "additionalFiles" injected into the workspace
+         * - "additionalRepositories" configured
+         * - incremental Prebuilds
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+         * @return Whether the composite field is set.
+         */
+        public boolean hasComposite() {
+          return ((bitField0_ & 0x00000020) != 0);
+        }
+        /**
+         * <pre>
+         * composite contains metrics for the composite initializer step
+         * This reports the total if multiple steps are run to initialize the workspace content.
+         * Examples are:
+         * - "additionalFiles" injected into the workspace
+         * - "additionalRepositories" configured
+         * - incremental Prebuilds
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+         * @return The composite.
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric getComposite() {
+          if (compositeBuilder_ == null) {
+            return composite_ == null ? io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : composite_;
+          } else {
+            return compositeBuilder_.getMessage();
+          }
+        }
+        /**
+         * <pre>
+         * composite contains metrics for the composite initializer step
+         * This reports the total if multiple steps are run to initialize the workspace content.
+         * Examples are:
+         * - "additionalFiles" injected into the workspace
+         * - "additionalRepositories" configured
+         * - incremental Prebuilds
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+         */
+        public Builder setComposite(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (compositeBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            composite_ = value;
+          } else {
+            compositeBuilder_.setMessage(value);
+          }
+          bitField0_ |= 0x00000020;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * composite contains metrics for the composite initializer step
+         * This reports the total if multiple steps are run to initialize the workspace content.
+         * Examples are:
+         * - "additionalFiles" injected into the workspace
+         * - "additionalRepositories" configured
+         * - incremental Prebuilds
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+         */
+        public Builder setComposite(
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder builderForValue) {
+          if (compositeBuilder_ == null) {
+            composite_ = builderForValue.build();
+          } else {
+            compositeBuilder_.setMessage(builderForValue.build());
+          }
+          bitField0_ |= 0x00000020;
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * composite contains metrics for the composite initializer step
+         * This reports the total if multiple steps are run to initialize the workspace content.
+         * Examples are:
+         * - "additionalFiles" injected into the workspace
+         * - "additionalRepositories" configured
+         * - incremental Prebuilds
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+         */
+        public Builder mergeComposite(io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric value) {
+          if (compositeBuilder_ == null) {
+            if (((bitField0_ & 0x00000020) != 0) &&
+              composite_ != null &&
+              composite_ != io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance()) {
+              getCompositeBuilder().mergeFrom(value);
+            } else {
+              composite_ = value;
+            }
+          } else {
+            compositeBuilder_.mergeFrom(value);
+          }
+          if (composite_ != null) {
+            bitField0_ |= 0x00000020;
+            onChanged();
+          }
+          return this;
+        }
+        /**
+         * <pre>
+         * composite contains metrics for the composite initializer step
+         * This reports the total if multiple steps are run to initialize the workspace content.
+         * Examples are:
+         * - "additionalFiles" injected into the workspace
+         * - "additionalRepositories" configured
+         * - incremental Prebuilds
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+         */
+        public Builder clearComposite() {
+          bitField0_ = (bitField0_ & ~0x00000020);
+          composite_ = null;
+          if (compositeBuilder_ != null) {
+            compositeBuilder_.dispose();
+            compositeBuilder_ = null;
+          }
+          onChanged();
+          return this;
+        }
+        /**
+         * <pre>
+         * composite contains metrics for the composite initializer step
+         * This reports the total if multiple steps are run to initialize the workspace content.
+         * Examples are:
+         * - "additionalFiles" injected into the workspace
+         * - "additionalRepositories" configured
+         * - incremental Prebuilds
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder getCompositeBuilder() {
+          bitField0_ |= 0x00000020;
+          onChanged();
+          return getCompositeFieldBuilder().getBuilder();
+        }
+        /**
+         * <pre>
+         * composite contains metrics for the composite initializer step
+         * This reports the total if multiple steps are run to initialize the workspace content.
+         * Examples are:
+         * - "additionalFiles" injected into the workspace
+         * - "additionalRepositories" configured
+         * - incremental Prebuilds
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+         */
+        public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder getCompositeOrBuilder() {
+          if (compositeBuilder_ != null) {
+            return compositeBuilder_.getMessageOrBuilder();
+          } else {
+            return composite_ == null ?
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.getDefaultInstance() : composite_;
+          }
+        }
+        /**
+         * <pre>
+         * composite contains metrics for the composite initializer step
+         * This reports the total if multiple steps are run to initialize the workspace content.
+         * Examples are:
+         * - "additionalFiles" injected into the workspace
+         * - "additionalRepositories" configured
+         * - incremental Prebuilds
+         * </pre>
+         *
+         * <code>.gitpod.v1.WorkspaceSession.InitializerMetric composite = 6 [json_name = "composite"];</code>
+         */
+        private com.google.protobuf.SingleFieldBuilder<
+            io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>
+            getCompositeFieldBuilder() {
+          if (compositeBuilder_ == null) {
+            compositeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+                io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetric.Builder, io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetricOrBuilder>(
+                    getComposite(),
+                    getParentForChildren(),
+                    isClean());
+            composite_ = null;
+          }
+          return compositeBuilder_;
+        }
+
+        // @@protoc_insertion_point(builder_scope:gitpod.v1.WorkspaceSession.InitializerMetrics)
+      }
+
+      // @@protoc_insertion_point(class_scope:gitpod.v1.WorkspaceSession.InitializerMetrics)
+      private static final io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics();
+      }
+
+      public static io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<InitializerMetrics>
+          PARSER = new com.google.protobuf.AbstractParser<InitializerMetrics>() {
+        @java.lang.Override
+        public InitializerMetrics parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          Builder builder = newBuilder();
+          try {
+            builder.mergeFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(builder.buildPartial());
+          } catch (com.google.protobuf.UninitializedMessageException e) {
+            throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+          } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(e)
+                .setUnfinishedMessage(builder.buildPartial());
+          }
+          return builder.buildPartial();
+        }
+      };
+
+      public static com.google.protobuf.Parser<InitializerMetrics> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<InitializerMetrics> getParserForType() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.WorkspaceOuterClass.WorkspaceSession.InitializerMetrics getDefaultInstanceForType() {
         return DEFAULT_INSTANCE;
       }
 
@@ -65214,6 +68293,16 @@ java.lang.String defaultValue) {
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_WorkspaceSession_Metrics_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_WorkspaceSession_InitializerMetric_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_WorkspaceSession_InitializerMetric_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_WorkspaceSession_InitializerMetrics_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_WorkspaceSession_InitializerMetrics_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -65489,7 +68578,7 @@ java.lang.String defaultValue) {
       "onse\"\207\001\n\021WorkspaceSnapshot\022\016\n\002id\030\001 \001(\tR\002" +
       "id\022!\n\014workspace_id\030\002 \001(\tR\013workspaceId\022?\n" +
       "\rcreation_time\030\003 \001(\0132\032.google.protobuf.T" +
-      "imestampR\014creationTime\"\327\t\n\020WorkspaceSess" +
+      "imestampR\014creationTime\"\357\016\n\020WorkspaceSess" +
       "ion\022\016\n\002id\030\001 \001(\tR\002id\0222\n\tworkspace\030\002 \001(\0132\024" +
       ".gitpod.v1.WorkspaceR\tworkspace\022?\n\rcreat" +
       "ion_time\030\003 \001(\0132\032.google.protobuf.Timesta" +
@@ -65518,61 +68607,78 @@ java.lang.String defaultValue) {
       "er\022\022\n\004name\030\004 \001(\tR\004name\"a\n\007RefType\022\030\n\024REF" +
       "_TYPE_UNSPECIFIED\020\000\022\023\n\017REF_TYPE_BRANCH\020\001" +
       "\022\020\n\014REF_TYPE_TAG\020\002\022\025\n\021REF_TYPE_REVISION\020" +
-      "\003\032e\n\007Metrics\0220\n\024workspace_image_size\030\001 \001" +
-      "(\003R\022workspaceImageSize\022(\n\020total_image_si" +
-      "ze\030\002 \001(\003R\016totalImageSize*o\n\016AdmissionLev" +
-      "el\022\037\n\033ADMISSION_LEVEL_UNSPECIFIED\020\000\022\036\n\032A" +
-      "DMISSION_LEVEL_OWNER_ONLY\020\001\022\034\n\030ADMISSION" +
-      "_LEVEL_EVERYONE\020\0022\323\016\n\020WorkspaceService\022Q" +
-      "\n\014GetWorkspace\022\036.gitpod.v1.GetWorkspaceR" +
-      "equest\032\037.gitpod.v1.GetWorkspaceResponse\"" +
-      "\000\022k\n\024WatchWorkspaceStatus\022&.gitpod.v1.Wa" +
-      "tchWorkspaceStatusRequest\032\'.gitpod.v1.Wa" +
-      "tchWorkspaceStatusResponse\"\0000\001\022W\n\016ListWo" +
-      "rkspaces\022 .gitpod.v1.ListWorkspacesReque" +
-      "st\032!.gitpod.v1.ListWorkspacesResponse\"\000\022" +
-      "l\n\025ListWorkspaceSessions\022\'.gitpod.v1.Lis" +
-      "tWorkspaceSessionsRequest\032(.gitpod.v1.Li" +
-      "stWorkspaceSessionsResponse\"\000\022r\n\027CreateA" +
-      "ndStartWorkspace\022).gitpod.v1.CreateAndSt" +
-      "artWorkspaceRequest\032*.gitpod.v1.CreateAn" +
-      "dStartWorkspaceResponse\"\000\022W\n\016StartWorksp" +
-      "ace\022 .gitpod.v1.StartWorkspaceRequest\032!." +
-      "gitpod.v1.StartWorkspaceResponse\"\000\022Z\n\017Up" +
-      "dateWorkspace\022!.gitpod.v1.UpdateWorkspac" +
-      "eRequest\032\".gitpod.v1.UpdateWorkspaceResp" +
-      "onse\"\000\022T\n\rStopWorkspace\022\037.gitpod.v1.Stop" +
-      "WorkspaceRequest\032 .gitpod.v1.StopWorkspa" +
-      "ceResponse\"\000\022Z\n\017DeleteWorkspace\022!.gitpod" +
-      ".v1.DeleteWorkspaceRequest\032\".gitpod.v1.D" +
-      "eleteWorkspaceResponse\"\000\022i\n\024ListWorkspac" +
-      "eClasses\022&.gitpod.v1.ListWorkspaceClasse" +
-      "sRequest\032\'.gitpod.v1.ListWorkspaceClasse" +
-      "sResponse\"\000\022Z\n\017ParseContextURL\022!.gitpod." +
-      "v1.ParseContextURLRequest\032\".gitpod.v1.Pa" +
-      "rseContextURLResponse\"\000\022u\n\030GetWorkspaceD" +
-      "efaultImage\022*.gitpod.v1.GetWorkspaceDefa" +
-      "ultImageRequest\032+.gitpod.v1.GetWorkspace" +
-      "DefaultImageResponse\"\000\022T\n\rSendHeartBeat\022" +
-      "\037.gitpod.v1.SendHeartBeatRequest\032 .gitpo" +
-      "d.v1.SendHeartBeatResponse\"\000\022o\n\026GetWorks" +
-      "paceOwnerToken\022(.gitpod.v1.GetWorkspaceO" +
-      "wnerTokenRequest\032).gitpod.v1.GetWorkspac" +
-      "eOwnerTokenResponse\"\000\022\204\001\n\035GetWorkspaceEd" +
-      "itorCredentials\022/.gitpod.v1.GetWorkspace" +
-      "EditorCredentialsRequest\0320.gitpod.v1.Get" +
-      "WorkspaceEditorCredentialsResponse\"\000\022r\n\027" +
-      "CreateWorkspaceSnapshot\022).gitpod.v1.Crea" +
-      "teWorkspaceSnapshotRequest\032*.gitpod.v1.C" +
-      "reateWorkspaceSnapshotResponse\"\000\022u\n\030Wait" +
-      "ForWorkspaceSnapshot\022*.gitpod.v1.WaitFor" +
-      "WorkspaceSnapshotRequest\032+.gitpod.v1.Wai" +
-      "tForWorkspaceSnapshotResponse\"\000\022f\n\023Updat" +
-      "eWorkspacePort\022%.gitpod.v1.UpdateWorkspa" +
-      "cePortRequest\032&.gitpod.v1.UpdateWorkspac" +
-      "ePortResponse\"\000BQ\n\026io.gitpod.publicapi.v" +
-      "1Z7github.com/gitpod-io/gitpod/component" +
-      "s/public-api/go/v1b\006proto3"
+      "\003\032\306\001\n\007Metrics\0220\n\024workspace_image_size\030\001 " +
+      "\001(\003R\022workspaceImageSize\022(\n\020total_image_s" +
+      "ize\030\002 \001(\003R\016totalImageSize\022_\n\023initializer" +
+      "_metrics\030\003 \001(\0132..gitpod.v1.WorkspaceSess" +
+      "ion.InitializerMetricsR\022initializerMetri" +
+      "cs\032^\n\021InitializerMetric\0225\n\010duration\030\001 \001(" +
+      "\0132\031.google.protobuf.DurationR\010duration\022\022" +
+      "\n\004size\030\002 \001(\004R\004size\032\323\003\n\022InitializerMetric" +
+      "s\022?\n\003git\030\001 \001(\0132-.gitpod.v1.WorkspaceSess" +
+      "ion.InitializerMetricR\003git\022R\n\rfile_downl" +
+      "oad\030\002 \001(\0132-.gitpod.v1.WorkspaceSession.I" +
+      "nitializerMetricR\014fileDownload\022I\n\010snapsh" +
+      "ot\030\003 \001(\0132-.gitpod.v1.WorkspaceSession.In" +
+      "itializerMetricR\010snapshot\022E\n\006backup\030\004 \001(" +
+      "\0132-.gitpod.v1.WorkspaceSession.Initializ" +
+      "erMetricR\006backup\022I\n\010prebuild\030\005 \001(\0132-.git" +
+      "pod.v1.WorkspaceSession.InitializerMetri" +
+      "cR\010prebuild\022K\n\tcomposite\030\006 \001(\0132-.gitpod." +
+      "v1.WorkspaceSession.InitializerMetricR\tc" +
+      "omposite*o\n\016AdmissionLevel\022\037\n\033ADMISSION_" +
+      "LEVEL_UNSPECIFIED\020\000\022\036\n\032ADMISSION_LEVEL_O" +
+      "WNER_ONLY\020\001\022\034\n\030ADMISSION_LEVEL_EVERYONE\020" +
+      "\0022\323\016\n\020WorkspaceService\022Q\n\014GetWorkspace\022\036" +
+      ".gitpod.v1.GetWorkspaceRequest\032\037.gitpod." +
+      "v1.GetWorkspaceResponse\"\000\022k\n\024WatchWorksp" +
+      "aceStatus\022&.gitpod.v1.WatchWorkspaceStat" +
+      "usRequest\032\'.gitpod.v1.WatchWorkspaceStat" +
+      "usResponse\"\0000\001\022W\n\016ListWorkspaces\022 .gitpo" +
+      "d.v1.ListWorkspacesRequest\032!.gitpod.v1.L" +
+      "istWorkspacesResponse\"\000\022l\n\025ListWorkspace" +
+      "Sessions\022\'.gitpod.v1.ListWorkspaceSessio" +
+      "nsRequest\032(.gitpod.v1.ListWorkspaceSessi" +
+      "onsResponse\"\000\022r\n\027CreateAndStartWorkspace" +
+      "\022).gitpod.v1.CreateAndStartWorkspaceRequ" +
+      "est\032*.gitpod.v1.CreateAndStartWorkspaceR" +
+      "esponse\"\000\022W\n\016StartWorkspace\022 .gitpod.v1." +
+      "StartWorkspaceRequest\032!.gitpod.v1.StartW" +
+      "orkspaceResponse\"\000\022Z\n\017UpdateWorkspace\022!." +
+      "gitpod.v1.UpdateWorkspaceRequest\032\".gitpo" +
+      "d.v1.UpdateWorkspaceResponse\"\000\022T\n\rStopWo" +
+      "rkspace\022\037.gitpod.v1.StopWorkspaceRequest" +
+      "\032 .gitpod.v1.StopWorkspaceResponse\"\000\022Z\n\017" +
+      "DeleteWorkspace\022!.gitpod.v1.DeleteWorksp" +
+      "aceRequest\032\".gitpod.v1.DeleteWorkspaceRe" +
+      "sponse\"\000\022i\n\024ListWorkspaceClasses\022&.gitpo" +
+      "d.v1.ListWorkspaceClassesRequest\032\'.gitpo" +
+      "d.v1.ListWorkspaceClassesResponse\"\000\022Z\n\017P" +
+      "arseContextURL\022!.gitpod.v1.ParseContextU" +
+      "RLRequest\032\".gitpod.v1.ParseContextURLRes" +
+      "ponse\"\000\022u\n\030GetWorkspaceDefaultImage\022*.gi" +
+      "tpod.v1.GetWorkspaceDefaultImageRequest\032" +
+      "+.gitpod.v1.GetWorkspaceDefaultImageResp" +
+      "onse\"\000\022T\n\rSendHeartBeat\022\037.gitpod.v1.Send" +
+      "HeartBeatRequest\032 .gitpod.v1.SendHeartBe" +
+      "atResponse\"\000\022o\n\026GetWorkspaceOwnerToken\022(" +
+      ".gitpod.v1.GetWorkspaceOwnerTokenRequest" +
+      "\032).gitpod.v1.GetWorkspaceOwnerTokenRespo" +
+      "nse\"\000\022\204\001\n\035GetWorkspaceEditorCredentials\022" +
+      "/.gitpod.v1.GetWorkspaceEditorCredential" +
+      "sRequest\0320.gitpod.v1.GetWorkspaceEditorC" +
+      "redentialsResponse\"\000\022r\n\027CreateWorkspaceS" +
+      "napshot\022).gitpod.v1.CreateWorkspaceSnaps" +
+      "hotRequest\032*.gitpod.v1.CreateWorkspaceSn" +
+      "apshotResponse\"\000\022u\n\030WaitForWorkspaceSnap" +
+      "shot\022*.gitpod.v1.WaitForWorkspaceSnapsho" +
+      "tRequest\032+.gitpod.v1.WaitForWorkspaceSna" +
+      "pshotResponse\"\000\022f\n\023UpdateWorkspacePort\022%" +
+      ".gitpod.v1.UpdateWorkspacePortRequest\032&." +
+      "gitpod.v1.UpdateWorkspacePortResponse\"\000B" +
+      "Q\n\026io.gitpod.publicapi.v1Z7github.com/gi" +
+      "tpod-io/gitpod/components/public-api/go/" +
+      "v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -65996,7 +69102,19 @@ java.lang.String defaultValue) {
     internal_static_gitpod_v1_WorkspaceSession_Metrics_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_WorkspaceSession_Metrics_descriptor,
-        new java.lang.String[] { "WorkspaceImageSize", "TotalImageSize", });
+        new java.lang.String[] { "WorkspaceImageSize", "TotalImageSize", "InitializerMetrics", });
+    internal_static_gitpod_v1_WorkspaceSession_InitializerMetric_descriptor =
+      internal_static_gitpod_v1_WorkspaceSession_descriptor.getNestedTypes().get(3);
+    internal_static_gitpod_v1_WorkspaceSession_InitializerMetric_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_WorkspaceSession_InitializerMetric_descriptor,
+        new java.lang.String[] { "Duration", "Size", });
+    internal_static_gitpod_v1_WorkspaceSession_InitializerMetrics_descriptor =
+      internal_static_gitpod_v1_WorkspaceSession_descriptor.getNestedTypes().get(4);
+    internal_static_gitpod_v1_WorkspaceSession_InitializerMetrics_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_WorkspaceSession_InitializerMetrics_descriptor,
+        new java.lang.String[] { "Git", "FileDownload", "Snapshot", "Backup", "Prebuild", "Composite", });
     descriptor.resolveAllFeaturesImmutable();
     io.gitpod.publicapi.v1.Editor.getDescriptor();
     io.gitpod.publicapi.v1.Envvar.getDescriptor();
