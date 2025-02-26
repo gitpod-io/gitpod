@@ -22,6 +22,9 @@ Key areas of focus include:
   - ws-manager-mk2: Kubernetes controller for managing workspace lifecycle
   - supervisor: Init process that runs inside each workspace container
   - ws-daemon: Node-level daemon for workspace operations
+  - ide-service: Manages IDE configurations and resolves workspace IDE requirements
+  - registry-facade: Modifies container images by adding layers for workspaces
+  - image-builder-mk3: Builds custom workspace images from user-defined Dockerfiles
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation
@@ -34,15 +37,11 @@ As work progresses, this section will continue to be updated to reflect:
 
 The immediate next steps are:
 
-1. **Continue Component Documentation**: Document additional key components such as:
-   - ide-service
-   - registry-facade
-   - image-builder
-2. **Explore Component Interactions**: Understand how components interact with each other
-3. **Set Up Development Environment**: Configure a local development environment for effective testing
-4. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
-5. **Establish Testing Approach**: Define how changes will be tested and validated
-6. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
+1. **Explore Component Interactions**: Understand how components interact with each other
+2. **Set Up Development Environment**: Configure a local development environment for effective testing
+3. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
+4. **Establish Testing Approach**: Define how changes will be tested and validated
+5. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
 
 ## Active Decisions and Considerations
 
