@@ -31,6 +31,9 @@ Key areas of focus include:
   - gitpod-cli: Command-line interface for interacting with Gitpod workspaces
   - gitpod-db: Database layer for the Gitpod platform
   - gitpod-protocol: Core type definitions and shared protocol library
+  - ide: Packages and manages IDEs available in Gitpod workspaces
+  - ide-proxy: Serves static IDE-related assets and proxies requests
+  - ws-manager-bridge: Bridges between workspace managers and the rest of the platform
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation
