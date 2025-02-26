@@ -6,7 +6,7 @@ We are in the early stages of our work with the Gitpod codebase. The current sta
 
 - **Memory Bank**: Initial setup complete with core files and component documentation
 - **Codebase Understanding**: Basic overview obtained, with detailed understanding of key components
-- **Component Documentation**: Documentation created for 4 key components
+- **Component Documentation**: Documentation created for 6 key components
 - **Development Environment**: Not yet configured
 - **Task Identification**: Not yet started
 
@@ -19,6 +19,8 @@ Our current contributions:
   - content-service
   - dashboard
   - ws-manager-mk2
+  - supervisor
+  - ws-daemon
 
 The existing functionality of the Gitpod platform:
 
@@ -40,8 +42,6 @@ The existing functionality of the Gitpod platform:
 
 ### Immediate Tasks
 - Document additional key components:
-  - supervisor
-  - ws-daemon
   - ide-service
   - registry-facade
   - image-builder
@@ -68,7 +68,8 @@ As we begin working with the codebase, we have not yet identified specific issue
 ### Completed Milestones
 - Memory bank initialization
 - Component documentation structure
-- Documentation of first set of key components
+- Documentation of first set of key components (blobserve, content-service, dashboard, ws-manager-mk2)
+- Documentation of second set of key components (supervisor, ws-daemon)
 
 ### Upcoming Milestones
 - Documentation of remaining key components
@@ -100,6 +101,8 @@ No specific blockers or dependencies have been identified yet. This section will
   - Documented content-service component
   - Documented dashboard component
   - Documented ws-manager-mk2 component
+  - Documented supervisor component
+  - Documented ws-daemon component
 
 ## Next Evaluation Point
 

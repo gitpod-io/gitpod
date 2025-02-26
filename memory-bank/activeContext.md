@@ -20,6 +20,8 @@ Key areas of focus include:
   - content-service: Manages various types of content within the platform
   - dashboard: Web-based user interface for Gitpod
   - ws-manager-mk2: Kubernetes controller for managing workspace lifecycle
+  - supervisor: Init process that runs inside each workspace container
+  - ws-daemon: Node-level daemon for workspace operations
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation
@@ -33,8 +35,6 @@ As work progresses, this section will continue to be updated to reflect:
 The immediate next steps are:
 
 1. **Continue Component Documentation**: Document additional key components such as:
-   - supervisor
-   - ws-daemon
    - ide-service
    - registry-facade
    - image-builder
