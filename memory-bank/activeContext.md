@@ -36,6 +36,8 @@ Key areas of focus include:
   - ws-manager-bridge: Bridges between workspace managers and the rest of the platform
   - ide-metrics: Collects and processes metrics and error reports from IDE components
   - local-app: Provides tools for interacting with Gitpod workspaces from local machine
+  - public-api-server: Provides a stable, versioned API for programmatic access to Gitpod
+  - usage: Tracks, calculates, and manages workspace usage and billing
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation
