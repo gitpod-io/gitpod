@@ -40,6 +40,9 @@ Key areas of focus include:
   - usage: Tracks, calculates, and manages workspace usage and billing
   - common-go: Foundational Go library providing shared utilities across services
   - workspacekit: Manages container setup and namespace isolation for workspaces
+  - spicedb: Provides authorization and permission management
+  - scrubber: Removes or masks sensitive information from data
+  - service-waiter: Waits for services to become available
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation

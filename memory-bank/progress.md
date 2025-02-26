@@ -6,7 +6,7 @@ We are in the early stages of our work with the Gitpod codebase. The current sta
 
 - **Memory Bank**: Initial setup complete with core files and component documentation
 - **Codebase Understanding**: Basic overview obtained, with detailed understanding of key components
-- **Component Documentation**: Documentation created for 24 key components
+- **Component Documentation**: Documentation created for 27 key components
 - **Development Environment**: Not yet configured
 - **Task Identification**: Not yet started
 
@@ -39,6 +39,9 @@ Our current contributions:
   - usage
   - common-go
   - workspacekit
+  - spicedb
+  - scrubber
+  - service-waiter
 
 The existing functionality of the Gitpod platform:
 
@@ -93,6 +96,7 @@ As we begin working with the codebase, we have not yet identified specific issue
 - Documentation of eighth set of key components (ide-metrics, local-app)
 - Documentation of ninth set of key components (public-api-server, usage)
 - Documentation of tenth set of key components (common-go, workspacekit)
+- Documentation of eleventh set of key components (spicedb, scrubber, service-waiter)
 
 ### Upcoming Milestones
 - Documentation of remaining key components
@@ -144,6 +148,9 @@ No specific blockers or dependencies have been identified yet. This section will
   - Documented usage component
   - Documented common-go component
   - Documented workspacekit component
+  - Documented spicedb component
+  - Documented scrubber component
+  - Documented service-waiter component
 
 ## Next Evaluation Point
 
