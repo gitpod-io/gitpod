@@ -43,6 +43,9 @@ Key areas of focus include:
   - spicedb: Provides authorization and permission management
   - scrubber: Removes or masks sensitive information from data
   - service-waiter: Waits for services to become available
+  - docker-up: Sets up and manages Docker within workspace containers
+  - image-builder-bob: Builds and pushes workspace images during workspace startup
+  - node-labeler: Manages node labels and annotations for workspace scheduling
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation

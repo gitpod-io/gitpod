@@ -6,7 +6,7 @@ We are in the early stages of our work with the Gitpod codebase. The current sta
 
 - **Memory Bank**: Initial setup complete with core files and component documentation
 - **Codebase Understanding**: Basic overview obtained, with detailed understanding of key components
-- **Component Documentation**: Documentation created for 27 key components
+- **Component Documentation**: Documentation created for 30 key components
 - **Development Environment**: Not yet configured
 - **Task Identification**: Not yet started
 
@@ -42,6 +42,9 @@ Our current contributions:
   - spicedb
   - scrubber
   - service-waiter
+  - docker-up
+  - image-builder-bob
+  - node-labeler
 
 The existing functionality of the Gitpod platform:
 
@@ -97,6 +100,7 @@ As we begin working with the codebase, we have not yet identified specific issue
 - Documentation of ninth set of key components (public-api-server, usage)
 - Documentation of tenth set of key components (common-go, workspacekit)
 - Documentation of eleventh set of key components (spicedb, scrubber, service-waiter)
+- Documentation of twelfth set of key components (docker-up, image-builder-bob, node-labeler)
 
 ### Upcoming Milestones
 - Documentation of remaining key components
@@ -151,6 +155,9 @@ No specific blockers or dependencies have been identified yet. This section will
   - Documented spicedb component
   - Documented scrubber component
   - Documented service-waiter component
+  - Documented docker-up component
+  - Documented image-builder-bob component
+  - Documented node-labeler component
 
 ## Next Evaluation Point
 
