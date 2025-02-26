@@ -2,33 +2,47 @@
 
 ## Current Work Focus
 
-As of the memory bank initialization, we are focusing on understanding the Gitpod codebase and architecture. The primary goal is to build a comprehensive knowledge base that will allow for effective development, troubleshooting, and enhancement of the Gitpod platform.
+We are focusing on understanding the Gitpod codebase and architecture. The primary goal is to build a comprehensive knowledge base that will allow for effective development, troubleshooting, and enhancement of the Gitpod platform.
 
 Key areas of focus include:
 
 1. **System Architecture Understanding**: Mapping out the relationships between components and services
-2. **Development Workflow**: Understanding how to effectively develop and test changes
-3. **Documentation**: Creating a comprehensive memory bank for future reference
+2. **Component Documentation**: Creating detailed documentation for each component
+3. **Development Workflow**: Understanding how to effectively develop and test changes
+4. **Documentation**: Maintaining a comprehensive memory bank for future reference
 
 ## Recent Changes
 
-The memory bank has just been initialized, so there are no recent changes to track yet. As work progresses, this section will be updated to reflect:
+- Created the initial memory bank structure with core files
+- Added a components subdirectory to the memory bank
+- Created detailed documentation for key components:
+  - blobserve: Service that provides static assets from OCI images
+  - content-service: Manages various types of content within the platform
+  - dashboard: Web-based user interface for Gitpod
+  - ws-manager-mk2: Kubernetes controller for managing workspace lifecycle
 
+As work progresses, this section will continue to be updated to reflect:
+- Additional component documentation
 - Code changes implemented
 - Bug fixes
 - Feature additions
 - Refactoring efforts
-- Documentation improvements
 
 ## Next Steps
 
 The immediate next steps are:
 
-1. **Explore Component Structure**: Dive deeper into specific components to understand their implementation details
-2. **Set Up Development Environment**: Configure a local development environment for effective testing
-3. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
-4. **Establish Testing Approach**: Define how changes will be tested and validated
-5. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
+1. **Continue Component Documentation**: Document additional key components such as:
+   - supervisor
+   - ws-daemon
+   - ide-service
+   - registry-facade
+   - image-builder
+2. **Explore Component Interactions**: Understand how components interact with each other
+3. **Set Up Development Environment**: Configure a local development environment for effective testing
+4. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
+5. **Establish Testing Approach**: Define how changes will be tested and validated
+6. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
 
 ## Active Decisions and Considerations
 
@@ -68,12 +82,15 @@ No active experiments are currently in progress. This section will be updated as
 
 ## Recent Learnings
 
-As we begin working with the Gitpod codebase, we'll document key learnings here. This will include:
+Initial exploration of the Gitpod codebase has revealed:
 
-- Insights about system behavior
-- Unexpected interactions between components
-- Performance characteristics
-- Common patterns and anti-patterns
-- Effective debugging techniques
+- **Microservices Architecture**: Gitpod is built as a collection of loosely coupled services, each with specific responsibilities
+- **Go and TypeScript**: Backend services are primarily written in Go, while frontend components use TypeScript/React
+- **Kubernetes Native**: Many components are designed as Kubernetes controllers or operators
+- **gRPC Communication**: Services communicate using gRPC for efficient, typed communication
+- **Component Patterns**: Components follow consistent patterns:
+  - Go services typically have a cmd/ directory with command implementations
+  - TypeScript services use React and modern frontend practices
+  - Most components have a clear separation between API definitions and implementations
 
 This section will be continuously updated as new insights are gained through working with the system.
