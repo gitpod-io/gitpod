@@ -34,6 +34,8 @@ Key areas of focus include:
   - ide: Packages and manages IDEs available in Gitpod workspaces
   - ide-proxy: Serves static IDE-related assets and proxies requests
   - ws-manager-bridge: Bridges between workspace managers and the rest of the platform
+  - ide-metrics: Collects and processes metrics and error reports from IDE components
+  - local-app: Provides tools for interacting with Gitpod workspaces from local machine
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation

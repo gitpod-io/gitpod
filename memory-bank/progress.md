@@ -6,7 +6,7 @@ We are in the early stages of our work with the Gitpod codebase. The current sta
 
 - **Memory Bank**: Initial setup complete with core files and component documentation
 - **Codebase Understanding**: Basic overview obtained, with detailed understanding of key components
-- **Component Documentation**: Documentation created for 18 key components
+- **Component Documentation**: Documentation created for 20 key components
 - **Development Environment**: Not yet configured
 - **Task Identification**: Not yet started
 
@@ -33,6 +33,8 @@ Our current contributions:
   - ide
   - ide-proxy
   - ws-manager-bridge
+  - ide-metrics
+  - local-app
 
 The existing functionality of the Gitpod platform:
 
@@ -84,6 +86,7 @@ As we begin working with the codebase, we have not yet identified specific issue
 - Documentation of fifth set of key components (gitpod-cli, gitpod-db)
 - Documentation of sixth set of key components (gitpod-protocol)
 - Documentation of seventh set of key components (ide, ide-proxy, ws-manager-bridge)
+- Documentation of eighth set of key components (ide-metrics, local-app)
 
 ### Upcoming Milestones
 - Documentation of remaining key components
@@ -129,6 +132,8 @@ No specific blockers or dependencies have been identified yet. This section will
   - Documented ide component
   - Documented ide-proxy component
   - Documented ws-manager-bridge component
+  - Documented ide-metrics component
+  - Documented local-app component
 
 ## Next Evaluation Point
 
