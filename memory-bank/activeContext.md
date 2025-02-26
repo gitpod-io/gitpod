@@ -38,6 +38,8 @@ Key areas of focus include:
   - local-app: Provides tools for interacting with Gitpod workspaces from local machine
   - public-api-server: Provides a stable, versioned API for programmatic access to Gitpod
   - usage: Tracks, calculates, and manages workspace usage and billing
+  - common-go: Foundational Go library providing shared utilities across services
+  - workspacekit: Manages container setup and namespace isolation for workspaces
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation
