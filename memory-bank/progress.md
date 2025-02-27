@@ -68,8 +68,10 @@ The existing functionality of the Gitpod platform:
 ## What's Left to Build
 
 ### Immediate Tasks
-- Explore component interactios
+- Explore component interactions
 - Set up local development environment
+- Explore build system approaches (in-tree and Leeway)
+- Test component builds for different component types
 - Identify specific components for deeper exploration
 - Establish testing methodology
 - Create initial contribution plan
@@ -105,9 +107,12 @@ As we begin working with the codebase, we have not yet identified specific issue
 - Documentation of eleventh set of key components (spicedb, scrubber, service-waiter)
 - Documentation of twelfth set of key components (docker-up, image-builder-bob, node-labeler)
 - Documentation of thirteenth set of key components (openvsx-proxy, scheduler-extender, ipfs)
+- Documentation of first set of API components (content-service-api, ide-metrics-api, ide-service-api)
+- Documentation of second set of API components (image-builder-api, local-app-api, registry-facade-api)
+- Documentation of third set of API components (supervisor-api, usage-api, ws-daemon-api)
+- Documentation of fourth set of API components (ws-manager-api, ws-manager-bridge-api)
 
 ### Upcoming Milestones
-- Documentation of remaining key components
 - Development environment setup
 - First component deep dive
 - Initial contribution
@@ -165,6 +170,39 @@ No specific blockers or dependencies have been identified yet. This section will
   - Documented openvsx-proxy component
   - Documented scheduler-extender component
   - Documented ipfs component
+
+- **2/27/2025**:
+  - Documented build system approaches:
+    - In-tree builds using language-specific tools (yarn, go)
+    - Out-of-tree builds using Leeway
+  - Updated techContext.md with detailed build process information
+  - Updated .clinerules with build patterns and commands
+  - Added build information tracking to memory bank maintenance procedures
+  - Updated documentation approach to include API components:
+    - Removed exclusion of "*-api" components from documentation
+    - Identified 11 API components that need documentation
+    - Updated .clinerules to reflect new documentation approach
+    - Updated activeContext.md and progress.md with new documentation tasks
+  - Documented first set of API components:
+    - content-service-api: Interfaces for managing workspace content, blobs, logs, and IDE plugins
+    - ide-metrics-api: Interfaces for collecting metrics and error reports from IDE components
+    - ide-service-api: Interfaces for managing IDE configurations and resolving workspace IDE requirements
+  - Enhanced API component documentation with code generation information:
+    - Added details on how to regenerate code from protobuf definitions
+    - Documented the implementation details of the generation process
+    - Included instructions for building components after code regeneration
+    - Updated .clinerules to standardize API documentation with code generation sections
+  - Documented second set of API components:
+    - image-builder-api: Interfaces for building Docker images for workspaces
+    - local-app-api: Interfaces for communication between local machines and remote workspaces
+    - registry-facade-api: Interfaces for dynamically assembling workspace container images
+  - Documented third set of API components:
+    - supervisor-api: Interfaces for workspace management, terminal handling, and port forwarding
+    - usage-api: Interfaces for tracking, calculating, and managing workspace usage and billing
+    - ws-daemon-api: Interfaces for workspace content management and container operations
+  - Documented fourth set of API components:
+    - ws-manager-api: Interfaces for managing the lifecycle of workspaces in Kubernetes clusters
+    - ws-manager-bridge-api: Interfaces for dynamic management of workspace clusters
 
 ## Next Evaluation Point
 

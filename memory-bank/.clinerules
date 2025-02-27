@@ -26,19 +26,35 @@ This file captures important patterns, preferences, and project intelligence tha
 
 ## Development Workflow
 
-- **Build System**: Use Leeway for building components
-  - `leeway build` to build specific components
-  - `leeway exec` to run commands across components
+- **Build Approaches**:
+  - **In-tree builds** (primary for local development):
+    - TypeScript components: Use `yarn` commands defined in package.json
+      - `yarn build`: Compile the component
+      - `yarn test`: Run tests
+      - `yarn lint`: Check code style
+      - `yarn watch`: Watch for changes and rebuild
+    - Go components: Use standard Go tools
+      - `go build ./...`: Build all packages
+      - `go test ./...`: Test all packages
+      - `go run main.go`: Build and run
+
+  - **Out-of-tree builds** (Leeway, primary for CI):
+    - `leeway build components/component-name:app`: Build a specific component
+    - `leeway build -D components/component-name:app`: Build with dependencies
+    - `leeway exec --package components/component-name:app -- command`: Run a command for a package
 
 - **Testing**:
   - Unit tests alongside code
   - Integration tests in separate directories
   - End-to-end tests in the `test/` directory
+  - Component-specific test commands in package.json (for TypeScript)
+  - Go tests use standard `go test` command
 
 - **Local Development**:
   - Use Gitpod workspaces for development (dogfooding)
   - Components can be run individually for testing
   - Preview environments for testing changes
+  - Use in-tree builds for rapid iteration during development
 
 ## Critical Implementation Paths
 
@@ -76,9 +92,12 @@ This file captures important patterns, preferences, and project intelligence tha
 - **Memory Bank Documentation**:
   - Component-specific documentation is stored in `memory-bank/components/` directory
   - Each component gets its own markdown file with detailed information about its purpose, architecture, and implementation
-  - API components (with "*-api" suffix) should NOT be documented separately as they are typically just interface definitions
-  - Component documentation should focus on the main service components that implement business logic
+  - Component documentation should focus on both service components that implement business logic and API components that define interfaces
   - Documentation follows a consistent structure with sections for Overview, Purpose, Architecture, Key Features, etc.
+  - API component documentation should include a "Code Generation and Building" section that explains:
+    - How to regenerate code from protobuf definitions
+    - The implementation details of the generation process
+    - How to build components that depend on the API after regeneration
 
 ## Evolution of Project Decisions
 
@@ -92,15 +111,32 @@ This section will be updated as I learn about how and why certain architectural 
   3. Make it easier to find information about specific components
   4. Enable incremental updates to component documentation without affecting other files
 
-- **API Component Exclusion**: The decision to exclude "*-api" components from separate documentation was made because:
-  1. API components primarily contain interface definitions, not implementation logic
-  2. The interfaces are typically documented within the main service component that implements them
-  3. Documenting API components separately would create redundancy
-  4. The focus should be on documenting the service components that implement business logic
+- **API Component Documentation**: The decision to include "*-api" components in separate documentation was made because:
+  1. API components define critical interfaces between services
+  2. Understanding these interfaces is essential for developers working across components
+  3. API documentation helps clarify system boundaries and communication patterns
+  4. Separate documentation makes it easier to track API changes and versioning
 
 ## User Preferences
 
 This section will be updated as I learn about specific user preferences for working with the codebase.
+
+## Build and Test Information
+
+When working with components, I should always document:
+
+- **Build Commands**: Document any new or component-specific build commands I encounter
+- **Test Commands**: Document how to run tests for each component
+- **Dependencies**: Note any special dependencies required for building or testing
+- **Common Issues**: Document common build or test issues and their solutions
+- **Performance Considerations**: Note any performance considerations for builds
+
+Whenever I encounter new build patterns or commands, I should update:
+1. The relevant component documentation in `memory-bank/components/`
+2. The `.clinerules` file with general patterns
+3. The `techContext.md` file if it represents a significant pattern
+
+This information is critical for effective development work, as being able to build and test components is fundamental to making changes and verifying their correctness.
 
 ---
 

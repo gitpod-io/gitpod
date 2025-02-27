@@ -42,13 +42,57 @@ The project uses a Gitpod-based development workflow (dogfooding), with the foll
 4. **Dev Containers**: Development occurs in containers that mirror production
 
 ### Build Process
-1. **Leeway**: Custom build system that manages the complex dependencies between components
-2. **Component Compilation**: Each component is compiled independently
-   - TypeScript components use `yarn build`
-   - Go components use `go build`
-   - Java components use Gradle
-3. **Docker Images**: Components are packaged as Docker images
-4. **Helm Charts**: Deployment configurations are managed as Helm charts
+
+Gitpod uses two primary approaches for building components:
+
+#### 1. In-tree Builds (Primary for Local Development)
+Components are built directly in the workspace using language-specific tools:
+
+- **TypeScript/JavaScript Components**:
+  - Commands are defined in each component's `package.json`
+  - Common commands:
+    - `yarn build`: Compiles the component
+    - `yarn test`: Runs unit tests
+    - `yarn lint`: Checks code style
+    - `yarn watch`: Watches for changes and rebuilds automatically
+  - Example (from server component):
+    ```bash
+    cd components/server
+    yarn build        # Build the component
+    yarn test:unit    # Run unit tests
+    yarn test:db      # Run database tests
+    ```
+
+- **Go Components**:
+  - Use standard Go tools
+  - Common commands:
+    - `go build`: Compiles the component
+    - `go test`: Runs tests
+    - `go run`: Builds and runs the component
+  - Example:
+    ```bash
+    cd components/ws-daemon
+    go build ./...    # Build all packages
+    go test ./...     # Test all packages
+    ```
+
+#### 2. Leeway Builds (Out-of-tree, Primary for CI)
+Leeway is a custom build tool that:
+- Copies relevant sources into a separate file tree
+- Manages complex dependencies between components
+- Generates build artifacts for CI/CD pipelines
+- Can also be run from inside the workspace
+
+Common Leeway commands:
+```bash
+leeway build components/server:app    # Build a specific component
+leeway build -D components/server:app # Build with dependencies
+leeway exec --package components/server:app -- yarn test  # Run a command for a package
+```
+
+#### 3. Component Packaging
+- **Docker Images**: Components are packaged as Docker images using `leeway.Dockerfile` files
+- **Helm Charts**: Deployment configurations are managed as Helm charts for Kubernetes deployment
 
 ### Testing Strategy
 1. **Unit Tests**: Component-level tests for individual functions and classes

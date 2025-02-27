@@ -18,7 +18,7 @@ Key areas of focus include:
 - Created detailed documentation for key components:
   - blobserve: Service that provides static assets from OCI images
   - content-service: Manages various types of content within the platform
-  - dashboard: Web-based user interface for Gitpod
+  - dashboard: Web-based user inSterface for Gitpod
   - ws-manager-mk2: Kubernetes controller for managing workspace lifecycle
   - supervisor: Init process that runs inside each workspace container
   - ws-daemon: Node-level daemon for workspace operations
@@ -49,6 +49,23 @@ Key areas of focus include:
   - openvsx-proxy: Caching proxy service for the OpenVSX registry
   - scheduler-extender: Extends Kubernetes scheduling capabilities for workspaces
   - ipfs: Provides distributed content-addressable storage for container images
+- Created documentation for API components:
+  - content-service-api: Interfaces for managing workspace content, blobs, logs, and IDE plugins
+  - ide-metrics-api: Interfaces for collecting metrics and error reports from IDE components
+  - ide-service-api: Interfaces for managing IDE configurations and resolving workspace IDE requirements
+  - image-builder-api: Interfaces for building Docker images for workspaces
+  - local-app-api: Interfaces for communication between local machines and remote workspaces
+  - registry-facade-api: Interfaces for dynamically assembling workspace container images
+  - supervisor-api: Interfaces for workspace management, terminal handling, and port forwarding
+  - usage-api: Interfaces for tracking, calculating, and managing workspace usage and billing
+  - ws-daemon-api: Interfaces for workspace content management and container operations
+  - ws-manager-api: Interfaces for managing the lifecycle of workspaces in Kubernetes clusters
+  - ws-manager-bridge-api: Interfaces for dynamic management of workspace clusters
+- Enhanced API component documentation with code generation information:
+  - Added details on how to regenerate code from protobuf definitions
+  - Documented the implementation details of the generation process
+  - Included instructions for building components after code regeneration
+  - Updated .clinerules to standardize API documentation with code generation sections
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation
@@ -63,9 +80,11 @@ The immediate next steps are:
 
 1. **Explore Component Interactions**: Understand how components interact with each other
 2. **Set Up Development Environment**: Configure a local development environment for effective testing
-3. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
-4. **Establish Testing Approach**: Define how changes will be tested and validated
-5. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
+3. **Explore Build System**: Gain hands-on experience with both in-tree and Leeway builds
+4. **Test Component Builds**: Practice building and testing different component types
+5. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
+6. **Establish Testing Approach**: Define how changes will be tested and validated
+7. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
 
 ## Active Decisions and Considerations
 
@@ -115,5 +134,15 @@ Initial exploration of the Gitpod codebase has revealed:
   - Go services typically have a cmd/ directory with command implementations
   - TypeScript services use React and modern frontend practices
   - Most components have a clear separation between API definitions and implementations
+- **Build System Approaches**: Gitpod uses two primary approaches for building components:
+  - **In-tree builds**: Using language-specific tools (yarn, go) directly in the workspace
+    - Primary method for local development
+    - TypeScript components use commands defined in package.json (yarn build, yarn test, etc.)
+    - Go components use standard Go tools (go build, go test, etc.)
+  - **Out-of-tree builds**: Using Leeway, a custom build tool
+    - Primary method for CI to generate build artifacts
+    - Works by copying relevant sources into a separate file tree
+    - Can also be run from inside the workspace
+    - Manages complex dependencies between components
 
 This section will be continuously updated as new insights are gained through working with the system.
