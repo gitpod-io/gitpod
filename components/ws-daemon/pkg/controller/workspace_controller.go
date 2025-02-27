@@ -226,7 +226,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 }
 
 func initializerMetricsFromInitializerStats(stats *csapi.InitializerMetrics) *workspacev1.InitializerMetrics {
-	if stats == nil {
+	if stats == nil || len(*stats) == 0 {
 		return nil
 	}
 
