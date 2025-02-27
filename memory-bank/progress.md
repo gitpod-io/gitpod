@@ -110,11 +110,9 @@ As we begin working with the codebase, we have not yet identified specific issue
 - Documentation of first set of API components (content-service-api, ide-metrics-api, ide-service-api)
 - Documentation of second set of API components (image-builder-api, local-app-api, registry-facade-api)
 - Documentation of third set of API components (supervisor-api, usage-api, ws-daemon-api)
+- Documentation of fourth set of API components (ws-manager-api, ws-manager-bridge-api)
 
 ### Upcoming Milestones
-- Documentation of remaining API components:
-  - ws-manager-api
-  - ws-manager-bridge-api
 - Development environment setup
 - First component deep dive
 - Initial contribution
@@ -202,6 +200,9 @@ No specific blockers or dependencies have been identified yet. This section will
     - supervisor-api: Interfaces for workspace management, terminal handling, and port forwarding
     - usage-api: Interfaces for tracking, calculating, and managing workspace usage and billing
     - ws-daemon-api: Interfaces for workspace content management and container operations
+  - Documented fourth set of API components:
+    - ws-manager-api: Interfaces for managing the lifecycle of workspaces in Kubernetes clusters
+    - ws-manager-bridge-api: Interfaces for dynamic management of workspace clusters
 
 ## Next Evaluation Point
 

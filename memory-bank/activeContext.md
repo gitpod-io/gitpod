@@ -18,7 +18,7 @@ Key areas of focus include:
 - Created detailed documentation for key components:
   - blobserve: Service that provides static assets from OCI images
   - content-service: Manages various types of content within the platform
-  - dashboard: Web-based user interface for Gitpod
+  - dashboard: Web-based user inSterface for Gitpod
   - ws-manager-mk2: Kubernetes controller for managing workspace lifecycle
   - supervisor: Init process that runs inside each workspace container
   - ws-daemon: Node-level daemon for workspace operations
@@ -59,6 +59,8 @@ Key areas of focus include:
   - supervisor-api: Interfaces for workspace management, terminal handling, and port forwarding
   - usage-api: Interfaces for tracking, calculating, and managing workspace usage and billing
   - ws-daemon-api: Interfaces for workspace content management and container operations
+  - ws-manager-api: Interfaces for managing the lifecycle of workspaces in Kubernetes clusters
+  - ws-manager-bridge-api: Interfaces for dynamic management of workspace clusters
 - Enhanced API component documentation with code generation information:
   - Added details on how to regenerate code from protobuf definitions
   - Documented the implementation details of the generation process
@@ -76,17 +78,13 @@ As work progresses, this section will continue to be updated to reflect:
 
 The immediate next steps are:
 
-1. **Document Remaining API Components**: Create documentation for the following API components:
-   - ws-manager-api
-   - ws-manager-bridge-api
-
-2. **Explore Component Interactions**: Understand how components interact with each other
-3. **Set Up Development Environment**: Configure a local development environment for effective testing
-4. **Explore Build System**: Gain hands-on experience with both in-tree and Leeway builds
-5. **Test Component Builds**: Practice building and testing different component types
-6. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
-7. **Establish Testing Approach**: Define how changes will be tested and validated
-8. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
+1. **Explore Component Interactions**: Understand how components interact with each other
+2. **Set Up Development Environment**: Configure a local development environment for effective testing
+3. **Explore Build System**: Gain hands-on experience with both in-tree and Leeway builds
+4. **Test Component Builds**: Practice building and testing different component types
+5. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
+6. **Establish Testing Approach**: Define how changes will be tested and validated
+7. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
 
 ## Active Decisions and Considerations
 
