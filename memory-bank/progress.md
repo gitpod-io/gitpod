@@ -109,7 +109,18 @@ As we begin working with the codebase, we have not yet identified specific issue
 - Documentation of thirteenth set of key components (openvsx-proxy, scheduler-extender, ipfs)
 
 ### Upcoming Milestones
-- Documentation of remaining key components
+- Documentation of API components:
+  - content-service-api
+  - ide-metrics-api
+  - ide-service-api
+  - image-builder-api
+  - local-app-api
+  - registry-facade-api
+  - supervisor-api
+  - usage-api
+  - ws-daemon-api
+  - ws-manager-api
+  - ws-manager-bridge-api
 - Development environment setup
 - First component deep dive
 - Initial contribution
@@ -175,6 +186,11 @@ No specific blockers or dependencies have been identified yet. This section will
   - Updated techContext.md with detailed build process information
   - Updated .clinerules with build patterns and commands
   - Added build information tracking to memory bank maintenance procedures
+  - Updated documentation approach to include API components:
+    - Removed exclusion of "*-api" components from documentation
+    - Identified 11 API components that need documentation
+    - Updated .clinerules to reflect new documentation approach
+    - Updated activeContext.md and progress.md with new documentation tasks
 
 ## Next Evaluation Point
 

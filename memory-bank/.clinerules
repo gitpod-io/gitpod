@@ -92,8 +92,7 @@ This file captures important patterns, preferences, and project intelligence tha
 - **Memory Bank Documentation**:
   - Component-specific documentation is stored in `memory-bank/components/` directory
   - Each component gets its own markdown file with detailed information about its purpose, architecture, and implementation
-  - API components (with "*-api" suffix) should NOT be documented separately as they are typically just interface definitions
-  - Component documentation should focus on the main service components that implement business logic
+  - Component documentation should focus on both service components that implement business logic and API components that define interfaces
   - Documentation follows a consistent structure with sections for Overview, Purpose, Architecture, Key Features, etc.
 
 ## Evolution of Project Decisions
@@ -108,11 +107,11 @@ This section will be updated as I learn about how and why certain architectural 
   3. Make it easier to find information about specific components
   4. Enable incremental updates to component documentation without affecting other files
 
-- **API Component Exclusion**: The decision to exclude "*-api" components from separate documentation was made because:
-  1. API components primarily contain interface definitions, not implementation logic
-  2. The interfaces are typically documented within the main service component that implements them
-  3. Documenting API components separately would create redundancy
-  4. The focus should be on documenting the service components that implement business logic
+- **API Component Documentation**: The decision to include "*-api" components in separate documentation was made because:
+  1. API components define critical interfaces between services
+  2. Understanding these interfaces is essential for developers working across components
+  3. API documentation helps clarify system boundaries and communication patterns
+  4. Separate documentation makes it easier to track API changes and versioning
 
 ## User Preferences
 

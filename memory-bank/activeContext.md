@@ -61,13 +61,26 @@ As work progresses, this section will continue to be updated to reflect:
 
 The immediate next steps are:
 
-1. **Explore Component Interactions**: Understand how components interact with each other
-2. **Set Up Development Environment**: Configure a local development environment for effective testing
-3. **Explore Build System**: Gain hands-on experience with both in-tree and Leeway builds
-4. **Test Component Builds**: Practice building and testing different component types
-5. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
-6. **Establish Testing Approach**: Define how changes will be tested and validated
-7. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
+1. **Document API Components**: Create documentation for the following API components:
+   - content-service-api
+   - ide-metrics-api
+   - ide-service-api
+   - image-builder-api
+   - local-app-api
+   - registry-facade-api
+   - supervisor-api
+   - usage-api
+   - ws-daemon-api
+   - ws-manager-api
+   - ws-manager-bridge-api
+
+2. **Explore Component Interactions**: Understand how components interact with each other
+3. **Set Up Development Environment**: Configure a local development environment for effective testing
+4. **Explore Build System**: Gain hands-on experience with both in-tree and Leeway builds
+5. **Test Component Builds**: Practice building and testing different component types
+6. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
+7. **Establish Testing Approach**: Define how changes will be tested and validated
+8. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
 
 ## Active Decisions and Considerations
 
