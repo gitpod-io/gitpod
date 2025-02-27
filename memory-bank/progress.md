@@ -68,8 +68,10 @@ The existing functionality of the Gitpod platform:
 ## What's Left to Build
 
 ### Immediate Tasks
-- Explore component interactios
+- Explore component interactions
 - Set up local development environment
+- Explore build system approaches (in-tree and Leeway)
+- Test component builds for different component types
 - Identify specific components for deeper exploration
 - Establish testing methodology
 - Create initial contribution plan
@@ -165,6 +167,14 @@ No specific blockers or dependencies have been identified yet. This section will
   - Documented openvsx-proxy component
   - Documented scheduler-extender component
   - Documented ipfs component
+
+- **2/27/2025**:
+  - Documented build system approaches:
+    - In-tree builds using language-specific tools (yarn, go)
+    - Out-of-tree builds using Leeway
+  - Updated techContext.md with detailed build process information
+  - Updated .clinerules with build patterns and commands
+  - Added build information tracking to memory bank maintenance procedures
 
 ## Next Evaluation Point
 

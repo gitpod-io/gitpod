@@ -26,19 +26,35 @@ This file captures important patterns, preferences, and project intelligence tha
 
 ## Development Workflow
 
-- **Build System**: Use Leeway for building components
-  - `leeway build` to build specific components
-  - `leeway exec` to run commands across components
+- **Build Approaches**:
+  - **In-tree builds** (primary for local development):
+    - TypeScript components: Use `yarn` commands defined in package.json
+      - `yarn build`: Compile the component
+      - `yarn test`: Run tests
+      - `yarn lint`: Check code style
+      - `yarn watch`: Watch for changes and rebuild
+    - Go components: Use standard Go tools
+      - `go build ./...`: Build all packages
+      - `go test ./...`: Test all packages
+      - `go run main.go`: Build and run
+
+  - **Out-of-tree builds** (Leeway, primary for CI):
+    - `leeway build components/component-name:app`: Build a specific component
+    - `leeway build -D components/component-name:app`: Build with dependencies
+    - `leeway exec --package components/component-name:app -- command`: Run a command for a package
 
 - **Testing**:
   - Unit tests alongside code
   - Integration tests in separate directories
   - End-to-end tests in the `test/` directory
+  - Component-specific test commands in package.json (for TypeScript)
+  - Go tests use standard `go test` command
 
 - **Local Development**:
   - Use Gitpod workspaces for development (dogfooding)
   - Components can be run individually for testing
   - Preview environments for testing changes
+  - Use in-tree builds for rapid iteration during development
 
 ## Critical Implementation Paths
 
@@ -101,6 +117,23 @@ This section will be updated as I learn about how and why certain architectural 
 ## User Preferences
 
 This section will be updated as I learn about specific user preferences for working with the codebase.
+
+## Build and Test Information
+
+When working with components, I should always document:
+
+- **Build Commands**: Document any new or component-specific build commands I encounter
+- **Test Commands**: Document how to run tests for each component
+- **Dependencies**: Note any special dependencies required for building or testing
+- **Common Issues**: Document common build or test issues and their solutions
+- **Performance Considerations**: Note any performance considerations for builds
+
+Whenever I encounter new build patterns or commands, I should update:
+1. The relevant component documentation in `memory-bank/components/`
+2. The `.clinerules` file with general patterns
+3. The `techContext.md` file if it represents a significant pattern
+
+This information is critical for effective development work, as being able to build and test components is fundamental to making changes and verifying their correctness.
 
 ---
 

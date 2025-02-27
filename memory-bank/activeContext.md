@@ -63,9 +63,11 @@ The immediate next steps are:
 
 1. **Explore Component Interactions**: Understand how components interact with each other
 2. **Set Up Development Environment**: Configure a local development environment for effective testing
-3. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
-4. **Establish Testing Approach**: Define how changes will be tested and validated
-5. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
+3. **Explore Build System**: Gain hands-on experience with both in-tree and Leeway builds
+4. **Test Component Builds**: Practice building and testing different component types
+5. **Identify Initial Tasks**: Determine specific tasks or improvements to focus on
+6. **Establish Testing Approach**: Define how changes will be tested and validated
+7. **Update Memory Bank**: Continue to refine and expand the memory bank as new information is discovered
 
 ## Active Decisions and Considerations
 
@@ -115,5 +117,15 @@ Initial exploration of the Gitpod codebase has revealed:
   - Go services typically have a cmd/ directory with command implementations
   - TypeScript services use React and modern frontend practices
   - Most components have a clear separation between API definitions and implementations
+- **Build System Approaches**: Gitpod uses two primary approaches for building components:
+  - **In-tree builds**: Using language-specific tools (yarn, go) directly in the workspace
+    - Primary method for local development
+    - TypeScript components use commands defined in package.json (yarn build, yarn test, etc.)
+    - Go components use standard Go tools (go build, go test, etc.)
+  - **Out-of-tree builds**: Using Leeway, a custom build tool
+    - Primary method for CI to generate build artifacts
+    - Works by copying relevant sources into a separate file tree
+    - Can also be run from inside the workspace
+    - Manages complex dependencies between components
 
 This section will be continuously updated as new insights are gained through working with the system.
