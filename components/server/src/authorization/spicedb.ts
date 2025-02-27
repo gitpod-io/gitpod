@@ -17,24 +17,33 @@ export interface SpiceDBClientConfig {
 
 export type SpiceDBClient = v1.ZedPromiseClientInterface;
 type Client = v1.ZedClientInterface & grpc.Client;
+
 const DEFAULT_FEATURE_FLAG_VALUE = "undefined";
 const DefaultClientOptions: grpc.ClientOptions = {
     // we ping frequently to check if the connection is still alive
-    "grpc.keepalive_time_ms": 1000,
-    "grpc.keepalive_timeout_ms": 1000,
+    "grpc.keepalive_time_ms": 30_000,
+    "grpc.keepalive_timeout_ms": 4_000,
 
-    "grpc.max_reconnect_backoff_ms": 5000,
-    "grpc.initial_reconnect_backoff_ms": 500,
+    "grpc.max_reconnect_backoff_ms": 5_000,
+    "grpc.initial_reconnect_backoff_ms": 1_000,
+
+    // docs on client-side retry support: https://github.com/grpc/grpc-node/blob/0c093b0b7f78f691a4f6e41efc184899d7a2d987/examples/retry/README.md?plain=1#L3
+    "grpc.service_config_disable_resolution": 1, // don't resolve from external, but guarantee to take this config
     "grpc.service_config": JSON.stringify({
         methodConfig: [
             {
+                // here is the code that shows how an empty shape matches every method: https://github.com/grpc/grpc-node/blob/bfd87a9bf62ebc438bcf98a7af223d5353f4c8b2/packages/grpc-js/src/resolving-load-balancer.ts#L62-L147
                 name: [{}],
+                // docs: https://github.com/grpc/grpc-proto/blob/master/grpc/service_config/service_config.proto#L88C29-L88C43
+                waitForReady: true,
+                // docs: https://github.com/grpc/grpc-proto/blob/master/grpc/service_config/service_config.proto#L136
                 retryPolicy: {
-                    maxAttempts: 10,
-                    initialBackoff: "0.1s",
+                    maxAttempts: 5,
+                    initialBackoff: "1s",
                     maxBackoff: "5s",
                     backoffMultiplier: 2.0,
-                    retryableStatusCodes: ["UNAVAILABLE", "DEADLINE_EXCEEDED"],
+                    // validation code: https://github.com/grpc/grpc-node/blob/0c093b0b7f78f691a4f6e41efc184899d7a2d987/packages/grpc-js/src/service-config.ts#L182C1-L197C4
+                    retryableStatusCodes: ["UNAVAILABLE", "DEADLINE_EXCEEDED", "INTERNAL"],
                 },
             },
         ],
@@ -43,7 +52,7 @@ const DefaultClientOptions: grpc.ClientOptions = {
 
     // Governs how log DNS resolution results are cached (at minimum!)
     // default is 30s, which is too long for us during rollouts (where service DNS entries are updated)
-    "grpc.dns_min_time_between_resolutions_ms": 2000,
+    "grpc.dns_min_time_between_resolutions_ms": 2_000,
 };
 
 export function spiceDBConfigFromEnv(): SpiceDBClientConfig | undefined {

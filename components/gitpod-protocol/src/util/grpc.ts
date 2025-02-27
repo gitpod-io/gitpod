@@ -6,6 +6,8 @@
 
 import * as grpc from "@grpc/grpc-js";
 import { Status } from "@grpc/grpc-js/build/src/constants";
+import { log } from "./logging";
+import { TrustedValue } from "./scrubbing";
 
 export const defaultGRPCOptions = {
     "grpc.keepalive_timeout_ms": 10000,
@@ -101,6 +103,72 @@ export function createClientCallMetricsInterceptor(metrics: IClientCallMetrics):
                     metrics.sent(labels);
                 } finally {
                     next(message);
+                }
+            })
+            .build();
+        return new grpc.InterceptingCall(nextCall(options), requester);
+    };
+}
+
+export function createDebugLogInterceptor(): grpc.Interceptor {
+    const FAILURE_STATUS_CODES = new Map([
+        [Status.ABORTED, true],
+        [Status.CANCELLED, true],
+        [Status.DATA_LOSS, true],
+        [Status.DEADLINE_EXCEEDED, true],
+        [Status.FAILED_PRECONDITION, true],
+        [Status.INTERNAL, true],
+        [Status.PERMISSION_DENIED, true],
+        [Status.RESOURCE_EXHAUSTED, true],
+        [Status.UNAUTHENTICATED, true],
+        [Status.UNAVAILABLE, true],
+        [Status.UNIMPLEMENTED, true],
+        [Status.UNKNOWN, true],
+    ]);
+
+    return (options, nextCall): grpc.InterceptingCall => {
+        const methodDef = options.method_definition;
+        const method = methodDef.path.substring(methodDef.path.lastIndexOf("/") + 1);
+        const service = methodDef.path.substring(1, methodDef.path.length - method.length - 1);
+        const labels = {
+            service,
+            method,
+            type: getGrpcMethodType(options.method_definition.requestStream, options.method_definition.responseStream),
+        };
+        const requester = new grpc.RequesterBuilder()
+            .withStart((metadata, listener, next) => {
+                const newListener = new grpc.ListenerBuilder()
+                    .withOnReceiveStatus((status, next) => {
+                        try {
+                            const info = {
+                                labels: new TrustedValue(labels),
+                                metadata: new TrustedValue(metadata.toJSON()),
+                                code: Status[status.code],
+                            };
+                            if (FAILURE_STATUS_CODES.has(status.code)) {
+                                log.warn(`grpc call failed`, info);
+                            } else {
+                                log.debug(`grpc call status`, info);
+                            }
+                        } finally {
+                            next(status);
+                        }
+                    })
+                    .build();
+                try {
+                    log.debug(`grpc call started`, {
+                        labels: new TrustedValue(labels),
+                        metadata: new TrustedValue(metadata.toJSON()),
+                    });
+                } finally {
+                    next(metadata, newListener);
+                }
+            })
+            .withCancel((next) => {
+                try {
+                    log.debug(`grpc call cancelled`, { labels: new TrustedValue(labels) });
+                } finally {
+                    next();
                 }
             })
             .build();

@@ -17,46 +17,6 @@ import { ctxTryGetCache, ctxTrySetCache } from "../util/request-context";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { isGrpcError } from "@gitpod/gitpod-protocol/lib/util/grpc";
 
-async function tryThree<T>(errMessage: string, code: (attempt: number) => Promise<T>): Promise<T> {
-    let attempt = 0;
-    // we do sometimes see INTERNAL errors from SpiceDB, or grpc-js reports DEADLINE_EXCEEDED, so we retry a few times
-    // last time we checked it was 15 times per day (check logs)
-    while (attempt++ < 3) {
-        try {
-            return await code(attempt);
-        } catch (err) {
-            if (
-                (err.code === grpc.status.INTERNAL ||
-                    err.code === grpc.status.DEADLINE_EXCEEDED ||
-                    err.code === grpc.status.UNAVAILABLE) &&
-                attempt < 3
-            ) {
-                let delay = 500 * attempt;
-                if (err.code === grpc.status.DEADLINE_EXCEEDED) {
-                    // we already waited for timeout, so let's try again immediately
-                    delay = 0;
-                }
-
-                log.warn(errMessage, err, {
-                    attempt,
-                    delay,
-                    code: err.code,
-                });
-                await new Promise((resolve) => setTimeout(resolve, delay));
-                continue;
-            }
-
-            log.error(errMessage, err, {
-                attempt,
-                code: err.code,
-            });
-            // we don't try again on other errors
-            throw err;
-        }
-    }
-    throw new Error("unreachable");
-}
-
 export function createSpiceDBAuthorizer(clientProvider: SpiceDBClientProvider): SpiceDBAuthorizer {
     return new SpiceDBAuthorizer(clientProvider, new RequestLocalZedTokenCache());
 }
@@ -71,12 +31,10 @@ interface DeletionResult {
     deletedAt?: string;
 }
 
+const GRPC_DEADLINE = 10_000;
+
 export class SpiceDBAuthorizer {
     constructor(private readonly clientProvider: SpiceDBClientProvider, private readonly tokenCache: ZedTokenCache) {}
-
-    private get client(): v1.ZedPromiseClientInterface {
-        return this.clientProvider.getClient();
-    }
 
     public async check(req: v1.CheckPermissionRequest, experimentsFields: { userId: string }): Promise<boolean> {
         req.consistency = await this.tokenCache.consistency(req.resource);
@@ -99,8 +57,8 @@ export class SpiceDBAuthorizer {
             const timer = spicedbClientLatency.startTimer();
             let error: Error | undefined;
             try {
-                const response = await tryThree("[spicedb] Failed to perform authorization check.", () =>
-                    this.client.checkPermission(req, this.callOptions),
+                const response = await this.call("[spicedb] Failed to perform authorization check.", (client) =>
+                    client.checkPermission(req, this.callOptions),
                 );
                 const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
                 return { permitted, checkedAt: response.checkedAt?.token };
@@ -139,8 +97,8 @@ export class SpiceDBAuthorizer {
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const response = await tryThree("[spicedb] Failed to write relationships.", () =>
-                this.client.writeRelationships(
+            const response = await this.call("[spicedb] Failed to write relationships.", (client) =>
+                client.writeRelationships(
                     v1.WriteRelationshipsRequest.create({
                         updates,
                     }),
@@ -175,16 +133,16 @@ export class SpiceDBAuthorizer {
         let error: Error | undefined;
         try {
             let deletedAt: string | undefined = undefined;
-            const existing = await tryThree("readRelationships before deleteRelationships failed.", () =>
-                this.client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
+            const existing = await this.call("readRelationships before deleteRelationships failed.", (client) =>
+                client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
             );
             if (existing.length > 0) {
-                const response = await tryThree("deleteRelationships failed.", () =>
-                    this.client.deleteRelationships(req, this.callOptions),
+                const response = await this.call("deleteRelationships failed.", (client) =>
+                    client.deleteRelationships(req, this.callOptions),
                 );
                 deletedAt = response.deletedAt?.token;
-                const after = await tryThree("readRelationships failed.", () =>
-                    this.client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
+                const after = await this.call("readRelationships failed.", (client) =>
+                    client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
                 );
                 if (after.length > 0) {
                     log.error("[spicedb] Failed to delete relationships.", { existing, after, request: req });
@@ -213,7 +171,19 @@ export class SpiceDBAuthorizer {
     async readRelationships(req: v1.ReadRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
         req.consistency = await this.tokenCache.consistency(undefined);
         incSpiceDBRequestsCheckTotal(req.consistency?.requirement?.oneofKind || "undefined");
-        return tryThree("readRelationships failed.", () => this.client.readRelationships(req, this.callOptions));
+        return this.call("readRelationships failed.", (client) => client.readRelationships(req, this.callOptions));
+    }
+
+    private async call<T>(errMessage: string, code: (client: v1.ZedPromiseClientInterface) => Promise<T>): Promise<T> {
+        try {
+            const client = this.clientProvider.getClient();
+            return code(client);
+        } catch (err) {
+            log.error(errMessage, err, {
+                code: err.code,
+            });
+            throw err;
+        }
     }
 
     /**
@@ -223,7 +193,7 @@ export class SpiceDBAuthorizer {
      */
     private get callOptions(): grpc.Metadata {
         return (<grpc.CallOptions>{
-            deadline: Date.now() + 8000,
+            deadline: Date.now() + GRPC_DEADLINE,
         }) as any as grpc.Metadata;
     }
 }
