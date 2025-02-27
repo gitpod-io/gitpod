@@ -107,12 +107,10 @@ As we begin working with the codebase, we have not yet identified specific issue
 - Documentation of eleventh set of key components (spicedb, scrubber, service-waiter)
 - Documentation of twelfth set of key components (docker-up, image-builder-bob, node-labeler)
 - Documentation of thirteenth set of key components (openvsx-proxy, scheduler-extender, ipfs)
+- Documentation of first set of API components (content-service-api, ide-metrics-api, ide-service-api)
 
 ### Upcoming Milestones
-- Documentation of API components:
-  - content-service-api
-  - ide-metrics-api
-  - ide-service-api
+- Documentation of remaining API components:
   - image-builder-api
   - local-app-api
   - registry-facade-api
@@ -191,6 +189,15 @@ No specific blockers or dependencies have been identified yet. This section will
     - Identified 11 API components that need documentation
     - Updated .clinerules to reflect new documentation approach
     - Updated activeContext.md and progress.md with new documentation tasks
+  - Documented first set of API components:
+    - content-service-api: Interfaces for managing workspace content, blobs, logs, and IDE plugins
+    - ide-metrics-api: Interfaces for collecting metrics and error reports from IDE components
+    - ide-service-api: Interfaces for managing IDE configurations and resolving workspace IDE requirements
+  - Enhanced API component documentation with code generation information:
+    - Added details on how to regenerate code from protobuf definitions
+    - Documented the implementation details of the generation process
+    - Included instructions for building components after code regeneration
+    - Updated .clinerules to standardize API documentation with code generation sections
 
 ## Next Evaluation Point
 

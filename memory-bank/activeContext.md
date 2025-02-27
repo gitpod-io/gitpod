@@ -49,6 +49,15 @@ Key areas of focus include:
   - openvsx-proxy: Caching proxy service for the OpenVSX registry
   - scheduler-extender: Extends Kubernetes scheduling capabilities for workspaces
   - ipfs: Provides distributed content-addressable storage for container images
+- Created documentation for API components:
+  - content-service-api: Interfaces for managing workspace content, blobs, logs, and IDE plugins
+  - ide-metrics-api: Interfaces for collecting metrics and error reports from IDE components
+  - ide-service-api: Interfaces for managing IDE configurations and resolving workspace IDE requirements
+- Enhanced API component documentation with code generation information:
+  - Added details on how to regenerate code from protobuf definitions
+  - Documented the implementation details of the generation process
+  - Included instructions for building components after code regeneration
+  - Updated .clinerules to standardize API documentation with code generation sections
 
 As work progresses, this section will continue to be updated to reflect:
 - Additional component documentation
@@ -61,10 +70,7 @@ As work progresses, this section will continue to be updated to reflect:
 
 The immediate next steps are:
 
-1. **Document API Components**: Create documentation for the following API components:
-   - content-service-api
-   - ide-metrics-api
-   - ide-service-api
+1. **Document Remaining API Components**: Create documentation for the following API components:
    - image-builder-api
    - local-app-api
    - registry-facade-api

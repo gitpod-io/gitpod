@@ -94,6 +94,10 @@ This file captures important patterns, preferences, and project intelligence tha
   - Each component gets its own markdown file with detailed information about its purpose, architecture, and implementation
   - Component documentation should focus on both service components that implement business logic and API components that define interfaces
   - Documentation follows a consistent structure with sections for Overview, Purpose, Architecture, Key Features, etc.
+  - API component documentation should include a "Code Generation and Building" section that explains:
+    - How to regenerate code from protobuf definitions
+    - The implementation details of the generation process
+    - How to build components that depend on the API after regeneration
 
 ## Evolution of Project Decisions
 
