@@ -45,7 +45,7 @@
     "/src"
   ],
   "dependencies": {
-    "@authzed/authzed-node": "^0.15.0",
+    "@authzed/authzed-node": "^1.2.2",
     "@connectrpc/connect": "1.1.2",
     "@connectrpc/connect-express": "1.1.2",
     "@gitbeaker/rest": "^39.12.0",
