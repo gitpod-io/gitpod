@@ -108,12 +108,10 @@ As we begin working with the codebase, we have not yet identified specific issue
 - Documentation of twelfth set of key components (docker-up, image-builder-bob, node-labeler)
 - Documentation of thirteenth set of key components (openvsx-proxy, scheduler-extender, ipfs)
 - Documentation of first set of API components (content-service-api, ide-metrics-api, ide-service-api)
+- Documentation of second set of API components (image-builder-api, local-app-api, registry-facade-api)
 
 ### Upcoming Milestones
 - Documentation of remaining API components:
-  - image-builder-api
-  - local-app-api
-  - registry-facade-api
   - supervisor-api
   - usage-api
   - ws-daemon-api
@@ -198,6 +196,10 @@ No specific blockers or dependencies have been identified yet. This section will
     - Documented the implementation details of the generation process
     - Included instructions for building components after code regeneration
     - Updated .clinerules to standardize API documentation with code generation sections
+  - Documented second set of API components:
+    - image-builder-api: Interfaces for building Docker images for workspaces
+    - local-app-api: Interfaces for communication between local machines and remote workspaces
+    - registry-facade-api: Interfaces for dynamically assembling workspace container images
 
 ## Next Evaluation Point
 

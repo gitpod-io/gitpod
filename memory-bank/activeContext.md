@@ -53,6 +53,9 @@ Key areas of focus include:
   - content-service-api: Interfaces for managing workspace content, blobs, logs, and IDE plugins
   - ide-metrics-api: Interfaces for collecting metrics and error reports from IDE components
   - ide-service-api: Interfaces for managing IDE configurations and resolving workspace IDE requirements
+  - image-builder-api: Interfaces for building Docker images for workspaces
+  - local-app-api: Interfaces for communication between local machines and remote workspaces
+  - registry-facade-api: Interfaces for dynamically assembling workspace container images
 - Enhanced API component documentation with code generation information:
   - Added details on how to regenerate code from protobuf definitions
   - Documented the implementation details of the generation process
@@ -71,9 +74,6 @@ As work progresses, this section will continue to be updated to reflect:
 The immediate next steps are:
 
 1. **Document Remaining API Components**: Create documentation for the following API components:
-   - image-builder-api
-   - local-app-api
-   - registry-facade-api
    - supervisor-api
    - usage-api
    - ws-daemon-api
