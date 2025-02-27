@@ -56,6 +56,9 @@ Key areas of focus include:
   - image-builder-api: Interfaces for building Docker images for workspaces
   - local-app-api: Interfaces for communication between local machines and remote workspaces
   - registry-facade-api: Interfaces for dynamically assembling workspace container images
+  - supervisor-api: Interfaces for workspace management, terminal handling, and port forwarding
+  - usage-api: Interfaces for tracking, calculating, and managing workspace usage and billing
+  - ws-daemon-api: Interfaces for workspace content management and container operations
 - Enhanced API component documentation with code generation information:
   - Added details on how to regenerate code from protobuf definitions
   - Documented the implementation details of the generation process
@@ -74,9 +77,6 @@ As work progresses, this section will continue to be updated to reflect:
 The immediate next steps are:
 
 1. **Document Remaining API Components**: Create documentation for the following API components:
-   - supervisor-api
-   - usage-api
-   - ws-daemon-api
    - ws-manager-api
    - ws-manager-bridge-api
 
