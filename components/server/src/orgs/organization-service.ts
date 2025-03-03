@@ -637,6 +637,11 @@ export class OrganizationService {
                 settings.roleRestrictions = partialUpdate.roleRestrictions;
             }
 
+            // pinnedEditorVersions is an exception: override if set
+            if (partialUpdate.pinnedEditorVersions !== undefined) {
+                settings.pinnedEditorVersions = partialUpdate.pinnedEditorVersions;
+            }
+
             return settings;
         };
 

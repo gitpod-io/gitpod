@@ -18,6 +18,7 @@ import { expectError } from "../test/expect-utils";
 import { UserService } from "../user/user-service";
 import { DefaultWorkspaceImageValidator } from "./default-workspace-image-validator";
 import { SYSTEM_USER } from "../authorization/authorizer";
+import { IDEService } from "../ide-service";
 
 const expect = chai.expect;
 
@@ -47,6 +48,36 @@ describe("OrganizationService", async () => {
                     await validateDefaultWorkspaceImage(userId, imageRef);
                 }
             });
+        // Setup
+        container.rebind<IDEService>(IDEService).toConstantValue({
+            getIDEConfig: async () => ({
+                supervisorImage: "foo",
+                ideOptions: {
+                    options: {
+                        code: {
+                            orderKey: "00",
+                            title: "VS Code",
+                            type: "browser",
+                            logo: "https://ide.gitpod.io/image/ide-logo/vscode.svg",
+                            label: "Browser",
+                            image: "bar",
+                            latestImage: "baz",
+                            versions: [{ version: "1.2.3" }],
+                        },
+                        intellij: {
+                            orderKey: "01",
+                            title: "Intellij",
+                            type: "desktop",
+                            logo: "https://ide.gitpod.io/image/ide-logo/intellij.svg",
+                            label: "Desktop",
+                            image: "bar",
+                            latestImage: "baz",
+                            versions: [{ version: "4.5.6" }],
+                        },
+                    },
+                },
+            }),
+        } as any as IDEService);
         os = container.get(OrganizationService);
         userService = container.get<UserService>(UserService);
         owner = await userService.createUser({
@@ -518,6 +549,26 @@ describe("OrganizationService", async () => {
 
         const failingInvite = await orgService.getOrCreateInvite(owner.id, anotherOrg.id);
         await expectError(ErrorCodes.PERMISSION_DENIED, () => os.joinOrganization(member.id, failingInvite.id));
+    });
+
+    it("should update pinnedEditorVersions", async () => {
+        // Create a test organization
+        const myOrg = await os.createOrganization(adminId, "My Org");
+
+        // Test 1: Set specific pinned editor versions
+        const pinnedVersions = { code: "1.2.3", intellij: "4.5.6" };
+        await os.updateSettings(adminId, myOrg.id, { pinnedEditorVersions: pinnedVersions });
+
+        // Verify the settings were updated correctly
+        let settings = await os.getSettings(adminId, myOrg.id);
+        expect(settings.pinnedEditorVersions).to.deep.equal(pinnedVersions);
+
+        // Test 2: Unset all pinned versions by setting an empty object
+        await os.updateSettings(adminId, myOrg.id, { pinnedEditorVersions: {} });
+
+        // Verify all pinned versions were removed
+        settings = await os.getSettings(adminId, myOrg.id);
+        expect(settings.pinnedEditorVersions).to.deep.equal({});
     });
 });
 
