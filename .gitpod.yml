@@ -42,6 +42,13 @@ tasks:
         gp env -u GCP_ADC_FILE
       fi
       exit 0
+  - name: MCP Servers Setup
+    init: |
+      # Run Git MCP install script with current workspace as repository
+      ./scripts/install-git-mcp-go.sh /workspace/gitpod "$GIT_WRITE_ACCESS"
+
+      # Run Linear MCP install script
+      ./scripts/install-linear-mcp-go.sh "$LINEAR_WRITE_ACCESS"
   - name: Install `gitpod` CLI
     command: |
       leeway run components/local-app:install-cli
