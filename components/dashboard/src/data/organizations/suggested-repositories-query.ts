@@ -28,12 +28,12 @@ export type SuggestedOrgRepository = PlainMessage<SuggestedRepository> & {
 
 export function useOrgSuggestedRepos() {
     const organizationId = useCurrentOrg().data?.id;
-    const orgSettings = useOrgSettingsQuery();
+    const { data: orgSettings, isLoading: isOrgSettingsLoading } = useOrgSettingsQuery();
 
     const query = useQuery<SuggestedOrgRepository[], Error>(
         getQueryKey(organizationId),
         async () => {
-            const repos = orgSettings.data?.onboardingSettings?.recommendedRepositories ?? [];
+            const repos = orgSettings?.onboardingSettings?.recommendedRepositories ?? [];
 
             const suggestions: SuggestedOrgRepository[] = [];
             for (const configurationId of repos) {
@@ -58,7 +58,7 @@ export function useOrgSuggestedRepos() {
             return suggestions;
         },
         {
-            enabled: !!organizationId,
+            enabled: !!organizationId && !isOrgSettingsLoading,
             cacheTime: 1000 * 60 * 60 * 24 * 7, // 1 week
             staleTime: 1000 * 60 * 5, // 5 minutes
         },
