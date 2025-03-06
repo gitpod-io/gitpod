@@ -179,3 +179,12 @@ export function createDebugLogInterceptor(): grpc.Interceptor {
 export function isGrpcError(err: any): err is grpc.StatusObject {
     return err.code && err.details;
 }
+
+export function isConnectionAlive(client: grpc.Client) {
+    const cs = client.getChannel().getConnectivityState(false);
+    return (
+        cs == grpc.connectivityState.CONNECTING ||
+        cs == grpc.connectivityState.IDLE ||
+        cs == grpc.connectivityState.READY
+    );
+}

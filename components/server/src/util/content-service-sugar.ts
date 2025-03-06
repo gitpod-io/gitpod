@@ -6,7 +6,11 @@
 
 import { inject, injectable, interfaces, optional } from "inversify";
 import * as grpc from "@grpc/grpc-js";
-import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import {
+    createClientCallMetricsInterceptor,
+    IClientCallMetrics,
+    isConnectionAlive,
+} from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { IDEPluginServiceClient } from "@gitpod/content-service/lib/ideplugin_grpc_pb";
 import { ContentServiceClient } from "@gitpod/content-service/lib/content_grpc_pb";
 import { BlobServiceClient } from "@gitpod/content-service/lib/blobs_grpc_pb";
@@ -141,13 +145,4 @@ export class CachingHeadlessLogServiceClientProvider extends CachingClientProvid
             return new HeadlessLogServiceClient(config.address, config.credentials, config.options);
         });
     }
-}
-
-function isConnectionAlive(client: grpc.Client) {
-    const cs = client.getChannel().getConnectivityState(false);
-    return (
-        cs == grpc.connectivityState.CONNECTING ||
-        cs == grpc.connectivityState.IDLE ||
-        cs == grpc.connectivityState.READY
-    );
 }
