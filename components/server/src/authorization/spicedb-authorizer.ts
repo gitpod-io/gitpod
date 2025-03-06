@@ -174,16 +174,52 @@ export class SpiceDBAuthorizer {
         return this.call("readRelationships failed.", (client) => client.readRelationships(req, this.callOptions));
     }
 
-    private async call<T>(errMessage: string, code: (client: v1.ZedPromiseClientInterface) => Promise<T>): Promise<T> {
-        try {
-            const client = this.clientProvider.getClient();
-            return code(client);
-        } catch (err) {
-            log.error(errMessage, err, {
-                code: err.code,
-            });
-            throw err;
+    /**
+     * call retrieves a Spicedb client and executes the given code block.
+     * In addition to the gRPC-level retry mechanisms, it retries on "Waiting for LB pick" errors.
+     * This is required, because we seem to be running into a grpc/grpc-js bug where a subchannel takes 120s+ to reconnect.
+     * @param description
+     * @param code
+     * @returns
+     */
+    private async call<T>(description: string, code: (client: v1.ZedPromiseClientInterface) => Promise<T>): Promise<T> {
+        const MAX_ATTEMPTS = 3;
+        let attempt = 0;
+        while (attempt++ < 3) {
+            try {
+                const checkClient = attempt > 1; // the last client error'd out, so check if we should get a new one
+                const client = this.clientProvider.getClient(checkClient);
+                return code(client);
+            } catch (err) {
+                // Check: Is this a "no connection to upstream" error? If yes, retry here, to work around grpc/grpc-js bugs introducing high latency for re-tries
+                if (
+                    (err.code === grpc.status.DEADLINE_EXCEEDED || err.code === grpc.status.UNAVAILABLE) &&
+                    attempt < MAX_ATTEMPTS
+                ) {
+                    let delay = 500 * attempt;
+                    if (err.code === grpc.status.DEADLINE_EXCEEDED) {
+                        // we already waited for timeout, so let's try again immediately
+                        delay = 0;
+                    }
+
+                    log.warn(description, err, {
+                        attempt,
+                        delay,
+                        code: err.code,
+                    });
+                    await new Promise((resolve) => setTimeout(resolve, delay));
+                    continue;
+                }
+
+                // Some other error: log and rethrow
+                log.error(description, err, {
+                    attempt,
+                    code: err.code,
+                });
+                throw err;
+            }
         }
+        throw new Error("unreachable");
     }
 
     /**

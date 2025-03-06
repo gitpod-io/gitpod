@@ -9,6 +9,8 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import * as grpc from "@grpc/grpc-js";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
+import { createDebugLogInterceptor } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { isConnectionAlive } from "@gitpod/gitpod-protocol/lib/util/grpc";
 
 export interface SpiceDBClientConfig {
     address: string;
@@ -54,6 +56,7 @@ const DefaultClientOptions: grpc.ClientOptions = {
     // default is 30s, which is too long for us during rollouts (where service DNS entries are updated)
     "grpc.dns_min_time_between_resolutions_ms": 2_000,
 };
+const CLIENT_CLOSE_DELAY = 60_000; // 60 [s]
 
 export function spiceDBConfigFromEnv(): SpiceDBClientConfig | undefined {
     const token = process.env["SPICEDB_PRESHARED_KEY"];
@@ -110,9 +113,7 @@ export class SpiceDBClientProvider {
                 });
 
                 // close client after 2 minutes to make sure most pending requests on the previous client are finished.
-                setTimeout(() => {
-                    this.closeClient(oldClient);
-                }, 2 * 60 * 1000);
+                this.closeClientAfter(oldClient, CLIENT_CLOSE_DELAY);
             }
             this.clientOptions = clientOptions;
             // `createClient` will use the `DefaultClientOptions` to create client if the value on Feature Flag is not able to create a client
@@ -132,47 +133,76 @@ export class SpiceDBClientProvider {
         })();
     }
 
-    private closeClient(client: Client) {
-        try {
-            client.close();
-        } catch (error) {
-            log.error("[spicedb] Error closing client", error);
-        }
+    private closeClientAfter(client: Client, timeout: number): void {
+        setTimeout(() => {
+            try {
+                client.close();
+            } catch (error) {
+                log.error("[spicedb] Error closing client", error);
+            }
+        }, timeout);
     }
 
     private createClient(clientOptions: grpc.ClientOptions): Client {
         log.debug("[spicedb] Creating client", {
             clientOptions: new TrustedValue(clientOptions),
         });
+
+        // Inject debugLogInterceptor to log details especially on failed grpc calls
+        let client: Client;
+        const debugInfo = (): object => {
+            if (!client) {
+                return {};
+            }
+            const ch = client.getChannel();
+            return {
+                target: ch.getTarget(),
+                state: ch.getConnectivityState(false),
+            };
+        };
+        const interceptors = [...(this.interceptors || []), createDebugLogInterceptor(debugInfo)];
+
+        // Create the actual client
         try {
-            return v1.NewClient(
+            client = v1.NewClient(
                 this.clientConfig.token,
                 this.clientConfig.address,
                 v1.ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS,
                 undefined,
                 {
                     ...clientOptions,
-                    interceptors: this.interceptors,
+                    interceptors,
                 },
             ) as Client;
         } catch (error) {
             log.error("[spicedb] Error create client, fallback to default options", error);
-            return v1.NewClient(
+            client = v1.NewClient(
                 this.clientConfig.token,
                 this.clientConfig.address,
                 v1.ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS,
                 undefined,
                 {
                     ...DefaultClientOptions,
-                    interceptors: this.interceptors,
+                    interceptors,
                 },
             ) as Client;
         }
+        return client;
     }
 
-    getClient(): SpiceDBClient {
+    getClient(checkClient: boolean = false): SpiceDBClient {
         if (!this.client) {
             this.client = this.createClient(this.clientOptions);
+        }
+
+        if (checkClient) {
+            const oldClient = this.client;
+            if (!isConnectionAlive(oldClient)) {
+                const connectivityState = oldClient.getChannel().getConnectivityState(false);
+                log.warn("[spicedb] Client is not alive, creating a new one", { connectivityState });
+                this.closeClientAfter(oldClient, CLIENT_CLOSE_DELAY);
+                this.client = this.createClient(this.clientOptions);
+            }
         }
         return this.client.promises;
     }
