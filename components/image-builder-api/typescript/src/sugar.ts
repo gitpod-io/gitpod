@@ -8,7 +8,7 @@ import { ImageBuilderClient } from "./imgbuilder_grpc_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { createClientCallMetricsInterceptor, IClientCallMetrics, isConnectionAlive } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import * as opentracing from "opentracing";
 import { Metadata } from "@grpc/grpc-js";
 import {
@@ -130,12 +130,7 @@ export class PromisifiedImageBuilderClient {
     ) {}
 
     public isConnectionAlive() {
-        const cs = this.client.getChannel().getConnectivityState(false);
-        return (
-            cs == grpc.connectivityState.CONNECTING ||
-            cs == grpc.connectivityState.IDLE ||
-            cs == grpc.connectivityState.READY
-        );
+        return isConnectionAlive(this.client);
     }
 
     public resolveBaseImage(ctx: TraceContext, request: ResolveBaseImageRequest): Promise<ResolveBaseImageResponse> {
