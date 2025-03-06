@@ -110,7 +110,7 @@ export function createClientCallMetricsInterceptor(metrics: IClientCallMetrics):
     };
 }
 
-export function createDebugLogInterceptor(): grpc.Interceptor {
+export function createDebugLogInterceptor(additionalContextF: (() => object) | undefined): grpc.Interceptor {
     const FAILURE_STATUS_CODES = new Map([
         [Status.ABORTED, true],
         [Status.CANCELLED, true],
@@ -139,11 +139,21 @@ export function createDebugLogInterceptor(): grpc.Interceptor {
             .withStart((metadata, listener, next) => {
                 const newListener = new grpc.ListenerBuilder()
                     .withOnReceiveStatus((status, next) => {
+                        // If given, call the additionalContext function and log the result
+                        let additionalContext = {};
+                        try {
+                            if (additionalContextF) {
+                                additionalContext = additionalContextF();
+                            }
+                        } catch (e) {}
+
                         try {
                             const info = {
                                 labels: new TrustedValue(labels),
                                 metadata: new TrustedValue(metadata.toJSON()),
                                 code: Status[status.code],
+                                details: status.details,
+                                additionalContext: new TrustedValue(additionalContext),
                             };
                             if (FAILURE_STATUS_CODES.has(status.code)) {
                                 log.warn(`grpc call failed`, info);

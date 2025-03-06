@@ -15,7 +15,6 @@ import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import {
     IClientCallMetrics,
     createClientCallMetricsInterceptor,
-    createDebugLogInterceptor,
     defaultGRPCOptions,
 } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
@@ -342,7 +341,7 @@ export const productionContainerModule = new ContainerModule(
                 const clientCallMetrics = ctx.container.get<IClientCallMetrics>(IClientCallMetrics);
                 return new SpiceDBClientProvider(
                     config, //
-                    [createClientCallMetricsInterceptor(clientCallMetrics), createDebugLogInterceptor()],
+                    [createClientCallMetricsInterceptor(clientCallMetrics)],
                 );
             })
             .inSingletonScope();
