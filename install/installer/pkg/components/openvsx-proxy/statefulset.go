@@ -195,6 +195,7 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						}},
 					}, *common.KubeRBACProxyContainer(ctx),
 					},
+					Tolerations: common.WithTolerationWorkspaceComponentNotReady(ctx),
 				},
 			},
 			VolumeClaimTemplates: volumeClaimTemplates,

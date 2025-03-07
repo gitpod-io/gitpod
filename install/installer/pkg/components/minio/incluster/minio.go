@@ -6,6 +6,7 @@ package incluster
 
 import (
 	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
@@ -26,6 +27,15 @@ var Helm = func(apiPort int32, consolePort int32, commonHelmValues []string) com
 				return nil, err
 			}
 
+			tolerations, err := helm.WithTolerationWorkspaceComponentNotReadyYaml(cfg)
+			if err != nil {
+				return nil, err
+			}
+			tolerationsTemplate, err := helm.KeyFileValue("minio.tolerations", tolerations)
+			if err != nil {
+				return nil, err
+			}
+
 			return &common.HelmConfig{
 				Enabled: true,
 				Values: &values.Options{
@@ -41,6 +51,7 @@ var Helm = func(apiPort int32, consolePort int32, commonHelmValues []string) com
 					// This is too complex to be sent as a string
 					FileValues: []string{
 						affinityTemplate,
+						tolerationsTemplate,
 					},
 				},
 			}, nil

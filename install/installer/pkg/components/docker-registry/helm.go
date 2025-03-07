@@ -65,12 +65,25 @@ var Helm = common.CompositeHelmFunc(
 			)
 		}
 
+		tolerations, err := helm.WithTolerationWorkspaceComponentNotReadyYaml(cfg)
+		if err != nil {
+			return nil, err
+		}
+		tolerationsTemplate, err := helm.KeyFileValue("docker-registry.tolerations", tolerations)
+		if err != nil {
+			return nil, err
+		}
+
 		registryValues = append(registryValues, helm.KeyValue("docker-registry.persistence.enabled", enablePersistence))
 
 		return &common.HelmConfig{
 			Enabled: inCluster,
 			Values: &values.Options{
 				Values: registryValues,
+				// This is too complex to be sent as a string
+				FileValues: []string{
+					tolerationsTemplate,
+				},
 			},
 		}, nil
 	}),

@@ -25,6 +25,15 @@ var Helm = common.CompositeHelmFunc(
 			return nil, err
 		}
 
+		tolerations, err := helm.WithTolerationWorkspaceComponentNotReadyYaml(cfg)
+		if err != nil {
+			return nil, err
+		}
+		tolerationsTemplate, err := helm.KeyFileValue("mysql.primary.tolerations", tolerations)
+		if err != nil {
+			return nil, err
+		}
+
 		imageRegistry := common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)
 
 		type EnvVar struct {
@@ -73,6 +82,7 @@ var Helm = common.CompositeHelmFunc(
 				FileValues: []string{
 					primaryAffinityTemplate,
 					extraEnvVarsTemplate,
+					tolerationsTemplate,
 				},
 			},
 		}, nil
