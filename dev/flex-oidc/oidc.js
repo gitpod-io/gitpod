@@ -1,53 +1,14 @@
-const fs = require("fs");
-const http2 = require("http2");
+const { execSync } = require("child_process");
 
 const getIDToken = async () => {
     return new Promise((resolve, reject) => {
         try {
-            const configPath = "/usr/local/gitpod/config/initial-spec.json";
-            const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-
-            const controlPlaneApiEndpoint = config.controlPlaneApiEndpoint;
-            const environmentToken = config.environmentToken;
-
-            const url = new URL(controlPlaneApiEndpoint);
-            const client = http2.connect(url.origin);
-
-            const req = client.request({
-                ":method": "POST",
-                "content-type": "application/json",
-                authorization: `Bearer ${environmentToken}`,
-                ":path": `${url.pathname}/gitpod.v1.IdentityService/GetIDToken`,
-            });
-
-            let responseData = "";
-
-            req.on("data", (chunk) => {
-                responseData += chunk;
-            });
-
-            req.on("end", () => {
-                try {
-                    const result = JSON.parse(responseData);
-                    const token = result.token;
-                    resolve(token);
-                } catch (error) {
-                    reject(new Error("Error parsing response: " + error.message));
-                } finally {
-                    client.close();
-                }
-            });
-
-            req.on("error", (error) => {
-                reject(new Error(error.message));
-                client.close();
-            });
-
-            req.end(
-                JSON.stringify({
-                    audience: ["accounts.google.com"],
-                }),
-            );
+            try {
+                const token = execSync("gitpod idp token --audience accounts.google.com", { encoding: "utf8" }).trim();
+                resolve(token);
+            } catch (error) {
+                reject(new Error("Error getting token: " + error.message));
+            }
         } catch (e) {
             reject(new Error(e.message));
         }
