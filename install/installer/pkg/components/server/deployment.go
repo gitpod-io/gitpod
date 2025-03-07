@@ -416,6 +416,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								volumeMounts...,
 							),
 						}, *common.KubeRBACProxyContainer(ctx)},
+						Tolerations: common.WithTolerationWorkspaceComponentNotReady(ctx),
 					},
 				},
 			},

@@ -125,6 +125,17 @@ func AffinityYaml(orLabels ...string) ([]byte, error) {
 	return marshal, nil
 }
 
+func WithTolerationWorkspaceComponentNotReadyYaml(ctx *common.RenderContext) ([]byte, error) {
+	tolerations := common.WithTolerationWorkspaceComponentNotReady(ctx)
+
+	marshal, err := yaml.Marshal(tolerations)
+	if err != nil {
+		return nil, err
+	}
+
+	return marshal, nil
+}
+
 func nodeAffinity(orLabels ...string) *corev1.Affinity {
 	var terms []corev1.NodeSelectorTerm
 	for _, lbl := range orLabels {

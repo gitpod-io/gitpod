@@ -26,7 +26,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/util/retry"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -35,7 +35,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -50,6 +49,13 @@ const (
 
 	registryFacade = "registry-facade"
 	wsDaemon       = "ws-daemon"
+
+	// Taint keys for different components
+	registryFacadeTaintKey = "gitpod.io/registry-facade-not-ready"
+	wsDaemonTaintKey       = "gitpod.io/ws-daemon-not-ready"
+
+	workspacesRegularLabel  = "gitpod.io/workload_workspace_regular"
+	workspacesHeadlessLabel = "gitpod.io/workload_workspace_headless"
 )
 
 var defaultRequeueTime = time.Second * 10
@@ -72,7 +78,7 @@ var runCmd = &cobra.Command{
 				// default sync period is 10h.
 				// in case node-labeler is restarted and not change happens, we could waste (at least) 20m in a node
 				// that never will run workspaces and the additional nodes cluster-autoscaler adds to compensate
-				SyncPeriod: pointer.Duration(2 * time.Minute),
+				SyncPeriod: ptr.To(time.Duration(2 * time.Minute)),
 			},
 			WebhookServer: webhook.NewServer(webhook.Options{
 				Port: 9443,
@@ -84,13 +90,8 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("unable to start node-labeler")
 		}
 
-		kClient, err := client.New(ctrl.GetConfigOrDie(), client.Options{})
-		if err != nil {
-			log.WithError(err).Fatal("unable to create client")
-		}
-
 		r := &PodReconciler{
-			kClient,
+			mgr.GetClient(),
 		}
 
 		componentPredicate, err := predicate.LabelSelectorPredicate(metav1.LabelSelector{
@@ -112,6 +113,25 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("unable to bind controller watch event handler")
 		}
+		nr := &NodeReconciler{
+			mgr.GetClient(),
+		}
+
+		err = ctrl.NewControllerManagedBy(mgr).
+			Named("node-watcher").
+			For(&corev1.Node{}, builder.WithPredicates(predicate.Or(nr.nodeFilter()))).
+			WithOptions(controller.Options{MaxConcurrentReconciles: 1}).
+			Complete(nr)
+		if err != nil {
+			log.WithError(err).Fatal("unable to bind controller watch event handler")
+		}
+
+		go func() {
+			<-mgr.Elected()
+			if err := nr.reconcileAll(context.Background()); err != nil {
+				log.WithError(err).Fatal("failed to reconcile all nodes")
+			}
+		}()
 
 		if err := mgr.GetFieldIndexer().IndexField(context.Background(), &workspacev1.Workspace{}, "status.runtime.nodeName", func(o client.Object) []string {
 			ws := o.(*workspacev1.Workspace)
@@ -121,6 +141,17 @@ var runCmd = &cobra.Command{
 			return []string{ws.Status.Runtime.NodeName}
 		}); err != nil {
 			log.WithError(err).Fatal("unable to create workspace indexer")
+			return
+		}
+
+		if err := mgr.GetFieldIndexer().IndexField(context.Background(), &corev1.Pod{}, "spec.nodeName", func(o client.Object) []string {
+			pod := o.(*corev1.Pod)
+			if pod.Spec.NodeName == "" {
+				return nil
+			}
+			return []string{pod.Spec.NodeName}
+		}); err != nil {
+			log.WithError(err).Fatal("unable to create pod indexer")
 			return
 		}
 
@@ -142,10 +173,6 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("couldn't properly clean up node scaledown annotation controller")
 		}
-
-		metrics.Registry.MustRegister(NodeLabelerCounterVec)
-		metrics.Registry.MustRegister(NodeLabelerTimeHistVec)
-
 		err = mgr.AddHealthzCheck("healthz", healthz.Ping)
 		if err != nil {
 			log.WithError(err).Fatal("unable to set up health check")
@@ -197,90 +224,183 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 		return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
 	}
 
-	var (
-		ipAddress     string
-		port          string
-		component     string
-		labelToUpdate string
-	)
-
+	var taintKey string
 	switch {
 	case strings.HasPrefix(pod.Name, registryFacade):
-		component = registryFacade
-		labelToUpdate = fmt.Sprintf(registryFacadeLabel, namespace)
-		ipAddress = pod.Status.HostIP
-		port = strconv.Itoa(registryFacadePort)
+		taintKey = registryFacadeTaintKey
 	case strings.HasPrefix(pod.Name, wsDaemon):
-		component = wsDaemon
-		labelToUpdate = fmt.Sprintf(wsdaemonLabel, namespace)
-		ipAddress = pod.Status.PodIP
-		port = strconv.Itoa(wsdaemonPort)
+		taintKey = wsDaemonTaintKey
 	default:
 		// nothing to do
 		return reconcile.Result{}, nil
 	}
 
-	if !pod.ObjectMeta.DeletionTimestamp.IsZero() {
-		// the pod is being removed.
-		// remove the component label from the node
-		time.Sleep(1 * time.Second)
-		err := updateLabel(labelToUpdate, false, nodeName, r)
-		if err != nil {
-			// this is a edge case when cluster-autoscaler removes a node
-			// (all the running pods will be removed after that)
-			if errors.IsNotFound(err) {
-				return reconcile.Result{}, nil
-			}
-
-			log.WithError(err).Error("removing node label")
-			return reconcile.Result{RequeueAfter: defaultRequeueTime}, err
-		}
-
-		return reconcile.Result{}, err
-	}
-
-	if !IsPodReady(pod) {
-		// not ready. Wait until the next update.
-		return reconcile.Result{}, nil
+	healthy, err := checkPodHealth(pod)
+	if err != nil {
+		log.WithError(err).Error("checking pod health")
+		return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
 	}
 
 	var node corev1.Node
 	err = r.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
 	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("obtaining node %s: %w", nodeName, err)
+		if !errors.IsNotFound(err) {
+			log.WithError(err).Error("obtaining node")
+		}
+		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if labelValue, exists := node.Labels[labelToUpdate]; exists && labelValue == "true" {
-		// nothing to do, the label already exists.
+	if isNodeTaintExists(taintKey, node) != healthy {
+		// nothing to do, the taint already exists and is in the desired state.
 		return reconcile.Result{}, nil
 	}
 
-	err = checkTCPPortIsReachable(ipAddress, port)
+	err = updateNodeTaint(taintKey, !healthy, nodeName, r)
 	if err != nil {
-		log.WithField("host", ipAddress).WithField("port", port).WithField("pod", pod.Name).WithError(err).Error("checking if TCP port is open")
+		log.WithError(err).Error("updating node taint")
 		return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
 	}
 
-	if component == registryFacade {
+	return reconcile.Result{}, nil
+}
+
+func checkPodHealth(pod corev1.Pod) (bool, error) {
+	var (
+		ipAddress string
+		port      string
+	)
+	switch {
+	case strings.HasPrefix(pod.Name, registryFacade):
+		ipAddress = pod.Status.HostIP
+		port = strconv.Itoa(registryFacadePort)
+	case strings.HasPrefix(pod.Name, wsDaemon):
+		ipAddress = pod.Status.PodIP
+		port = strconv.Itoa(wsdaemonPort)
+	default:
+		// nothing to do
+		return true, nil
+	}
+
+	if !pod.ObjectMeta.DeletionTimestamp.IsZero() {
+		// the pod is being removed.
+		// add the taint to the node
+		return false, nil
+	}
+
+	if !IsPodReady(pod) {
+		// not ready. Wait until the next update.
+		return false, nil
+	}
+
+	err := checkTCPPortIsReachable(ipAddress, port)
+	if err != nil {
+		log.WithField("host", ipAddress).WithField("port", port).WithField("pod", pod.Name).WithError(err).Error("checking if TCP port is open")
+		return false, nil
+	}
+
+	if strings.HasPrefix(pod.Name, registryFacade) {
 		err = checkRegistryFacade(ipAddress, port)
 		if err != nil {
 			log.WithError(err).Error("checking registry-facade")
-			return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+type NodeReconciler struct {
+	client.Client
+}
+
+func (r *NodeReconciler) nodeFilter() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			node, ok := e.Object.(*corev1.Node)
+			if !ok {
+				return false
+			}
+			return isWorkspaceNode(*node)
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return false
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return false
+		},
+	}
+}
+
+func (r *NodeReconciler) reconcileAll(ctx context.Context) error {
+	log.Info("start reconciling all nodes")
+
+	var nodes corev1.NodeList
+	if err := r.List(ctx, &nodes); err != nil {
+		return fmt.Errorf("failed to list nodes: %w", err)
+	}
+
+	for _, node := range nodes.Items {
+		if node.Labels == nil {
+			continue
+		}
+		if !isWorkspaceNode(node) {
+			continue
 		}
 
-		time.Sleep(1 * time.Second)
+		err := updateNodeLabel(node.Name, r.Client)
+		if err != nil {
+			log.WithError(err).WithField("node", node.Name).Error("failed to initialize labels on node")
+		}
+		r.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Name: node.Name}})
 	}
 
-	err = updateLabel(labelToUpdate, true, nodeName, r)
+	log.Info("finished reconciling all nodes")
+	return nil
+}
+
+func (r *NodeReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
+	var node corev1.Node
+	err := r.Get(ctx, req.NamespacedName, &node)
 	if err != nil {
-		log.WithError(err).Error("updating node label")
-		return reconcile.Result{}, fmt.Errorf("trying to add the label: %v", err)
+		if !errors.IsNotFound(err) {
+			log.WithError(err).Error("unable to fetch node")
+		}
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
-	readyIn := time.Since(pod.Status.StartTime.Time)
-	NodeLabelerTimeHistVec.WithLabelValues(component).Observe(readyIn.Seconds())
-	NodeLabelerCounterVec.WithLabelValues(component).Inc()
-
+	var podList corev1.PodList
+	err = r.List(ctx, &podList, client.MatchingFields{
+		"spec.nodeName": node.Name,
+	})
+	if err != nil {
+		return reconcile.Result{}, fmt.Errorf("listing pods: %w", err)
+	}
+	err = updateNodeLabel(node.Name, r.Client)
+	if err != nil {
+		log.WithError(err).WithField("node", node.Name).Error("failed to initialize labels on node")
+	}
+	isWsdaemonTaintExists := isNodeTaintExists(wsDaemonTaintKey, node)
+	isRegistryFacadeTaintExists := isNodeTaintExists(registryFacadeTaintKey, node)
+	isWsDaemonReady, isRegistryFacadeReady := false, false
+	for _, pod := range podList.Items {
+		if strings.HasPrefix(pod.Name, wsDaemon) {
+			isWsDaemonReady, err = checkPodHealth(pod)
+			if err != nil {
+				log.WithError(err).Error("checking pod health")
+			}
+		}
+		if strings.HasPrefix(pod.Name, registryFacade) {
+			isRegistryFacadeReady, err = checkPodHealth(pod)
+			if err != nil {
+				log.WithError(err).Error("checking pod health")
+			}
+		}
+	}
+	if isWsDaemonReady == isWsdaemonTaintExists {
+		updateNodeTaint(wsDaemonTaintKey, !isWsDaemonReady, node.Name, r)
+	}
+	if isRegistryFacadeReady == isRegistryFacadeTaintExists {
+		updateNodeTaint(registryFacadeTaintKey, !isRegistryFacadeReady, node.Name, r)
+	}
 	return reconcile.Result{}, nil
 }
 
@@ -485,7 +605,7 @@ func (c *NodeScaledownAnnotationController) updateNodeAnnotation(ctx context.Con
 	})
 }
 
-func updateLabel(label string, add bool, nodeName string, client client.Client) error {
+func updateNodeTaint(taintKey string, add bool, nodeName string, client client.Client) error {
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -493,15 +613,42 @@ func updateLabel(label string, add bool, nodeName string, client client.Client) 
 		var node corev1.Node
 		err := client.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
 		if err != nil {
-			return err
+			if !errors.IsNotFound(err) {
+				return err
+			}
+			return nil
 		}
 
+		// Create or remove taint
 		if add {
-			node.Labels[label] = "true"
-			log.WithField("label", label).WithField("node", nodeName).Info("adding label to node")
+			// Add taint if it doesn't exist
+			taintExists := false
+			for _, taint := range node.Spec.Taints {
+				if taint.Key == taintKey {
+					taintExists = true
+					break
+				}
+			}
+			if !taintExists {
+				node.Spec.Taints = append(node.Spec.Taints, corev1.Taint{
+					Key:    taintKey,
+					Value:  "true",
+					Effect: corev1.TaintEffectNoSchedule,
+				})
+				log.WithField("taint", taintKey).WithField("node", nodeName).Info("adding taint to node")
+			}
 		} else {
-			delete(node.Labels, label)
-			log.WithField("label", label).WithField("node", nodeName).Info("removing label from node")
+			// Remove taint if it exists
+			newTaints := make([]corev1.Taint, 0)
+			for _, taint := range node.Spec.Taints {
+				if taint.Key != taintKey {
+					newTaints = append(newTaints, taint)
+				}
+			}
+			if len(newTaints) != len(node.Spec.Taints) {
+				node.Spec.Taints = newTaints
+				log.WithField("taint", taintKey).WithField("node", nodeName).Info("removing taint from node")
+			}
 		}
 
 		err = client.Update(ctx, &node)
@@ -511,6 +658,15 @@ func updateLabel(label string, add bool, nodeName string, client client.Client) 
 
 		return nil
 	})
+}
+
+func isNodeTaintExists(taintKey string, node corev1.Node) bool {
+	for _, taint := range node.Spec.Taints {
+		if taint.Key == taintKey {
+			return true
+		}
+	}
+	return false
 }
 
 func checkTCPPortIsReachable(host string, port string) error {
@@ -568,4 +724,52 @@ func newDefaultTransport() *http.Transport {
 		ExpectContinueTimeout: 5 * time.Second,
 		DisableKeepAlives:     true,
 	}
+}
+
+func isWorkspaceNode(node corev1.Node) bool {
+	_, isRegularWorkspaceNode := node.Labels[workspacesRegularLabel]
+	_, isHeadlessWorkspaceNode := node.Labels[workspacesHeadlessLabel]
+	return isRegularWorkspaceNode || isHeadlessWorkspaceNode
+}
+
+func updateNodeLabel(nodeName string, client client.Client) error {
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		var node corev1.Node
+		err := client.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
+		if err != nil {
+			return err
+		}
+
+		registryFacadeLabelForNamespace := fmt.Sprintf(registryFacadeLabel, namespace)
+		wsDaemonLabelForNamespace := fmt.Sprintf(wsdaemonLabel, namespace)
+
+		needUpdate := false
+
+		if node.Labels == nil {
+			node.Labels = make(map[string]string)
+		}
+
+		if v := node.Labels[registryFacadeLabelForNamespace]; v != "true" {
+			needUpdate = true
+		}
+		if v := node.Labels[wsDaemonLabelForNamespace]; v != "true" {
+			needUpdate = true
+		}
+
+		if !needUpdate {
+			return nil
+		}
+		node.Labels[registryFacadeLabelForNamespace] = "true"
+		node.Labels[wsDaemonLabelForNamespace] = "true"
+
+		err = client.Update(ctx, &node)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

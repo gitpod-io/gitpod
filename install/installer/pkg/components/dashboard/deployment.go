@@ -86,6 +86,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								TimeoutSeconds:   1,
 							},
 						}},
+						Tolerations: common.WithTolerationWorkspaceComponentNotReady(ctx),
 					},
 				},
 			},
