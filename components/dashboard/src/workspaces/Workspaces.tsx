@@ -222,7 +222,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                     <div className="min-w-0">
                                         <CardTitle>Learn how Gitpod works</CardTitle>
                                         <CardDescription>
-                                            We've put together resources for you to get the most our of Gitpod.
+                                            We've put together resources for you to get the most out of Gitpod.
                                         </CardDescription>
                                     </div>
                                 </Card>
@@ -246,7 +246,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                                 Explore{" "}
                                                 {orgSuggestedRepos?.length
                                                     ? "repositories recommended by your organization"
-                                                    : "a sample repository"}
+                                                    : "a sample repository"}{" "}
                                                 to quickly experience Gitpod.
                                             </CardDescription>
                                         </div>
