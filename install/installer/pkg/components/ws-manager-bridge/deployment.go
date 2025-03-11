@@ -209,6 +209,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								PeriodSeconds:       20,
 							},
 						}, *common.KubeRBACProxyContainer(ctx)},
+						Tolerations: common.WithTolerationWorkspaceComponentNotReady(ctx),
 					},
 				},
 			},

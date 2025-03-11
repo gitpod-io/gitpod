@@ -71,6 +71,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			*common.KubeRBACProxyContainerWithConfig(ctx),
 		},
+		Tolerations: common.WithTolerationWorkspaceComponentNotReady(ctx),
 	}
 
 	return []runtime.Object{

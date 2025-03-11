@@ -168,6 +168,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								FailureThreshold:    3,
 							},
 						}, *common.KubeRBACProxyContainer(ctx)},
+						Tolerations: common.WithTolerationWorkspaceComponentNotReady(ctx),
 					},
 				},
 			},
