@@ -376,7 +376,7 @@ func (r *NodeReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 		"spec.nodeName": node.Name,
 	})
 	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("listing pods: %w", err)
+		return reconcile.Result{}, fmt.Errorf("cannot list pods: %w", err)
 	}
 	err = updateNodeLabel(node.Name, r.Client)
 	if err != nil {
