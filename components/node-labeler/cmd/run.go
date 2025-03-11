@@ -237,7 +237,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 
 	healthy, err := checkPodHealth(pod)
 	if err != nil {
-		log.WithError(err).Error("checking pod health")
+		log.WithError(err).Error("cannot check pod health")
 		return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
 	}
 
@@ -245,7 +245,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 	err = r.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			log.WithError(err).Error("obtaining node")
+			log.WithError(err).Error("cannot get node")
 		}
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
@@ -257,7 +257,11 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 
 	err = updateNodeTaint(taintKey, !healthy, nodeName, r)
 	if err != nil {
-		log.WithError(err).Error("updating node taint")
+		log.WithError(err).
+			WithField("taintKey", taintKey).
+			WithField("add", !healthy).
+			WithField("nodeName", nodeName).
+			Error("cannot update node taint")
 		return reconcile.Result{RequeueAfter: defaultRequeueTime}, nil
 	}
 
