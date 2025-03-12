@@ -113,8 +113,8 @@ RUN commitVersion=$(cat package.json | jq -r .version) \
 RUN nameShort=$(jq --raw-output '.nameShort' product.json) && \
     nameLong=$(jq --raw-output '.nameLong' product.json) && \
     if [ "$CODE_QUALITY" = "insider" ]; then \
-        nameShort="$nameShort - Insiders" \
-        nameLong="$nameLong - Insiders" \
+    nameShort="$nameShort - Insiders" \
+    nameLong="$nameLong - Insiders" \
     ; fi  && \
     setQuality="setpath([\"quality\"]; \"$CODE_QUALITY\")" && \
     setNameShort="setpath([\"nameShort\"]; \"$nameShort\")" && \
@@ -125,7 +125,7 @@ RUN nameShort=$(jq --raw-output '.nameShort' product.json) && \
     mv product.json.tmp product.json && \
     jq '{quality,nameLong,nameShort}' product.json
 
-RUN npm run gulp compile-build
+RUN npm run gulp compile-build-pr
 RUN npm run gulp extensions-ci
 RUN npm run gulp minify-vscode-reh
 RUN npm run gulp vscode-web-min-ci
@@ -135,13 +135,13 @@ RUN npm run gulp vscode-reh-linux-x64-min-ci
 # this custom urls will be then replaced by blobserve.
 # Check pkg/blobserve/blobserve.go, `inlineVars` method
 RUN cp /vscode-web/out/vs/gitpod/browser/workbench/workbench.html /vscode-web/index.html \
-&& cp /vscode-web/out/vs/gitpod/browser/workbench/callback.html /vscode-web/callback.html \
-&& sed -i -e "s/{{VERSION}}/$CODE_QUALITY-$CODE_COMMIT/g" /vscode-web/index.html
+    && cp /vscode-web/out/vs/gitpod/browser/workbench/callback.html /vscode-web/callback.html \
+    && sed -i -e "s/{{VERSION}}/$CODE_QUALITY-$CODE_COMMIT/g" /vscode-web/index.html
 
 # cli config: alises to gitpod-code
 RUN cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/code \
-&& cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/gp-code \
-&& cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/open
+    && cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/gp-code \
+    && cp /vscode-reh-linux-x64/bin/remote-cli/gitpod-code /vscode-reh-linux-x64/bin/remote-cli/open
 
 # grant write permissions for built-in extensions
 RUN chmod -R ugo+w /vscode-reh-linux-x64/extensions
