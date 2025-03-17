@@ -10,10 +10,13 @@ Key areas of focus include:
 2. **Component Documentation**: Creating detailed documentation for each component
 3. **Development Workflow**: Understanding how to effectively develop and test changes
 4. **Documentation**: Maintaining a comprehensive memory bank for future reference
+5. **Standardized Workflows**: Establishing and documenting standardized workflows for development activities
 
 ## Recent Changes
 
 - Created the initial memory bank structure with core files
+- Established standardized workflows for development activities:
+  - Product Requirements Document (PRD) workflow for feature development
 - Added a components subdirectory to the memory bank
 - Created detailed documentation for key components:
   - blobserve: Service that provides static assets from OCI images
@@ -144,5 +147,23 @@ Initial exploration of the Gitpod codebase has revealed:
     - Works by copying relevant sources into a separate file tree
     - Can also be run from inside the workspace
     - Manages complex dependencies between components
+- **Server Health Checks**: The Gitpod server uses two distinct health check mechanisms:
+  - **Liveness Probe**: Checks the event loop lag to determine if the server is functioning properly
+  - **Readiness Probe**: Checks database, SpiceDB, and Redis connectivity to ensure the server is ready to handle requests
+    - Controlled by a ConfigCat feature flag `server_readiness_probe` (default: true) that can bypass the actual checks
+- **Critical Dependencies**: The server has critical external dependencies that must be operational:
+  - **Database (TypeORM)**: Used for persistent storage
+  - **SpiceDB**: Used for authorization and permission management
+  - **Redis**: Used for caching, pub/sub messaging, and distributed locking
+- **Server Architecture Patterns**:
+  - The server uses dependency injection (Inversify) for component management
+  - Components are registered in `container-module.ts` and injected where needed
+  - The server exposes HTTP endpoints for health checks and other functionality
+  - Routes are registered in the `registerRoutes` method in `server.ts`
+  - New functionality typically requires:
+    1. Creating a new controller/service class
+    2. Registering it in the container module
+    3. Injecting it where needed
+    4. Updating any relevant configuration files
 
 This section will be continuously updated as new insights are gained through working with the system.

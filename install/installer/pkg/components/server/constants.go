@@ -25,6 +25,8 @@ const (
 	DebugNodePortName                      = "debugnode"
 	ServicePort                            = 3000
 	personalAccessTokenSigningKeyMountPath = "/secrets/personal-access-token-signing-key"
+	ProbesPort                             = 9400
+	ProbesPortName                         = "probes"
 
 	AdminCredentialsSecretName      = "admin-credentials"
 	AdminCredentialsSecretMountPath = "/credentials/admin"

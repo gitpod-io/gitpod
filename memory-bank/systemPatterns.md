@@ -129,3 +129,19 @@ Workspaces are treated as immutable, with changes to configuration resulting in 
 6. **gRPC Communication**: Internal services communicate using gRPC for efficient, typed communication.
 
 7. **Leeway Build System**: Custom build system for managing the complex dependencies between components.
+
+8. **Kubernetes Deployment Configuration**: All code that defines Kubernetes objects for deployable components lives in `install/installer`. This centralized approach ensures consistent deployment patterns across all components.
+
+## Development Workflows
+
+### Product Requirements Document (PRD) Workflow
+Gitpod uses a structured PRD workflow for feature development to ensure proper planning, documentation, and implementation:
+
+1. **Requirements Gathering** (Plan Mode): Understand the problem, explore existing components, gather information
+2. **PRD Creation** (Plan Mode): Create a detailed document in `prd/` with standardized sections
+3. **Implementation Planning** (Plan Mode): Identify files to modify and plan the approach
+4. **Implementation** (Act Mode): Create/modify necessary files following the plan
+5. **Documentation Update** (Act Mode): Update memory bank with new knowledge
+6. **Verification**: Ensure implementation meets requirements and documentation is complete
+
+This workflow ensures thorough planning, clear documentation, and knowledge preservation for all feature development.

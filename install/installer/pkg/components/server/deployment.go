@@ -363,7 +363,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										Path: "/live",
 										Port: intstr.IntOrString{
 											Type:   intstr.Int,
-											IntVal: ContainerPort,
+											IntVal: ProbesPort,
 										},
 									},
 								},
@@ -371,35 +371,61 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								PeriodSeconds:       10,
 								FailureThreshold:    6,
 							},
+							ReadinessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/ready",
+										Port: intstr.IntOrString{
+											Type:   intstr.Int,
+											IntVal: ProbesPort,
+										},
+									},
+								},
+								InitialDelaySeconds: 5,
+								PeriodSeconds:       10,
+								FailureThreshold:    12, // try for 120 seconds
+							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged:               pointer.Bool(false),
 								AllowPrivilegeEscalation: pointer.Bool(false),
 							},
-							Ports: []corev1.ContainerPort{{
-								Name:          ContainerPortName,
-								ContainerPort: ContainerPort,
-							}, {
-								Name:          baseserver.BuiltinMetricsPortName,
-								ContainerPort: baseserver.BuiltinMetricsPort,
-							}, {
-								Name:          InstallationAdminName,
-								ContainerPort: InstallationAdminPort,
-							}, {
-								Name:          IAMSessionPortName,
-								ContainerPort: IAMSessionPort,
-							}, {
-								Name:          DebugPortName,
-								ContainerPort: baseserver.BuiltinDebugPort,
-							}, {
-								Name:          DebugNodePortName,
-								ContainerPort: common.DebugNodePort,
-							}, {
-								Name:          GRPCAPIName,
-								ContainerPort: GRPCAPIPort,
-							}, {
-								Name:          PublicAPIName,
-								ContainerPort: PublicAPIPort,
-							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          ContainerPortName,
+									ContainerPort: ContainerPort,
+								},
+								{
+									Name:          baseserver.BuiltinMetricsPortName,
+									ContainerPort: baseserver.BuiltinMetricsPort,
+								},
+								{
+									Name:          InstallationAdminName,
+									ContainerPort: InstallationAdminPort,
+								},
+								{
+									Name:          IAMSessionPortName,
+									ContainerPort: IAMSessionPort,
+								},
+								{
+									Name:          DebugPortName,
+									ContainerPort: baseserver.BuiltinDebugPort,
+								},
+								{
+									Name:          DebugNodePortName,
+									ContainerPort: common.DebugNodePort,
+								},
+								{
+									Name:          GRPCAPIName,
+									ContainerPort: GRPCAPIPort,
+								},
+								{
+									Name:          PublicAPIName,
+									ContainerPort: PublicAPIPort,
+								},
+								{
+									Name:          ProbesPortName,
+									ContainerPort: ProbesPort,
+								},
 							},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?
 							Env: common.CustomizeEnvvar(ctx, Component, env),
