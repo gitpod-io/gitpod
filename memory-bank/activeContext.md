@@ -147,6 +147,7 @@ Initial exploration of the Gitpod codebase has revealed:
 - **Server Health Checks**: The Gitpod server uses two distinct health check mechanisms:
   - **Liveness Probe**: Checks the event loop lag to determine if the server is functioning properly
   - **Readiness Probe**: Checks database and SpiceDB connectivity to ensure the server is ready to handle requests
+    - Controlled by a ConfigCat feature flag `server_readiness_probe` (default: true) that can bypass the actual checks
 - **Critical Dependencies**: The server has critical external dependencies that must be operational:
   - **Database (TypeORM)**: Used for persistent storage
   - **SpiceDB**: Used for authorization and permission management

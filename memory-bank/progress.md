@@ -211,10 +211,12 @@ No specific blockers or dependencies have been identified yet. This section will
     - Updated server container module and route configuration
     - Created PRD document for the readiness probe implementation
     - Updated Kubernetes deployment configuration to add the readiness probe
+    - Added ConfigCat feature flag `server_readiness_probe` to control readiness checks
   - Updated memory bank with new learnings:
     - Added information about server health checks and critical dependencies
     - Documented server architecture patterns and dependency injection
     - Added information about Kubernetes deployment configuration
+    - Documented feature flag implementation for readiness probe
 
 ## Next Evaluation Point
 

@@ -157,6 +157,19 @@ The readiness probe should be tested to ensure:
 - The probe runs every 10 seconds
 - The probe allows up to 3 failures before marking the pod as not ready
 
+## Feature Flag Control
+
+The readiness probe implementation includes a ConfigCat feature flag called `server_readiness_probe` that controls whether the actual connectivity checks are performed:
+
+- When the flag is set to `true` (default): The readiness probe will always return a 200 status code, bypassing the actual database and SpiceDB connectivity checks
+- When the flag is set to `false`: The readiness probe will perform the actual checks and return the appropriate status code based on the results
+
+This feature flag provides several benefits:
+
+1. **Gradual Rollout**: Allows for a gradual rollout of the readiness probe, which is useful for testing in production environments
+2. **Emergency Override**: If the readiness probe causes issues in production, the flag can be quickly toggled to bypass the checks without requiring a code deployment
+3. **Environment-Specific Configuration**: Different environments (dev, staging, production) can have different settings for the readiness probe
+
 ## Future Improvements
 
 - Add more sophisticated checks for SpiceDB connectivity, such as a simple permission check
