@@ -26,6 +26,15 @@ This file captures important patterns, preferences, and project intelligence tha
 
 ## Development Workflow
 
+- **Feature Development Process**:
+  - Follow the Product Requirements Document (PRD) workflow documented in systemPatterns.md under "Development Workflows"
+  - Create PRD documents in the `prd/` directory with naming convention `NNN-featurename.md`
+  - Include standard sections: Overview, Background, Requirements, Implementation Details, Testing, Deployment Considerations, Future Improvements
+  - Use Plan Mode for requirements gathering and planning
+  - Use Act Mode for implementation and documentation updates
+  - Always update memory bank with new knowledge gained during implementation
+  - Reference the PRD in commit messages and documentation
+
 - **Build Approaches**:
   - **In-tree builds** (primary for local development):
     - TypeScript components: Use `yarn` commands defined in package.json

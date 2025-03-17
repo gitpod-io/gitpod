@@ -10,10 +10,13 @@ Key areas of focus include:
 2. **Component Documentation**: Creating detailed documentation for each component
 3. **Development Workflow**: Understanding how to effectively develop and test changes
 4. **Documentation**: Maintaining a comprehensive memory bank for future reference
+5. **Standardized Workflows**: Establishing and documenting standardized workflows for development activities
 
 ## Recent Changes
 
 - Created the initial memory bank structure with core files
+- Established standardized workflows for development activities:
+  - Product Requirements Document (PRD) workflow for feature development
 - Added a components subdirectory to the memory bank
 - Created detailed documentation for key components:
   - blobserve: Service that provides static assets from OCI images

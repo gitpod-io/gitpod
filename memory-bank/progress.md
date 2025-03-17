@@ -217,6 +217,10 @@ No specific blockers or dependencies have been identified yet. This section will
     - Documented server architecture patterns and dependency injection
     - Added information about Kubernetes deployment configuration
     - Documented feature flag implementation for readiness probe
+  - Established standardized development workflows:
+    - Created `workflows.md` to document standardized development processes
+    - Documented the Product Requirements Document (PRD) workflow
+    - Updated `activeContext.md` to reference the new workflows
 
 ## Next Evaluation Point
 
