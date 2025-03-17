@@ -37,6 +37,7 @@ import { Config } from "./config";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { LivenessController } from "./liveness/liveness-controller";
+import { ReadinessController } from "./liveness/readiness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { API } from "./api/server";
 import { GithubApp } from "./prebuilds/github-app";
@@ -80,6 +81,7 @@ export class Server {
         @inject(WebsocketConnectionManager) private readonly websocketConnectionHandler: WebsocketConnectionManager,
         @inject(WorkspaceDownloadService) private readonly workspaceDownloadService: WorkspaceDownloadService,
         @inject(LivenessController) private readonly livenessController: LivenessController,
+        @inject(ReadinessController) private readonly readinessController: ReadinessController,
         @inject(MonitoringEndpointsApp) private readonly monitoringEndpointsApp: MonitoringEndpointsApp,
         @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService,
         @inject(HeadlessLogController) private readonly headlessLogController: HeadlessLogController,
@@ -320,6 +322,7 @@ export class Server {
         app.use(this.oneTimeSecretServer.apiRouter);
         app.use(this.newsletterSubscriptionController.apiRouter);
         app.use("/live", this.livenessController.apiRouter);
+        app.use("/ready", this.readinessController.apiRouter);
         app.use("/version", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             res.send(this.config.version);
         });
