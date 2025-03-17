@@ -363,7 +363,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										Path: "/live",
 										Port: intstr.IntOrString{
 											Type:   intstr.Int,
-											IntVal: ContainerPort,
+											IntVal: ProbesPort,
 										},
 									},
 								},
@@ -377,7 +377,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										Path: "/ready",
 										Port: intstr.IntOrString{
 											Type:   intstr.Int,
-											IntVal: ContainerPort,
+											IntVal: ProbesPort,
 										},
 									},
 								},
@@ -421,6 +421,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								{
 									Name:          PublicAPIName,
 									ContainerPort: PublicAPIPort,
+								},
+								{
+									Name:          ProbesPortName,
+									ContainerPort: ProbesPort,
 								},
 							},
 							// todo(sje): do we need to cater for serverContainer.env from values.yaml?

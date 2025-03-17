@@ -136,6 +136,7 @@ import { AnalyticsController } from "./analytics-controller";
 import { InstallationAdminCleanup } from "./jobs/installation-admin-cleanup";
 import { AuditLogService } from "./audit/AuditLogService";
 import { AuditLogGarbageCollectorJob } from "./jobs/auditlog-gc";
+import { ProbesApp } from "./liveness/probes";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -241,6 +242,8 @@ export const productionContainerModule = new ContainerModule(
         bind(IWorkspaceManagerClientCallMetrics).toService(IClientCallMetrics);
 
         bind(WorkspaceDownloadService).toSelf().inSingletonScope();
+
+        bind(ProbesApp).toSelf().inSingletonScope();
         bind(LivenessController).toSelf().inSingletonScope();
         bind(ReadinessController).toSelf().inSingletonScope();
 
