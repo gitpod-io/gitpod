@@ -9,7 +9,7 @@ import express from "express";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { SpiceDBClientProvider } from "../authorization/spicedb";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { ReadSchemaRequest } from "@authzed/authzed-node/dist/src/v1";
+import { v1 } from "@authzed/authzed-node";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { Redis } from "ioredis";
 
@@ -91,7 +91,7 @@ export class ReadinessController {
             const client = this.spiceDBClientProvider.getClient();
 
             // Send a request, to verify that the connection works
-            const req = ReadSchemaRequest.create({});
+            const req = v1.ReadSchemaRequest.create({});
             const response = await client.readSchema(req);
             log.debug("SpiceDB connection check successful", { schemaLength: response.schemaText.length });
 
