@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the implementation of a readiness probe for the Gitpod server deployment. The readiness probe will ensure that the server is only considered ready when it has established connections to both the database and SpiceDB authorizer.
+This document outlines the implementation of a readiness probe for the Gitpod server deployment. The readiness probe will ensure that the server is only considered ready when it has established connections to the database, SpiceDB authorizer, and Redis.
 
 ## Background
 
@@ -13,6 +13,7 @@ Currently, the server deployment has a liveness probe that checks the event loop
 1. Create a readiness endpoint in the server that checks:
    - Database connectivity
    - SpiceDB authorizer connectivity
+   - Redis connectivity
 2. Configure the Kubernetes deployment to use this endpoint as a readiness probe
 
 ## Implementation Details
@@ -22,7 +23,8 @@ Currently, the server deployment has a liveness probe that checks the event loop
 We've created a new `ReadinessController` class in `components/server/src/liveness/readiness-controller.ts` that:
 - Checks database connectivity by executing a simple query
 - Checks SpiceDB connectivity by attempting to get a client
-- Returns a 200 status code only if both checks pass, otherwise returns a 503 status code
+- Checks Redis connectivity by executing a PING command
+- Returns a 200 status code only if all checks pass, otherwise returns a 503 status code
 
 ```typescript
 // components/server/src/liveness/readiness-controller.ts
@@ -147,8 +149,8 @@ ReadinessProbe: &corev1.Probe{
 
 The readiness probe should be tested to ensure:
 
-1. The server is only considered ready when both database and SpiceDB connections are established
-2. The server is not considered ready if either connection fails
+1. The server is only considered ready when database, SpiceDB, and Redis connections are established
+2. The server is not considered ready if any connection fails
 3. The server becomes ready again when connections are re-established
 
 ## Deployment Considerations
@@ -161,7 +163,7 @@ The readiness probe should be tested to ensure:
 
 The readiness probe implementation includes a ConfigCat feature flag called `server_readiness_probe` that controls whether the actual connectivity checks are performed:
 
-- When the flag is set to `true` (default): The readiness probe will always return a 200 status code, bypassing the actual database and SpiceDB connectivity checks
+- When the flag is set to `true` (default): The readiness probe will always return a 200 status code, bypassing the actual database, SpiceDB, and Redis connectivity checks
 - When the flag is set to `false`: The readiness probe will perform the actual checks and return the appropriate status code based on the results
 
 This feature flag provides several benefits:
@@ -173,9 +175,10 @@ This feature flag provides several benefits:
 ## Future Improvements
 
 - Add more sophisticated checks for SpiceDB connectivity, such as a simple permission check
+- Add more sophisticated checks for Redis connectivity, such as a simple key-value operation
 - Add metrics for readiness probe failures
 - Consider adding more dependencies to the readiness check as needed
 
 ## Conclusion
 
-This implementation ensures that the server is only considered ready when it has established connections to both the database and SpiceDB authorizer. This improves the reliability of the deployment by preventing traffic from being sent to instances that are not fully initialized.
+This implementation ensures that the server is only considered ready when it has established connections to the database, SpiceDB authorizer, and Redis. This improves the reliability of the deployment by preventing traffic from being sent to instances that are not fully initialized.

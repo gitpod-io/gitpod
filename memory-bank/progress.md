@@ -212,11 +212,16 @@ No specific blockers or dependencies have been identified yet. This section will
     - Created PRD document for the readiness probe implementation
     - Updated Kubernetes deployment configuration to add the readiness probe
     - Added ConfigCat feature flag `server_readiness_probe` to control readiness checks
+  - Enhanced server readiness probe with Redis health check:
+    - Added Redis connectivity check to the ReadinessController
+    - Updated PRD document to include Redis in the list of checked dependencies
+    - Ensured the feature flag continues to work with the new Redis check
   - Updated memory bank with new learnings:
     - Added information about server health checks and critical dependencies
     - Documented server architecture patterns and dependency injection
     - Added information about Kubernetes deployment configuration
     - Documented feature flag implementation for readiness probe
+    - Added Redis as a critical dependency for the server
   - Established standardized development workflows:
     - Created `workflows.md` to document standardized development processes
     - Documented the Product Requirements Document (PRD) workflow

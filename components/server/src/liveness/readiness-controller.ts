@@ -11,11 +11,13 @@ import { SpiceDBClientProvider } from "../authorization/spicedb";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { ReadSchemaRequest } from "@authzed/authzed-node/dist/src/v1";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { Redis } from "ioredis";
 
 @injectable()
 export class ReadinessController {
     @inject(TypeORM) protected readonly typeOrm: TypeORM;
     @inject(SpiceDBClientProvider) protected readonly spiceDBClientProvider: SpiceDBClientProvider;
+    @inject(Redis) protected readonly redis: Redis;
 
     get apiRouter(): express.Router {
         const router = express.Router();
@@ -55,7 +57,15 @@ export class ReadinessController {
                     return;
                 }
 
-                // Both connections are good
+                // Check Redis connection
+                const redisConnection = await this.checkRedisConnection();
+                if (!redisConnection) {
+                    log.warn("Readiness check failed: Redis connection failed");
+                    res.status(503).send("Redis connection failed");
+                    return;
+                }
+
+                // All connections are good
                 res.status(200).send("Ready");
             } catch (error) {
                 log.error("Readiness check failed", error);
@@ -88,6 +98,18 @@ export class ReadinessController {
             return true;
         } catch (error) {
             log.error("SpiceDB connection check failed", error);
+            return false;
+        }
+    }
+
+    private async checkRedisConnection(): Promise<boolean> {
+        try {
+            // Simple PING command to verify connection is working
+            const result = await this.redis.ping();
+            log.debug("Redis connection check successful", { result });
+            return result === "PONG";
+        } catch (error) {
+            log.error("Redis connection check failed", error);
             return false;
         }
     }
