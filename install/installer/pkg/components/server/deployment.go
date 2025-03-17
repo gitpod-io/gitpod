@@ -383,7 +383,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 								InitialDelaySeconds: 5,
 								PeriodSeconds:       10,
-								FailureThreshold:    12, // try for 120 seconds, then re-start the container
+								FailureThreshold:    12, // try for 120 seconds
 							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged:               pointer.Bool(false),
