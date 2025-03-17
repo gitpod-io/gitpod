@@ -144,5 +144,21 @@ Initial exploration of the Gitpod codebase has revealed:
     - Works by copying relevant sources into a separate file tree
     - Can also be run from inside the workspace
     - Manages complex dependencies between components
+- **Server Health Checks**: The Gitpod server uses two distinct health check mechanisms:
+  - **Liveness Probe**: Checks the event loop lag to determine if the server is functioning properly
+  - **Readiness Probe**: Checks database and SpiceDB connectivity to ensure the server is ready to handle requests
+- **Critical Dependencies**: The server has critical external dependencies that must be operational:
+  - **Database (TypeORM)**: Used for persistent storage
+  - **SpiceDB**: Used for authorization and permission management
+- **Server Architecture Patterns**:
+  - The server uses dependency injection (Inversify) for component management
+  - Components are registered in `container-module.ts` and injected where needed
+  - The server exposes HTTP endpoints for health checks and other functionality
+  - Routes are registered in the `registerRoutes` method in `server.ts`
+  - New functionality typically requires:
+    1. Creating a new controller/service class
+    2. Registering it in the container module
+    3. Injecting it where needed
+    4. Updating any relevant configuration files
 
 This section will be continuously updated as new insights are gained through working with the system.

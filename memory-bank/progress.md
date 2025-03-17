@@ -111,6 +111,7 @@ As we begin working with the codebase, we have not yet identified specific issue
 - Documentation of second set of API components (image-builder-api, local-app-api, registry-facade-api)
 - Documentation of third set of API components (supervisor-api, usage-api, ws-daemon-api)
 - Documentation of fourth set of API components (ws-manager-api, ws-manager-bridge-api)
+- First feature implementation: Server readiness probe for database and SpiceDB connectivity
 
 ### Upcoming Milestones
 - Development environment setup
@@ -203,6 +204,17 @@ No specific blockers or dependencies have been identified yet. This section will
   - Documented fourth set of API components:
     - ws-manager-api: Interfaces for managing the lifecycle of workspaces in Kubernetes clusters
     - ws-manager-bridge-api: Interfaces for dynamic management of workspace clusters
+
+- **3/17/2025**:
+  - Implemented server readiness probe:
+    - Created ReadinessController to check database and SpiceDB connectivity
+    - Updated server container module and route configuration
+    - Created PRD document for the readiness probe implementation
+    - Updated Kubernetes deployment configuration to add the readiness probe
+  - Updated memory bank with new learnings:
+    - Added information about server health checks and critical dependencies
+    - Documented server architecture patterns and dependency injection
+    - Added information about Kubernetes deployment configuration
 
 ## Next Evaluation Point
 

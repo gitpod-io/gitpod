@@ -129,3 +129,5 @@ Workspaces are treated as immutable, with changes to configuration resulting in 
 6. **gRPC Communication**: Internal services communicate using gRPC for efficient, typed communication.
 
 7. **Leeway Build System**: Custom build system for managing the complex dependencies between components.
+
+8. **Kubernetes Deployment Configuration**: All code that defines Kubernetes objects for deployable components lives in `install/installer`. This centralized approach ensures consistent deployment patterns across all components.
