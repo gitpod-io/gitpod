@@ -52,7 +52,7 @@ import {
 } from "./workspace/headless-log-service";
 import { runWithRequestContext } from "./util/request-context";
 import { AnalyticsController } from "./analytics-controller";
-import { ProbesApp as ProbesAppProvider } from "./liveness/probes";
+import { ProbesApp } from "./liveness/probes";
 
 const MONITORING_PORT = 9500;
 const IAM_SESSION_PORT = 9876;
@@ -69,8 +69,6 @@ export class Server {
     protected privateApiServer?: http.Server;
 
     protected readonly eventEmitter = new EventEmitter();
-    protected probesApp: express.Application;
-    protected probesServer?: http.Server;
     protected app?: express.Application;
     protected httpServer?: http.Server;
     protected monitoringApp?: express.Application;
@@ -105,7 +103,7 @@ export class Server {
         @inject(API) private readonly api: API,
         @inject(RedisSubscriber) private readonly redisSubscriber: RedisSubscriber,
         @inject(AnalyticsController) private readonly analyticsController: AnalyticsController,
-        @inject(ProbesAppProvider) private readonly probesAppProvider: ProbesAppProvider,
+        @inject(ProbesApp) private readonly probesApp: ProbesApp,
     ) {}
 
     public async init(app: express.Application) {
@@ -118,9 +116,6 @@ export class Server {
         // ensure DB connection is established to avoid noisy error messages
         await this.typeOrm.connect();
         log.info("connected to DB");
-
-        // probes
-        this.probesApp = this.probesAppProvider.create();
 
         // metrics
         app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -359,10 +354,9 @@ export class Server {
             throw new Error("server cannot start, not initialized");
         }
 
-        const probeServer = this.probesApp.listen(PROBES_PORT, () => {
-            log.info(`probes server listening on port: ${(<AddressInfo>probeServer.address()).port}`);
+        this.probesApp.start(PROBES_PORT).then((port) => {
+            log.info(`probes server listening on port: ${port}`);
         });
-        this.probesServer = probeServer;
 
         const httpServer = this.app.listen(port, () => {
             this.eventEmitter.emit(Server.EVENT_ON_START, httpServer);
@@ -419,7 +413,7 @@ export class Server {
             race(this.stopServer(this.httpServer), "stop httpserver"),
             race(this.stopServer(this.privateApiServer), "stop private api server"),
             race(this.stopServer(this.publicApiServer), "stop public api server"),
-            race(this.stopServer(this.probesServer), "stop probe server"),
+            race(this.probesApp.stop(), "stop probe server"),
             race((async () => this.disposables.dispose())(), "dispose disposables"),
         ]);
 

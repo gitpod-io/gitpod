@@ -371,7 +371,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								PeriodSeconds:       10,
 								FailureThreshold:    6,
 							},
-							ReadinessProbe: &corev1.Probe{
+							// StartupProbe, as we are only interested in controlling the startup of the server pod, and
+							// not interferring with the readiness afterwards.
+							StartupProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
 										Path: "/ready",
@@ -383,7 +385,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 								InitialDelaySeconds: 5,
 								PeriodSeconds:       10,
-								FailureThreshold:    12, // try for 120 seconds
+								FailureThreshold:    18, // try for 180 seconds, then the Pod is restarted
 							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged:               pointer.Bool(false),
