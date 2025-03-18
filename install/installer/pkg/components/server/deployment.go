@@ -376,7 +376,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							StartupProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/ready",
+										Path: "/startup",
 										Port: intstr.IntOrString{
 											Type:   intstr.Int,
 											IntVal: ProbesPort,

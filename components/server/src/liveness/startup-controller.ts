@@ -10,47 +10,27 @@ import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { SpiceDBClientProvider } from "../authorization/spicedb";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { v1 } from "@authzed/authzed-node";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { Redis } from "ioredis";
-import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
 
 @injectable()
-export class ReadinessController {
+export class StartupController {
     @inject(TypeORM) protected readonly typeOrm: TypeORM;
     @inject(SpiceDBClientProvider) protected readonly spiceDBClientProvider: SpiceDBClientProvider;
     @inject(Redis) protected readonly redis: Redis;
 
-    private readinessProbeEnabled: boolean = true;
-    private disposables: DisposableCollection = new DisposableCollection();
-
     get apiRouter(): express.Router {
         const router = express.Router();
-        this.addReadinessHandler(router);
+        this.addStartupHandler(router);
         return router;
     }
 
-    public async start() {
-        this.disposables.push(this.startPollingFeatureFlag());
-    }
-
-    public async stop() {
-        this.disposables.dispose();
-    }
-
-    protected addReadinessHandler(router: express.Router) {
+    protected addStartupHandler(router: express.Router) {
         router.get("/", async (_, res) => {
             try {
-                if (!this.readinessProbeEnabled) {
-                    log.debug("Readiness check skipped due to feature flag");
-                    res.status(200);
-                    return;
-                }
-
                 // Check database connection
                 const dbConnection = await this.checkDatabaseConnection();
                 if (!dbConnection) {
-                    log.warn("Readiness check failed: Database connection failed");
+                    log.warn("Startup check failed: Database connection failed");
                     res.status(503).send("Database connection failed");
                     return;
                 }
@@ -58,7 +38,7 @@ export class ReadinessController {
                 // Check SpiceDB connection
                 const spiceDBConnection = await this.checkSpiceDBConnection();
                 if (!spiceDBConnection) {
-                    log.warn("Readiness check failed: SpiceDB connection failed");
+                    log.warn("Startup check failed: SpiceDB connection failed");
                     res.status(503).send("SpiceDB connection failed");
                     return;
                 }
@@ -66,17 +46,17 @@ export class ReadinessController {
                 // Check Redis connection
                 const redisConnection = await this.checkRedisConnection();
                 if (!redisConnection) {
-                    log.warn("Readiness check failed: Redis connection failed");
+                    log.warn("Startup check failed: Redis connection failed");
                     res.status(503).send("Redis connection failed");
                     return;
                 }
 
                 // All connections are good
                 res.status(200).send("Ready");
-                log.debug("Readiness check successful");
+                log.debug("Startup check successful");
             } catch (error) {
-                log.error("Readiness check failed", error);
-                res.status(503).send("Readiness check failed");
+                log.error("Startup check failed", error);
+                res.status(503).send("Startup check failed");
             }
         });
     }
@@ -120,22 +100,5 @@ export class ReadinessController {
             log.error("Redis connection check failed", error);
             return false;
         }
-    }
-
-    private startPollingFeatureFlag(): Disposable {
-        return repeat(async () => {
-            // Check feature flag first
-            const readinessProbeEnabled = await getExperimentsClientForBackend().getValueAsync(
-                "server_readiness_probe",
-                true, // Default to readiness probe, skip if false
-                {},
-            );
-
-            log.debug("Feature flag server_readiness_probe updated", {
-                readinessProbeEnabled,
-                oldValue: this.readinessProbeEnabled,
-            });
-            this.readinessProbeEnabled = readinessProbeEnabled;
-        }, 10_000);
     }
 }
