@@ -8,8 +8,9 @@ import * as http from "http";
 import express from "express";
 import { inject, injectable } from "inversify";
 import { LivenessController } from "./liveness-controller";
-import { ReadinessController } from "./readiness-controller";
+import { StartupController } from "./startup-controller";
 import { AddressInfo } from "net";
+import { ReadinessController } from "./readiness-controller";
 
 @injectable()
 export class ProbesApp {
@@ -18,17 +19,17 @@ export class ProbesApp {
 
     constructor(
         @inject(LivenessController) protected readonly livenessController: LivenessController,
+        @inject(StartupController) protected readonly startupController: StartupController,
         @inject(ReadinessController) protected readonly readinessController: ReadinessController,
     ) {
         const probesApp = express();
         probesApp.use("/live", this.livenessController.apiRouter);
+        probesApp.use("/startup", this.startupController.apiRouter);
         probesApp.use("/ready", this.readinessController.apiRouter);
         this.app = probesApp;
     }
 
     public async start(port: number): Promise<number> {
-        await this.readinessController.start();
-
         return new Promise((resolve, reject) => {
             const probeServer = this.app.listen(port, () => {
                 resolve((<AddressInfo>probeServer.address()).port);
@@ -37,8 +38,11 @@ export class ProbesApp {
         });
     }
 
+    public notifyShutdown(): void {
+        this.readinessController.notifyShutdown();
+    }
+
     public async stop(): Promise<void> {
         this.httpServer?.close();
-        await this.readinessController.stop();
     }
 }

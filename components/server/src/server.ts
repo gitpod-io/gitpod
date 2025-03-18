@@ -387,6 +387,9 @@ export class Server {
     }
 
     public async stop() {
+        // mark as not-ready
+        this.probesApp.notifyShutdown();
+
         // run each stop with a timeout of 30s
         async function race(workLoad: Promise<any>, task: string, ms: number = 30 * 1000): Promise<void> {
             const before = Date.now();
@@ -413,9 +416,12 @@ export class Server {
             race(this.stopServer(this.httpServer), "stop httpserver"),
             race(this.stopServer(this.privateApiServer), "stop private api server"),
             race(this.stopServer(this.publicApiServer), "stop public api server"),
-            race(this.probesApp.stop(), "stop probe server"),
             race((async () => this.disposables.dispose())(), "dispose disposables"),
         ]);
+
+        this.probesApp.stop().catch(() => {
+            /* ignore */
+        });
 
         log.info("server stopped.");
     }

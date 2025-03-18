@@ -71,7 +71,7 @@ import { WebhookEventGarbageCollector } from "./jobs/webhook-gc";
 import { WorkspaceGarbageCollector } from "./jobs/workspace-gc";
 import { LinkedInService } from "./linkedin-service";
 import { LivenessController } from "./liveness/liveness-controller";
-import { ReadinessController } from "./liveness/readiness-controller";
+import { StartupController } from "./liveness/startup-controller";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { OAuthController } from "./oauth-server/oauth-controller";
@@ -137,6 +137,7 @@ import { InstallationAdminCleanup } from "./jobs/installation-admin-cleanup";
 import { AuditLogService } from "./audit/AuditLogService";
 import { AuditLogGarbageCollectorJob } from "./jobs/auditlog-gc";
 import { ProbesApp } from "./liveness/probes";
+import { ReadinessController } from "./liveness/readiness-controller";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -245,6 +246,7 @@ export const productionContainerModule = new ContainerModule(
 
         bind(ProbesApp).toSelf().inSingletonScope();
         bind(LivenessController).toSelf().inSingletonScope();
+        bind(StartupController).toSelf().inSingletonScope();
         bind(ReadinessController).toSelf().inSingletonScope();
 
         bind(OneTimeSecretServer).toSelf().inSingletonScope();

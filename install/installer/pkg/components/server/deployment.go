@@ -376,7 +376,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							StartupProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/ready",
+										Path: "/startup",
 										Port: intstr.IntOrString{
 											Type:   intstr.Int,
 											IntVal: ProbesPort,
@@ -386,6 +386,21 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								InitialDelaySeconds: 5,
 								PeriodSeconds:       10,
 								FailureThreshold:    18, // try for 180 seconds, then the Pod is restarted
+							},
+							// /ready will only return false on shutdown (SIGTERM), always true otherwise
+							ReadinessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									HTTPGet: &corev1.HTTPGetAction{
+										Path: "/ready",
+										Port: intstr.IntOrString{
+											Type:   intstr.Int,
+											IntVal: ProbesPort,
+										},
+									},
+								},
+								InitialDelaySeconds: 5,
+								PeriodSeconds:       5,
+								FailureThreshold:    1, // mark as "not ready" as quick as possible after receiving SIGTERM
 							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged:               pointer.Bool(false),
