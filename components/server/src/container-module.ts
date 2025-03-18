@@ -137,6 +137,7 @@ import { InstallationAdminCleanup } from "./jobs/installation-admin-cleanup";
 import { AuditLogService } from "./audit/AuditLogService";
 import { AuditLogGarbageCollectorJob } from "./jobs/auditlog-gc";
 import { ProbesApp } from "./liveness/probes";
+import { ReadinessController } from "./liveness/readiness-controller";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -246,6 +247,7 @@ export const productionContainerModule = new ContainerModule(
         bind(ProbesApp).toSelf().inSingletonScope();
         bind(LivenessController).toSelf().inSingletonScope();
         bind(StartupController).toSelf().inSingletonScope();
+        bind(ReadinessController).toSelf().inSingletonScope();
 
         bind(OneTimeSecretServer).toSelf().inSingletonScope();
 

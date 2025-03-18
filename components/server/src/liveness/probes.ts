@@ -10,6 +10,7 @@ import { inject, injectable } from "inversify";
 import { LivenessController } from "./liveness-controller";
 import { StartupController } from "./startup-controller";
 import { AddressInfo } from "net";
+import { ReadinessController } from "./readiness-controller";
 
 @injectable()
 export class ProbesApp {
@@ -19,10 +20,12 @@ export class ProbesApp {
     constructor(
         @inject(LivenessController) protected readonly livenessController: LivenessController,
         @inject(StartupController) protected readonly startupController: StartupController,
+        @inject(ReadinessController) protected readonly readinessController: ReadinessController,
     ) {
         const probesApp = express();
         probesApp.use("/live", this.livenessController.apiRouter);
         probesApp.use("/startup", this.startupController.apiRouter);
+        probesApp.use("/ready", this.readinessController.apiRouter);
         this.app = probesApp;
     }
 
@@ -33,6 +36,10 @@ export class ProbesApp {
             });
             this.httpServer = probeServer;
         });
+    }
+
+    public notifyShutdown(): void {
+        this.readinessController.notifyShutdown();
     }
 
     public async stop(): Promise<void> {
