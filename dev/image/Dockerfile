@@ -42,7 +42,7 @@ RUN install-packages mysql-client
 RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cmctl-linux-amd64.tar.gz | tar xzv --no-anchored cmctl
 
 # gokart
-RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.5.1/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
+RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.5.1/gokart_0.5.1_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
 
 # leeway
 ARG LEEWAY_VERSION=0.9.6
