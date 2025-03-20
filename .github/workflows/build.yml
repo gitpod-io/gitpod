@@ -104,7 +104,7 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.30393
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:aledbf-dev-env-gha.31878
     steps:
       - uses: actions/checkout@v4
       - name: Setup Environment
@@ -171,7 +171,7 @@ jobs:
         ports:
           - 6379:6379
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.30393
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:aledbf-dev-env-gha.31878
       env:
         DB_HOST: "mysql"
         DB_PORT: "23306"
@@ -425,7 +425,7 @@ jobs:
       - create-runner
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.30393
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:aledbf-dev-env-gha.31878
     if: needs.configuration.outputs.with_integration_tests != ''
     concurrency:
       group: ${{ needs.configuration.outputs.preview_name }}-integration-test
