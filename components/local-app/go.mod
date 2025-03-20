@@ -2,7 +2,7 @@ module github.com/gitpod-io/local-app
 
 go 1.23.0
 
-toolchain go1.24.1
+toolchain go1.23.3
 
 require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect

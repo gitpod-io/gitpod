@@ -2,7 +2,7 @@ module github.com/gitpod-io/gitpod/gpctl
 
 go 1.23.0
 
-toolchain go1.24.1
+toolchain go1.23.3
 
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect

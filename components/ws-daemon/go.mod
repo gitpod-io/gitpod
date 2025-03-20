@@ -2,7 +2,7 @@ module github.com/gitpod-io/gitpod/ws-daemon
 
 go 1.23.0
 
-toolchain go1.24.1
+toolchain go1.23.3
 
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26

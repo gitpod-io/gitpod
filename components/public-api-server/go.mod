@@ -2,7 +2,7 @@ module github.com/gitpod-io/gitpod/public-api-server
 
 go 1.23.0
 
-toolchain go1.24.1
+toolchain go1.23.3
 
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20220708163326-82d177caec6e

@@ -2,7 +2,7 @@ module github.com/gitpod-io/gitpod/proxy/plugins/headlesslogdownload
 
 go 1.23.0
 
-toolchain go1.24.1
+toolchain go1.23.3
 
 require github.com/caddyserver/caddy/v2 v2.7.6
 

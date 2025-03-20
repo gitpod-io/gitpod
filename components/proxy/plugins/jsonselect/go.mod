@@ -2,7 +2,7 @@ module github.com/gitpod-io/gitpod/proxy/plugins/jsonselect
 
 go 1.23.0
 
-toolchain go1.24.1
+toolchain go1.23.3
 
 require (
 	github.com/buger/jsonparser v1.1.1

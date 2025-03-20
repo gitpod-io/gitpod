@@ -2,7 +2,7 @@ module github.com/gitpod-io/gitpod/changelog
 
 go 1.23.0
 
-toolchain go1.24.1
+toolchain go1.23.3
 
 require (
 	github.com/google/go-github/v38 v38.1.0
