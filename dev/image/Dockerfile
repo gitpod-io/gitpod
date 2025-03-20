@@ -103,8 +103,8 @@ RUN curl -fsSL -o /usr/bin/toxiproxy https://github.com/Shopify/toxiproxy/releas
 ### libseccomp > 2.5.2
 RUN install-packages gperf \
     && cd $(mktemp -d) \
-    && curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v2.6.0/libseccomp-2.6.0.tar.gz | tar xz \
-    && cd libseccomp-2.6.0 && ./configure && make && make install
+    && curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v2.5.4/libseccomp-2.5.4.tar.gz | tar xz \
+    && cd libseccomp-2.5.4 && ./configure && make && make install
 
 ### Cypress deps
 RUN install-packages \
