@@ -5,7 +5,7 @@
 FROM cgr.dev/chainguard/wolfi-base:latest@sha256:91ed94ec4e72368a9b5113f2ffb1d8e783a91db489011a89d9fad3e3816a75ba as dl
 WORKDIR /dl
 RUN apk add --no-cache curl file \
-  && curl -OsSL https://github.com/opencontainers/runc/releases/download/v1.1.12/runc.amd64 \
+  && curl -OsSL https://github.com/opencontainers/runc/releases/download/v1.2.6/runc.amd64 \
   && chmod +x runc.amd64 \
   && if ! file runc.amd64 | grep -iq "ELF 64-bit LSB pie executable"; then echo "runc.amd64 is not a binary file"; exit 1;fi
 
