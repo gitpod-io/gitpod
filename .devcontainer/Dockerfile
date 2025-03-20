@@ -90,7 +90,7 @@ ARG TARGETOS
 
 # Install dependencies
 USER root
-ARG LEEWAY_VERSION=0.8.2
+ARG LEEWAY_VERSION=0.9.6
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
 ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
 ENV LEEWAY_REMOTE_CACHE_BUCKET=leeway-cache-dev-3ac8ef5
@@ -103,10 +103,10 @@ RUN arch=$(uname -m); \
     *) echo "Unsupported architecture: $arch"; exit 1 ;; \
     esac; \
     cd /tmp && \
-    curl -OsSL https://github.com/gitpod-io/leeway/releases/download/v${LEEWAY_VERSION}/leeway_${LEEWAY_VERSION}_Linux_${arch}.tar.gz && \
-    tar -xzf leeway_${LEEWAY_VERSION}_Linux_${arch}.tar.gz && \
+    curl -OsSL https://github.com/gitpod-io/leeway/releases/download/v${LEEWAY_VERSION}/leeway_Linux_${arch}.tar.gz && \
+    tar -xzf leeway_Linux_${arch}.tar.gz && \
     mv leeway /usr/local/bin/leeway && \
-    rm leeway_${LEEWAY_VERSION}_Linux_${arch}.tar.gz
+    rm leeway_Linux_${arch}.tar.gz
 
 
 ### cloud_sql_proxy ###
@@ -123,7 +123,7 @@ RUN mkdir -p /tmp/helm/ \
     && helm completion bash > /usr/share/bash-completion/completions/helm
 
 ### kubectl ###
-RUN curl -fsSL -o /usr/bin/kubectl "https://dl.k8s.io/release/v1.28.9/bin/linux/${TARGETARCH}/kubectl" && chmod +x /usr/bin/kubectl \
+RUN curl -fsSL -o /usr/bin/kubectl "https://dl.k8s.io/release/v1.31.0/bin/linux/${TARGETARCH}/kubectl" && chmod +x /usr/bin/kubectl \
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl
 
 RUN curl -fsSL -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
@@ -140,7 +140,7 @@ RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | sudo apt-key
 RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cmctl-linux-amd64.tar.gz | tar xzv --no-anchored cmctl
 
 # gokart
-RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
+RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.5.1/gokart_0.5.1_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
 
 # evans (gRPC client)
 RUN cd /usr/bin && curl -fsSL https://github.com/ktr0731/evans/releases/download/v0.10.6/evans_linux_${TARGETARCH}.tar.gz | tar xz evans
@@ -178,8 +178,8 @@ RUN curl -fsSL -o /usr/bin/toxiproxy https://github.com/Shopify/toxiproxy/releas
 
 ### libseccomp > 2.5.2
 RUN cd $(mktemp -d) \
-    && curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v2.5.4/libseccomp-2.5.4.tar.gz | tar xz \
-    && cd libseccomp-2.5.4 && ./configure && make && make install
+    && curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v2.6.0/libseccomp-2.6.0.tar.gz | tar xz \
+    && cd libseccomp-2.6.0 && ./configure && make && make install
 
 
 
@@ -188,7 +188,7 @@ RUN curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip" -o aws
     ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update && \
     rm -rf awscliv2.zip ./aws
 
-ENV GO_VERSION=1.23.3
+ENV GO_VERSION=1.24.1
 ENV GOPATH=/root/go-packages
 ENV GOROOT=/root/go
 ENV PATH=$GOROOT/bin:$GOPATH/bin:$PATH
@@ -270,7 +270,7 @@ RUN arch=$(uname -m); \
     *) echo "Unsupported architecture: $arch"; exit 1 ;; \
     esac; \
     mkdir -p $GCS_DIR \
-    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-472.0.0-linux-${arch}.tar.gz \
+    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-515.0.0-linux-${arch}.tar.gz \
     | tar -xzC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
     --additional-components gke-gcloud-auth-plugin docker-credential-gcr alpha beta \
