@@ -275,7 +275,9 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 		if strings.HasPrefix(dest, "/proc/self/") {
 			target = filepath.Join("/proc", strconv.Itoa(int(req.Pid)), strings.TrimPrefix(dest, "/proc/self/"))
 		}
-
+		if strings.HasPrefix(dest, "/proc/thread-self/") {
+			target = filepath.Join("/proc", strconv.Itoa(int(req.Pid)), strings.TrimPrefix(dest, "/proc/thread-self/"))
+		}
 		stat, err := os.Lstat(target)
 		if errors.Is(err, fs.ErrNotExist) {
 			err = os.MkdirAll(target, 0755)
