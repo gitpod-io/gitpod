@@ -107,7 +107,7 @@ jobs:
               echo "Using version $MAIN_VERSION" | tee -a $GITHUB_STEP_SUMMARY
 
               {
-                  echo "version=$("$MAIN_VERSION")"
+                  echo "version=$MAIN_VERSION"
               } >> $GITHUB_OUTPUT
           fi
           if [[ '${{ inputs.image_repo_base }}' != '' ]]; then
