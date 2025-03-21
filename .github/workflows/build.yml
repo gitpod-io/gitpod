@@ -4,6 +4,7 @@ permissions:
   contents: write # This is required for actions/checkout and create release
   pull-requests: write
   actions: write  # This is required for trigger another action which is used by JetBrains integrateion tests
+  packages: read
 on:
   pull_request:
     types: [ opened, edited ]
@@ -229,6 +230,12 @@ jobs:
           cat report.html >> $GITHUB_STEP_SUMMARY
 
           exit $RESULT
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Leeway Build
         id: leeway
         shell: bash
