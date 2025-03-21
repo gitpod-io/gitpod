@@ -49,6 +49,8 @@ packages:
         - ["mv", "components-docker-up--bin-docker-up/docker-up", "docker-up"]
         - ["mv", "components-docker-up--bin-docker-up/checksums.txt", "checksums.txt"]
         - ["mv", "components-docker-up--bin-docker-up/docker-compose", "docker-compose-linux-x86_64"]
+        - ["mv", "components-docker-up--bin-docker-up/docker-compose-linux-x86_64.provenance.json", "docker-compose-linux-x86_64.provenance.json"]
+        - ["mv", "components-docker-up--bin-docker-up/docker-compose-linux-x86_64.sbom.json", "docker-compose-linux-x86_64.sbom.json"]
         - ["rm", "-r", "components-docker-up--bin-docker-up"]
         - ["mv", "components-docker-up--bin-runc-facade/docker-up", "runc-facade"]
         - ["rm", "-r", "components-docker-up--bin-runc-facade"]
