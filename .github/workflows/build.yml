@@ -210,7 +210,11 @@ jobs:
           RESULT=0
           set -x
 
+          # CPUs/2
+          MAX_CONCURRENT_TASKS=$(($(nproc) / 2))
+
           leeway build dev:all \
+            --max-concurrent-tasks $MAX_CONCURRENT_TASKS \
             --docker-build-options network=host \
             --cache remote \
             -Dversion=$VERSION \

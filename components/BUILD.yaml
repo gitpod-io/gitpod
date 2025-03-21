@@ -8,13 +8,12 @@ packages:
     argdeps:
       - version
     deps:
-      - :all-docker
       - :docker-versions
       - :publish-api
-      - dev:all-app
-      - components:all-docker
-      - install/installer:docker
       - components/gitpod-protocol:all
+      - dev:all-app
+      - install/installer:docker
+      - :all-docker
   - name: docker-versions
     type: docker
     config:
