@@ -26,7 +26,7 @@ const (
 	InClusterDbSecret           = "mysql"
 	KubeRBACProxyRepo           = "quay.io"
 	KubeRBACProxyImage          = "brancz/kube-rbac-proxy"
-	KubeRBACProxyTag            = "v0.15.0"
+	KubeRBACProxyTag            = "v0.19.0"
 	MinioServiceAPIPort         = 9000
 	MonitoringChart             = "monitoring"
 	ProxyComponent              = "proxy"
