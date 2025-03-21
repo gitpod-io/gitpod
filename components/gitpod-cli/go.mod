@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/gitpod-cli
 
-go 1.22.0
+go 1.23.0
 
 toolchain go1.23.3
 
@@ -26,8 +26,8 @@ require (
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/sync v0.5.0
-	golang.org/x/term v0.18.0
+	golang.org/x/sync v0.12.0
+	golang.org/x/term v0.30.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	google.golang.org/grpc v1.58.3
 	gopkg.in/yaml.v2 v2.4.0
@@ -51,8 +51,8 @@ require (
 	github.com/prometheus/client_golang v1.16.0 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
-	golang.org/x/crypto v0.21.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
 	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
@@ -73,7 +73,7 @@ require (
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/net v0.23.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0 // indirect
 )
