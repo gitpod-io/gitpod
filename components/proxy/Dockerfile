@@ -2,7 +2,15 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM caddy:2.7.6-builder AS builder
+FROM caddy:2.7.6-builder AS withgo
+
+RUN go install golang.org/dl/go1.23.1@latest && \
+    go1.23.1 download && \
+    rm -rf /usr/local/go && \
+    mv /go /usr/local/go && \
+    mv /usr/local/go/bin/go1.23.1 /usr/local/go/bin/go
+
+FROM withgo AS builder
 
 WORKDIR /plugins
 
