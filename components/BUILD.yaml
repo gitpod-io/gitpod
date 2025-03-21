@@ -12,6 +12,7 @@ packages:
       - :docker-versions
       - :publish-api
       - dev:all-app
+      - components:all-docker
       - install/installer:docker
       - components/gitpod-protocol:all
   - name: docker-versions
