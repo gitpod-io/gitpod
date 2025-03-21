@@ -117,7 +117,6 @@ export class API {
         const server = app.listen(3001, () => {
             log.info(`public api: listening on port: ${(server.address() as AddressInfo).port}`);
         });
-
         return server;
     }
 

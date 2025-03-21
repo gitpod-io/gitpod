@@ -69,27 +69,6 @@ installCtxLogAugmenter();
 installLogCountMetric();
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-(async () => {
-    if (process.env.GOOGLE_CLOUD_PROFILER?.toLocaleLowerCase() !== "true") {
-        console.log("skipping cloud profiler, not enabled");
-        return;
-    }
-    console.log("starting cloud profiler");
-
-    try {
-        const profiler = await import("@google-cloud/profiler");
-        // there is no way to stop it: https://github.com/googleapis/cloud-profiler-nodejs/issues/876
-        // disable google_cloud_profiler and cycle servers
-        await profiler.start({
-            serviceContext: {
-                service: "server",
-                version: process.env.VERSION,
-            },
-        });
-    } catch (err) {
-        console.error("failed to start cloud profiler", err);
-    }
-})();
 
 export async function start(container: Container) {
     const server = container.get(Server);
