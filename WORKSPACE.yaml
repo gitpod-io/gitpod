@@ -24,7 +24,7 @@ defaultArgs:
   rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2024.3.4.tar.gz"
   jbBackendVersion: "latest"
   dockerVersion: "20.10.24"
-  dockerComposeVersion: "2.27.0-gitpod.0"
+  dockerComposeVersion: "v2.34.0-gitpod.1"
   ipfsKuboVersion: "v0.18.0"
   ipfsClusterVersion: "v1.0.8"
   schedulerExtenderVersion: "c1925d8"
