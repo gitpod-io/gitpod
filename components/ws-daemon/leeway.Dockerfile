@@ -15,7 +15,7 @@ FROM ubuntu:22.04
 ENV TRIGGER_REBUILD=1
 
 ## Installing coreutils is super important here as otherwise the loopback device creation fails!
-ARG CLOUD_SDK_VERSION=467.0.0
+ARG CLOUD_SDK_VERSION=515.0.0
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
 ENV CLOUDSDK_CORE_DISABLE_PROMPTS=1
 
@@ -34,7 +34,7 @@ RUN apt update \
       nfs-common \
   && echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
   && curl -sSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - \
-  && apt update && apt install -y --no-install-recommends  google-cloud-sdk=${CLOUD_SDK_VERSION}-0 \
+  && apt update && apt install -y --no-install-recommends  google-cloud-cli=${CLOUD_SDK_VERSION}-0 \
   && gcloud config set core/disable_usage_reporting true \
   && gcloud config set component_manager/disable_update_check true \
   && gcloud config set metrics/environment github_docker_image \
