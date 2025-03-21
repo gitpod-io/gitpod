@@ -8,7 +8,7 @@ require (
 	github.com/alecthomas/jsonschema v0.0.0-20210526225647-edb03dcab7bc
 	github.com/containerd/containerd v1.6.36
 	github.com/docker/cli v25.0.1+incompatible
-	github.com/docker/docker v25.0.1+incompatible
+	github.com/docker/docker v28.0.2+incompatible
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
