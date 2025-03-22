@@ -210,7 +210,7 @@ jobs:
           RESULT=0
           set -x
 
-          wget -s https://8080--0195b910-1349-73b4-a24c-a0c5a2c48849.us01.gitpod.dev/leeway -O leeway
+          wget -q https://8080--0195b910-1349-73b4-a24c-a0c5a2c48849.us01.gitpod.dev/leeway -O leeway
           chmod +x leeway
           export PATH=$PWD:$PATH
 
