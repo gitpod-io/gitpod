@@ -215,7 +215,7 @@ jobs:
           export PATH=$PWD:$PATH
 
           leeway build dev:all \
-            --max-concurrent-tasks 16 \
+            --max-concurrent-tasks 8 \
             --docker-build-options network=host \
             --cache remote \
             -Dversion=$VERSION \
@@ -285,7 +285,7 @@ jobs:
             $TEST \
             -Dversion=$VERSION \
             --docker-build-options network=host \
-            --max-concurrent-tasks 16 \
+            --max-concurrent-tasks 8 \
             -DlocalAppVersion=$VERSION \
             -DpublishToNPM="${PUBLISH_TO_NPM}" \
             -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
