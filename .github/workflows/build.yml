@@ -279,6 +279,10 @@ jobs:
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
           [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
 
+
+          # CPUs/2
+          MAX_CONCURRENT_TASKS=$(($(nproc) / 2))
+
           RESULT=0
           set -x
           # CI=true is a var set by GHA. Unsetting it for the build, as yarn builds treat warnings as errors if that var is set to true
@@ -287,7 +291,7 @@ jobs:
             $TEST \
             -Dversion=$VERSION \
             --docker-build-options network=host \
-            --max-concurrent-tasks 1 \
+            --max-concurrent-tasks $MAX_CONCURRENT_TASKS \
             -DlocalAppVersion=$VERSION \
             -DpublishToNPM="${PUBLISH_TO_NPM}" \
             -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
