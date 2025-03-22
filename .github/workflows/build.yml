@@ -210,15 +210,12 @@ jobs:
           RESULT=0
           set -x
 
-          # CPUs/2
-          MAX_CONCURRENT_TASKS=$(($(nproc) / 2))
-
-          wget https://8080--0195b910-1349-73b4-a24c-a0c5a2c48849.us01.gitpod.dev/leeway -O leeway
+          wget -s https://8080--0195b910-1349-73b4-a24c-a0c5a2c48849.us01.gitpod.dev/leeway -O leeway
           chmod +x leeway
           export PATH=$PWD:$PATH
 
           leeway build dev:all \
-            --max-concurrent-tasks $MAX_CONCURRENT_TASKS \
+            --max-concurrent-tasks 16 \
             --docker-build-options network=host \
             --cache remote \
             -Dversion=$VERSION \
@@ -280,9 +277,6 @@ jobs:
           [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
 
 
-          # CPUs/2
-          MAX_CONCURRENT_TASKS=$(($(nproc) / 2))
-
           RESULT=0
           set -x
           # CI=true is a var set by GHA. Unsetting it for the build, as yarn builds treat warnings as errors if that var is set to true
@@ -291,7 +285,7 @@ jobs:
             $TEST \
             -Dversion=$VERSION \
             --docker-build-options network=host \
-            --max-concurrent-tasks $MAX_CONCURRENT_TASKS \
+            --max-concurrent-tasks 16 \
             -DlocalAppVersion=$VERSION \
             -DpublishToNPM="${PUBLISH_TO_NPM}" \
             -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
