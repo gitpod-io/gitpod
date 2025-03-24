@@ -32,7 +32,6 @@
 </div>
 
 
-
 ## Features
 
 - **Dev environments as code** - Gitpod is like infrastructure-as-code, but for your development environment. Gitpod defines your editor extensions and requires dependencies in a declarative [`.gitpod.yml` configuration](https://www.gitpod.io/docs/introduction/gitpod-tutorial/2-configure-your-gitpod-yml). Spinning up dev environments is easily repeatable and reproducible empowering you to automate, version-control, and share dev environments across your team.
