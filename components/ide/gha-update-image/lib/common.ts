@@ -121,7 +121,7 @@ const getInstallerVersion = async (version: string | undefined) => {
         }
     }
     const installationVersion =
-        await $`echo '${tagInfo}' | awk '{ print $2 }' | grep -o 'main-gha\\.[0-9]*' | cut -d'/' -f3`
+        await $`echo '${tagInfo}' | awk '{ print $2 }' | grep -o 'main-gha.[0-9]*' | cut -d'/' -f3`
             .text()
             .catch((e) => {
                 throw new Error("Failed to parse installer version from git tag: " + e);
