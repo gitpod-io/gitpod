@@ -157,36 +157,56 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
             .filter { portsNumbersFromNonServedPorts.contains(it) || !portsNumbersFromPortsList.contains(it) }
 
         runJob(lifetime) {
-            processPortsInBatches(servedPortsToStartForwarding) { port ->
-                operationSemaphore.withPermit {
-                    startForwarding(port)
-                    allPortsToKeep.add(port.localPort)
+            coroutineScope {
+                // Stop operations first to free up resources
+                launch {
+                    processPortsInBatches(forwardedPortsToStopForwarding) { port ->
+                        operationSemaphore.withPermit { stopForwarding(port) }
+                    }
                 }
-            }
-
-            processPortsInBatches(exposedPortsToStartExposingOnClient) { port ->
-                operationSemaphore.withPermit {
-                    startExposingOnClient(port)
-                    allPortsToKeep.add(port.localPort)
+                launch {
+                    processPortsInBatches(exposedPortsToStopExposingOnClient) { port ->
+                        operationSemaphore.withPermit { stopExposingOnClient(port) }
+                    }
                 }
-            }
 
-            processPortsInBatches(forwardedPortsToStopForwarding) { port ->
-                operationSemaphore.withPermit { stopForwarding(port) }
-            }
+                // Wait for stop operations to complete
+                awaitAll()
 
-            processPortsInBatches(exposedPortsToStopExposingOnClient) { port ->
-                operationSemaphore.withPermit { stopExposingOnClient(port) }
-            }
-
-            processPortsInBatches(portsList) { port ->
-                application.invokeLater {
-                    updatePortsPresentation(port)
-                    allPortsToKeep.add(port.localPort)
+                // Start new operations
+                launch {
+                    processPortsInBatches(servedPortsToStartForwarding) { port ->
+                        operationSemaphore.withPermit {
+                            startForwarding(port)
+                            allPortsToKeep.add(port.localPort)
+                        }
+                    }
                 }
-            }
+                launch {
+                    processPortsInBatches(exposedPortsToStartExposingOnClient) { port ->
+                        operationSemaphore.withPermit {
+                            startExposingOnClient(port)
+                            allPortsToKeep.add(port.localPort)
+                        }
+                    }
+                }
 
-            cleanupUnusedLifetimes(allPortsToKeep)
+                // Update presentation in parallel with start operations
+                launch {
+                    processPortsInBatches(portsList) { port ->
+                        application.invokeLater {
+                            updatePortsPresentation(port)
+                            allPortsToKeep.add(port.localPort)
+                        }
+                    }
+                }
+
+                // Wait for all operations to complete
+                awaitAll()
+
+                // Clean up after all operations are done
+                cleanupUnusedLifetimes(allPortsToKeep)
+            }
         }
     }
 
@@ -195,7 +215,7 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
             try {
                 batch.forEach { port ->
                     try {
-                        withTimeout(5000) { // Add timeout to prevent hanging operations
+                        withTimeout(5000) {
                             action(port)
                         }
                     } catch (e: Exception) {
@@ -205,7 +225,7 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
                 delay(BATCH_DELAY)
             } catch (e: Exception) {
                 thisLogger().error("gitpod: Error processing batch", e)
-                delay(BATCH_DELAY * 2) // Double delay on error
+                delay(BATCH_DELAY * 2)
             }
         }
     }
