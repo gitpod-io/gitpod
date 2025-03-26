@@ -37,6 +37,7 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
         private const val BATCH_SIZE = 10
         private const val BATCH_DELAY = 100L
         private const val DEBOUNCE_DELAY = 500L
+        private const val UI_UPDATE_BATCH_SIZE = 50 // Batch size for UI updates
     }
 
     private val perClientPortForwardingManager = service<PerClientPortForwardingManager>()
@@ -92,7 +93,6 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
         val completableFuture = CompletableFuture<Void>()
 
         val statusServiceStub = StatusServiceGrpc.newStub(GitpodManager.supervisorChannel)
-
         val portsStatusRequest = Status.PortsStatusRequest.newBuilder().setObserve(true).build()
 
         val portsStatusResponseObserver = object :
@@ -104,8 +104,8 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
             override fun onNext(response: Status.PortsStatusResponse) {
                 debounceJob?.cancel()
                 debounceJob = runJob(lifetime) {
-                    delay(DEBOUNCE_DELAY)
                     try {
+                        delay(DEBOUNCE_DELAY)
                         syncPortsListWithClient(response)
                     } catch (e: Exception) {
                         thisLogger().error("gitpod: Error during port observation", e)
@@ -125,7 +125,6 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
         }
 
         statusServiceStub.portsStatus(portsStatusRequest, portsStatusResponseObserver)
-
         return completableFuture
     }
 
@@ -133,7 +132,7 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
         return System.getenv("GITPOD_DISABLE_JETBRAINS_LOCAL_PORT_FORWARDING")?.toBoolean() ?: false
     }
 
-    private fun syncPortsListWithClient(response: Status.PortsStatusResponse) {
+    private suspend fun syncPortsListWithClient(response: Status.PortsStatusResponse) {
         val ignoredPorts = ignoredPortsForNotificationService.getIgnoredPorts()
         val portsList = response.portsList.filter { !ignoredPorts.contains(it.localPort) }
         val portsNumbersFromPortsList = portsList.map { it.localPort }
@@ -156,57 +155,60 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
             .map { it.hostPortNumber }
             .filter { portsNumbersFromNonServedPorts.contains(it) || !portsNumbersFromPortsList.contains(it) }
 
-        runJob(lifetime) {
-            coroutineScope {
-                // Stop operations first to free up resources
-                launch {
-                    processPortsInBatches(forwardedPortsToStopForwarding) { port ->
-                        operationSemaphore.withPermit { stopForwarding(port) }
-                    }
+        coroutineScope {
+            // Stop operations first to free up resources
+            launch {
+                processPortsInBatches(forwardedPortsToStopForwarding) { port ->
+                    operationSemaphore.withPermit { stopForwarding(port) }
                 }
-                launch {
-                    processPortsInBatches(exposedPortsToStopExposingOnClient) { port ->
-                        operationSemaphore.withPermit { stopExposingOnClient(port) }
-                    }
+            }
+            launch {
+                processPortsInBatches(exposedPortsToStopExposingOnClient) { port ->
+                    operationSemaphore.withPermit { stopExposingOnClient(port) }
                 }
+            }
 
-                // Wait for stop operations to complete
-                awaitAll()
+            // Wait for stop operations to complete
+            awaitAll()
 
-                // Start new operations
-                launch {
-                    processPortsInBatches(servedPortsToStartForwarding) { port ->
-                        operationSemaphore.withPermit {
-                            startForwarding(port)
-                            allPortsToKeep.add(port.localPort)
-                        }
+            // Start new operations
+            launch {
+                processPortsInBatches(servedPortsToStartForwarding) { port ->
+                    operationSemaphore.withPermit {
+                        startForwarding(port)
+                        allPortsToKeep.add(port.localPort)
                     }
                 }
-                launch {
-                    processPortsInBatches(exposedPortsToStartExposingOnClient) { port ->
-                        operationSemaphore.withPermit {
-                            startExposingOnClient(port)
-                            allPortsToKeep.add(port.localPort)
-                        }
+            }
+            launch {
+                processPortsInBatches(exposedPortsToStartExposingOnClient) { port ->
+                    operationSemaphore.withPermit {
+                        startExposingOnClient(port)
+                        allPortsToKeep.add(port.localPort)
                     }
                 }
+            }
 
-                // Update presentation in parallel with start operations
-                launch {
-                    processPortsInBatches(portsList) { port ->
-                        application.invokeLater {
+            // Wait for all operations to complete
+            awaitAll()
+
+            // Update presentation in batches to avoid UI thread blocking
+            launch {
+                portsList.chunked(UI_UPDATE_BATCH_SIZE).forEach { batch ->
+                    application.invokeLater {
+                        batch.forEach { port ->
                             updatePortsPresentation(port)
                             allPortsToKeep.add(port.localPort)
                         }
                     }
+                    delay(50) // Small delay between UI updates to prevent overwhelming the EDT
                 }
-
-                // Wait for all operations to complete
-                awaitAll()
-
-                // Clean up after all operations are done
-                cleanupUnusedLifetimes(allPortsToKeep)
             }
+
+            awaitAll()
+
+            // Clean up after all operations are done
+            cleanupUnusedLifetimes(allPortsToKeep)
         }
     }
 
