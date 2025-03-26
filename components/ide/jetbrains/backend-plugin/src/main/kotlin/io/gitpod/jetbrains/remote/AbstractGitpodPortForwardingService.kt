@@ -157,22 +157,23 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
 
         coroutineScope {
             // Stop operations first to free up resources
-            launch {
+            val stopForwardingJob = launch {
                 processPortsInBatches(forwardedPortsToStopForwarding) { port ->
                     operationSemaphore.withPermit { stopForwarding(port) }
                 }
             }
-            launch {
+            val stopExposingJob = launch {
                 processPortsInBatches(exposedPortsToStopExposingOnClient) { port ->
                     operationSemaphore.withPermit { stopExposingOnClient(port) }
                 }
             }
 
             // Wait for stop operations to complete
-            awaitAll()
+            stopForwardingJob.join()
+            stopExposingJob.join()
 
             // Start new operations
-            launch {
+            val startForwardingJob = launch {
                 processPortsInBatches(servedPortsToStartForwarding) { port ->
                     operationSemaphore.withPermit {
                         startForwarding(port)
@@ -180,7 +181,7 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
                     }
                 }
             }
-            launch {
+            val startExposingJob = launch {
                 processPortsInBatches(exposedPortsToStartExposingOnClient) { port ->
                     operationSemaphore.withPermit {
                         startExposingOnClient(port)
@@ -189,11 +190,12 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
                 }
             }
 
-            // Wait for all operations to complete
-            awaitAll()
+            // Wait for start operations to complete
+            startForwardingJob.join()
+            startExposingJob.join()
 
             // Update presentation in batches to avoid UI thread blocking
-            launch {
+            val updatePresentationJob = launch {
                 portsList.chunked(UI_UPDATE_BATCH_SIZE).forEach { batch ->
                     application.invokeLater {
                         batch.forEach { port ->
@@ -205,7 +207,8 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
                 }
             }
 
-            awaitAll()
+            // Wait for UI updates to complete
+            updatePresentationJob.join()
 
             // Clean up after all operations are done
             cleanupUnusedLifetimes(allPortsToKeep)
