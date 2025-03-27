@@ -15,6 +15,8 @@ if [[ $# -lt 2 ]]; then
   exit 1
 fi
 
+INSTALLER_IMAGE_BASE_REPO="${INSTALLER_IMAGE_BASE_REPO:-eu.gcr.io/gitpod-dev-artifact}"
+
 # Extract VERSION and FAIL_ON from arguments and remove them from args list
 VERSION="$1"
 FAIL_ON="$2"
@@ -52,8 +54,9 @@ if ! command -v "$TRIVY_CMD" &> /dev/null; then
 fi
 
 echo "=== Gathering list of all images for $VERSION"
+
 # Run the installer docker image to get the list of images
-docker run --rm -v "$CONFIG_DIR:/config" eu.gcr.io/gitpod-core-dev/build/installer:"${VERSION}" mirror list \
+docker run --rm -v "$CONFIG_DIR:/config" "$INSTALLER_IMAGE_BASE_REPO/build/installer:${VERSION}" mirror list \
   -c "/config/$INSTALLER_CONFIG_FILE" > "$SCAN_DIR/mirror.json"
 
 # Extract original image references

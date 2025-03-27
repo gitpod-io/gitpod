@@ -323,6 +323,7 @@ jobs:
       - name: Scan Images for Vulnerabilities
         shell: bash
         run: |
+          INSTALLER_IMAGE_BASE_REPO=${{ needs.configuration.outputs.image_repo_base }}
           ./scripts/trivy/trivy-scan-images.sh ${{ needs.configuration.outputs.version }} CRITICAL
 
   install-app:
