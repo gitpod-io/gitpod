@@ -43,7 +43,7 @@ observability:
   logLevel: info
 openVSX:
   url: https://open-vsx.org
-repository: eu.gcr.io/gitpod-dev-artifact/build
+repository: example.org
 workspace:
   maxLifetime: 36h0m0s
   resources:

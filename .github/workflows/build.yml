@@ -325,6 +325,7 @@ jobs:
         run: |
           INSTALLER_IMAGE_BASE_REPO=${{ needs.configuration.outputs.image_repo_base }}
           ./scripts/trivy/trivy-scan-images.sh ${{ needs.configuration.outputs.version }} CRITICAL
+          exit $?
 
   install-app:
     runs-on: ${{ needs.create-runner.outputs.label }}

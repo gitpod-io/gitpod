@@ -3,7 +3,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-set -uo pipefail
+set -euo pipefail
 
 # Check if VERSION and FAIL_ON are provided
 if [[ $# -lt 2 ]]; then
@@ -40,8 +40,7 @@ echo "Working directory: $SCAN_DIR"
 
 # Directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_DIR="$SCRIPT_DIR"
-INSTALLER_CONFIG_FILE="scan-installer-config.yaml"
+INSTALLER_CONFIG_PATH="$SCRIPT_DIR/scan-installer-config.yaml"
 TRIVYIGNORE_PATH="$SCRIPT_DIR/trivyignore.yaml"
 
 # Ensure Trivy is installed
@@ -53,11 +52,25 @@ if ! command -v "$TRIVY_CMD" &> /dev/null; then
   curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "$SCAN_DIR/bin"
 fi
 
+OCI_TOOL_CMD="oci-tool"
+OCI_TOOL_VERSION="0.2.0"
+if  ! command -v "$OCI_TOOL_CMD" &> /dev/null; then
+  mkdir -p "$SCAN_DIR/bin"
+  OCI_TOOL_CMD="$SCAN_DIR/bin/oci-tool"
+  curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v${OCI_TOOL_VERSION}/oci-tool_${OCI_TOOL_VERSION}_linux_amd64.tar.gz | tar xz -C "$(dirname "$OCI_TOOL_CMD")" && chmod +x "$OCI_TOOL_CMD"
+fi
+
 echo "=== Gathering list of all images for $VERSION"
 
+# Extract installer binary from installer image
+INSTALLER_IMAGE="$INSTALLER_IMAGE_BASE_REPO/build/installer:${VERSION}"
+INSTALLER="$SCAN_DIR/installer"
+"$OCI_TOOL_CMD" fetch file -o "$INSTALLER" --platform=linux-amd64 "${INSTALLER_IMAGE}" app/installer
+echo ""
+chmod +x "$INSTALLER"
+
 # Run the installer docker image to get the list of images
-docker run --rm -v "$CONFIG_DIR:/config" "$INSTALLER_IMAGE_BASE_REPO/build/installer:${VERSION}" mirror list \
-  -c "/config/$INSTALLER_CONFIG_FILE" > "$SCAN_DIR/mirror.json"
+"$INSTALLER" mirror list -c "$INSTALLER_CONFIG_PATH" > "$SCAN_DIR/mirror.json"
 
 # Extract original image references
 jq -r '.[].original' "$SCAN_DIR/mirror.json" > "$SCAN_DIR/images.txt"
@@ -97,6 +110,7 @@ while IFS= read -r IMAGE_REF; do
 
   # Run Trivy on the image
   scan_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  set +e
   trivy_output=$("$TRIVY_CMD" image "$IMAGE_REF" --ignorefile "$TRIVYIGNORE_PATH" --scanners vuln --format json "$@" | jq -c)
   scan_status=$?
 
@@ -127,6 +141,7 @@ while IFS= read -r IMAGE_REF; do
             '{image: $image, scan_time: $scan_time, error: $error, error_details: $details}' >> "$RESULT_FILE"
           ((FAILED=FAILED+1))
   fi
+  set -e
 
   echo ""
 done < "$SCAN_DIR/images.txt"
