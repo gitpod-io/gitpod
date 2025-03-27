@@ -1,0 +1,56 @@
+apiVersion: v1
+domain: example.com
+authProviders: []
+blockNewUsers:
+  enabled: false
+  passlist: []
+certificate:
+  kind: secret
+  name: https-certificates
+containerRegistry:
+  enableAdditionalECRAuth: false
+  inCluster: false
+  privateBaseImageAllowList: []
+  subassemblyBucket: ""
+  external:
+    url: "registry.example.com"
+    certificate:
+      kind: secret
+      name: registry-certificate
+database:
+  inCluster: false
+  external:
+    certificate:
+      kind: secret
+      name: database-certificate
+disableDefinitelyGp: true
+kind: Full
+metadata:
+  region: local
+  shortname: default
+objectStorage:
+  inCluster: false
+  resources:
+    requests:
+      memory: 2Gi
+  s3:
+    endpoint: "s3.example.com"
+    bucket: "gitpod-storage"
+    credentials:
+      kind: secret
+      name: object-storage-credentials
+observability:
+  logLevel: info
+openVSX:
+  url: https://open-vsx.org
+repository: eu.gcr.io/gitpod-dev-artifact/build
+workspace:
+  maxLifetime: 36h0m0s
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+  runtime:
+    containerdRuntimeDir: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
+    containerdSocketDir: /run/containerd
+    fsShiftMethod: shiftfs
