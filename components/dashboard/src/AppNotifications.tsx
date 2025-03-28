@@ -138,7 +138,7 @@ const GITPOD_CLASSIC_SUNSET = {
     message: (
         <span className="text-md">
             <b>Gitpod Classic is sunsetting fall 2025.</b>{" "}
-            <a className="text-kumquat-ripe font-bold" href="https://app.gitpod.io" target="_blank" rel="noreferrer">
+            <a className="text-kumquat-base font-bold" href="https://app.gitpod.io" target="_blank" rel="noreferrer">
                 Try the new Gitpod
             </a>{" "}
             now (hosted compute coming soon)
@@ -186,7 +186,6 @@ export function AppNotifications() {
 
             if (!ignore) {
                 const dismissedNotifications = getDismissedNotifications();
-                // Since the sunset notification has preventDismiss: true, it won't be affected by dismissedNotifications
                 const topNotification = notifications.find((n) => !dismissedNotifications.includes(n.id));
                 setTopNotification(topNotification);
             }
