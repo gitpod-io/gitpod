@@ -131,6 +131,21 @@ const INVALID_BILLING_ADDRESS = (stripePortalUrl: string | undefined) => {
     } as Notification;
 };
 
+const GITPOD_CLASSIC_SUNSET = {
+    id: "gitpod-classic-sunset",
+    type: "info" as AlertType,
+    preventDismiss: true, // This makes it so users can't dismiss the notification
+    message: (
+        <span className="text-md">
+            <b>Gitpod Classic is sunsetting fall 2025.</b>{" "}
+            <a className="text-kumquat-ripe font-bold" href="https://app.gitpod.io" target="_blank" rel="noreferrer">
+                Try the new Gitpod
+            </a>{" "}
+            now (hosted compute coming soon)
+        </span>
+    ),
+} as Notification;
+
 export function AppNotifications() {
     const [topNotification, setTopNotification] = useState<Notification | undefined>(undefined);
     const { user, loading } = useUserLoader();
@@ -145,6 +160,10 @@ export function AppNotifications() {
         const updateNotifications = async () => {
             const notifications = [];
             if (!loading) {
+                if (isGitpodIo()) {
+                    notifications.push(GITPOD_CLASSIC_SUNSET);
+                }
+
                 if (
                     isGitpodIo() &&
                     (!user?.profile?.acceptedPrivacyPolicyDate ||
@@ -167,6 +186,7 @@ export function AppNotifications() {
 
             if (!ignore) {
                 const dismissedNotifications = getDismissedNotifications();
+                // Since the sunset notification has preventDismiss: true, it won't be affected by dismissedNotifications
                 const topNotification = notifications.find((n) => !dismissedNotifications.includes(n.id));
                 setTopNotification(topNotification);
             }
@@ -197,7 +217,7 @@ export function AppNotifications() {
         <div className="app-container pt-2">
             <Alert
                 type={topNotification.type}
-                closable={true}
+                closable={topNotification.id !== "gitpod-classic-sunset"} // Only show close button if it's not the sunset notification
                 onClose={() => {
                     if (!topNotification.preventDismiss) {
                         dismissNotification();
