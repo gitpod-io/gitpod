@@ -303,9 +303,33 @@ jobs:
           GITHUB_EMAIL: roboquat@gitpod.io
           VERSION: ${{ needs.configuration.outputs.version }}
 
+  trivy-scan:
+    name: "Scan Images for Vulnerabilities"
+    needs:
+      - configuration
+      - build-gitpod
+      - create-runner
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    container:
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.30393
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-environment
+        with:
+          identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
+          service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+      - name: Scan Images for Vulnerabilities
+        shell: bash
+        run: |
+          INSTALLER_IMAGE_BASE_REPO=${{ needs.configuration.outputs.image_repo_base }}
+          ./scripts/trivy/trivy-scan-images.sh ${{ needs.configuration.outputs.version }} CRITICAL
+          exit $?
+
   install-app:
     runs-on: ${{ needs.create-runner.outputs.label }}
-    needs: [ configuration, build-gitpod, create-runner ]
+    needs: [ configuration, build-gitpod, trivy-scan, create-runner ]
     if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
     strategy:
       fail-fast: false
@@ -343,6 +367,7 @@ jobs:
       - configuration
       - build-previewctl
       - build-gitpod
+      - trivy-scan
       - infrastructure
       - create-runner
     runs-on: ${{ needs.create-runner.outputs.label }}
@@ -490,6 +515,7 @@ jobs:
       - build-previewctl
       - infrastructure
       - build-gitpod
+      - trivy-scan
       - install-app
       - install
       - monitoring
