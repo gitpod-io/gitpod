@@ -365,7 +365,7 @@ export class Server {
         this.httpServer = httpServer;
 
         if (this.monitoringApp) {
-            this.monitoringHttpServer = this.monitoringApp.listen(MONITORING_PORT, "localhost", () => {
+            this.monitoringHttpServer = this.monitoringApp.listen(MONITORING_PORT, "127.0.0.1", () => {
                 log.info(
                     `monitoring app listening on port: ${(<AddressInfo>this.monitoringHttpServer!.address()).port}`,
                 );
