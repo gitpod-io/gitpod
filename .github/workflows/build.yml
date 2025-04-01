@@ -329,8 +329,9 @@ jobs:
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Scan Images for Vulnerabilities
         shell: bash
+        env:
+          INSTALLER_IMAGE_BASE_REPO: ${{needs.configuration.outputs.image_repo_base}}
         run: |
-          INSTALLER_IMAGE_BASE_REPO=${{ needs.configuration.outputs.image_repo_base }}
           ./scripts/trivy/trivy-scan-images.sh ${{ needs.configuration.outputs.version }} CRITICAL
           exit $?
 
