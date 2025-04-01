@@ -70,6 +70,7 @@ You can also follow [@gitpod](https://twitter.com/gitpod) for announcements and 
 
 For enterprise deployment and customized solutions, please explore our [**Enterprise offerings**](https://www.gitpod.io/contact/enterprise-self-serve) to get started with a setup that meets your organization's needs.
 
+
 ## Issues
 
 The issue tracker is used for tracking bug reports and feature requests for the Gitpod open source project as well as planning current and future development efforts. 🗺️
