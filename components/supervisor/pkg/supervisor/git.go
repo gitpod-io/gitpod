@@ -182,7 +182,7 @@ func (s *GitStatusService) Run(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (s *GitStatusService) update(ctx context.Context, updateContext *gitStatusUpdateContext) {
-	status, err := s.git.Status(ctx)
+	status, err := s.git.Status(ctx, git.WithDisableOptionalLocks(true))
 	if err != nil {
 		log.WithError(err).Error("git: error getting status")
 		time.Sleep(updateContext.statusBackoff.NextBackOff())
