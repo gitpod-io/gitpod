@@ -287,9 +287,32 @@ func GitStatusFromFiles(ctx context.Context, loc string) (res *Status, err error
 	}, nil
 }
 
+// StatusOption configures the behavior of git status
+type StatusOption func(*statusOptions)
+
+type statusOptions struct {
+	disableOptionalLocks bool
+}
+
+// WithDisableOptionalLocks disables optional locks during git status
+func WithDisableOptionalLocks(disable bool) StatusOption {
+	return func(o *statusOptions) {
+		o.disableOptionalLocks = disable
+	}
+}
+
 // Status runs git status
-func (c *Client) Status(ctx context.Context) (res *Status, err error) {
-	gitout, err := c.GitWithOutput(ctx, nil, "status", "--porcelain=v2", "--branch", "-uall")
+func (c *Client) Status(ctx context.Context, opts ...StatusOption) (res *Status, err error) {
+	options := &statusOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	args := []string{"status", "--porcelain=v2", "--branch", "-uall"}
+	if options.disableOptionalLocks {
+		args = append([]string{"--no-optional-locks"}, args...)
+	}
+	gitout, err := c.GitWithOutput(ctx, nil, args[0], args[1:]...)
 	if err != nil {
 		return nil, err
 	}
