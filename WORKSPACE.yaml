@@ -7,7 +7,7 @@ defaultArgs:
   publishToNPM: true
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: f7094f4e0dfcea8a01bc819f56d90d32ae468738
+  codeCommit: a5ccd0f051ed117b43403c959eb97f3ee2cfd7c1
   codeVersion: 1.99.0
   codeQuality: stable
   codeWebExtensionCommit: 3953e8160fffa97dd4a4509542b4bf7ff9b704cd
