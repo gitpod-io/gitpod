@@ -56,6 +56,9 @@ flowchart TD
    - Current status
    - Known issues
 
+### Per-component documentation
+The `memory-bank/components` directory contains detailed documentation about each component in this project. With regards to maintaining and updating it, treat it just like any other part of the memory-bank.
+
 ### Additional Context
 Create additional files/folders within memory-bank/ when they help organize:
 - Complex feature documentation
