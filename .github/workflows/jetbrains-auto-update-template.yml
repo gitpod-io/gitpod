@@ -23,7 +23,7 @@ jobs:
   update-jetbrains:
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.30393
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:clu-upgrade-leeway-gha.32148
     needs: [ create-runner ]
     steps:
       - uses: actions/checkout@v2
