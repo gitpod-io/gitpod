@@ -142,7 +142,7 @@ When working with components, I should always document:
 
 Whenever I encounter new build patterns or commands, I should update:
 1. The relevant component documentation in `memory-bank/components/`
-2. The `.clinerules` file with general patterns
+2. The LEARNING_JOURNAL section in `.clinerules` file with general patterns
 3. The `techContext.md` file if it represents a significant pattern
 
 This information is critical for effective development work, as being able to build and test components is fundamental to making changes and verifying their correctness.
