@@ -270,7 +270,7 @@ jobs:
           set -x
           # CI=true is a var set by GHA. Unsetting it for the build, as yarn builds treat warnings as errors if that var is set to true
           CI= leeway build \
-            --cache $CACHE \
+            --cache none \
             $TEST \
             -Dversion=$VERSION \
             --docker-build-options network=host \
