@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 
@@ -59,6 +60,12 @@ func File(ctx context.Context, path string, onChange func()) error {
 	fw.hash = hash
 
 	go func() {
+		const (
+			initialBackoff = 100 * time.Millisecond
+			maxBackoff     = 15 * time.Second
+		)
+		var currentBackoff time.Duration
+
 		defer func() {
 			if err != nil {
 				log.WithError(err).Error("Stopping file watch")
@@ -83,23 +90,40 @@ func File(ctx context.Context, path string, onChange func()) error {
 					continue
 				}
 
-				currentHash, err := hashConfig(path)
-				if err != nil {
-					log.WithError(err).WithField("event", event.Name).Warn("Cannot check if config has changed")
-					return
+				currentHash, hashErr := hashConfig(path)
+				if hashErr != nil {
+					log.WithError(hashErr).WithField("event", event.Name).Warn("Cannot check if config has changed, backing off")
+
+					if currentBackoff == 0 {
+						currentBackoff = initialBackoff
+					} else {
+						currentBackoff *= 2
+						if currentBackoff > maxBackoff {
+							currentBackoff = maxBackoff
+						}
+					}
+
+					select {
+					case <-time.After(currentBackoff):
+					case <-ctx.Done():
+						log.Info("Context cancelled during backoff sleep, stopping file watcher")
+						return
+					}
+					continue
 				}
 
-				// no change
+				currentBackoff = 0
+
 				if currentHash == fw.hash {
+					log.WithField("path", path).Debug("Config file changed but content hash is the same")
 					continue
 				}
 
 				log.WithField("path", path).Info("reloading file after change")
-
 				fw.hash = currentHash
 				fw.onChange()
-			case err := <-watcher.Errors:
-				log.WithError(err).Error("Unexpected error watching event")
+			case watchErr := <-watcher.Errors:
+				log.WithError(watchErr).Error("Unexpected error watching event")
 			case <-ctx.Done():
 				return
 			}
