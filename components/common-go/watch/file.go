@@ -86,7 +86,7 @@ func File(ctx context.Context, path string, onChange func()) error {
 				currentHash, err := hashConfig(path)
 				if err != nil {
 					log.WithError(err).WithField("event", event.Name).Warn("Cannot check if config has changed")
-					return
+					continue
 				}
 
 				// no change
