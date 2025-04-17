@@ -64,8 +64,9 @@ spec:
         for: 10m
       - alert: GitpodImageBuilderMk3InternalErrors
         labels:
-          severity: error
+          severity: warning
           dedicated: included
+          team: engine
         annotations:
           # runbook is 404 for now
           runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImageBuilderMk3InternalErrors.md
