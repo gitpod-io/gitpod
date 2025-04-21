@@ -62,3 +62,16 @@ spec:
         expr: |
           kube_deployment_status_replicas_unavailable{deployment="image-builder-mk3", cluster!~"ephemeral.*"} > 0
         for: 10m
+      - alert: GitpodImageBuilderMk3InternalErrors
+        labels:
+          severity: warning
+          dedicated: included
+          team: engine
+        annotations:
+          # runbook is 404 for now
+          runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImageBuilderMk3InternalErrors.md
+          summary: image-builder-mk3 is returning unexpected internal errors
+          description: 'Check the logs for image-builder-mk3 to inspect the high rate: {{ printf "%.2f" $value }}'
+        expr: |
+          sum by() (rate(grpc_server_handled_total{service="image-builder-mk3", grpc_code=~"Internal", grpc_method="Build"}[1h])) > 0.001
+        for: 1h
