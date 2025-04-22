@@ -14,6 +14,7 @@ import { VerifyModal } from "./VerifyModal";
 import { useWorkspaceDefaultImageQuery } from "../data/workspaces/default-workspace-image-query";
 import { GetWorkspaceDefaultImageResponse_Source } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { ProductLogo } from "../components/ProductLogo";
+import { useIsDataOps } from "../data/featureflag-query";
 
 export enum StartPhase {
     Checking = 0,
@@ -96,6 +97,8 @@ export function StartPage(props: StartPageProps) {
     const { phase, error, workspaceId } = props;
     let title = props.title || getPhaseTitle(phase, error);
     useDocumentTitle("Starting");
+    const isDataOps = useIsDataOps();
+
     return (
         <div className="w-screen h-screen align-middle">
             <div className="flex flex-col mx-auto items-center text-center h-screen">
@@ -105,6 +108,7 @@ export function StartPage(props: StartPageProps) {
                         error || phase === StartPhase.Stopped || phase === StartPhase.IdeReady ? "" : "animate-bounce"
                     }`}
                 />
+                {!isDataOps && <span className="block mt-2 text-gray-600 dark:text-gray-400">Gitpod Classic</span>}
                 <Heading2 className="mt-8">{title}</Heading2>
                 {typeof phase === "number" && phase < StartPhase.IdeReady && (
                     <ProgressBar phase={phase} error={!!error} />
