@@ -88,7 +88,7 @@ export default function Menu() {
                         <div className="hidden md:flex items-center">
                             <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2" />
                             <UserMenu user={user} className="" onFeedback={handleFeedbackFormClick} />
-                            <div className="pl-2">
+                            <div className="pl-4">
                                 <OrgPagesNav />
                             </div>
                         </div>
@@ -108,13 +108,10 @@ export default function Menu() {
                                 )}
                                 {!isDataOps && (
                                     <li>
-                                        <a
-                                            href="/"
-                                            className="flex items-center gap-x-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                                        >
+                                        <div className="flex items-center gap-x-1 text-sm text-pk-content-secondary">
                                             <ProductLogo className="h-4 w-auto" />
                                             <span>Gitpod Classic</span>
-                                        </a>
+                                        </div>
                                     </li>
                                 )}
                             </ul>
@@ -122,13 +119,10 @@ export default function Menu() {
                         {/* Right side items - Mobile Only */}
                         <div className="flex items-center space-x-3 md:hidden">
                             {!isDataOps && (
-                                <a
-                                    href="/"
-                                    className="flex items-center gap-x-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                                >
+                                <div className="flex items-center gap-x-1 text-sm text-pk-content-secondary">
                                     <ProductLogo className="h-4 w-auto" />
                                     <span>Gitpod Classic</span>
-                                </a>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -183,7 +177,7 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, onFeedbac
     const { data: installationConfig, isLoading: isInstallationConfigLoading } = useInstallationConfiguration();
     const isGitpodIo = isInstallationConfigLoading ? false : !installationConfig?.isDedicatedInstallation;
 
-    const extraSection = useMemo(() => {
+    const adminSection = useMemo(() => {
         const items: ContextMenuEntry[] = [];
 
         if (withAdminLink && user?.rolesOrPermissions?.includes(RoleOrPermission.ADMIN)) {
@@ -202,7 +196,7 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, onFeedbac
     }, [user?.rolesOrPermissions, withAdminLink]);
 
     const menuEntries = useMemo(() => {
-        const baseEntries: ContextMenuEntry[] = [
+        const entries: ContextMenuEntry[] = [
             {
                 title: (user && (getPrimaryEmail(user) || user?.name)) || "User",
                 customFontStyle: "text-gray-400",
@@ -228,22 +222,22 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, onFeedbac
         ];
 
         if (isGitpodIo) {
-            baseEntries.push({
+            entries.push({
                 title: "Feedback",
                 onClick: onFeedback,
                 separator: true,
             });
         }
 
-        baseEntries.push(...extraSection);
+        entries.push(...adminSection);
 
-        baseEntries.push({
+        entries.push({
             title: "Log out",
             href: gitpodHostUrl.asApiLogout().toString(),
         });
 
-        return baseEntries;
-    }, [extraSection, user, isGitpodIo, onFeedback]);
+        return entries;
+    }, [adminSection, user, isGitpodIo, onFeedback]);
 
     return (
         <div

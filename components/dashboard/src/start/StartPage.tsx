@@ -108,7 +108,7 @@ export function StartPage(props: StartPageProps) {
                         error || phase === StartPhase.Stopped || phase === StartPhase.IdeReady ? "" : "animate-bounce"
                     }`}
                 />
-                {!isDataOps && <span className="block mt-2 text-gray-600 dark:text-gray-400">Gitpod Classic</span>}
+                {!isDataOps && <span className="block mt-2 text-pk-content-secondary">Gitpod Classic</span>}
                 <Heading2 className="mt-8">{title}</Heading2>
                 {typeof phase === "number" && phase < StartPhase.IdeReady && (
                     <ProgressBar phase={phase} error={!!error} />
