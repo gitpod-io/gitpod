@@ -1,12 +1,4 @@
 packages:
-  - name: app
-    type: generic
-    deps:
-      - :docker-build
-    config:
-      commands:
-        - ["sh", "-c","TARFILE=$(cat ./components-supervisor-openssh--docker-build/manifest.json | jq -r '.[].Layers[]') && tar xvf ./components-supervisor-openssh--docker-build/$TARFILE"]
-        - ["rm", "-rf", "components-supervisor-openssh--docker-build"]
   - name: docker-build
     type: docker
     config:

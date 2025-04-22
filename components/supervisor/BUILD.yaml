@@ -27,7 +27,7 @@ packages:
     deps:
       - :app
       - components/supervisor/frontend:app
-      - components/supervisor/openssh:app
+      - components/supervisor/openssh:docker-build
       - components/gitpod-cli:app
     argdeps:
       - imageRepoBase
