@@ -34,6 +34,9 @@
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodTerminalServiceImpl" client="controller"
                         preload="true"/>
 
+        <projectService serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodClientProjectSessionTracker"
+                        client="controller" preload="true"/>
+
         <notificationGroup id="Gitpod Notifications" displayType="BALLOON" isLogByDefault="false"/>
 
         <httpRequestHandler implementation="io.gitpod.jetbrains.remote.GitpodCLIService"/>
@@ -46,7 +49,6 @@
         <registryKey key="gitpod.forceUpdateMavenProjects.disabled" defaultValue="false"
                      description="Disable the forced update of Maven projects when IDE opens."
                      restartRequired="true"/>
-
 
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService"
                             serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodIgnoredPortsForNotificationServiceImpl"
