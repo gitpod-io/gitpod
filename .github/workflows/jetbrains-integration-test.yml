@@ -39,7 +39,7 @@ jobs:
       gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
   jetbrains-smoke-test-linux:
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:clu-upgrade-leeway-gha.32245
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:clu-leeway-main-gha.32257
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     steps:
