@@ -51,7 +51,10 @@ ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
 ENV LEEWAY_REMOTE_CACHE_BUCKET=leeway-cache-dev-3ac8ef5
 ENV LEEWAY_CACHE_DIR=/workspace/.leeway/cache
 ENV LEEWAY_BUILD_DIR=/workspace/.leeway/build
-RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v${LEEWAY_VERSION}/leeway_Linux_x86_64.tar.gz | tar xz
+#RUN cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v${LEEWAY_VERSION}/leeway_Linux_x86_64.tar.gz | tar xz
+USER gitpod
+RUN LEEWAY_REPO_DIR=$(mktemp -d -t leeway-repo-XXXXXXXXXX) && git clone https://github.com/gitpod-io/leeway "$LEEWAY_REPO_DIR" && cd "$LEEWAY_REPO_DIR" && go build -o leeway && sudo install -m 755 leeway /usr/bin/ && cd / && rm -rf "$LEEWAY_REPO_DIR"
+USER root
 
 # evans (gRPC client)
 RUN cd /usr/bin && curl -fsSL https://github.com/ktr0731/evans/releases/download/v0.10.6/evans_linux_amd64.tar.gz | tar xz evans
