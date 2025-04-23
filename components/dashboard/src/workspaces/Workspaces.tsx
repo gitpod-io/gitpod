@@ -41,6 +41,7 @@ import { VideoCarousel } from "./VideoCarousel";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
 import { useInstallationConfiguration } from "../data/installation/installation-config-query";
+import { SkeletonBlock } from "@podkit/loading/Skeleton";
 
 export const GETTING_STARTED_DISMISSAL_KEY = "workspace-list-getting-started";
 
@@ -133,8 +134,10 @@ const WorkspacesPage: FunctionComponent = () => {
         }
     }, [user?.profile?.coachmarksDismissals]);
 
-    const { data: userSuggestedRepos } = useSuggestedRepositories({ excludeConfigurations: false });
-    const { data: orgSuggestedRepos } = useOrgSuggestedRepos();
+    const { data: userSuggestedRepos, isLoading: isUserSuggestedReposLoading } = useSuggestedRepositories({
+        excludeConfigurations: false,
+    });
+    const { data: orgSuggestedRepos, isLoading: isOrgSuggestedReposLoading } = useOrgSuggestedRepos();
 
     const suggestedRepos = useMemo(() => {
         const userSuggestions =
@@ -151,7 +154,7 @@ const WorkspacesPage: FunctionComponent = () => {
         });
 
         return [...userSuggestions, ...orgSuggestions].slice(0, 3);
-    }, [userSuggestedRepos, user, orgSuggestedRepos]);
+    }, [userSuggestedRepos, orgSuggestedRepos, user?.workspaceAutostartOptions]);
 
     const toggleGettingStarted = useCallback(
         (show: boolean) => {
@@ -264,13 +267,23 @@ const WorkspacesPage: FunctionComponent = () => {
                                 </Card>
                             </div>
 
-                            {suggestedRepos.length > 0 && (
+                            {(suggestedRepos.length > 0 ||
+                                isUserSuggestedReposLoading ||
+                                isOrgSuggestedReposLoading) && (
                                 <>
                                     <Subheading className="font-semibold text-pk-content-primary mb-2 app-container">
                                         Suggested
                                     </Subheading>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:px-28 px-4">
+                                        {suggestedRepos.length === 0 &&
+                                            (isUserSuggestedReposLoading || isOrgSuggestedReposLoading) && (
+                                                <>
+                                                    <SkeletonBlock className="w-full h-24" ready={false} />
+                                                    <SkeletonBlock className="w-full h-24" ready={false} />
+                                                    <SkeletonBlock className="w-full h-24" ready={false} />
+                                                </>
+                                            )}
                                         {suggestedRepos.map((repo) => {
                                             const isOrgSuggested =
                                                 (repo as SuggestedOrgRepository).orgSuggested ?? false;
