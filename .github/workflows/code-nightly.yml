@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:clu-leeway-main-gha.32257
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:clu-leeway-main-gha.32268
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-environment
