@@ -87,10 +87,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.AnalyticsEnv(&ctx.Config),
 		common.DatabaseEnv(&ctx.Config),
 		common.ConfigcatEnv(ctx),
-		[]corev1.EnvVar{{
-			Name:  "WSMAN_BRIDGE_CONFIGPATH",
-			Value: "/config/ws-manager-bridge.json",
-		}},
+		[]corev1.EnvVar{
+			{
+				Name:  "WSMAN_BRIDGE_CONFIGPATH",
+				Value: "/config/ws-manager-bridge.json",
+			},
+			// Required for node.js to pick up custom CAs
+			{
+				Name:  "NODE_EXTRA_CA_CERTS",
+				Value: common.CUSTOM_CA_MOUNT_PATH,
+			},
+		},
 	))
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {

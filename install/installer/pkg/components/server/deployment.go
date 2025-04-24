@@ -102,6 +102,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:  "WSMAN_CFG_MANAGERS",
 				Value: wsmanCfgManager,
 			},
+			// Required for node.js to pick up custom CAs
+			{
+				Name:  "NODE_EXTRA_CA_CERTS",
+				Value: common.CUSTOM_CA_MOUNT_PATH,
+			},
 		},
 	)
 
