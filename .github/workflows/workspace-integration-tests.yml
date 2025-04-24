@@ -61,7 +61,7 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:clu-leeway-main-gha.32268
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:clu-leeway-main-gha.32288
     outputs:
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
@@ -166,7 +166,7 @@ jobs:
     needs: [configuration, infrastructure, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:clu-leeway-main-gha.32268
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:clu-leeway-main-gha.32288
     steps:
       - uses: actions/checkout@v4
       - name: Integration Test
