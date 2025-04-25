@@ -317,6 +317,8 @@ export class EnvVarService {
         }
         if (projectId) {
             await this.auth.checkPermissionOnProject(requestorId, "read_env_var", projectId);
+        }
+        if (organizationId) {
             await this.auth.checkPermissionOnOrganization(requestorId, "read_env_var", organizationId);
         }
 
@@ -337,9 +339,7 @@ export class EnvVarService {
         }
 
         // 2. then org env vars (if applicable)
-        if (projectId) {
-            // !!! Important: Only apply the org env vars if the workspace is part of a project
-            // This is to prevent leaking org env vars to workspaces randomly started in an organization (safety feature)
+        if (organizationId) {
             const orgEnvVars =
                 (await ApplicationError.notFoundToUndefined(this.listOrgEnvVars(requestorId, organizationId))) || [];
             const withValues: OrgEnvVarWithValue[] = await this.orgDB.getOrgEnvironmentVariableValues(orgEnvVars);
