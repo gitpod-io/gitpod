@@ -114,7 +114,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), "getManifest")
 	logFields := log.OWI("", "", mh.Name)
 	logFields["tag"] = mh.Tag
-	logFields["spec"] = mh.Spec
+	logFields["spec"] = log.TrustedValueWrap{Value: mh.Spec}
 	err := func() error {
 		log.WithFields(logFields).Debug("get manifest")
 		tracing.LogMessageSafe(span, "spec", mh.Spec)
@@ -265,7 +265,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	if err != nil {
-		log.WithError(err).WithField("spec", mh.Spec).Error("cannot get manifest")
+		log.WithError(err).WithField("spec", log.TrustedValueWrap{Value: mh.Spec}).Error("cannot get manifest")
 		respondWithError(w, err)
 	}
 	tracing.FinishSpan(span, &err)
