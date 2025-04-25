@@ -31,7 +31,6 @@ export const useSuggestedRepositories = ({ excludeConfigurations }: Props) => {
             return repositories;
         },
         {
-            staleTime: 1000 * 60 * 10, // 10 minutes
             // Keeps data in cache for 7 days - will still refresh though
             cacheTime: 1000 * 60 * 60 * 24 * 7,
         },
