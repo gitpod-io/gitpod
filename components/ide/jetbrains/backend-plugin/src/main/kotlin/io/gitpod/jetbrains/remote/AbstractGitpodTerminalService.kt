@@ -172,7 +172,7 @@ abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
 
     private fun createAttachedSharedTerminal(title: String, supervisorTerminal: TerminalOuterClass.Terminal) {
         val shellTerminalWidget = createSharedTerminal(supervisorTerminal.alias, title)
-        shellTerminalWidget.executeCommand("gp tasks attach ${supervisorTerminal.alias}")
+        shellTerminalWidget.executeCommand("exec gp tasks attach ${supervisorTerminal.alias}")
         closeTerminalWidgetWhenClientGetsClosed(supervisorTerminal, shellTerminalWidget)
         exitTaskWhenTerminalWidgetGetsClosed(supervisorTerminal, shellTerminalWidget)
         listenForTaskTerminationAndTitleChanges(supervisorTerminal, shellTerminalWidget)
