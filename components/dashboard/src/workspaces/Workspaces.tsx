@@ -368,160 +368,153 @@ const WorkspacesPage: FunctionComponent = () => {
                             </Modal>
                         </>
                     )}
+                </>
+            )}
 
-                    {deleteModalVisible && (
-                        <ConfirmationModal
-                            title="Delete Inactive Workspaces"
-                            areYouSureText="Are you sure you want to delete all inactive workspaces?"
-                            buttonText="Delete Inactive Workspaces"
-                            onClose={() => setDeleteModalVisible(false)}
-                            onConfirm={handleDeleteInactiveWorkspacesConfirmation}
-                            visible
-                        />
-                    )}
+            {deleteModalVisible && (
+                <ConfirmationModal
+                    title="Delete Inactive Workspaces"
+                    areYouSureText="Are you sure you want to delete all inactive workspaces?"
+                    buttonText="Delete Inactive Workspaces"
+                    onClose={() => setDeleteModalVisible(false)}
+                    onConfirm={handleDeleteInactiveWorkspacesConfirmation}
+                    visible
+                />
+            )}
 
-                    {!isLoading &&
-                        (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || searchTerm ? (
-                            <>
-                                <div
-                                    className={
-                                        !isDedicatedInstallation
-                                            ? "!pl-0 app-container flex flex-1 flex-row"
-                                            : "app-container"
-                                    }
-                                >
-                                    <div>
-                                        <WorkspacesSearchBar
-                                            limit={limit}
-                                            searchTerm={searchTerm}
-                                            onLimitUpdated={setLimit}
-                                            onSearchTermUpdated={setSearchTerm}
-                                        />
-                                        <ItemsList
-                                            className={!isDedicatedInstallation ? "app-container xl:!pr-4 pb-40" : ""}
-                                        >
-                                            <div className="border-t border-gray-200 dark:border-gray-800"></div>
-                                            {filteredActiveWorkspaces.map((info) => {
-                                                return <WorkspaceEntry key={info.id} info={info} />;
-                                            })}
-                                            {filteredActiveWorkspaces.length > 0 && <div className="py-6"></div>}
-                                            {filteredInactiveWorkspaces.length > 0 && (
-                                                <div>
-                                                    <div
-                                                        onClick={() => setShowInactive(!showInactive)}
-                                                        className="flex cursor-pointer p-6 flex-row bg-pk-surface-secondary hover:bg-pk-surface-tertiary text-pk-content-tertiary rounded-xl mb-2"
-                                                    >
-                                                        <div className="pr-2">
-                                                            <Arrow direction={showInactive ? "down" : "right"} />
-                                                        </div>
-                                                        <div className="flex flex-grow flex-col ">
-                                                            <div className="font-medium truncate">
-                                                                <span>Inactive Workspaces&nbsp;</span>
-                                                                <span className="text-gray-400 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 rounded-xl px-2 py-0.5 text-xs">
-                                                                    {filteredInactiveWorkspaces.length}
-                                                                </span>
-                                                            </div>
-                                                            <div className="text-sm flex-auto">
-                                                                Workspaces that have been stopped for more than 24
-                                                                hours. Inactive workspaces are automatically deleted
-                                                                after 14 days.{" "}
-                                                                <a
-                                                                    target="_blank"
-                                                                    rel="noreferrer"
-                                                                    className="gp-link"
-                                                                    href="https://www.gitpod.io/docs/configure/workspaces/workspace-lifecycle#workspace-deletion"
-                                                                    onClick={(evt) => evt.stopPropagation()}
-                                                                >
-                                                                    Learn more
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                        <div className="self-center">
-                                                            {showInactive ? (
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    // TODO: Remove these classes once we decide on the new button style
-                                                                    // Leaving these to emulate the old button's danger.secondary style until we decide if we want that style or not
-                                                                    className="bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200 text-red-600 hover:text-red-700 hover:opacity-100"
-                                                                    onClick={(evt) => {
-                                                                        setDeleteModalVisible(true);
-                                                                        evt.stopPropagation();
-                                                                    }}
-                                                                >
-                                                                    Delete Inactive Workspaces
-                                                                </Button>
-                                                            ) : null}
-                                                        </div>
+            {!isLoading &&
+                (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || searchTerm ? (
+                    <>
+                        <div
+                            className={
+                                !isDedicatedInstallation ? "!pl-0 app-container flex flex-1 flex-row" : "app-container"
+                            }
+                        >
+                            <div>
+                                <WorkspacesSearchBar
+                                    limit={limit}
+                                    searchTerm={searchTerm}
+                                    onLimitUpdated={setLimit}
+                                    onSearchTermUpdated={setSearchTerm}
+                                />
+                                <ItemsList className={!isDedicatedInstallation ? "app-container xl:!pr-4 pb-40" : ""}>
+                                    <div className="border-t border-gray-200 dark:border-gray-800"></div>
+                                    {filteredActiveWorkspaces.map((info) => {
+                                        return <WorkspaceEntry key={info.id} info={info} />;
+                                    })}
+                                    {filteredActiveWorkspaces.length > 0 && <div className="py-6"></div>}
+                                    {filteredInactiveWorkspaces.length > 0 && (
+                                        <div>
+                                            <div
+                                                onClick={() => setShowInactive(!showInactive)}
+                                                className="flex cursor-pointer p-6 flex-row bg-pk-surface-secondary hover:bg-pk-surface-tertiary text-pk-content-tertiary rounded-xl mb-2"
+                                            >
+                                                <div className="pr-2">
+                                                    <Arrow direction={showInactive ? "down" : "right"} />
+                                                </div>
+                                                <div className="flex flex-grow flex-col ">
+                                                    <div className="font-medium truncate">
+                                                        <span>Inactive Workspaces&nbsp;</span>
+                                                        <span className="text-gray-400 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 rounded-xl px-2 py-0.5 text-xs">
+                                                            {filteredInactiveWorkspaces.length}
+                                                        </span>
                                                     </div>
+                                                    <div className="text-sm flex-auto">
+                                                        Workspaces that have been stopped for more than 24 hours.
+                                                        Inactive workspaces are automatically deleted after 14 days.{" "}
+                                                        <a
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="gp-link"
+                                                            href="https://www.gitpod.io/docs/configure/workspaces/workspace-lifecycle#workspace-deletion"
+                                                            onClick={(evt) => evt.stopPropagation()}
+                                                        >
+                                                            Learn more
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div className="self-center">
                                                     {showInactive ? (
-                                                        <>
-                                                            {filteredInactiveWorkspaces.map((info) => {
-                                                                return <WorkspaceEntry key={info.id} info={info} />;
-                                                            })}
-                                                        </>
+                                                        <Button
+                                                            variant="ghost"
+                                                            // TODO: Remove these classes once we decide on the new button style
+                                                            // Leaving these to emulate the old button's danger.secondary style until we decide if we want that style or not
+                                                            className="bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200 text-red-600 hover:text-red-700 hover:opacity-100"
+                                                            onClick={(evt) => {
+                                                                setDeleteModalVisible(true);
+                                                                evt.stopPropagation();
+                                                            }}
+                                                        >
+                                                            Delete Inactive Workspaces
+                                                        </Button>
                                                     ) : null}
                                                 </div>
-                                            )}
-                                        </ItemsList>
-                                    </div>
-                                    {/* Show Educational if user is in gitpodIo */}
-                                    {!isDedicatedInstallation && (
-                                        <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 pl-6 pt-5 pb-4 space-y-8">
-                                            <VideoCarousel />
-                                            <div className="flex flex-col gap-2">
-                                                <h3 className="text-lg font-semibold text-pk-content-primary">
-                                                    Documentation
-                                                </h3>
-                                                <div className="flex flex-col gap-1 w-fit">
-                                                    <a
-                                                        href="https://www.gitpod.io/docs/introduction"
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
-                                                    >
-                                                        <BookOpen width={20} />{" "}
-                                                        <span className="hover:text-blue-600 dark:hover:text-blue-400">
-                                                            Read the docs
-                                                        </span>
-                                                    </a>
-                                                    <a
-                                                        href="https://www.gitpod.io/docs/configure/workspaces"
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
-                                                    >
-                                                        <GitpodStrokedSVG />
-                                                        <span className="hover:text-blue-600 dark:hover:text-blue-400">
-                                                            Configuring a workspace
-                                                        </span>
-                                                    </a>
-                                                    <a
-                                                        href="https://www.gitpod.io/docs/references/gitpod-yml"
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
-                                                    >
-                                                        <Code width={20} />{" "}
-                                                        <span className="hover:text-blue-600 dark:hover:text-blue-400">
-                                                            .gitpod.yml reference
-                                                        </span>
-                                                    </a>
-                                                </div>
                                             </div>
-                                            <PersonalizedContent />
-                                            <BlogBanners />
+                                            {showInactive ? (
+                                                <>
+                                                    {filteredInactiveWorkspaces.map((info) => {
+                                                        return <WorkspaceEntry key={info.id} info={info} />;
+                                                    })}
+                                                </>
+                                            ) : null}
                                         </div>
                                     )}
+                                </ItemsList>
+                            </div>
+                            {/* Show Educational if user is in gitpodIo */}
+                            {!isDedicatedInstallation && (
+                                <div className="max-xl:hidden border-l border-gray-200 dark:border-gray-800 pl-6 pt-5 pb-4 space-y-8">
+                                    <VideoCarousel />
+                                    <div className="flex flex-col gap-2">
+                                        <h3 className="text-lg font-semibold text-pk-content-primary">Documentation</h3>
+                                        <div className="flex flex-col gap-1 w-fit">
+                                            <a
+                                                href="https://www.gitpod.io/docs/introduction"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
+                                            >
+                                                <BookOpen width={20} />{" "}
+                                                <span className="hover:text-blue-600 dark:hover:text-blue-400">
+                                                    Read the docs
+                                                </span>
+                                            </a>
+                                            <a
+                                                href="https://www.gitpod.io/docs/configure/workspaces"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
+                                            >
+                                                <GitpodStrokedSVG />
+                                                <span className="hover:text-blue-600 dark:hover:text-blue-400">
+                                                    Configuring a workspace
+                                                </span>
+                                            </a>
+                                            <a
+                                                href="https://www.gitpod.io/docs/references/gitpod-yml"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-pk-content-primary items-center gap-x-2 flex flex-row"
+                                            >
+                                                <Code width={20} />{" "}
+                                                <span className="hover:text-blue-600 dark:hover:text-blue-400">
+                                                    .gitpod.yml reference
+                                                </span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <PersonalizedContent />
+                                    <BlogBanners />
                                 </div>
-                            </>
-                        ) : (
-                            <EmptyWorkspacesContent />
-                        ))}
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <EmptyWorkspacesContent />
+                ))}
 
-                    {isEnterpriseOnboardingEnabled && isDedicatedInstallation && welcomeMessage && user && (
-                        <OrganizationJoinModal welcomeMessage={welcomeMessage} user={user} />
-                    )}
-                </>
+            {isEnterpriseOnboardingEnabled && isDedicatedInstallation && welcomeMessage && user && (
+                <OrganizationJoinModal welcomeMessage={welcomeMessage} user={user} />
             )}
         </>
     );
