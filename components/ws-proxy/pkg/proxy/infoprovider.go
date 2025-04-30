@@ -203,6 +203,10 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 		IsManagedByMk2:  managedByMk2,
 	}
 
+	if wsinfo.IDEImage == "" {
+		wsinfo.IDEImage = "fake:builtin"
+	}
+
 	r.store.Update(req.Name, wsinfo)
 	r.invalidateConnectionContext(wsinfo)
 	log.WithField("workspace", req.Name).WithField("details", wsinfo).Debug("adding/updating workspace details")

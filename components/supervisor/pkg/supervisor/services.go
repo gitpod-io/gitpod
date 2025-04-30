@@ -141,17 +141,20 @@ func (s *statusService) SupervisorStatus(ctx context.Context, req *api.Superviso
 
 func (s *statusService) IDEStatus(ctx context.Context, req *api.IDEStatusRequest) (*api.IDEStatusResponse, error) {
 	if req.Wait {
-		select {
-		case <-s.ideReady.Wait():
-			{
-				// do nothing
-			}
-		case <-ctx.Done():
-			if errors.Is(ctx.Err(), context.Canceled) {
-				return nil, status.Error(codes.Canceled, "execution canceled")
-			}
+		if s.ideReady != nil {
 
-			return nil, status.Error(codes.DeadlineExceeded, ctx.Err().Error())
+			select {
+			case <-s.ideReady.Wait():
+				{
+					// do nothing
+				}
+			case <-ctx.Done():
+				if errors.Is(ctx.Err(), context.Canceled) {
+					return nil, status.Error(codes.Canceled, "execution canceled")
+				}
+
+				return nil, status.Error(codes.DeadlineExceeded, ctx.Err().Error())
+			}
 		}
 
 		if s.desktopIdeReady != nil {
@@ -169,8 +172,10 @@ func (s *statusService) IDEStatus(ctx context.Context, req *api.IDEStatusRequest
 			}
 		}
 	}
-
-	ok, _ := s.ideReady.Get()
+	ok := true
+	if s.ideReady != nil {
+		ok, _ = s.ideReady.Get()
+	}
 	desktopStatus := &api.IDEStatusResponse_DesktopStatus{}
 	if s.desktopIdeReady != nil {
 		okR, i := s.desktopIdeReady.Get()

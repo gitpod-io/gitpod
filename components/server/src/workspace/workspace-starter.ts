@@ -458,7 +458,7 @@ export class WorkspaceStarter {
     ) {
         const span = TraceContext.startSpan("resolveIDEConfiguration", ctx);
         try {
-            const migrated = this.ideService.migrateSettings(user);
+            const migrated = await this.ideService.migrateSettings(user);
             if (user.additionalData?.ideSettings && migrated) {
                 user.additionalData.ideSettings = migrated;
             }

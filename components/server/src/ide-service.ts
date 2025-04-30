@@ -33,6 +33,7 @@ interface ExtendedIDEOptions extends Omit<IDEOptions, "options"> {
 
 export interface ExtendedIDESettings extends IDESettings {
     pinnedIDEversions?: { [key: string]: string };
+    restrictedEditorNames?: string[];
 }
 
 export interface IDEConfig {
@@ -75,7 +76,7 @@ export class IDEService {
         return Object.keys(config.ideOptions.options).includes(ide);
     }
 
-    migrateSettings(user: User): IDESettings | undefined {
+    async migrateSettings(user: User): Promise<IDESettings | undefined> {
         if (
             !user?.additionalData?.ideSettings ||
             user.additionalData.ideSettings.settingVersion === IDESettingsVersion
@@ -102,7 +103,7 @@ export class IDEService {
             newIDESettings.useLatestVersion = useLatest;
         }
 
-        if (ideSettings.defaultIde && !this.isIDEAvailable(ideSettings.defaultIde, { user })) {
+        if (ideSettings.defaultIde && !(await this.isIDEAvailable(ideSettings.defaultIde, { user }))) {
             ideSettings.defaultIde = "code";
         }
         return newIDESettings;
@@ -117,7 +118,10 @@ export class IDEService {
             workspace.type === "prebuild" ? IdeServiceApi.WorkspaceType.PREBUILD : IdeServiceApi.WorkspaceType.REGULAR;
 
         // in case users have `auto-start` options set
-        if (userSelectedIdeSettings?.defaultIde && !this.isIDEAvailable(userSelectedIdeSettings.defaultIde, { user })) {
+        if (
+            userSelectedIdeSettings?.defaultIde &&
+            !(await this.isIDEAvailable(userSelectedIdeSettings.defaultIde, { user }))
+        ) {
             userSelectedIdeSettings.defaultIde = "code";
         }
 

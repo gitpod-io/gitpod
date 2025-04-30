@@ -863,6 +863,12 @@ export class WorkspaceService {
             options.ideSettings.pinnedIDEversions = orgSettings.pinnedEditorVersions;
         }
 
+        if (orgSettings.restrictedEditorNames) {
+            if (!options.ideSettings) {
+                options.ideSettings = {};
+            }
+            options.ideSettings.restrictedEditorNames = orgSettings.restrictedEditorNames;
+        }
         // at this point we're about to actually start a new workspace
         const result = await this.workspaceStarter.startWorkspace(ctx, workspace, user, await projectPromise, options);
         this.asyncUpdateDeletionEligibilityTime(user.id, workspaceId, true);
