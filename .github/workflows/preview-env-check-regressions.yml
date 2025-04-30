@@ -99,7 +99,7 @@ jobs:
     if: ${{ needs.configuration.outputs.skip == 'false' }}
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.32357
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:pd-update-leeway-gha.32387
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
