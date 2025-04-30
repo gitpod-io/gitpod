@@ -125,7 +125,7 @@ RUN nameShort=$(jq --raw-output '.nameShort' product.json) && \
     mv product.json.tmp product.json && \
     jq '{quality,nameLong,nameShort}' product.json
 
-RUN npm run gulp compile-build-pr
+RUN npm run gulp compile-build-without-mangling
 RUN npm run gulp extensions-ci
 RUN npm run gulp minify-vscode-reh
 RUN npm run gulp vscode-web-min-ci
