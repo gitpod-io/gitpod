@@ -268,7 +268,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     subjectId: SubjectId.fromUserId(userId),
                 },
                 async () => {
-                    const organizations = await this.getTeams(ctx ?? {});
+                    const { rows: organizations } = await this.organizationService.listOrganizations(
+                        userId,
+                        { limit: 10 },
+                        "member",
+                    );
                     for (const organization of organizations) {
                         const hasPermission = await this.auth.hasPermissionOnOrganization(
                             userId,
