@@ -33,6 +33,7 @@ describe("OrganizationService", async () => {
     let stranger: User;
     const adminId = BUILTIN_INSTLLATION_ADMIN_USER_ID;
     let org: Organization;
+    let org2: Organization;
     let validateDefaultWorkspaceImage: DefaultWorkspaceImageValidator | undefined;
 
     beforeEach(async () => {
@@ -108,6 +109,8 @@ describe("OrganizationService", async () => {
         });
 
         await withTestCtx(SYSTEM_USER, () => os.joinOrganization(collaborator.id, invite.id));
+
+        org2 = await os.createOrganization(owner.id, "org2");
 
         stranger = await userService.createUser({
             identity: {
@@ -275,7 +278,7 @@ describe("OrganizationService", async () => {
         await os.createOrganization(owner.id, "org1");
         await os.createOrganization(owner.id, "org2");
         let orgs = await os.listOrganizationsByMember(owner.id, owner.id);
-        expect(orgs.length).to.eq(3);
+        expect(orgs.length).to.eq(4);
         orgs = await os.listOrganizationsByMember(member.id, member.id);
         expect(orgs.length).to.eq(1);
         orgs = await os.listOrganizationsByMember(collaborator.id, collaborator.id);
@@ -347,11 +350,12 @@ describe("OrganizationService", async () => {
         expect(members.some((m) => m.userId === owner.id && m.role === "owner")).to.be.true;
     });
 
-    it("should listOrganizations", async () => {
+    it("should listOrganizations (for installation)", async () => {
         const strangerOrg = await os.createOrganization(stranger.id, "stranger-org");
         let orgs = await os.listOrganizations(owner.id, {}, "installation");
-        expect(orgs.rows[0].id).to.eq(org.id);
-        expect(orgs.total).to.eq(1);
+        expect(orgs.rows.map((o) => o.id)).to.contain(org.id);
+        expect(orgs.rows.map((o) => o.id)).to.contain(org2.id);
+        expect(orgs.total).to.eq(2);
 
         orgs = await os.listOrganizations(stranger.id, {}, "installation");
         expect(orgs.rows[0].id).to.eq(strangerOrg.id);
@@ -360,7 +364,28 @@ describe("OrganizationService", async () => {
         orgs = await os.listOrganizations(adminId, {}, "installation");
         expect(orgs.rows.some((org) => org.id === org.id)).to.be.true;
         expect(orgs.rows.some((org) => org.id === strangerOrg.id)).to.be.true;
-        expect(orgs.total).to.eq(2);
+        expect(orgs.total).to.eq(3);
+    });
+
+    it("should listOrganizations (for member)", async () => {
+        // Owner is member of both orgs
+        const ownerResult = await os.listOrganizations(owner.id, {}, "member");
+        expect(ownerResult.rows.map((o) => o.id)).to.include(org.id);
+        expect(ownerResult.rows.map((o) => o.id)).to.include(org2.id);
+
+        // Member is only in org1
+        const memberResult = await os.listOrganizations(member.id, {}, "member");
+        expect(memberResult.rows.map((o) => o.id)).to.include(org.id);
+        expect(memberResult.rows.map((o) => o.id)).to.not.include(org2.id);
+
+        // Collaborator is only in org1
+        const collaboratorResults = await os.listOrganizations(collaborator.id, {}, "member");
+        expect(collaboratorResults.rows.map((o) => o.id)).to.include(org.id);
+        expect(collaboratorResults.rows.map((o) => o.id)).to.not.include(org2.id);
+
+        // Stranger is in no orgs
+        const strangerResult = await os.listOrganizations(stranger.id, {}, "member");
+        expect(strangerResult.total).to.equal(0);
     });
 
     it("should ad as collaborator with dataops + flexibleRole", async () => {
