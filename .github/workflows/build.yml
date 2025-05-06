@@ -309,35 +309,79 @@ jobs:
           GITHUB_USER: roboquat
           GITHUB_EMAIL: roboquat@gitpod.io
           VERSION: ${{ needs.configuration.outputs.version }}
-
-  trivy-scan:
-    name: "Scan Images for Vulnerabilities"
-    needs:
-      - configuration
-      - build-gitpod
-      - create-runner
-    runs-on: ${{ needs.create-runner.outputs.label }}
-    container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.32399
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Environment
-        uses: ./.github/actions/setup-environment
-        with:
-          identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
-          service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
-          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-      - name: Scan Images for Vulnerabilities
+      - name: Scan for Vulnerabilities
+        id: scan
         shell: bash
         env:
-          INSTALLER_IMAGE_BASE_REPO: ${{needs.configuration.outputs.image_repo_base}}
-        run: |
-          ./scripts/trivy/trivy-scan-images.sh ${{ needs.configuration.outputs.version }} CRITICAL
-          exit $?
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
+          VERSION: ${{needs.configuration.outputs.version}}
+          PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
+          PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
+          NPM_AUTH_TOKEN: "${{ secrets.NPM_AUTH_TOKEN }}"
+          PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
+          JB_MARKETPLACE_PUBLISH_TOKEN: "${{ secrets.JB_MARKETPLACE_PUBLISH_TOKEN }}"
+          PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
+          CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
+          LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
+          IMAGE_REPO_BASE: ${{needs.configuration.outputs.image_repo_base}}/build
 
+          # SCM tokens for integration tests
+          GITPOD_TEST_TOKEN_BITBUCKET: "${{ secrets.GITPOD_TEST_TOKEN_BITBUCKET }}"
+          GITPOD_TEST_TOKEN_BITBUCKET_SERVER: "${{ secrets.GITPOD_TEST_TOKEN_BITBUCKET_SERVER }}"
+          GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE: "${{ secrets.GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE }}"
+          GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ: "${{ secrets.GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ }}"
+          GITPOD_TEST_TOKEN_GITHUB: "${{ secrets.GITPOD_TEST_TOKEN_GITHUB }}"
+          GITPOD_TEST_TOKEN_GITLAB: "${{ secrets.GITPOD_TEST_TOKEN_GITLAB }}"
+          GITPOD_TEST_TOKEN_AZURE_DEVOPS: "${{ secrets.GITPOD_TEST_TOKEN_AZURE_DEVOPS }}"
+        run: |
+          [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
+          [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
+          [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
+
+          sboms_dir=$(mktemp -d)
+          CI= leeway sbom export --with-dependencies --output-dir "$sboms_dir" \
+            -Dversion=$VERSION \
+            --docker-build-options network=host \
+            --max-concurrent-tasks 1 \
+            -DlocalAppVersion=$VERSION \
+            -DpublishToNPM="${PUBLISH_TO_NPM}" \
+            -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
+            -DpublishToJBMarketplace="${PUBLISH_TO_JBPM}" \
+            -DimageRepoBase=$IMAGE_REPO_BASE
+
+          scans_dir=$(mktemp -d)
+          CI= leeway sbom scan --with-dependencies --output-dir "$scans_dir" \
+            -Dversion=$VERSION \
+            --docker-build-options network=host \
+            --max-concurrent-tasks 1 \
+            -DlocalAppVersion=$VERSION \
+            -DpublishToNPM="${PUBLISH_TO_NPM}" \
+            -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
+            -DpublishToJBMarketplace="${PUBLISH_TO_JBPM}" \
+            -DimageRepoBase=$IMAGE_REPO_BASE
+
+          {
+            echo "leeway_sboms_dir=$sboms_dir"
+            echo "leeway_vulnerability_reports_dir=$scans_dir"
+          } >> $GITHUB_OUTPUT
+
+          cat "$scans_dir/vulnerability-summary.md" >> $GITHUB_STEP_SUMMARY
+      - name: Upload SBOMs
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: sboms
+          path: ${{ steps.scan.outputs.leeway_sboms_dir }}
+      - name: Upload vulnerability reports
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: vulnerability-reports
+          path: ${{ steps.scan.outputs.leeway_vulnerability_reports_dir }}
   install-app:
     runs-on: ${{ needs.create-runner.outputs.label }}
-    needs: [ configuration, build-gitpod, trivy-scan, create-runner ]
+    needs: [ configuration, build-gitpod, create-runner ]
     if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
     strategy:
       fail-fast: false
@@ -375,7 +419,6 @@ jobs:
       - configuration
       - build-previewctl
       - build-gitpod
-      - trivy-scan
       - infrastructure
       - create-runner
     runs-on: ${{ needs.create-runner.outputs.label }}
@@ -523,7 +566,6 @@ jobs:
       - build-previewctl
       - infrastructure
       - build-gitpod
-      - trivy-scan
       - install-app
       - install
       - monitoring
