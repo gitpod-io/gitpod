@@ -31,6 +31,8 @@ defaultArgs:
 provenance:
   enabled: true
   slsa: true
+sbom:
+  enabled: true
 environmentManifest:
   - name: "go"
     command: ["sh", "-c", "go version | sed s/arm/amd/"]
