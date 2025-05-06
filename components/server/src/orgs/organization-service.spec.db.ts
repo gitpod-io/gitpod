@@ -342,8 +342,11 @@ describe("OrganizationService", async () => {
         const myOrg = await os.createOrganization(adminId, "My Org");
         expect((await os.listMembers(adminId, myOrg.id)).length).to.eq(1);
 
-        // add a another member which should become owner
-        await os.addOrUpdateMember(adminId, myOrg.id, owner.id, "member");
+        await withTestCtx(adminId, async () => {
+            // add a another member which should become owner
+            await os.addOrUpdateMember(adminId, myOrg.id, owner.id, "member");
+        });
+
         // admin should have been removed
         const members = await os.listMembers(owner.id, myOrg.id);
         expect(members.length).to.eq(1);
