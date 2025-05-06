@@ -258,18 +258,18 @@ export class UserController {
 
             // stop all running workspaces
             const user = req.user as User;
-            await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
-                if (user) {
+            if (user) {
+                await runWithSubjectId(SubjectId.fromUserId(user.id), async () => {
                     this.workspaceService
                         .stopRunningWorkspacesForUser({}, user.id, user.id, "logout", StopWorkspacePolicy.NORMALLY)
                         .catch((error) =>
                             log.error(logContext, "cannot stop workspaces on logout", { error, ...logPayload }),
                         );
-                }
 
-                // reset the FGA state
-                await this.userService.resetFgaVersion(user.id, user.id);
-            });
+                    // reset the FGA state
+                    await this.userService.resetFgaVersion(user.id, user.id);
+                });
+            }
 
             const redirectToUrl = this.getSafeReturnToParam(req) || this.config.hostUrl.toString();
 

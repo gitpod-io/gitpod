@@ -305,11 +305,8 @@ describe("OrganizationService", async () => {
         const members2 = await withTestCtx(owner.id, () => os.listMembers(owner.id, org.id));
         expect(members2.some((m) => m.userId === ownedMember.id)).to.be.false;
         // also assert that the user is gone
-        const deleted = await withTestCtx(ownedMember.id, () =>
-            userService.findUserById(ownedMember.id, ownedMember.id),
-        );
-        // await expectError(ErrorCodes.NOT_FOUND, () => deleted);
-        expect(deleted.markedDeleted).to.be.true;
+        const deleted = withTestCtx(ownedMember.id, () => userService.findUserById(ownedMember.id, ownedMember.id));
+        await expectError(ErrorCodes.NOT_FOUND, () => deleted);
     });
 
     it("should listOrganizationsByMember", async () => {

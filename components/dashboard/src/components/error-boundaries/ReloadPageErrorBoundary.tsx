@@ -11,7 +11,7 @@ import { Heading1, Subheading } from "../typography/headings";
 import { reportError } from "../../service/metrics";
 import { Button } from "@podkit/buttons/Button";
 
-export type CaughtError = Error & { code?: number };
+export type CaughtError = Error & { code?: number; data?: any };
 
 // Catches any unexpected errors w/ a UI to reload the page. Also reports errors to api
 export const ReloadPageErrorBoundary: FC = ({ children }) => {

@@ -67,6 +67,14 @@ message ImageBuildLogsNotYetAvailableError {}
 
 message CellDisabledError {}
 
+message NotFoundDetails {
+  oneof reason {
+    UserDeletedError user_deleted = 1;
+  }
+}
+
+message UserDeletedError {}
+
 /*
 // details for INVALID_ARGUMENT status code
 // TODO: this is not yet implemented in the backend

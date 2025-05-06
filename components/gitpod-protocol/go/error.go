@@ -48,9 +48,6 @@ const (
 	// 470 User Blocked (custom status code)
 	USER_BLOCKED = 470
 
-	// 471 User Deleted (custom status code)
-	USER_DELETED = 471
-
 	// 472 Terms Acceptance Required (custom status code)
 	USER_TERMS_ACCEPTANCE_REQUIRED = 472
 

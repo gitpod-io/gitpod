@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { QueryErrorResetBoundary, useQueryClient } from "@tanstack/react-query";
 import { FC } from "react";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
@@ -36,7 +36,7 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
     const caughtError = error as CaughtError;
 
     // user deleted needs a n explicit logout to destroy the session
-    if (caughtError.code === ErrorCodes.USER_DELETED) {
+    if (ApplicationError.isUserDeletedError(caughtError)) {
         console.log("clearing query cache for deleted user");
         client.clear();
 

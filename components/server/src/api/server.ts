@@ -386,7 +386,14 @@ export class API {
         try {
             const claims = await this.sessionHandler.verifyJWTCookie(cookieHeader);
             const userId = claims?.sub;
-            return !!userId ? SubjectId.fromUserId(userId) : undefined;
+            if (!userId) {
+                return undefined;
+            }
+
+            // 3. Verify user
+            await this.userServiceInternal.findUserById(userId, userId);
+
+            return SubjectId.fromUserId(userId);
         } catch (err) {
             log.warn("Failed to authenticate user with JWT Session", err);
             return undefined;

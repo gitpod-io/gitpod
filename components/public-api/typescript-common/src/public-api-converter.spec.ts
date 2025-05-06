@@ -23,6 +23,8 @@ import {
     InvalidCostCenterError,
     ImageBuildLogsNotYetAvailableError,
     TooManyRunningWorkspacesError,
+    UserDeletedError,
+    NotFoundDetails,
 } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import { startFixtureTest } from "./fixtures.spec";
 import { OrganizationRole } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
@@ -375,6 +377,22 @@ describe("PublicAPIConverter", () => {
             const appError = converter.fromError(connectError);
             expect(appError.code).to.equal(ErrorCodes.USER_BLOCKED);
             expect(appError.message).to.equal("user blocked");
+        });
+
+        it("USER_DELETED", () => {
+            const connectError = converter.toError(new ApplicationError(ErrorCodes.NOT_FOUND, "not found: user deleted", { userDeleted: true}));
+            expect(connectError.code).to.equal(Code.NotFound);
+            expect(connectError.rawMessage).to.equal("not found: user deleted");
+
+            const details = connectError.findDetails(NotFoundDetails)[0];
+            expect(details).to.not.be.undefined;
+            expect(details?.reason?.case).to.equal("userDeleted");
+            expect(details?.reason?.value).to.be.instanceOf(UserDeletedError);
+
+            const appError = converter.fromError(connectError);
+            expect(appError.code).to.equal(ErrorCodes.NOT_FOUND);
+            expect(appError.message).to.equal("not found: user deleted");
+            expect(appError.data.userDeleted).to.equal(true);
         });
 
         it("NEEDS_VERIFICATION", () => {
