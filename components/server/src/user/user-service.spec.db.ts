@@ -220,8 +220,8 @@ describe("UserService", async () => {
         await expectError(ErrorCodes.PERMISSION_DENIED, userService.deleteUser(user.id, user2.id));
         // user can delete themselves
         await userService.deleteUser(user.id, user.id);
-        user = await userService.findUserById(user.id, user.id);
-        expect(user.markedDeleted).to.be.true;
+        const deleted = userService.findUserById(user.id, user.id);
+        expectError(ErrorCodes.NOT_FOUND, deleted);
 
         // org owners can delete users owned by org
         const orgOwner = await userService.createUser({
@@ -237,12 +237,12 @@ describe("UserService", async () => {
 
         await expectError(ErrorCodes.NOT_FOUND, userService.deleteUser(orgOwner.id, nonOrgUser.id));
         await userService.deleteUser(orgOwner.id, user2.id);
-        user2 = await userService.findUserById(orgOwner.id, user2.id);
-        expect(user2.markedDeleted).to.be.true;
+        const deleted2 = userService.findUserById(orgOwner.id, user2.id);
+        expectError(ErrorCodes.NOT_FOUND, deleted2);
 
         // admins can delete any user
         await userService.deleteUser(BUILTIN_INSTLLATION_ADMIN_USER_ID, nonOrgUser.id);
-        nonOrgUser = await userService.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID, nonOrgUser.id);
-        expect(nonOrgUser.markedDeleted).to.be.true;
+        const deletedNonOrg = userService.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID, nonOrgUser.id);
+        expectError(ErrorCodes.NOT_FOUND, deletedNonOrg);
     });
 });

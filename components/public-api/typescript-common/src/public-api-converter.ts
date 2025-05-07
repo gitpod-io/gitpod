@@ -113,7 +113,9 @@ import {
     RepositoryNotFoundError as RepositoryNotFoundErrorData,
     RepositoryUnauthorizedError as RepositoryUnauthorizedErrorData,
     TooManyRunningWorkspacesError,
+    NotFoundDetails,
     UserBlockedError,
+    UserDeletedError,
 } from "@gitpod/public-api/lib/gitpod/v1/error_pb";
 import {
     BlockedEmailDomain,
@@ -742,6 +744,17 @@ export class PublicAPIConverter {
                 return new ConnectError(reason.message, Code.InvalidArgument, undefined, undefined, reason);
             }
             if (reason.code === ErrorCodes.NOT_FOUND) {
+                if (reason.data?.userDeleted) {
+                    return new ConnectError(reason.message, Code.NotFound, undefined,
+                        [
+                            new NotFoundDetails({
+                                reason: {
+                                    case: "userDeleted",
+                                    value: new UserDeletedError(),
+                                },
+                            }),
+                        ], reason);
+                }
                 return new ConnectError(reason.message, Code.NotFound, undefined, undefined, reason);
             }
             if (reason.code === ErrorCodes.NOT_AUTHENTICATED) {
@@ -797,6 +810,10 @@ export class PublicAPIConverter {
             return new ApplicationError(ErrorCodes.BAD_REQUEST, reason.rawMessage);
         }
         if (reason.code === Code.NotFound) {
+            const details = reason.findDetails(NotFoundDetails)[0];
+            if (details?.reason?.case === "userDeleted") {
+                return new ApplicationError(ErrorCodes.NOT_FOUND, reason.rawMessage, { userDeleted: true });
+            }
             return new ApplicationError(ErrorCodes.NOT_FOUND, reason.rawMessage);
         }
         if (reason.code === Code.Unauthenticated) {

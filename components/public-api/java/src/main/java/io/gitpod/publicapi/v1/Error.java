@@ -8924,6 +8924,1023 @@ public final class Error {
 
   }
 
+  public interface NotFoundDetailsOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.NotFoundDetails)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+     * @return Whether the userDeleted field is set.
+     */
+    boolean hasUserDeleted();
+    /**
+     * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+     * @return The userDeleted.
+     */
+    io.gitpod.publicapi.v1.Error.UserDeletedError getUserDeleted();
+    /**
+     * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+     */
+    io.gitpod.publicapi.v1.Error.UserDeletedErrorOrBuilder getUserDeletedOrBuilder();
+
+    io.gitpod.publicapi.v1.Error.NotFoundDetails.ReasonCase getReasonCase();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.NotFoundDetails}
+   */
+  public static final class NotFoundDetails extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.NotFoundDetails)
+      NotFoundDetailsOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        NotFoundDetails.class.getName());
+    }
+    // Use NotFoundDetails.newBuilder() to construct.
+    private NotFoundDetails(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private NotFoundDetails() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_NotFoundDetails_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_NotFoundDetails_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Error.NotFoundDetails.class, io.gitpod.publicapi.v1.Error.NotFoundDetails.Builder.class);
+    }
+
+    private int reasonCase_ = 0;
+    @SuppressWarnings("serial")
+    private java.lang.Object reason_;
+    public enum ReasonCase
+        implements com.google.protobuf.Internal.EnumLite,
+            com.google.protobuf.AbstractMessage.InternalOneOfEnum {
+      USER_DELETED(1),
+      REASON_NOT_SET(0);
+      private final int value;
+      private ReasonCase(int value) {
+        this.value = value;
+      }
+      /**
+       * @param value The number of the enum to look for.
+       * @return The enum associated with the given number.
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
+      public static ReasonCase valueOf(int value) {
+        return forNumber(value);
+      }
+
+      public static ReasonCase forNumber(int value) {
+        switch (value) {
+          case 1: return USER_DELETED;
+          case 0: return REASON_NOT_SET;
+          default: return null;
+        }
+      }
+      public int getNumber() {
+        return this.value;
+      }
+    };
+
+    public ReasonCase
+    getReasonCase() {
+      return ReasonCase.forNumber(
+          reasonCase_);
+    }
+
+    public static final int USER_DELETED_FIELD_NUMBER = 1;
+    /**
+     * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+     * @return Whether the userDeleted field is set.
+     */
+    @java.lang.Override
+    public boolean hasUserDeleted() {
+      return reasonCase_ == 1;
+    }
+    /**
+     * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+     * @return The userDeleted.
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Error.UserDeletedError getUserDeleted() {
+      if (reasonCase_ == 1) {
+         return (io.gitpod.publicapi.v1.Error.UserDeletedError) reason_;
+      }
+      return io.gitpod.publicapi.v1.Error.UserDeletedError.getDefaultInstance();
+    }
+    /**
+     * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+     */
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Error.UserDeletedErrorOrBuilder getUserDeletedOrBuilder() {
+      if (reasonCase_ == 1) {
+         return (io.gitpod.publicapi.v1.Error.UserDeletedError) reason_;
+      }
+      return io.gitpod.publicapi.v1.Error.UserDeletedError.getDefaultInstance();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (reasonCase_ == 1) {
+        output.writeMessage(1, (io.gitpod.publicapi.v1.Error.UserDeletedError) reason_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (reasonCase_ == 1) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, (io.gitpod.publicapi.v1.Error.UserDeletedError) reason_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Error.NotFoundDetails)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Error.NotFoundDetails other = (io.gitpod.publicapi.v1.Error.NotFoundDetails) obj;
+
+      if (!getReasonCase().equals(other.getReasonCase())) return false;
+      switch (reasonCase_) {
+        case 1:
+          if (!getUserDeleted()
+              .equals(other.getUserDeleted())) return false;
+          break;
+        case 0:
+        default:
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      switch (reasonCase_) {
+        case 1:
+          hash = (37 * hash) + USER_DELETED_FIELD_NUMBER;
+          hash = (53 * hash) + getUserDeleted().hashCode();
+          break;
+        case 0:
+        default:
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Error.NotFoundDetails prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.NotFoundDetails}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.NotFoundDetails)
+        io.gitpod.publicapi.v1.Error.NotFoundDetailsOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_NotFoundDetails_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_NotFoundDetails_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Error.NotFoundDetails.class, io.gitpod.publicapi.v1.Error.NotFoundDetails.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Error.NotFoundDetails.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        if (userDeletedBuilder_ != null) {
+          userDeletedBuilder_.clear();
+        }
+        reasonCase_ = 0;
+        reason_ = null;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_NotFoundDetails_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.NotFoundDetails getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Error.NotFoundDetails.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.NotFoundDetails build() {
+        io.gitpod.publicapi.v1.Error.NotFoundDetails result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.NotFoundDetails buildPartial() {
+        io.gitpod.publicapi.v1.Error.NotFoundDetails result = new io.gitpod.publicapi.v1.Error.NotFoundDetails(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        buildPartialOneofs(result);
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.Error.NotFoundDetails result) {
+        int from_bitField0_ = bitField0_;
+      }
+
+      private void buildPartialOneofs(io.gitpod.publicapi.v1.Error.NotFoundDetails result) {
+        result.reasonCase_ = reasonCase_;
+        result.reason_ = this.reason_;
+        if (reasonCase_ == 1 &&
+            userDeletedBuilder_ != null) {
+          result.reason_ = userDeletedBuilder_.build();
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Error.NotFoundDetails) {
+          return mergeFrom((io.gitpod.publicapi.v1.Error.NotFoundDetails)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Error.NotFoundDetails other) {
+        if (other == io.gitpod.publicapi.v1.Error.NotFoundDetails.getDefaultInstance()) return this;
+        switch (other.getReasonCase()) {
+          case USER_DELETED: {
+            mergeUserDeleted(other.getUserDeleted());
+            break;
+          }
+          case REASON_NOT_SET: {
+            break;
+          }
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                input.readMessage(
+                    getUserDeletedFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                reasonCase_ = 1;
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int reasonCase_ = 0;
+      private java.lang.Object reason_;
+      public ReasonCase
+          getReasonCase() {
+        return ReasonCase.forNumber(
+            reasonCase_);
+      }
+
+      public Builder clearReason() {
+        reasonCase_ = 0;
+        reason_ = null;
+        onChanged();
+        return this;
+      }
+
+      private int bitField0_;
+
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Error.UserDeletedError, io.gitpod.publicapi.v1.Error.UserDeletedError.Builder, io.gitpod.publicapi.v1.Error.UserDeletedErrorOrBuilder> userDeletedBuilder_;
+      /**
+       * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+       * @return Whether the userDeleted field is set.
+       */
+      @java.lang.Override
+      public boolean hasUserDeleted() {
+        return reasonCase_ == 1;
+      }
+      /**
+       * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+       * @return The userDeleted.
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.UserDeletedError getUserDeleted() {
+        if (userDeletedBuilder_ == null) {
+          if (reasonCase_ == 1) {
+            return (io.gitpod.publicapi.v1.Error.UserDeletedError) reason_;
+          }
+          return io.gitpod.publicapi.v1.Error.UserDeletedError.getDefaultInstance();
+        } else {
+          if (reasonCase_ == 1) {
+            return userDeletedBuilder_.getMessage();
+          }
+          return io.gitpod.publicapi.v1.Error.UserDeletedError.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+       */
+      public Builder setUserDeleted(io.gitpod.publicapi.v1.Error.UserDeletedError value) {
+        if (userDeletedBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          reason_ = value;
+          onChanged();
+        } else {
+          userDeletedBuilder_.setMessage(value);
+        }
+        reasonCase_ = 1;
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+       */
+      public Builder setUserDeleted(
+          io.gitpod.publicapi.v1.Error.UserDeletedError.Builder builderForValue) {
+        if (userDeletedBuilder_ == null) {
+          reason_ = builderForValue.build();
+          onChanged();
+        } else {
+          userDeletedBuilder_.setMessage(builderForValue.build());
+        }
+        reasonCase_ = 1;
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+       */
+      public Builder mergeUserDeleted(io.gitpod.publicapi.v1.Error.UserDeletedError value) {
+        if (userDeletedBuilder_ == null) {
+          if (reasonCase_ == 1 &&
+              reason_ != io.gitpod.publicapi.v1.Error.UserDeletedError.getDefaultInstance()) {
+            reason_ = io.gitpod.publicapi.v1.Error.UserDeletedError.newBuilder((io.gitpod.publicapi.v1.Error.UserDeletedError) reason_)
+                .mergeFrom(value).buildPartial();
+          } else {
+            reason_ = value;
+          }
+          onChanged();
+        } else {
+          if (reasonCase_ == 1) {
+            userDeletedBuilder_.mergeFrom(value);
+          } else {
+            userDeletedBuilder_.setMessage(value);
+          }
+        }
+        reasonCase_ = 1;
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+       */
+      public Builder clearUserDeleted() {
+        if (userDeletedBuilder_ == null) {
+          if (reasonCase_ == 1) {
+            reasonCase_ = 0;
+            reason_ = null;
+            onChanged();
+          }
+        } else {
+          if (reasonCase_ == 1) {
+            reasonCase_ = 0;
+            reason_ = null;
+          }
+          userDeletedBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+       */
+      public io.gitpod.publicapi.v1.Error.UserDeletedError.Builder getUserDeletedBuilder() {
+        return getUserDeletedFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+       */
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.UserDeletedErrorOrBuilder getUserDeletedOrBuilder() {
+        if ((reasonCase_ == 1) && (userDeletedBuilder_ != null)) {
+          return userDeletedBuilder_.getMessageOrBuilder();
+        } else {
+          if (reasonCase_ == 1) {
+            return (io.gitpod.publicapi.v1.Error.UserDeletedError) reason_;
+          }
+          return io.gitpod.publicapi.v1.Error.UserDeletedError.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.gitpod.v1.UserDeletedError user_deleted = 1 [json_name = "userDeleted"];</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          io.gitpod.publicapi.v1.Error.UserDeletedError, io.gitpod.publicapi.v1.Error.UserDeletedError.Builder, io.gitpod.publicapi.v1.Error.UserDeletedErrorOrBuilder>
+          getUserDeletedFieldBuilder() {
+        if (userDeletedBuilder_ == null) {
+          if (!(reasonCase_ == 1)) {
+            reason_ = io.gitpod.publicapi.v1.Error.UserDeletedError.getDefaultInstance();
+          }
+          userDeletedBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              io.gitpod.publicapi.v1.Error.UserDeletedError, io.gitpod.publicapi.v1.Error.UserDeletedError.Builder, io.gitpod.publicapi.v1.Error.UserDeletedErrorOrBuilder>(
+                  (io.gitpod.publicapi.v1.Error.UserDeletedError) reason_,
+                  getParentForChildren(),
+                  isClean());
+          reason_ = null;
+        }
+        reasonCase_ = 1;
+        onChanged();
+        return userDeletedBuilder_;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.NotFoundDetails)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.NotFoundDetails)
+    private static final io.gitpod.publicapi.v1.Error.NotFoundDetails DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Error.NotFoundDetails();
+    }
+
+    public static io.gitpod.publicapi.v1.Error.NotFoundDetails getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<NotFoundDetails>
+        PARSER = new com.google.protobuf.AbstractParser<NotFoundDetails>() {
+      @java.lang.Override
+      public NotFoundDetails parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<NotFoundDetails> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<NotFoundDetails> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Error.NotFoundDetails getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface UserDeletedErrorOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.UserDeletedError)
+      com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.UserDeletedError}
+   */
+  public static final class UserDeletedError extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.UserDeletedError)
+      UserDeletedErrorOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        UserDeletedError.class.getName());
+    }
+    // Use UserDeletedError.newBuilder() to construct.
+    private UserDeletedError(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private UserDeletedError() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_UserDeletedError_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_UserDeletedError_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.Error.UserDeletedError.class, io.gitpod.publicapi.v1.Error.UserDeletedError.Builder.class);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.Error.UserDeletedError)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.Error.UserDeletedError other = (io.gitpod.publicapi.v1.Error.UserDeletedError) obj;
+
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.Error.UserDeletedError prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.UserDeletedError}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.UserDeletedError)
+        io.gitpod.publicapi.v1.Error.UserDeletedErrorOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_UserDeletedError_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_UserDeletedError_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.Error.UserDeletedError.class, io.gitpod.publicapi.v1.Error.UserDeletedError.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.Error.UserDeletedError.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.Error.internal_static_gitpod_v1_UserDeletedError_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.UserDeletedError getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.Error.UserDeletedError.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.UserDeletedError build() {
+        io.gitpod.publicapi.v1.Error.UserDeletedError result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.Error.UserDeletedError buildPartial() {
+        io.gitpod.publicapi.v1.Error.UserDeletedError result = new io.gitpod.publicapi.v1.Error.UserDeletedError(this);
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.Error.UserDeletedError) {
+          return mergeFrom((io.gitpod.publicapi.v1.Error.UserDeletedError)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.Error.UserDeletedError other) {
+        if (other == io.gitpod.publicapi.v1.Error.UserDeletedError.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.UserDeletedError)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.UserDeletedError)
+    private static final io.gitpod.publicapi.v1.Error.UserDeletedError DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.Error.UserDeletedError();
+    }
+
+    public static io.gitpod.publicapi.v1.Error.UserDeletedError getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<UserDeletedError>
+        PARSER = new com.google.protobuf.AbstractParser<UserDeletedError>() {
+      @java.lang.Override
+      public UserDeletedError parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<UserDeletedError> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<UserDeletedError> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.Error.UserDeletedError getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_v1_PermissionDeniedDetails_descriptor;
   private static final
@@ -8984,6 +10001,16 @@ public final class Error {
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_CellDisabledError_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_NotFoundDetails_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_NotFoundDetails_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_UserDeletedError_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_UserDeletedError_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -9039,9 +10066,12 @@ public final class Error {
       "_connected\030\005 \001(\010R\023providerIsConnected\022*\n" +
       "\021is_missing_scopes\030\006 \001(\010R\017isMissingScope" +
       "s\"$\n\"ImageBuildLogsNotYetAvailableError\"" +
-      "\023\n\021CellDisabledErrorBQ\n\026io.gitpod.public" +
-      "api.v1Z7github.com/gitpod-io/gitpod/comp" +
-      "onents/public-api/go/v1b\006proto3"
+      "\023\n\021CellDisabledError\"]\n\017NotFoundDetails\022" +
+      "@\n\014user_deleted\030\001 \001(\0132\033.gitpod.v1.UserDe" +
+      "letedErrorH\000R\013userDeletedB\010\n\006reason\"\022\n\020U" +
+      "serDeletedErrorBQ\n\026io.gitpod.publicapi.v" +
+      "1Z7github.com/gitpod-io/gitpod/component" +
+      "s/public-api/go/v1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -9119,6 +10149,18 @@ public final class Error {
     internal_static_gitpod_v1_CellDisabledError_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_CellDisabledError_descriptor,
+        new java.lang.String[] { });
+    internal_static_gitpod_v1_NotFoundDetails_descriptor =
+      getDescriptor().getMessageTypes().get(12);
+    internal_static_gitpod_v1_NotFoundDetails_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_NotFoundDetails_descriptor,
+        new java.lang.String[] { "UserDeleted", "Reason", });
+    internal_static_gitpod_v1_UserDeletedError_descriptor =
+      getDescriptor().getMessageTypes().get(13);
+    internal_static_gitpod_v1_UserDeletedError_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_UserDeletedError_descriptor,
         new java.lang.String[] { });
     descriptor.resolveAllFeaturesImmutable();
     com.google.protobuf.DescriptorProtos.getDescriptor();

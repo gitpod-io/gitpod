@@ -403,7 +403,14 @@ export class OrganizationService {
                 // we can remove the built-in installation admin if we have added an owner
                 if (!hasOtherRegularOwners && members.some((m) => m.userId === BUILTIN_INSTLLATION_ADMIN_USER_ID)) {
                     try {
-                        await this.removeOrganizationMember(memberId, orgId, BUILTIN_INSTLLATION_ADMIN_USER_ID, txCtx);
+                        await runWithSubjectId(SYSTEM_USER, async () => {
+                            return this.removeOrganizationMember(
+                                SYSTEM_USER_ID,
+                                orgId,
+                                BUILTIN_INSTLLATION_ADMIN_USER_ID,
+                                txCtx,
+                            );
+                        });
                     } catch (error) {
                         log.warn("Failed to remove built-in installation admin from organization.", error);
                     }
@@ -476,7 +483,7 @@ export class OrganizationService {
             event: "team_user_removed",
             properties: {
                 team_id: orgId,
-                removed_user_id: userId,
+                removed_user_id: memberId,
             },
         });
     }

@@ -379,9 +379,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await runWithSubjectId(SYSTEM_USER, async () =>
             this.userService.findUserById(SYSTEM_USER_ID, userId),
         );
-        if (user.markedDeleted === true) {
-            throw new ApplicationError(ErrorCodes.USER_DELETED, "User has been deleted.");
-        }
         const userContext: LogContext = {
             ...ctx,
             userId: user.id,

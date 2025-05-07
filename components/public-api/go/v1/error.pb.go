@@ -778,6 +778,111 @@ func (*CellDisabledError) Descriptor() ([]byte, []int) {
 	return file_gitpod_v1_error_proto_rawDescGZIP(), []int{11}
 }
 
+type NotFoundDetails struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Reason:
+	//
+	//	*NotFoundDetails_UserDeleted
+	Reason isNotFoundDetails_Reason `protobuf_oneof:"reason"`
+}
+
+func (x *NotFoundDetails) Reset() {
+	*x = NotFoundDetails{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_error_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *NotFoundDetails) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NotFoundDetails) ProtoMessage() {}
+
+func (x *NotFoundDetails) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_error_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NotFoundDetails.ProtoReflect.Descriptor instead.
+func (*NotFoundDetails) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_error_proto_rawDescGZIP(), []int{12}
+}
+
+func (m *NotFoundDetails) GetReason() isNotFoundDetails_Reason {
+	if m != nil {
+		return m.Reason
+	}
+	return nil
+}
+
+func (x *NotFoundDetails) GetUserDeleted() *UserDeletedError {
+	if x, ok := x.GetReason().(*NotFoundDetails_UserDeleted); ok {
+		return x.UserDeleted
+	}
+	return nil
+}
+
+type isNotFoundDetails_Reason interface {
+	isNotFoundDetails_Reason()
+}
+
+type NotFoundDetails_UserDeleted struct {
+	UserDeleted *UserDeletedError `protobuf:"bytes,1,opt,name=user_deleted,json=userDeleted,proto3,oneof"`
+}
+
+func (*NotFoundDetails_UserDeleted) isNotFoundDetails_Reason() {}
+
+type UserDeletedError struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *UserDeletedError) Reset() {
+	*x = UserDeletedError{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_error_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UserDeletedError) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserDeletedError) ProtoMessage() {}
+
+func (x *UserDeletedError) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_error_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserDeletedError.ProtoReflect.Descriptor instead.
+func (*UserDeletedError) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_error_proto_rawDescGZIP(), []int{13}
+}
+
 var File_gitpod_v1_error_proto protoreflect.FileDescriptor
 
 var file_gitpod_v1_error_proto_rawDesc = []byte{
@@ -897,12 +1002,20 @@ var file_gitpod_v1_error_proto_rawDesc = []byte{
 	0x67, 0x65, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x4c, 0x6f, 0x67, 0x73, 0x4e, 0x6f, 0x74, 0x59, 0x65,
 	0x74, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x22,
 	0x13, 0x0a, 0x11, 0x43, 0x65, 0x6c, 0x6c, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x45,
-	0x72, 0x72, 0x6f, 0x72, 0x42, 0x51, 0x0a, 0x16, 0x69, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f,
-	0x64, 0x2e, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x5a, 0x37,
-	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f,
-	0x64, 0x2d, 0x69, 0x6f, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2f, 0x63, 0x6f, 0x6d, 0x70,
-	0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x73, 0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x61, 0x70,
-	0x69, 0x2f, 0x67, 0x6f, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x72, 0x72, 0x6f, 0x72, 0x22, 0x5d, 0x0a, 0x0f, 0x4e, 0x6f, 0x74, 0x46, 0x6f, 0x75, 0x6e, 0x64,
+	0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x12, 0x40, 0x0a, 0x0c, 0x75, 0x73, 0x65, 0x72, 0x5f,
+	0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e,
+	0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x44, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x64, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x48, 0x00, 0x52, 0x0b, 0x75, 0x73,
+	0x65, 0x72, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x42, 0x08, 0x0a, 0x06, 0x72, 0x65, 0x61,
+	0x73, 0x6f, 0x6e, 0x22, 0x12, 0x0a, 0x10, 0x55, 0x73, 0x65, 0x72, 0x44, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x64, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x42, 0x51, 0x0a, 0x16, 0x69, 0x6f, 0x2e, 0x67, 0x69,
+	0x74, 0x70, 0x6f, 0x64, 0x2e, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x61, 0x70, 0x69, 0x2e, 0x76,
+	0x31, 0x5a, 0x37, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x69,
+	0x74, 0x70, 0x6f, 0x64, 0x2d, 0x69, 0x6f, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2f, 0x63,
+	0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x73, 0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63,
+	0x2d, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x6f, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -917,7 +1030,7 @@ func file_gitpod_v1_error_proto_rawDescGZIP() []byte {
 	return file_gitpod_v1_error_proto_rawDescData
 }
 
-var file_gitpod_v1_error_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_gitpod_v1_error_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_gitpod_v1_error_proto_goTypes = []interface{}{
 	(*PermissionDeniedDetails)(nil),            // 0: gitpod.v1.PermissionDeniedDetails
 	(*UserBlockedError)(nil),                   // 1: gitpod.v1.UserBlockedError
@@ -931,6 +1044,8 @@ var file_gitpod_v1_error_proto_goTypes = []interface{}{
 	(*RepositoryUnauthorizedError)(nil),        // 9: gitpod.v1.RepositoryUnauthorizedError
 	(*ImageBuildLogsNotYetAvailableError)(nil), // 10: gitpod.v1.ImageBuildLogsNotYetAvailableError
 	(*CellDisabledError)(nil),                  // 11: gitpod.v1.CellDisabledError
+	(*NotFoundDetails)(nil),                    // 12: gitpod.v1.NotFoundDetails
+	(*UserDeletedError)(nil),                   // 13: gitpod.v1.UserDeletedError
 }
 var file_gitpod_v1_error_proto_depIdxs = []int32{
 	1,  // 0: gitpod.v1.PermissionDeniedDetails.user_blocked:type_name -> gitpod.v1.UserBlockedError
@@ -943,11 +1058,12 @@ var file_gitpod_v1_error_proto_depIdxs = []int32{
 	9,  // 7: gitpod.v1.FailedPreconditionDetails.repository_unauthorized:type_name -> gitpod.v1.RepositoryUnauthorizedError
 	10, // 8: gitpod.v1.FailedPreconditionDetails.image_build_logs_not_yet_available:type_name -> gitpod.v1.ImageBuildLogsNotYetAvailableError
 	11, // 9: gitpod.v1.FailedPreconditionDetails.cell_is_disabled:type_name -> gitpod.v1.CellDisabledError
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	13, // 10: gitpod.v1.NotFoundDetails.user_deleted:type_name -> gitpod.v1.UserDeletedError
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_gitpod_v1_error_proto_init() }
@@ -1100,6 +1216,30 @@ func file_gitpod_v1_error_proto_init() {
 				return nil
 			}
 		}
+		file_gitpod_v1_error_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*NotFoundDetails); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_error_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UserDeletedError); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_gitpod_v1_error_proto_msgTypes[0].OneofWrappers = []interface{}{
 		(*PermissionDeniedDetails_UserBlocked)(nil),
@@ -1115,13 +1255,16 @@ func file_gitpod_v1_error_proto_init() {
 		(*FailedPreconditionDetails_ImageBuildLogsNotYetAvailable)(nil),
 		(*FailedPreconditionDetails_CellIsDisabled)(nil),
 	}
+	file_gitpod_v1_error_proto_msgTypes[12].OneofWrappers = []interface{}{
+		(*NotFoundDetails_UserDeleted)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_gitpod_v1_error_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -9,7 +9,7 @@ import { UserContext } from "../user-context";
 import { trackLocation } from "../Analytics";
 import { useQuery } from "@tanstack/react-query";
 import { noPersistence } from "../data/setup";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { userClient } from "../service/public-api";
 
 export const useUserLoader = () => {
@@ -28,10 +28,11 @@ export const useUserLoader = () => {
         useErrorBoundary: true,
         // It's important we don't retry as we want to show the login screen as quickly as possible if a 401
         retry: (_failureCount: number, error: Error & { code?: number }) => {
+            const isUserDeletedError = ApplicationError.isUserDeletedError(error);
             return (
                 error.code !== ErrorCodes.NOT_AUTHENTICATED &&
-                error.code !== ErrorCodes.USER_DELETED &&
-                error.code !== ErrorCodes.CELL_EXPIRED
+                error.code !== ErrorCodes.CELL_EXPIRED &&
+                !isUserDeletedError
             );
         },
         // docs: https://tanstack.com/query/v4/docs/react/guides/query-retries
