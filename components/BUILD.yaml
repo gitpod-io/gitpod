@@ -9,6 +9,7 @@ packages:
       - version
     deps:
       - :all-docker
+      - :needs-vuln-scan
       - :docker-versions
       - :publish-api
       - dev:all-app
@@ -95,6 +96,33 @@ packages:
         - ["sh", "-c", "echo \"version: ${version}\" >> versions.yaml"]
         - ["sh", "-c", "dev-version-manifest--app/version-manifest >> versions.yaml"]
         - ["sh", "-c", "rm -r components* dev-*"]
+  - name: needs-vuln-scan
+    type: generic
+    deps:
+      - components/blobserve:docker
+      - components/content-service:docker
+      - components/dashboard:docker
+      - components/docker-up:docker
+      - components/ee/agent-smith:docker
+      - components/gitpod-db:docker
+      - components/ide-metrics:docker
+      - components/ide-proxy:docker
+      - components/ide-service:docker
+      - components/image-builder-bob:docker
+      - components/image-builder-mk3:docker
+      - components/node-labeler:docker
+      - components/openvsx-proxy:docker
+      - components/proxy:docker
+      - components/public-api-server:docker
+      - components/registry-facade:docker
+      - components/server:docker
+      - components/service-waiter:docker
+      - components/supervisor:docker
+      - components/workspacekit:docker
+      - components/ws-daemon:docker
+      - components/ws-manager-bridge:docker
+      - components/ws-manager-mk2:docker
+      - components/ws-proxy:docker
   - name: publish-api
     type: generic
     deps:

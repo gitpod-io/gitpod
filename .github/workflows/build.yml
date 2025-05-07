@@ -340,7 +340,7 @@ jobs:
           [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
 
           sboms_dir=$(mktemp -d)
-          CI= leeway sbom export --with-dependencies --output-dir "$sboms_dir" \
+          CI= leeway sbom export components:needs-vuln-scan --with-dependencies --output-dir "$sboms_dir" \
             -Dversion=$VERSION \
             --docker-build-options network=host \
             --max-concurrent-tasks 1 \
@@ -351,7 +351,7 @@ jobs:
             -DimageRepoBase=$IMAGE_REPO_BASE
 
           scans_dir=$(mktemp -d)
-          CI= leeway sbom scan --with-dependencies --output-dir "$scans_dir" \
+          CI= leeway sbom scan components:needs-vuln-scan --with-dependencies --output-dir "$scans_dir" \
             -Dversion=$VERSION \
             --docker-build-options network=host \
             --max-concurrent-tasks 1 \
