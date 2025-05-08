@@ -37,13 +37,13 @@ An "Admin" section will be added to the Gitpod organization menu. This section w
 *   **R3.1:** Administrators must have an option (e.g., a button) to stop all currently running workspaces within their organization.
 *   **R3.2:** This action is intended to ensure all running workspaces are backed up before an infrastructure update.
 *   **R3.3:** The UI should provide a clear explanation of what this action does and its implications.
-*   **R3.4:** This functionality must be disabled if Maintenance Mode is not active. It should only be usable when Maintenance Mode is enabled.
 
 ### 4.3. Maintenance Mode Toggle (Ref: [CLC-1273](https://linear.app/gitpod/issue/CLC-1273/admin-maintenance-mode-toggle))
 *   **R2.1:** Administrators must be able to manually enable or disable a "Maintenance Mode" for their Gitpod instance.
 *   **R2.2:** When Maintenance Mode is enabled:
     *   Users must be prevented from starting new workspaces.
     *   A clear warning or notification must be displayed on the dashboard indicating that the system is in maintenance.
+    *   The "Stop All Running Workspaces" button (from feature 4.2) must be enabled; otherwise, it must be disabled.
 *   **R2.3:** This toggle allows administrators to control the state before, during, and after an update.
 
 ### 4.4. Schedule Maintenance Notification (Optional) (Ref: [CLC-1274](https://linear.app/gitpod/issue/CLC-1274/admin-schedule-maintenance-notification))
@@ -84,14 +84,15 @@ An "Admin" section will be added to the Gitpod organization menu. This section w
 | **4.1 View Running Workspaces**                        | Done        | Cline    | [001-infra-rollout-4.1.md](pdd/001-infra-rollout-4.1.md)   |
 | - API: Fetch running workspaces                        |             |          |                                                            |
 | - UI: Display running workspaces                       |             |          |                                                            |
-| **4.2 Stop All Running Workspaces**                    |             |          |                                                            |
-| - API: Trigger stop all workspaces                     |             |          |                                                            |
-| - Logic: Iterate and stop workspaces                   |             |          |                                                            |
-| - UI: Button (disabled if Maint. Mode off) & Confirm   |             |          |                                                            |
+| **4.2 Stop All Running Workspaces**                    |             |          | [001-infra-rollout-4.2.md](pdd/001-infra-rollout-4.2.md)   |
+| - API: Trigger stop all workspaces                     | Done (N/A)  | Cline    | (Leverages existing StopWorkspace API)                     |
+| - Logic: Iterate and stop workspaces                   |             |          | (Frontend orchestration)                                   |
+| - UI: Button & Confirm                                 |             |          | (Integrated into RunningWorkspacesCard)                    |
 | **4.3 Maintenance Mode Toggle**                        |             |          |                                                            |
 | - API: Get/Set Maintenance Mode                        |             |          |                                                            |
 | - Logic: Prevent new workspace starts                  |             |          |                                                            |
 | - UI: Toggle & Dashboard Banner                        |             |          |                                                            |
+| - UI: Enable/disable "Stop All Workspaces" button      |             |          | (Logic within RunningWorkspacesCard to check Maint. Mode)  |
 | **4.4 Schedule Maintenance Notification (Optional)**   |             |          |                                                            |
 | - API: Get/Set Notification                            |             |          |                                                            |
 | - UI: Form for scheduling & Dashboard Banner           |             |          |                                                            |
@@ -103,4 +104,7 @@ An "Admin" section will be added to the Gitpod organization menu. This section w
 
 ## 10. Open Questions
 
-No open questions at this time.
+- **Resolved (for 4.2):**
+    - UI Feedback for "Stop All": A toast notification after all `stopWorkspace` calls are initiated.
+    - Rate Limiting for "Stop All": Considered not an issue for now.
+    - Dependency of "Stop All" (4.2) on Maintenance Mode API (4.3): The "Stop All" button's enabled/disabled state (based on Maintenance Mode) is now a requirement of feature 4.3. Feature 4.2 will implement the button, and feature 4.3 will implement the logic to enable/disable it based on Maintenance Mode status.
