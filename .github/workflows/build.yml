@@ -16,6 +16,17 @@ on:
         type: string
         description: "Whether to recreate the VM"
         default: "false"
+      simulate_scheduled_run:
+        required: false
+        type: boolean
+        description: "Simulate a scheduled run"
+        default: false
+  schedule:
+    # Run at midnight UTC every day
+    # Purpose: This scheduled run performs regular vulnerability scans of the codebase
+    # and sends notifications to Slack when new critical vulnerabilities are found.
+    # The scan results are used to maintain security standards and address issues promptly.
+    - cron: '0 0 * * *'
 
 jobs:
   create-runner:
@@ -36,6 +47,7 @@ jobs:
       cancel-in-progress: true
     outputs:
       is_main_branch: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
+      is_scheduled_run: ${{ github.event_name == 'schedule' || inputs.simulate_scheduled_run == true }}
       version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
       preview_enable: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-preview') || (steps.output.outputs.with_integration_tests != '') }}
       preview_name: ${{ github.head_ref || github.ref_name }}
@@ -98,7 +110,8 @@ jobs:
     name: Build previewctl
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
-      (needs.configuration.outputs.preview_enable == 'true')
+      (needs.configuration.outputs.preview_enable == 'true') &&
+      (needs.configuration.outputs.is_scheduled_run != 'true')
     needs: [ configuration, create-runner ]
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-build-previewctl
@@ -126,7 +139,8 @@ jobs:
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
       (needs.configuration.outputs.preview_enable == 'true') &&
-      (needs.configuration.outputs.is_main_branch != 'true')
+      (needs.configuration.outputs.is_main_branch != 'true') &&
+      (needs.configuration.outputs.is_scheduled_run != 'true')
     runs-on: ${{ needs.create-runner.outputs.label }}
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-infrastructure
@@ -154,6 +168,8 @@ jobs:
     name: Build Gitpod
     needs: [ configuration, create-runner ]
     runs-on: ${{ needs.create-runner.outputs.label }}
+    outputs:
+      affected_packages: ${{ steps.check_vulnerabilities.outputs.affected_packages }}
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-build-gitpod
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
@@ -299,7 +315,7 @@ jobs:
 
           exit $RESULT
       - name: Tag the release
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && needs.configuration.outputs.is_scheduled_run != 'true'
         run: |
           git config --global user.name $GITHUB_USER
           git config --global user.email $GITHUB_EMAIL
@@ -359,7 +375,7 @@ jobs:
             -DpublishToNPM="${PUBLISH_TO_NPM}" \
             -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
             -DpublishToJBMarketplace="${PUBLISH_TO_JBPM}" \
-            -DimageRepoBase=$IMAGE_REPO_BASE
+            -DimageRepoBase=$IMAGE_REPO_BASE || RESULT=$?
 
           {
             echo "leeway_sboms_dir=$sboms_dir"
@@ -367,22 +383,41 @@ jobs:
           } >> $GITHUB_OUTPUT
 
           cat "$scans_dir/vulnerability-summary.md" >> $GITHUB_STEP_SUMMARY
+
+          exit $RESULT
+      - name: Check for Critical Vulnerabilities
+        if: needs.configuration.outputs.is_scheduled_run == 'true'
+        id: check_vulnerabilities
+        shell: bash
+        run: |
+          # Parse vulnerability-stats.json from the scans directory
+          CRITICAL_PACKAGES=$(jq -r '.[] | select(.critical > 0) | "\(.name): \(.critical) critical vulnerabilities"' "${{ steps.scan.outputs.leeway_vulnerability_reports_dir }}/vulnerability-stats.json")
+
+          # If there are critical packages, list them and fail the build
+          if [ -n "$CRITICAL_PACKAGES" ]; then
+            echo "::error::Critical vulnerabilities found in the following packages:"
+            echo "$CRITICAL_PACKAGES" | tee -a $GITHUB_STEP_SUMMARY
+            echo "affected_packages<<EOF" >> $GITHUB_OUTPUT
+            echo "$CRITICAL_PACKAGES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "No critical vulnerabilities found."
+          fi
       - name: Upload SBOMs
         uses: actions/upload-artifact@v4
-        if: success()
         with:
           name: sboms
           path: ${{ steps.scan.outputs.leeway_sboms_dir }}
       - name: Upload vulnerability reports
         uses: actions/upload-artifact@v4
-        if: success()
         with:
           name: vulnerability-reports
           path: ${{ steps.scan.outputs.leeway_vulnerability_reports_dir }}
   install-app:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [ configuration, build-gitpod, create-runner ]
-    if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
+    if: ${{ needs.configuration.outputs.is_main_branch == 'true' && needs.configuration.outputs.is_scheduled_run != 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -421,6 +456,7 @@ jobs:
       - build-gitpod
       - infrastructure
       - create-runner
+    if: needs.configuration.outputs.is_scheduled_run != 'true'
     runs-on: ${{ needs.create-runner.outputs.label }}
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-install
@@ -471,7 +507,7 @@ jobs:
     name: "Install Monitoring Satellite"
     needs: [ infrastructure, build-previewctl, create-runner ]
     runs-on: ${{ needs.create-runner.outputs.label }}
-    if: needs.configuration.outputs.with_monitoring == 'true'
+    if: needs.configuration.outputs.with_monitoring == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-monitoring
       cancel-in-progress: true
@@ -502,7 +538,7 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.32399
-    if: needs.configuration.outputs.with_integration_tests != ''
+    if: needs.configuration.outputs.with_integration_tests != '' && needs.configuration.outputs.is_scheduled_run != 'true'
     concurrency:
       group: ${{ needs.configuration.outputs.preview_name }}-integration-test
       cancel-in-progress: true
@@ -532,7 +568,7 @@ jobs:
       - configuration
       - build-gitpod
       - create-runner
-    if: needs.configuration.outputs.is_main_branch == 'true'
+    if: needs.configuration.outputs.is_main_branch == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
     uses: ./.github/workflows/workspace-integration-tests.yml
     with:
       version: ${{ needs.configuration.outputs.version }}
@@ -544,7 +580,7 @@ jobs:
       - configuration
       - build-gitpod
       - create-runner
-    if: needs.configuration.outputs.is_main_branch == 'true'
+    if: needs.configuration.outputs.is_main_branch == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
     uses: ./.github/workflows/code-updates.yml
     secrets: inherit
 
@@ -554,9 +590,30 @@ jobs:
       - configuration
       - build-gitpod
       - create-runner
-    if: needs.configuration.outputs.is_main_branch == 'true'
+    if: needs.configuration.outputs.is_main_branch == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
     uses: ./.github/workflows/jetbrains-updates.yml
     secrets: inherit
+
+  notify-scheduled-failure:
+    name: "Notify on scheduled run failure"
+    if: needs.configuration.outputs.is_scheduled_run == 'true' && failure()
+    needs:
+      - configuration
+      - build-gitpod
+      - workspace-integration-tests-main
+      - ide-code-updates
+      - ide-jb-updates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
+          SLACK_ICON_EMOJI: ":x:"
+          SLACK_USERNAME: "Scheduled Build"
+          SLACK_COLOR: "danger"
+          SLACK_MESSAGE: "⚠️ Security Alert: Daily vulnerability scan detected critical vulnerabilities in the following packages:\n${{ needs.build-gitpod.outputs.affected_packages }}"
+          SLACK_FOOTER: "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Logs>"
 
   delete-runner:
     if: always()
@@ -570,6 +627,7 @@ jobs:
       - install
       - monitoring
       - integration-test
+      - notify-scheduled-failure
     uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@main
     secrets:
       gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
