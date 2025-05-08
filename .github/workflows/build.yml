@@ -329,27 +329,11 @@ jobs:
         id: scan
         shell: bash
         env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
-          PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
-          PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
-          NPM_AUTH_TOKEN: "${{ secrets.NPM_AUTH_TOKEN }}"
           PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
-          JB_MARKETPLACE_PUBLISH_TOKEN: "${{ secrets.JB_MARKETPLACE_PUBLISH_TOKEN }}"
           PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
-          CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
           LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
           IMAGE_REPO_BASE: ${{needs.configuration.outputs.image_repo_base}}/build
-
-          # SCM tokens for integration tests
-          GITPOD_TEST_TOKEN_BITBUCKET: "${{ secrets.GITPOD_TEST_TOKEN_BITBUCKET }}"
-          GITPOD_TEST_TOKEN_BITBUCKET_SERVER: "${{ secrets.GITPOD_TEST_TOKEN_BITBUCKET_SERVER }}"
-          GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE: "${{ secrets.GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE }}"
-          GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ: "${{ secrets.GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ }}"
-          GITPOD_TEST_TOKEN_GITHUB: "${{ secrets.GITPOD_TEST_TOKEN_GITHUB }}"
-          GITPOD_TEST_TOKEN_GITLAB: "${{ secrets.GITPOD_TEST_TOKEN_GITLAB }}"
-          GITPOD_TEST_TOKEN_AZURE_DEVOPS: "${{ secrets.GITPOD_TEST_TOKEN_AZURE_DEVOPS }}"
         run: |
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
