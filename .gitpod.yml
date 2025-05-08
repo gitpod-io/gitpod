@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.32399
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.32507
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:

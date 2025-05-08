@@ -31,6 +31,20 @@ defaultArgs:
 provenance:
   enabled: true
   slsa: true
+sbom:
+  enabled: true
+  ignoreVulnerabilities:
+    - vulnerability: GHSA-fx4w-v43j-vc45
+      reason: |
+        This vulnerability in TypeORM's findOne / findOneOrFail functions can improperly interpret a crafted JSON object
+        and concatenate it into raw SQL, potentially allowing SQL injection attacks.
+
+        In Gitpod’s usage, TypeORM is not exposed to arbitrary user input. For example, DB migrations run preset queries;
+        the server/bridge code does not hand raw JSON from external sources to findOne. Therefore, there is no path for
+        injecting malicious JSON into a query, rendering the vulnerability non-exploitable.
+    - vulnerability: GHSA-2jcg-qqmg-46q6
+      reason: |
+        This is a false positive. See https://github.com/browserify/resolve/issues/303
 environmentManifest:
   - name: "go"
     command: ["sh", "-c", "go version | sed s/arm/amd/"]
