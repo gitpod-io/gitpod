@@ -83,6 +83,31 @@ An "Admin" section will be added to the Gitpod organization menu. This section w
 *   Documentation for administrators on how to use these new features will be required.
 *   Consider feature flagging for a phased rollout if deemed necessary.
 
-## 9. Open Questions
+## 9. Implementation Progress
+
+| Feature / Sub-Task                                     | Status      | Assignee | PR Link(s) | Notes                                                                 |
+| ------------------------------------------------------ | ----------- | -------- | ---------- | --------------------------------------------------------------------- |
+| **Admin Page Scaffolding**                             |             |          |            | Create basic Admin page structure in Dashboard, accessible via org menu |
+| **4.1 View Running Workspaces**                        |             |          |            |                                                                       |
+| - API: Fetch running workspaces                        |             |          |            | `server`                                                              |
+| - UI: Display running workspaces                       |             |          |            | `dashboard`                                                           |
+| **4.2 Maintenance Mode Toggle**                        |             |          |            |                                                                       |
+| - API: Get/Set Maintenance Mode                        |             |          |            | `server` (state persistence)                                          |
+| - Logic: Prevent new workspace starts                  |             |          |            | `server`                                                              |
+| - UI: Toggle & Dashboard Banner                        |             |          |            | `dashboard`                                                           |
+| **4.3 Stop All Running Workspaces**                    |             |          |            |                                                                       |
+| - API: Trigger stop all workspaces                     |             |          |            | `server`                                                              |
+| - Logic: Iterate and stop workspaces                   |             |          |            | `server` (existing API methods?)                                      |
+| - UI: Button (disabled if Maint. Mode off) & Confirm   |             |          |            | `dashboard`                                                           |
+| **4.4 Schedule Maintenance Notification (Optional)**   |             |          |            |                                                                       |
+| - API: Get/Set Notification                            |             |          |            | `server` (state persistence)                                          |
+| - UI: Form for scheduling & Dashboard Banner           |             |          |            | `dashboard`                                                           |
+| **General**                                            |             |          |            |                                                                       |
+| - Permissions/Authorization                            |             |          |            | `server`                                                              |
+| - Auditing                                             |             |          |            | `server`                                                              |
+
+**Status Key:** Not Started, In Progress, Blocked, In Review, Done
+
+## 10. Open Questions
 
 No open questions at this time.
