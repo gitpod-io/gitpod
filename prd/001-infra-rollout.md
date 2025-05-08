@@ -87,7 +87,7 @@ An "Admin" section will be added to the Gitpod organization menu. This section w
 
 | Feature / Sub-Task                                     | Status      | Assignee | PR Link(s) | Notes                                                                 |
 | ------------------------------------------------------ | ----------- | -------- | ---------- | --------------------------------------------------------------------- |
-| **Admin Page Scaffolding**                             |             |          |            | Create basic Admin page structure in Dashboard, accessible via org menu |
+| **Admin Page Scaffolding**                             | Done        | Cline    |            | Create basic Admin page structure in Dashboard, accessible via org menu. Route: /org-admin |
 | **4.1 View Running Workspaces**                        |             |          |            |                                                                       |
 | - API: Fetch running workspaces                        |             |          |            | `server`                                                              |
 | - UI: Display running workspaces                       |             |          |            | `dashboard`                                                           |
