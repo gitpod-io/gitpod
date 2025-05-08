@@ -217,6 +217,7 @@ export interface Organization {
     slug?: string;
     creationTime: string;
     markedDeleted?: boolean;
+    maintenanceMode?: boolean;
 }
 
 export interface OrganizationSettings {

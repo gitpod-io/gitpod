@@ -208,6 +208,7 @@ export type FailedInstanceStartReason =
     | "scmAccessFailed"
     | "resourceExhausted"
     | "workspaceClusterMaintenance"
+    | "maintenanceMode"
     | "other";
 export function increaseFailedInstanceStartCounter(reason: FailedInstanceStartReason) {
     instanceStartsFailedTotal.inc({ reason });

@@ -4,10 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useEffect, useMemo } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { WorkspaceSession, WorkspacePhase_Phase } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
+import { workspaceClient } from "../service/public-api";
 import { useWorkspaceSessions } from "../data/insights/list-workspace-sessions-query";
+import { Button } from "@podkit/buttons/Button";
+import ConfirmationModal from "../components/ConfirmationModal";
+import { useToast } from "../components/toasts/Toasts";
+import { useMaintenanceMode } from "../data/maintenance-mode-query";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import Alert from "../components/Alert";
 import Spinner from "../icons/Spinner.svg";
@@ -24,10 +29,15 @@ const isWorkspaceNotStopped = (session: WorkspaceSession): boolean => {
 
 export const RunningWorkspacesCard: FC<RunningWorkspacesCardProps> = () => {
     const lookbackHours = 48;
+    const [isStopAllModalOpen, setIsStopAllModalOpen] = useState(false);
+    const [isStoppingAll, setIsStoppingAll] = useState(false);
+    const toast = useToast();
+    const { isMaintenanceMode } = useMaintenanceMode();
 
-    const { data, fetchNextPage, hasNextPage, isLoading, isError, error, isFetchingNextPage } = useWorkspaceSessions({
-        from: Timestamp.fromDate(dayjs().subtract(lookbackHours, "hours").startOf("day").toDate()),
-    });
+    const { data, fetchNextPage, hasNextPage, isLoading, isError, error, isFetchingNextPage, refetch } =
+        useWorkspaceSessions({
+            from: Timestamp.fromDate(dayjs().subtract(lookbackHours, "hours").startOf("day").toDate()),
+        });
 
     useEffect(() => {
         if (hasNextPage && !isFetchingNextPage) {
@@ -43,7 +53,51 @@ export const RunningWorkspacesCard: FC<RunningWorkspacesCardProps> = () => {
         return allSessions.filter(isWorkspaceNotStopped);
     }, [data]);
 
-    if (isLoading) {
+    const handleStopAllWorkspaces = async () => {
+        if (runningWorkspaces.length === 0) {
+            toast.toast({ type: "error", message: "No running workspaces to stop." });
+            setIsStopAllModalOpen(false);
+            return;
+        }
+
+        setIsStoppingAll(true);
+        let successCount = 0;
+        let errorCount = 0;
+
+        const stopPromises = runningWorkspaces.map(async (session) => {
+            if (session.workspace?.id) {
+                try {
+                    await workspaceClient.stopWorkspace({ workspaceId: session.workspace.id });
+                    successCount++;
+                } catch (e) {
+                    console.error(`Failed to stop workspace ${session.workspace.id}:`, e);
+                    errorCount++;
+                }
+            }
+        });
+
+        await Promise.allSettled(stopPromises);
+
+        setIsStoppingAll(false);
+        setIsStopAllModalOpen(false);
+
+        if (errorCount > 0) {
+            toast.toast({
+                type: "error",
+                message: `Failed to stop all workspaces`,
+                description: `Attempted to stop ${runningWorkspaces.length} workspaces. ${successCount} stopped, ${errorCount} failed.`,
+            });
+        } else {
+            toast.toast({
+                type: "success",
+                message: `Stop command sent`,
+                description: `Successfully sent stop command for ${successCount} workspaces.`,
+            });
+        }
+        refetch();
+    };
+
+    if (isLoading && !isStoppingAll) {
         return (
             <div className="flex items-center justify-center w-full space-x-2 text-gray-400 text-sm p-8">
                 <img alt="Loading Spinner" className="h-4 w-4 animate-spin" src={Spinner} />
@@ -63,10 +117,19 @@ export const RunningWorkspacesCard: FC<RunningWorkspacesCardProps> = () => {
 
     return (
         <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 mt-6">
-            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3">
-                Currently Running Workspaces ({runningWorkspaces.length})
-            </h3>
-            {runningWorkspaces.length === 0 ? (
+            <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                    Currently Running Workspaces ({runningWorkspaces.length})
+                </h3>
+                <Button
+                    variant="destructive"
+                    onClick={() => setIsStopAllModalOpen(true)}
+                    disabled={!isMaintenanceMode || isStoppingAll || isLoading || runningWorkspaces.length === 0}
+                >
+                    {!isMaintenanceMode ? "Enable Maintenance Mode to Stop All" : "Stop All Workspaces"}
+                </Button>
+            </div>
+            {runningWorkspaces.length === 0 && !isLoading ? (
                 <p className="text-gray-500 dark:text-gray-400">No workspaces are currently running.</p>
             ) : (
                 <ItemsList className="text-gray-400 dark:text-gray-500">
@@ -116,6 +179,21 @@ export const RunningWorkspacesCard: FC<RunningWorkspacesCardProps> = () => {
                     })}
                 </ItemsList>
             )}
+            <ConfirmationModal
+                title="Confirm Stop All Workspaces"
+                visible={isStopAllModalOpen}
+                onClose={() => setIsStopAllModalOpen(false)}
+                onConfirm={handleStopAllWorkspaces}
+                buttonText={isStoppingAll ? "Stopping..." : "Confirm Stop All"}
+                buttonType="destructive"
+                buttonDisabled={isStoppingAll}
+            >
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Are you sure you want to stop all {runningWorkspaces.length} currently running workspaces in this
+                    organization? Workspaces will be backed up before stopping. This action cannot be undone for the
+                    stop process itself.
+                </p>
+            </ConfirmationModal>
         </div>
     );
 };

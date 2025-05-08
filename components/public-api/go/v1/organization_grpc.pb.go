@@ -56,6 +56,10 @@ type OrganizationServiceClient interface {
 	// ListOrganizationWorkspaceClasses lists workspace classes of a
 	// Organization.
 	ListOrganizationWorkspaceClasses(ctx context.Context, in *ListOrganizationWorkspaceClassesRequest, opts ...grpc.CallOption) (*ListOrganizationWorkspaceClassesResponse, error)
+	// GetOrganizationMaintenanceMode retrieves the maintenance mode status for an organization.
+	GetOrganizationMaintenanceMode(ctx context.Context, in *GetOrganizationMaintenanceModeRequest, opts ...grpc.CallOption) (*GetOrganizationMaintenanceModeResponse, error)
+	// SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
+	SetOrganizationMaintenanceMode(ctx context.Context, in *SetOrganizationMaintenanceModeRequest, opts ...grpc.CallOption) (*SetOrganizationMaintenanceModeResponse, error)
 }
 
 type organizationServiceClient struct {
@@ -192,6 +196,24 @@ func (c *organizationServiceClient) ListOrganizationWorkspaceClasses(ctx context
 	return out, nil
 }
 
+func (c *organizationServiceClient) GetOrganizationMaintenanceMode(ctx context.Context, in *GetOrganizationMaintenanceModeRequest, opts ...grpc.CallOption) (*GetOrganizationMaintenanceModeResponse, error) {
+	out := new(GetOrganizationMaintenanceModeResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.OrganizationService/GetOrganizationMaintenanceMode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *organizationServiceClient) SetOrganizationMaintenanceMode(ctx context.Context, in *SetOrganizationMaintenanceModeRequest, opts ...grpc.CallOption) (*SetOrganizationMaintenanceModeResponse, error) {
+	out := new(SetOrganizationMaintenanceModeResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.OrganizationService/SetOrganizationMaintenanceMode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrganizationServiceServer is the server API for OrganizationService service.
 // All implementations must embed UnimplementedOrganizationServiceServer
 // for forward compatibility
@@ -226,6 +248,10 @@ type OrganizationServiceServer interface {
 	// ListOrganizationWorkspaceClasses lists workspace classes of a
 	// Organization.
 	ListOrganizationWorkspaceClasses(context.Context, *ListOrganizationWorkspaceClassesRequest) (*ListOrganizationWorkspaceClassesResponse, error)
+	// GetOrganizationMaintenanceMode retrieves the maintenance mode status for an organization.
+	GetOrganizationMaintenanceMode(context.Context, *GetOrganizationMaintenanceModeRequest) (*GetOrganizationMaintenanceModeResponse, error)
+	// SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
+	SetOrganizationMaintenanceMode(context.Context, *SetOrganizationMaintenanceModeRequest) (*SetOrganizationMaintenanceModeResponse, error)
 	mustEmbedUnimplementedOrganizationServiceServer()
 }
 
@@ -274,6 +300,12 @@ func (UnimplementedOrganizationServiceServer) UpdateOrganizationSettings(context
 }
 func (UnimplementedOrganizationServiceServer) ListOrganizationWorkspaceClasses(context.Context, *ListOrganizationWorkspaceClassesRequest) (*ListOrganizationWorkspaceClassesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListOrganizationWorkspaceClasses not implemented")
+}
+func (UnimplementedOrganizationServiceServer) GetOrganizationMaintenanceMode(context.Context, *GetOrganizationMaintenanceModeRequest) (*GetOrganizationMaintenanceModeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrganizationMaintenanceMode not implemented")
+}
+func (UnimplementedOrganizationServiceServer) SetOrganizationMaintenanceMode(context.Context, *SetOrganizationMaintenanceModeRequest) (*SetOrganizationMaintenanceModeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetOrganizationMaintenanceMode not implemented")
 }
 func (UnimplementedOrganizationServiceServer) mustEmbedUnimplementedOrganizationServiceServer() {}
 
@@ -540,6 +572,42 @@ func _OrganizationService_ListOrganizationWorkspaceClasses_Handler(srv interface
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrganizationService_GetOrganizationMaintenanceMode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrganizationMaintenanceModeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganizationServiceServer).GetOrganizationMaintenanceMode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.OrganizationService/GetOrganizationMaintenanceMode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganizationServiceServer).GetOrganizationMaintenanceMode(ctx, req.(*GetOrganizationMaintenanceModeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrganizationService_SetOrganizationMaintenanceMode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetOrganizationMaintenanceModeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganizationServiceServer).SetOrganizationMaintenanceMode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.OrganizationService/SetOrganizationMaintenanceMode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganizationServiceServer).SetOrganizationMaintenanceMode(ctx, req.(*SetOrganizationMaintenanceModeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrganizationService_ServiceDesc is the grpc.ServiceDesc for OrganizationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -602,6 +670,14 @@ var OrganizationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListOrganizationWorkspaceClasses",
 			Handler:    _OrganizationService_ListOrganizationWorkspaceClasses_Handler,
+		},
+		{
+			MethodName: "GetOrganizationMaintenanceMode",
+			Handler:    _OrganizationService_GetOrganizationMaintenanceMode_Handler,
+		},
+		{
+			MethodName: "SetOrganizationMaintenanceMode",
+			Handler:    _OrganizationService_SetOrganizationMaintenanceMode_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

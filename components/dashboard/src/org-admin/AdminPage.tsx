@@ -12,6 +12,7 @@ import { useIsOwner } from "../data/organizations/members-query";
 import Header from "../components/Header";
 import { SpinnerLoader } from "../components/Loader";
 import { RunningWorkspacesCard } from "./RunningWorkspacesCard";
+import { MaintenanceModeCard } from "./MaintenanceModeCard";
 
 const AdminPage: React.FC = () => {
     const history = useHistory();
@@ -51,9 +52,12 @@ const AdminPage: React.FC = () => {
                     </div>
                 )}
 
-                {currentOrg && <RunningWorkspacesCard />}
-
-                {/* Other admin cards/sections will go here in the future */}
+                {currentOrg && (
+                    <>
+                        <MaintenanceModeCard />
+                        <RunningWorkspacesCard />
+                    </>
+                )}
             </div>
         </div>
     );

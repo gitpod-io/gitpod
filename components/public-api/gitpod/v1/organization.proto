@@ -147,6 +147,12 @@ service OrganizationService {
   // ListOrganizationWorkspaceClasses lists workspace classes of a
   // Organization.
   rpc ListOrganizationWorkspaceClasses(ListOrganizationWorkspaceClassesRequest) returns (ListOrganizationWorkspaceClassesResponse) {}
+
+  // GetOrganizationMaintenanceMode retrieves the maintenance mode status for an organization.
+  rpc GetOrganizationMaintenanceMode(GetOrganizationMaintenanceModeRequest) returns (GetOrganizationMaintenanceModeResponse) {}
+
+  // SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
+  rpc SetOrganizationMaintenanceMode(SetOrganizationMaintenanceModeRequest) returns (SetOrganizationMaintenanceModeResponse) {}
 }
 
 message ListOrganizationWorkspaceClassesRequest {
@@ -379,3 +385,26 @@ message DeleteOrganizationMemberRequest {
 }
 
 message DeleteOrganizationMemberResponse {}
+
+message GetOrganizationMaintenanceModeRequest {
+  // organization_id is the ID of the organization to retrieve the maintenance mode status for.
+  string organization_id = 1;
+}
+
+message GetOrganizationMaintenanceModeResponse {
+  // enabled indicates whether maintenance mode is enabled for the organization.
+  bool enabled = 1;
+}
+
+message SetOrganizationMaintenanceModeRequest {
+  // organization_id is the ID of the organization to set the maintenance mode status for.
+  string organization_id = 1;
+
+  // enabled indicates whether maintenance mode should be enabled or disabled.
+  bool enabled = 2;
+}
+
+message SetOrganizationMaintenanceModeResponse {
+  // enabled indicates the new maintenance mode status after the update.
+  bool enabled = 1;
+}

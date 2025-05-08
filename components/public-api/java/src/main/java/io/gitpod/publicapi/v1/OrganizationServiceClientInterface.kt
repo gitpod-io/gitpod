@@ -119,4 +119,20 @@ public interface OrganizationServiceClientInterface {
       fun listOrganizationWorkspaceClasses(request: OrganizationOuterClass.ListOrganizationWorkspaceClassesRequest,
       headers: Headers = emptyMap()):
       ResponseMessage<OrganizationOuterClass.ListOrganizationWorkspaceClassesResponse>
+
+  /**
+   *  GetOrganizationMaintenanceMode retrieves the maintenance mode status for an organization.
+   */
+  public suspend
+      fun getOrganizationMaintenanceMode(request: OrganizationOuterClass.GetOrganizationMaintenanceModeRequest,
+      headers: Headers = emptyMap()):
+      ResponseMessage<OrganizationOuterClass.GetOrganizationMaintenanceModeResponse>
+
+  /**
+   *  SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
+   */
+  public suspend
+      fun setOrganizationMaintenanceMode(request: OrganizationOuterClass.SetOrganizationMaintenanceModeRequest,
+      headers: Headers = emptyMap()):
+      ResponseMessage<OrganizationOuterClass.SetOrganizationMaintenanceModeResponse>
 }

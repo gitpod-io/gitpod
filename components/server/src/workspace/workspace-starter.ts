@@ -590,6 +590,33 @@ export class WorkspaceStarter {
         }
     }
 
+    /**
+     * Checks if the organization is in maintenance mode and if the user has permission to bypass it.
+     *
+     * @param user The user trying to start the workspace
+     * @param workspace The workspace to be started
+     * @throws ApplicationError if the organization is in maintenance mode and the user doesn't have permission to bypass it
+     */
+    private async checkMaintenanceMode(user: User, workspace: Workspace): Promise<void> {
+        if (!workspace.organizationId) {
+            return;
+        }
+
+        // Get the organization's maintenance mode status
+        const org = await this.orgService.getOrganization(user.id, workspace.organizationId);
+        if (!org.maintenanceMode) {
+            throw new StartInstanceError(
+                "maintenanceMode",
+                new Error(
+                    "Cannot start workspace: The organization is currently in maintenance mode. Please try again later or contact your organization administrator.",
+                ),
+            );
+            // throw new ApplicationError(
+            //     ErrorCodes.PRECONDITION_FAILED,
+            // );
+        }
+    }
+
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself.
     private async actuallyStartWorkspace(
         ctx: TraceContext,
@@ -630,6 +657,9 @@ export class WorkspaceStarter {
                     return;
                 }
             }
+
+            // check maintenance mode: throw application error if the organization is in maintenance mode
+            await this.checkMaintenanceMode(user, workspace);
 
             // build workspace image
             const additionalAuth = envVars.gitpodImageAuth || new Map<string, string>();

@@ -68,6 +68,7 @@ export type OrganizationPermission =
     | "read_env_var"
     | "write_env_var"
     | "read_audit_logs"
+    | "maintenance"
     | "read_members"
     | "invite_members"
     | "write_members"
