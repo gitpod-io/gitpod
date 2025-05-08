@@ -98,6 +98,15 @@ export default function OrganizationSelector() {
             }
             // Show billing if user is an owner of current org
             if (isOwner) {
+                // Add Admin link for owners
+                linkEntries.push({
+                    title: "Admin",
+                    customContent: <LinkEntry>Admin</LinkEntry>,
+                    active: false,
+                    separator: false,
+                    link: "/org-admin",
+                });
+
                 if (billingMode?.mode === "usage-based") {
                     linkEntries.push({
                         title: "Billing",
