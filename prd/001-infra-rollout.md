@@ -33,18 +33,18 @@ An "Admin" section will be added to the Gitpod organization menu. This section w
 *   **R1.2:** The list should include relevant information for each workspace (e.g., user, workspace ID, start time, project).
 *   **R1.3:** This feature aims to restore or provide similar functionality to a previously available view that helped admins identify active users during upgrades.
 
-### 4.2. Maintenance Mode Toggle (Ref: [CLC-1273](https://linear.app/gitpod/issue/CLC-1273/admin-maintenance-mode-toggle))
+### 4.2. Stop All Running Workspaces (Ref: [CLC-1275](https://linear.app/gitpod/issue/CLC-1275/admin-stop-all-running-workspaces-button-for-infra-update))
+*   **R3.1:** Administrators must have an option (e.g., a button) to stop all currently running workspaces within their organization.
+*   **R3.2:** This action is intended to ensure all running workspaces are backed up before an infrastructure update.
+*   **R3.3:** The UI should provide a clear explanation of what this action does and its implications.
+*   **R3.4:** This functionality must be disabled if Maintenance Mode is not active. It should only be usable when Maintenance Mode is enabled.
+
+### 4.3. Maintenance Mode Toggle (Ref: [CLC-1273](https://linear.app/gitpod/issue/CLC-1273/admin-maintenance-mode-toggle))
 *   **R2.1:** Administrators must be able to manually enable or disable a "Maintenance Mode" for their Gitpod instance.
 *   **R2.2:** When Maintenance Mode is enabled:
     *   Users must be prevented from starting new workspaces.
     *   A clear warning or notification must be displayed on the dashboard indicating that the system is in maintenance.
 *   **R2.3:** This toggle allows administrators to control the state before, during, and after an update.
-
-### 4.3. Stop All Running Workspaces (Ref: [CLC-1275](https://linear.app/gitpod/issue/CLC-1275/admin-stop-all-running-workspaces-button-for-infra-update))
-*   **R3.1:** Administrators must have an option (e.g., a button) to stop all currently running workspaces within their organization.
-*   **R3.2:** This action is intended to ensure all running workspaces are backed up before an infrastructure update.
-*   **R3.3:** The UI should provide a clear explanation of what this action does and its implications.
-*   **R3.4:** This functionality must be disabled if Maintenance Mode is not active. It should only be usable when Maintenance Mode is enabled.
 
 ### 4.4. Schedule Maintenance Notification (Optional) (Ref: [CLC-1274](https://linear.app/gitpod/issue/CLC-1274/admin-schedule-maintenance-notification))
 *   **R4.1:** Administrators must be able to schedule and display a maintenance notification banner on the Gitpod dashboard.
@@ -68,14 +68,7 @@ An "Admin" section will be added to the Gitpod organization menu. This section w
 
 ## 7. Testing Considerations
 
-*   **Functional Testing:** Each feature (viewing workspaces, notifications, maintenance mode, stopping workspaces) must be tested thoroughly.
-*   **Permissions Testing:** Verify that only authorized administrators can access and use these features.
-*   **UI/UX Testing:** Ensure the admin interface is user-friendly and provides clear information.
-*   **Integration Testing:** Test the interaction of these features with other parts of the Gitpod system (e.g., workspace startup flow, dashboard display).
-*   **Scenario Testing:** Test various scenarios, such as:
-    *   Scheduling a notification and then disabling it.
-    *   Enabling maintenance mode while users are attempting to start workspaces.
-    *   Stopping all workspaces when some are idle and some are active.
+*   manual testing only
 
 ## 8. Deployment Considerations
 
@@ -85,26 +78,26 @@ An "Admin" section will be added to the Gitpod organization menu. This section w
 
 ## 9. Implementation Progress
 
-| Feature / Sub-Task                                     | Status      | Assignee | PR Link(s) | Notes                                                                 |
-| ------------------------------------------------------ | ----------- | -------- | ---------- | --------------------------------------------------------------------- |
-| **Admin Page Scaffolding**                             | Done        | Cline    |            | Create basic Admin page structure in Dashboard, accessible via org menu. Route: /org-admin |
-| **4.1 View Running Workspaces**                        |             |          |            |                                                                       |
-| - API: Fetch running workspaces                        |             |          |            | `server`                                                              |
-| - UI: Display running workspaces                       |             |          |            | `dashboard`                                                           |
-| **4.2 Maintenance Mode Toggle**                        |             |          |            |                                                                       |
-| - API: Get/Set Maintenance Mode                        |             |          |            | `server` (state persistence)                                          |
-| - Logic: Prevent new workspace starts                  |             |          |            | `server`                                                              |
-| - UI: Toggle & Dashboard Banner                        |             |          |            | `dashboard`                                                           |
-| **4.3 Stop All Running Workspaces**                    |             |          |            |                                                                       |
-| - API: Trigger stop all workspaces                     |             |          |            | `server`                                                              |
-| - Logic: Iterate and stop workspaces                   |             |          |            | `server` (existing API methods?)                                      |
-| - UI: Button (disabled if Maint. Mode off) & Confirm   |             |          |            | `dashboard`                                                           |
-| **4.4 Schedule Maintenance Notification (Optional)**   |             |          |            |                                                                       |
-| - API: Get/Set Notification                            |             |          |            | `server` (state persistence)                                          |
-| - UI: Form for scheduling & Dashboard Banner           |             |          |            | `dashboard`                                                           |
-| **General**                                            |             |          |            |                                                                       |
-| - Permissions/Authorization                            |             |          |            | `server`                                                              |
-| - Auditing                                             |             |          |            | `server`                                                              |
+| Feature / Sub-Task                                     | Status      | Assignee | PDD Links                                                  |
+| ------------------------------------------------------ | ----------- | -------- | ---------------------------------------------------------- |
+| **Admin Page Scaffolding**                             | Done        | Cline    | [001-infra-rollout-4.0.md](pdd/001-infra-rollout-4.0.md)   |
+| **4.1 View Running Workspaces**                        | Done        | Cline    | [001-infra-rollout-4.1.md](pdd/001-infra-rollout-4.1.md)   |
+| - API: Fetch running workspaces                        |             |          |                                                            |
+| - UI: Display running workspaces                       |             |          |                                                            |
+| **4.2 Stop All Running Workspaces**                    |             |          |                                                            |
+| - API: Trigger stop all workspaces                     |             |          |                                                            |
+| - Logic: Iterate and stop workspaces                   |             |          |                                                            |
+| - UI: Button (disabled if Maint. Mode off) & Confirm   |             |          |                                                            |
+| **4.3 Maintenance Mode Toggle**                        |             |          |                                                            |
+| - API: Get/Set Maintenance Mode                        |             |          |                                                            |
+| - Logic: Prevent new workspace starts                  |             |          |                                                            |
+| - UI: Toggle & Dashboard Banner                        |             |          |                                                            |
+| **4.4 Schedule Maintenance Notification (Optional)**   |             |          |                                                            |
+| - API: Get/Set Notification                            |             |          |                                                            |
+| - UI: Form for scheduling & Dashboard Banner           |             |          |                                                            |
+| **General**                                            |             |          |                                                            |
+| - Permissions/Authorization                            |             |          |                                                            |
+| - Auditing                                             |             |          |                                                            |
 
 **Status Key:** Not Started, In Progress, Blocked, In Review, Done
 
