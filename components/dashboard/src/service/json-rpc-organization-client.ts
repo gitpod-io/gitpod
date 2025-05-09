@@ -16,6 +16,8 @@ import {
     DeleteOrganizationResponse,
     GetOrganizationInvitationRequest,
     GetOrganizationInvitationResponse,
+    GetOrganizationMaintenanceModeRequest,
+    GetOrganizationMaintenanceModeResponse,
     GetOrganizationRequest,
     GetOrganizationResponse,
     GetOrganizationSettingsRequest,
@@ -31,6 +33,8 @@ import {
     OrganizationSettings,
     ResetOrganizationInvitationRequest,
     ResetOrganizationInvitationResponse,
+    SetOrganizationMaintenanceModeRequest,
+    SetOrganizationMaintenanceModeResponse,
     UpdateOrganizationMemberRequest,
     UpdateOrganizationMemberResponse,
     UpdateOrganizationRequest,
@@ -284,5 +288,33 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
 
         await getGitpodService().server.updateOrgSettings(request.organizationId, update);
         return new UpdateOrganizationSettingsResponse();
+    }
+
+    async getOrganizationMaintenanceMode(
+        request: PartialMessage<GetOrganizationMaintenanceModeRequest>,
+        options?: CallOptions | undefined,
+    ): Promise<GetOrganizationMaintenanceModeResponse> {
+        if (!request.organizationId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+        const result = await getGitpodService().server.getTeam(request.organizationId);
+        return new GetOrganizationMaintenanceModeResponse({
+            enabled: result.maintenanceMode,
+        });
+    }
+
+    async setOrganizationMaintenanceMode(
+        request: PartialMessage<SetOrganizationMaintenanceModeRequest>,
+        options?: CallOptions | undefined,
+    ): Promise<SetOrganizationMaintenanceModeResponse> {
+        if (!request.organizationId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+        const result = await getGitpodService().server.updateTeam(request.organizationId, {
+            maintenanceMode: request.enabled,
+        });
+        return new SetOrganizationMaintenanceModeResponse({
+            enabled: result.maintenanceMode,
+        });
     }
 }

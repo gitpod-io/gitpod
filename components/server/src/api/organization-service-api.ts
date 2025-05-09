@@ -16,27 +16,31 @@ import {
     DeleteOrganizationResponse,
     GetOrganizationInvitationRequest,
     GetOrganizationInvitationResponse,
+    GetOrganizationMaintenanceModeRequest,
+    GetOrganizationMaintenanceModeResponse,
     GetOrganizationRequest,
     GetOrganizationResponse,
+    GetOrganizationSettingsRequest,
+    GetOrganizationSettingsResponse,
     JoinOrganizationRequest,
     JoinOrganizationResponse,
     ListOrganizationMembersRequest,
     ListOrganizationMembersResponse,
     ListOrganizationsRequest,
-    ListOrganizationsResponse,
-    ResetOrganizationInvitationRequest,
-    ResetOrganizationInvitationResponse,
-    UpdateOrganizationRequest,
-    UpdateOrganizationResponse,
-    UpdateOrganizationMemberRequest,
-    UpdateOrganizationMemberResponse,
-    GetOrganizationSettingsRequest,
-    GetOrganizationSettingsResponse,
-    UpdateOrganizationSettingsRequest,
-    UpdateOrganizationSettingsResponse,
     ListOrganizationsRequest_Scope,
+    ListOrganizationsResponse,
     ListOrganizationWorkspaceClassesRequest,
     ListOrganizationWorkspaceClassesResponse,
+    ResetOrganizationInvitationRequest,
+    ResetOrganizationInvitationResponse,
+    SetOrganizationMaintenanceModeRequest,
+    SetOrganizationMaintenanceModeResponse,
+    UpdateOrganizationMemberRequest,
+    UpdateOrganizationMemberResponse,
+    UpdateOrganizationRequest,
+    UpdateOrganizationResponse,
+    UpdateOrganizationSettingsRequest,
+    UpdateOrganizationSettingsResponse,
 } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-converter";
 import { OrganizationService } from "../orgs/organization-service";
@@ -311,6 +315,34 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         const updatedSettings = await this.orgService.updateSettings(ctxUserId(), req.organizationId, update);
         return new UpdateOrganizationSettingsResponse({
             settings: this.apiConverter.toOrganizationSettings(updatedSettings),
+        });
+    }
+
+    async getOrganizationMaintenanceMode(
+        req: GetOrganizationMaintenanceModeRequest,
+        _: HandlerContext,
+    ): Promise<GetOrganizationMaintenanceModeResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+
+        const enabled = await this.orgService.getMaintenanceMode(ctxUserId(), req.organizationId);
+        return new GetOrganizationMaintenanceModeResponse({
+            enabled,
+        });
+    }
+
+    async setOrganizationMaintenanceMode(
+        req: SetOrganizationMaintenanceModeRequest,
+        _: HandlerContext,
+    ): Promise<SetOrganizationMaintenanceModeResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+
+        const enabled = await this.orgService.setMaintenanceMode(ctxUserId(), req.organizationId, req.enabled);
+        return new SetOrganizationMaintenanceModeResponse({
+            enabled,
         });
     }
 }

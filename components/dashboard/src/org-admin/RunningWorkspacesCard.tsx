@@ -12,6 +12,7 @@ import { useWorkspaceSessions } from "../data/insights/list-workspace-sessions-q
 import { Button } from "@podkit/buttons/Button";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { useToast } from "../components/toasts/Toasts";
+import { useMaintenanceMode } from "../data/maintenance-mode-query";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import Alert from "../components/Alert";
 import Spinner from "../icons/Spinner.svg";
@@ -31,6 +32,7 @@ export const RunningWorkspacesCard: FC<RunningWorkspacesCardProps> = () => {
     const [isStopAllModalOpen, setIsStopAllModalOpen] = useState(false);
     const [isStoppingAll, setIsStoppingAll] = useState(false);
     const toast = useToast();
+    const { isMaintenanceMode } = useMaintenanceMode();
 
     const { data, fetchNextPage, hasNextPage, isLoading, isError, error, isFetchingNextPage, refetch } =
         useWorkspaceSessions({
@@ -122,9 +124,9 @@ export const RunningWorkspacesCard: FC<RunningWorkspacesCardProps> = () => {
                 <Button
                     variant="destructive"
                     onClick={() => setIsStopAllModalOpen(true)}
-                    disabled={isStoppingAll || isLoading || runningWorkspaces.length === 0}
+                    disabled={!isMaintenanceMode || isStoppingAll || isLoading || runningWorkspaces.length === 0}
                 >
-                    Stop All Workspaces
+                    {!isMaintenanceMode ? "Enable Maintenance Mode to Stop All" : "Stop All Workspaces"}
                 </Button>
             </div>
             {runningWorkspaces.length === 0 && !isLoading ? (

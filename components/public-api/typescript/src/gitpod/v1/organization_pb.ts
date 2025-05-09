@@ -1835,3 +1835,167 @@ export class DeleteOrganizationMemberResponse extends Message<DeleteOrganization
     return proto3.util.equals(DeleteOrganizationMemberResponse, a, b);
   }
 }
+
+/**
+ * @generated from message gitpod.v1.GetOrganizationMaintenanceModeRequest
+ */
+export class GetOrganizationMaintenanceModeRequest extends Message<GetOrganizationMaintenanceModeRequest> {
+  /**
+   * organization_id is the ID of the organization to retrieve the maintenance mode status for.
+   *
+   * @generated from field: string organization_id = 1;
+   */
+  organizationId = "";
+
+  constructor(data?: PartialMessage<GetOrganizationMaintenanceModeRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetOrganizationMaintenanceModeRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetOrganizationMaintenanceModeRequest {
+    return new GetOrganizationMaintenanceModeRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetOrganizationMaintenanceModeRequest {
+    return new GetOrganizationMaintenanceModeRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetOrganizationMaintenanceModeRequest {
+    return new GetOrganizationMaintenanceModeRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetOrganizationMaintenanceModeRequest | PlainMessage<GetOrganizationMaintenanceModeRequest> | undefined, b: GetOrganizationMaintenanceModeRequest | PlainMessage<GetOrganizationMaintenanceModeRequest> | undefined): boolean {
+    return proto3.util.equals(GetOrganizationMaintenanceModeRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetOrganizationMaintenanceModeResponse
+ */
+export class GetOrganizationMaintenanceModeResponse extends Message<GetOrganizationMaintenanceModeResponse> {
+  /**
+   * enabled indicates whether maintenance mode is enabled for the organization.
+   *
+   * @generated from field: bool enabled = 1;
+   */
+  enabled = false;
+
+  constructor(data?: PartialMessage<GetOrganizationMaintenanceModeResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetOrganizationMaintenanceModeResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetOrganizationMaintenanceModeResponse {
+    return new GetOrganizationMaintenanceModeResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetOrganizationMaintenanceModeResponse {
+    return new GetOrganizationMaintenanceModeResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetOrganizationMaintenanceModeResponse {
+    return new GetOrganizationMaintenanceModeResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetOrganizationMaintenanceModeResponse | PlainMessage<GetOrganizationMaintenanceModeResponse> | undefined, b: GetOrganizationMaintenanceModeResponse | PlainMessage<GetOrganizationMaintenanceModeResponse> | undefined): boolean {
+    return proto3.util.equals(GetOrganizationMaintenanceModeResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.SetOrganizationMaintenanceModeRequest
+ */
+export class SetOrganizationMaintenanceModeRequest extends Message<SetOrganizationMaintenanceModeRequest> {
+  /**
+   * organization_id is the ID of the organization to set the maintenance mode status for.
+   *
+   * @generated from field: string organization_id = 1;
+   */
+  organizationId = "";
+
+  /**
+   * enabled indicates whether maintenance mode should be enabled or disabled.
+   *
+   * @generated from field: bool enabled = 2;
+   */
+  enabled = false;
+
+  constructor(data?: PartialMessage<SetOrganizationMaintenanceModeRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.SetOrganizationMaintenanceModeRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetOrganizationMaintenanceModeRequest {
+    return new SetOrganizationMaintenanceModeRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetOrganizationMaintenanceModeRequest {
+    return new SetOrganizationMaintenanceModeRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetOrganizationMaintenanceModeRequest {
+    return new SetOrganizationMaintenanceModeRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SetOrganizationMaintenanceModeRequest | PlainMessage<SetOrganizationMaintenanceModeRequest> | undefined, b: SetOrganizationMaintenanceModeRequest | PlainMessage<SetOrganizationMaintenanceModeRequest> | undefined): boolean {
+    return proto3.util.equals(SetOrganizationMaintenanceModeRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.SetOrganizationMaintenanceModeResponse
+ */
+export class SetOrganizationMaintenanceModeResponse extends Message<SetOrganizationMaintenanceModeResponse> {
+  /**
+   * enabled indicates the new maintenance mode status after the update.
+   *
+   * @generated from field: bool enabled = 1;
+   */
+  enabled = false;
+
+  constructor(data?: PartialMessage<SetOrganizationMaintenanceModeResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.SetOrganizationMaintenanceModeResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetOrganizationMaintenanceModeResponse {
+    return new SetOrganizationMaintenanceModeResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetOrganizationMaintenanceModeResponse {
+    return new SetOrganizationMaintenanceModeResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetOrganizationMaintenanceModeResponse {
+    return new SetOrganizationMaintenanceModeResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SetOrganizationMaintenanceModeResponse | PlainMessage<SetOrganizationMaintenanceModeResponse> | undefined, b: SetOrganizationMaintenanceModeResponse | PlainMessage<SetOrganizationMaintenanceModeResponse> | undefined): boolean {
+    return proto3.util.equals(SetOrganizationMaintenanceModeResponse, a, b);
+  }
+}

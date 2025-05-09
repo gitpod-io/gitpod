@@ -80,6 +80,9 @@ schema: |-
 
       permission read_audit_logs = owner + installation->admin
 
+      // Maintenance mode permission
+      permission maintenance = owner + installation->admin
+
       // Operations on Organization's Members
       permission read_members = member + owner + installation->admin
       permission invite_members = member + owner + installation->admin

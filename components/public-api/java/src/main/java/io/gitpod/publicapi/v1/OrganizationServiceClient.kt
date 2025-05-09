@@ -265,4 +265,40 @@ public class OrganizationServiceClient(
     ),
   )
 
+
+  /**
+   *  GetOrganizationMaintenanceMode retrieves the maintenance mode status for an organization.
+   */
+  override suspend
+      fun getOrganizationMaintenanceMode(request: OrganizationOuterClass.GetOrganizationMaintenanceModeRequest,
+      headers: Headers):
+      ResponseMessage<OrganizationOuterClass.GetOrganizationMaintenanceModeResponse> = client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.OrganizationService/GetOrganizationMaintenanceMode",
+      io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest::class,
+      io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
+
+  /**
+   *  SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
+   */
+  override suspend
+      fun setOrganizationMaintenanceMode(request: OrganizationOuterClass.SetOrganizationMaintenanceModeRequest,
+      headers: Headers):
+      ResponseMessage<OrganizationOuterClass.SetOrganizationMaintenanceModeResponse> = client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.OrganizationService/SetOrganizationMaintenanceMode",
+      io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest::class,
+      io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
 }

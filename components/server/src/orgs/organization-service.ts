@@ -145,7 +145,7 @@ export class OrganizationService {
     async updateOrganization(
         userId: string,
         orgId: string,
-        changes: Pick<Organization, "name">,
+        changes: Partial<Pick<Organization, "name" | "maintenanceMode">>,
     ): Promise<Organization> {
         await this.auth.checkPermissionOnOrganization(userId, "write_info", orgId);
         return this.teamDB.updateTeam(orgId, changes);
@@ -765,5 +765,55 @@ export class OrganizationService {
             return availableClasses;
         }
         return allClasses;
+    }
+
+    /**
+     * Gets the maintenance mode status for an organization.
+     *
+     * @param userId The ID of the user making the request
+     * @param orgId The ID of the organization
+     * @returns A boolean indicating whether maintenance mode is enabled
+     */
+    public async getMaintenanceMode(userId: string, orgId: string): Promise<boolean> {
+        // Using write_settings permission as it's available to owners and installation admins
+        await this.auth.checkPermissionOnOrganization(userId, "write_settings", orgId);
+
+        const team = await this.teamDB.findTeamById(orgId);
+        if (!team) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
+        }
+
+        return !!team.maintenanceMode;
+    }
+
+    /**
+     * Sets the maintenance mode status for an organization.
+     *
+     * @param userId The ID of the user making the request
+     * @param orgId The ID of the organization
+     * @param enabled Whether maintenance mode should be enabled
+     * @returns A boolean indicating the new maintenance mode status
+     */
+    public async setMaintenanceMode(userId: string, orgId: string, enabled: boolean): Promise<boolean> {
+        // Using write_settings permission as it's available to owners and installation admins
+        await this.auth.checkPermissionOnOrganization(userId, "write_settings", orgId);
+
+        const team = await this.teamDB.findTeamById(orgId);
+        if (!team) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
+        }
+
+        await this.teamDB.updateTeam(orgId, { maintenanceMode: enabled });
+
+        // Track the maintenance mode change
+        this.analytics.track({
+            userId,
+            event: enabled ? "maintenance_mode_enabled" : "maintenance_mode_disabled",
+            properties: {
+                organization_id: orgId,
+            },
+        });
+
+        return enabled;
     }
 }

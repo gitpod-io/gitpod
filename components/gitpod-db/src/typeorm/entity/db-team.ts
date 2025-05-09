@@ -25,4 +25,7 @@ export class DBTeam implements Team {
 
     @Column()
     markedDeleted?: boolean;
+
+    @Column({ default: false })
+    maintenanceMode?: boolean;
 }
