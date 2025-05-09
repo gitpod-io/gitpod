@@ -41,7 +41,7 @@ const supervisorConfigFile = "supervisor-config.json"
 // Config configures supervisor.
 type Config struct {
 	StaticConfig
-	IDE         IDEConfig
+	IDE         *IDEConfig
 	DesktopIDEs []*IDEConfig
 	WorkspaceConfig
 }
@@ -573,9 +573,12 @@ func GetConfig() (*Config, error) {
 		return nil, err
 	}
 
-	ide, err := loadIDEConfigFromFile(static.IDEConfigLocation)
-	if err != nil {
-		return nil, err
+	var ide *IDEConfig
+	if _, err := os.Stat(static.IDEConfigLocation); !os.IsNotExist(err) {
+		ide, err = loadIDEConfigFromFile(static.IDEConfigLocation)
+		if err != nil {
+			return nil, err
+		}
 	}
 	desktopIDEs, err := loadDesktopIDEs(static)
 	if err != nil {
@@ -589,7 +592,7 @@ func GetConfig() (*Config, error) {
 
 	return &Config{
 		StaticConfig:    *static,
-		IDE:             *ide,
+		IDE:             ide,
 		DesktopIDEs:     desktopIDEs,
 		WorkspaceConfig: *workspace,
 	}, nil

@@ -301,10 +301,11 @@ func grpcProbe(cfg baseserver.ServerConfiguration) func() error {
 }
 
 type IDESettings struct {
-	DefaultIde        string            `json:"defaultIde,omitempty"`
-	UseLatestVersion  bool              `json:"useLatestVersion,omitempty"`
-	PreferToolbox     bool              `json:"preferToolbox,omitempty"`
-	PinnedIDEversions map[string]string `json:"pinnedIDEversions,omitempty"`
+	DefaultIde            string            `json:"defaultIde,omitempty"`
+	UseLatestVersion      bool              `json:"useLatestVersion,omitempty"`
+	PreferToolbox         bool              `json:"preferToolbox,omitempty"`
+	PinnedIDEversions     map[string]string `json:"pinnedIDEversions,omitempty"`
+	RestrictedEditorNames []string          `json:"restrictedEditorNames,omitempty"`
 }
 
 type WorkspaceContext struct {
@@ -395,6 +396,11 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 	}
 
 	pinnedIDEversions := make(map[string]string)
+	restrictedEditorNames := make(map[string]struct{})
+
+	for _, editorName := range ideSettings.RestrictedEditorNames {
+		restrictedEditorNames[editorName] = struct{}{}
+	}
 
 	if ideSettings != nil {
 		pinnedIDEversions = ideSettings.PinnedIDEversions
@@ -481,6 +487,11 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 		// we always need WebImage for when the user chooses a desktop ide
 		resp.WebImage = getUserIDEImage(ideConfig.IdeOptions.DefaultIde, useLatest)
 		resp.IdeImageLayers = getUserImageLayers(ideConfig.IdeOptions.DefaultIde, useLatest)
+
+		if _, ok := restrictedEditorNames["code"]; ok {
+			resp.WebImage = ""
+			resp.IdeImageLayers = []string{}
+		}
 
 		var desktopImageLayer string
 		var desktopUserImageLayers []string

@@ -6,6 +6,7 @@ packages:
       - "go.mod"
       - "go.sum"
       - "public/**"
+      - "pkg/proxy/ide-fallback.html"
     deps:
       - components/common-go:lib
       - components/gitpod-protocol/go:lib
@@ -45,6 +46,7 @@ packages:
       - "go.mod"
       - "go.sum"
       - "public/**"
+      - "pkg/proxy/ide-fallback.html"
     deps:
       - components/common-go:lib
       - components/gitpod-protocol/go:lib

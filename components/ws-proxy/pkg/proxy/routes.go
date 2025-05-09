@@ -11,6 +11,7 @@ import (
 	"crypto/elliptic"
 	crand "crypto/rand"
 	"crypto/tls"
+	_ "embed"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
@@ -840,12 +841,26 @@ func isWebSocketUpgrade(req *http.Request) bool {
 		strings.Contains(strings.ToLower(req.Header.Get("Connection")), "upgrade")
 }
 
+//go:embed ide-fallback.html
+var ideFallbackPage []byte
+
 func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	if isWebSocketUpgrade(req) {
 		return nil, xerrors.Errorf("blobserve: websocket not supported")
 	}
 
 	image := t.resolveImage(t, req)
+
+	if image == "fake:builtin" {
+		return &http.Response{
+			StatusCode:    http.StatusOK,
+			Body:          io.NopCloser(bytes.NewReader(ideFallbackPage)),
+			Header:        http.Header{"Content-Type": {"text/html; charset=utf-8"}},
+			Request:       req,
+			ContentLength: int64(len(ideFallbackPage)),
+			Status:        "200 OK",
+		}, nil
+	}
 
 	resp, err = t.DoRoundTrip(req)
 	if err != nil {

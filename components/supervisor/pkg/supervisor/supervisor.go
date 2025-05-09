@@ -190,7 +190,7 @@ func Run(options ...RunOption) {
 	}
 
 	var (
-		ideReady                       = newIDEReadyState(&cfg.IDE)
+		ideReady        *ideReadyState = nil
 		desktopIdeReady *ideReadyState = nil
 
 		cstate        = NewInMemoryContentState(cfg.RepoRoot)
@@ -282,6 +282,9 @@ func Run(options ...RunOption) {
 		}, tokenService)
 	}
 
+	if cfg.IDE != nil {
+		ideReady = newIDEReadyState(cfg.IDE)
+	}
 	if cfg.GetDesktopIDE() != nil {
 		desktopIdeReady = newIDEReadyState(cfg.GetDesktopIDE())
 	}
@@ -415,8 +418,10 @@ func Run(options ...RunOption) {
 	// - JB backend-plugin https://github.com/gitpod-io/gitpod/blob/main/components/ide/jetbrains/launcher/main.go#L80
 	shouldWaitBackend := shouldShutdown
 	var ideWG sync.WaitGroup
-	ideWG.Add(1)
-	go startAndWatchIDE(ctx, cfg, &cfg.IDE, &ideWG, cstate, ideReady, WebIDE, supervisorMetrics, shouldWaitBackend)
+	if cfg.IDE != nil {
+		ideWG.Add(1)
+		go startAndWatchIDE(ctx, cfg, cfg.IDE, &ideWG, cstate, ideReady, WebIDE, supervisorMetrics, shouldWaitBackend)
+	}
 	if cfg.GetDesktopIDE() != nil {
 		ideWG.Add(1)
 		go startAndWatchIDE(ctx, cfg, cfg.GetDesktopIDE(), &ideWG, cstate, desktopIdeReady, DesktopIDE, supervisorMetrics, shouldWaitBackend)
@@ -1122,7 +1127,7 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 	getEnv := func(name string) string {
 		return envs[name]
 	}
-	for _, ide := range []*IDEConfig{&cfg.IDE, cfg.GetDesktopIDE()} {
+	for _, ide := range []*IDEConfig{cfg.IDE, cfg.GetDesktopIDE()} {
 		if ide == nil || ide.Env == nil {
 			continue
 		}
@@ -1967,10 +1972,12 @@ func trackReadiness(ctx context.Context, w analytics.Writer, cfg *Config, cstate
 		<-cstate.ContentReady()
 		trackFn(cfg, readinessKindContent)
 	}()
-	go func() {
-		<-ideReady.Wait()
-		trackFn(cfg, readinessKindIDE)
-	}()
+	if cfg.IDE != nil {
+		go func() {
+			<-ideReady.Wait()
+			trackFn(cfg, readinessKindIDE)
+		}()
+	}
 	if cfg.GetDesktopIDE() != nil {
 		go func() {
 			<-desktopIdeReady.Wait()
@@ -1999,26 +2006,26 @@ func handleExit(ec *int) {
 }
 
 func waitForIde(parent context.Context, ideReady *ideReadyState, desktopIdeReady *ideReadyState, timeout time.Duration) (bool, string) {
-	if ideReady == nil {
-		return true, ""
-	}
 	ctx, cancel := context.WithTimeout(parent, timeout)
 	defer cancel()
-	select {
-	case <-ctx.Done():
-		return false, ideReady.ideConfig.DisplayName
-	case <-ideReady.Wait():
+
+	wait := func(ready *ideReadyState) bool {
+		if ready == nil {
+			return true
+		}
+		select {
+		case <-ctx.Done():
+			return false
+		case <-ready.Wait():
+		}
+		return true
 	}
 
-	if desktopIdeReady == nil {
-		return true, ""
+	if !wait(ideReady) {
+		return false, ideReady.ideConfig.DisplayName
 	}
-	select {
-	case <-ctx.Done():
-		// We assume desktop editors should have backend/server anyway
-		// "IntelliJ backend timed out to start after 5 minutes"
+	if !wait(desktopIdeReady) {
 		return false, desktopIdeReady.ideConfig.DisplayName + " backend"
-	case <-desktopIdeReady.Wait():
 	}
 	return true, ""
 }

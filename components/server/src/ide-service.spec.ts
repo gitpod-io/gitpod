@@ -13,7 +13,7 @@ const expect = chai.expect;
 describe("ide-service", function () {
     describe("migrateSettings", function () {
         const ideService = new IDEService();
-        it("with no ideSettings should be undefined", function () {
+        it("with no ideSettings should be undefined", async function () {
             const user: User = {
                 id: "string",
 
@@ -21,11 +21,11 @@ describe("ide-service", function () {
                 identities: [],
                 additionalData: {},
             };
-            const result = ideService.migrateSettings(user);
+            const result = await ideService.migrateSettings(user);
             expect(result).to.undefined;
         });
 
-        it("with settingVersion 2.0 should be latest", function () {
+        it("with settingVersion 2.0 should be latest", async function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -38,7 +38,7 @@ describe("ide-service", function () {
                     },
                 },
             };
-            const result = ideService.migrateSettings(user);
+            const result = await ideService.migrateSettings(user);
             expect(result).to.deep.equal({
                 settingVersion: IDESettingsVersion,
                 defaultIde: "code",
@@ -46,7 +46,7 @@ describe("ide-service", function () {
             });
         });
 
-        it("with settingVersion 2.0 should be latest and remove intellij-previous", function () {
+        it("with settingVersion 2.0 should be latest and remove intellij-previous", async function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -59,7 +59,7 @@ describe("ide-service", function () {
                     },
                 },
             };
-            const result = ideService.migrateSettings(user);
+            const result = await ideService.migrateSettings(user);
             expect(result).to.deep.equal({
                 settingVersion: IDESettingsVersion,
                 defaultIde: "code",
@@ -67,7 +67,7 @@ describe("ide-service", function () {
             });
         });
 
-        it("with settingVersion latest should be undefined", function () {
+        it("with settingVersion latest should be undefined", async function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -80,11 +80,11 @@ describe("ide-service", function () {
                     },
                 },
             };
-            const result = ideService.migrateSettings(user);
+            const result = await ideService.migrateSettings(user);
             expect(result).to.undefined;
         });
 
-        it("with code-latest should be code latest", function () {
+        it("with code-latest should be code latest", async function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -96,12 +96,12 @@ describe("ide-service", function () {
                     },
                 },
             };
-            const result = ideService.migrateSettings(user);
+            const result = await ideService.migrateSettings(user);
             expect(result?.defaultIde).to.equal("code");
             expect(result?.useLatestVersion ?? false).to.be.true;
         });
 
-        it("with code-desktop-insiders should be code-desktop latest", function () {
+        it("with code-desktop-insiders should be code-desktop latest", async function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -114,12 +114,12 @@ describe("ide-service", function () {
                     },
                 },
             };
-            const result = ideService.migrateSettings(user);
+            const result = await ideService.migrateSettings(user);
             expect(result?.defaultIde).to.equal("code-desktop");
             expect(result?.useLatestVersion ?? false).to.be.true;
         });
 
-        it("with code-desktop should be code-desktop", function () {
+        it("with code-desktop should be code-desktop", async function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -132,12 +132,12 @@ describe("ide-service", function () {
                     },
                 },
             };
-            const result = ideService.migrateSettings(user);
+            const result = await ideService.migrateSettings(user);
             expect(result?.defaultIde).to.equal("code-desktop");
             expect(result?.useLatestVersion ?? false).to.be.false;
         });
 
-        it("with intellij should be intellij", function () {
+        it("with intellij should be intellij", async function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -151,12 +151,12 @@ describe("ide-service", function () {
                     },
                 },
             };
-            const result = ideService.migrateSettings(user);
+            const result = await ideService.migrateSettings(user);
             expect(result?.defaultIde).to.equal("intellij");
             expect(result?.useLatestVersion ?? false).to.be.false;
         });
 
-        it("with intellij latest version  should be intellij latest", function () {
+        it("with intellij latest version  should be intellij latest", async function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -170,12 +170,12 @@ describe("ide-service", function () {
                     },
                 },
             };
-            const result = ideService.migrateSettings(user);
+            const result = await ideService.migrateSettings(user);
             expect(result?.defaultIde).to.equal("intellij");
             expect(result?.useLatestVersion ?? false).to.be.true;
         });
 
-        it("with user desktopIde false should be code latest", function () {
+        it("with user desktopIde false should be code latest", async function () {
             const user: User = {
                 id: "string",
                 creationDate: "string",
@@ -189,7 +189,7 @@ describe("ide-service", function () {
                     },
                 },
             };
-            const result = ideService.migrateSettings(user);
+            const result = await ideService.migrateSettings(user);
             expect(result?.defaultIde).to.equal("code");
             expect(result?.useLatestVersion ?? false).to.be.true;
         });
