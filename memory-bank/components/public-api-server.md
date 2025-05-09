@@ -120,7 +120,7 @@ The Public API Server is configured through a JSON configuration file:
 ## Integration Points
 
 The Public API Server integrates with:
-1. **Gitpod Server**: For core Gitpod functionality
+1. **Gitpod Server**: For core Gitpod functionality. The Public API Server often acts as a gRPC gateway, proxying requests to the Gitpod Server (TypeScript component) where the business logic for many `gitpod.v1` services (like `OrganizationService`) is implemented.
 2. **Database**: For persistent storage
 3. **Redis**: For caching and session management
 4. **Billing Service**: For billing-related operations

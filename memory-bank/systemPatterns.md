@@ -112,7 +112,8 @@ Workspaces are treated as immutable, with changes to configuration resulting in 
 1. **User Code**: Managed by Content Service, synchronized between workspace and git repositories
 2. **Configuration**: Stored in database, applied by Workspace Manager during workspace creation
 3. **Build Artifacts**: Cached by Image Builder for reuse in future workspaces
-4. **User Data**: Stored in database, accessed through Dashboard and API
+4. **Core Data Entities**: Key platform data (including User data, Organization/Team settings, Project details, Workspace configurations) is stored in the database (primarily MySQL, managed by `gitpod-db` component using TypeORM).
+    *   Notably, the `DBTeam` entity serves as the representation for "Organizations," storing organization-level details and settings. This is accessed via the Dashboard and various APIs.
 
 ## Key Technical Decisions
 
@@ -131,6 +132,10 @@ Workspaces are treated as immutable, with changes to configuration resulting in 
 7. **Leeway Build System**: Custom build system for managing the complex dependencies between components.
 
 8. **Kubernetes Deployment Configuration**: All code that defines Kubernetes objects for deployable components lives in `install/installer`. This centralized approach ensures consistent deployment patterns across all components.
+
+9. **Public API Architecture**: External programmatic access is provided via `gitpod.v1` gRPC services. These services are defined using Protocol Buffers (`.proto` files) located in the `components/public-api/gitpod/v1/` directory. The `server` component (TypeScript/Express.js based) directly implements and hosts these gRPC services. The `public-api-server` component (Go based) can act as an external-facing gRPC gateway.
+
+10. **Authorization with SpiceDB**: Fine-grained, relationship-based access control (ReBAC) is managed by SpiceDB. The authorization schema, defining resources, relationships, and permissions, is located in `components/spicedb/schema/schema.yaml`. Service implementations (e.g., within the `server` component) query SpiceDB to enforce these permissions.
 
 ## Development Workflows
 

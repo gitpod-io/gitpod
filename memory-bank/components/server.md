@@ -21,7 +21,7 @@ The primary purposes of the Server component are:
 
 The Server operates as an Express.js application with several key components:
 
-1. **API Server**: Provides HTTP and WebSocket endpoints for client communication
+1. **API Server**: Provides HTTP and WebSocket endpoints for client communication. It also directly hosts and implements `gitpod.v1` gRPC services (defined in `.proto` files within `components/public-api/`) for programmatic access.
 2. **Authentication System**: Handles user authentication and session management
 3. **Database Interface**: Interacts with the database for persistent storage
 4. **WebSocket Manager**: Manages real-time communication with clients
@@ -94,7 +94,7 @@ The Server supports multiple authentication methods:
 3. **OAuth Integration**: With GitHub, GitLab, Bitbucket, etc.
 4. **Personal Access Tokens**: For programmatic access
 
-Authorization is handled through a combination of user roles, permissions, and access controls.
+Authorization is handled through a combination of user roles and permissions, leveraging SpiceDB for fine-grained access control checks within its service implementations (including for gRPC services).
 
 ## Integration Points
 
