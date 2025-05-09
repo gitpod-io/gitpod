@@ -312,11 +312,6 @@ export namespace EnvVar {
             }
         });
 
-        // (imageAuth.value || "")
-        //     .split(",")
-        //     .map((e) => e.trim().split(":"))
-        //     .filter((e) => e.length == 2)
-        //     .forEach((e) => res.set(e[0], e[1]));
         return res;
     }
 }
