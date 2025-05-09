@@ -293,21 +293,22 @@ export namespace EnvVar {
             return res;
         }
 
-        (imageAuth.value || "").split(",").forEach((entry) => {
-            const parts = entry.trim().split(":");
-            if (parts.length === 2) {
-                const [host, token] = parts;
-                if (host && token) {
-                    res.set(host, token);
-                }
-            } else if (parts.length === 3) {
-                const [host, port, token] = parts;
-                const hostWithPort = `${host}:${port}`;
-                if (hostWithPort && token) {
-                    res.set(hostWithPort, token);
-                }
+        // Returns a host value, which can include port, if token also has length.
+        const getHost = (parts: string[]): string => {
+            if (parts.length === 2 && parts[0] && parts[1]) {
+                return parts[0];
+            } else if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+                return `${parts[0]}:${parts[1]}`;
             }
-        });
+            return "";
+        };
+
+        (imageAuth.value || "")
+            .split(",")
+            .map((e) => e.trim().split(":"))
+            .forEach((parts) => {
+                getHost(parts) !== "" ? res.set(getHost(parts), parts[parts.length - 1]) : null;
+            });
 
         return res;
     }
