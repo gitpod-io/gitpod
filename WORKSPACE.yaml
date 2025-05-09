@@ -13,15 +13,15 @@ defaultArgs:
   codeWebExtensionCommit: 3953e8160fffa97dd4a4509542b4bf7ff9b704cd
   xtermCommit: d547d4ff4590b66c3ea24342fc62e3afcf6b77bc
   noVerifyJBPlugin: false
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2025.1.tar.gz"
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2025.1.1.tar.gz"
   golandDownloadUrl: "https://download.jetbrains.com/go/goland-2025.1.tar.gz"
-  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-2025.1.tar.gz"
-  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2025.1.tar.gz"
-  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2025.1.tar.gz"
-  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2025.1.tar.gz"
+  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-2025.1.1.tar.gz"
+  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2025.1.0.1.tar.gz"
+  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2025.1.1.tar.gz"
+  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2025.1.1.tar.gz"
   riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2024.1.4.tar.gz"
-  clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2025.1.tar.gz"
-  rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2025.1.tar.gz"
+  clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2025.1.1.tar.gz"
+  rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2025.1.2.tar.gz"
   jbBackendVersion: "latest"
   dockerVersion: "27.5.1"
   dockerComposeVersion: "2.34.0-gitpod.1"
