@@ -84,7 +84,7 @@ An "Admin" section will be added to the Gitpod organization menu. This section w
 | **4.1 View Running Workspaces**                        | Done        | Cline    | [001-infra-rollout-4.1.md](pdd/001-infra-rollout-4.1.md)   |
 | - API: Fetch running workspaces                        |             |          |                                                            |
 | - UI: Display running workspaces                       |             |          |                                                            |
-| **4.2 Stop All Running Workspaces**                    |             |          | [001-infra-rollout-4.2.md](pdd/001-infra-rollout-4.2.md)   |
+| **4.2 Stop All Running Workspaces**                    | Done        | Cline    | [001-infra-rollout-4.2.md](pdd/001-infra-rollout-4.2.md)   |
 | - API: Trigger stop all workspaces                     | Done (N/A)  | Cline    | (Leverages existing StopWorkspace API)                     |
 | - Logic: Iterate and stop workspaces                   |             |          | (Frontend orchestration)                                   |
 | - UI: Button & Confirm                                 |             |          | (Integrated into RunningWorkspacesCard)                    |
