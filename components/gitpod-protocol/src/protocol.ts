@@ -307,7 +307,8 @@ export namespace EnvVar {
             .split(",")
             .map((e) => e.trim().split(":"))
             .forEach((parts) => {
-                getHost(parts) !== "" ? res.set(getHost(parts), parts[parts.length - 1]) : null;
+                const host = getHost(parts);
+                host !== "" ? res.set(host, parts[parts.length - 1]) : null;
             });
 
         return res;
