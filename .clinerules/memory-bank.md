@@ -11,10 +11,12 @@ flowchart TD
     PB[projectbrief.md] --> PC[productContext.md]
     PB --> SP[systemPatterns.md]
     PB --> TC[techContext.md]
+    PB --> CI[components/_index.md]
 
     PC --> AC[activeContext.md]
     SP --> AC
     TC --> AC
+    CI --> AC
 
     AC --> P[progress.md]
 ```
@@ -56,11 +58,18 @@ flowchart TD
    - Current status
    - Known issues
 
-### Per-component documentation (optional, decide per on per-task basis)
-- The `memory-bank/components` directory contains detailed documentation about each component in this project.
-- Read those when working on them.
-- Use list all files and directories in `memory-bank/components/` for a list of all available documentation.
-- With regards to maintaining and updating it, treat it just like any other part of the memory-bank.
+7. `components/_index.md`
+   - Comprehensive index of all components
+   - Brief descriptions of component functionality
+   - Key relationships between components
+   - Entry point for exploring component-specific documentation
+
+### Per-component Documentation
+- The `memory-bank/components/_index.md` file provides a comprehensive index of all components with brief descriptions
+- The `memory-bank/components` directory contains detailed documentation about each component
+- **Always read the components/_index.md file** at the start of every task to understand the component landscape
+- Use the index as a starting point to identify which component documentation files to read in depth
+- With regards to maintaining and updating it, treat it just like any other part of the memory-bank
 
 ### Additional Context
 Create additional files/folders within memory-bank/ when they help organize:
@@ -75,8 +84,9 @@ Create additional files/folders within memory-bank/ when they help organize:
 ### Plan Mode
 ```mermaid
 flowchart TD
-    Start[Start] --> ReadFiles[Read Memory Bank]
-    ReadFiles --> CheckFiles{Files Complete?}
+    Start[Start] --> ReadFiles[Read Core Memory Bank Files]
+    ReadFiles --> ReadIndex[Read Components Index]
+    ReadIndex --> CheckFiles{Files Complete?}
 
     CheckFiles -->|No| Plan[Create Plan]
     Plan --> Document[Document in Chat]
@@ -89,8 +99,9 @@ flowchart TD
 ### Act Mode
 ```mermaid
 flowchart TD
-    Start[Start] --> Context[Check Memory Bank]
-    Context --> Update[Update Documentation]
+    Start[Start] --> Context[Read Core Memory Bank Files]
+    Context --> ReadIndex[Read Components Index]
+    ReadIndex --> Update[Update Documentation]
     Update --> Rules[Update .clinerules/learning-journal.md if needed]
     Rules --> Execute[Execute Task]
     Execute --> Document[Document Changes]
@@ -110,17 +121,18 @@ flowchart TD
 
     subgraph Process
         P1[Review ALL Files]
-        P2[Document Current State]
-        P3[Clarify Next Steps]
-        P4[Update .clinerules/learning-journal.md]
+        P2[Review Components Index]
+        P3[Document Current State]
+        P4[Clarify Next Steps]
+        P5[Update .clinerules/learning-journal.md]
 
-        P1 --> P2 --> P3 --> P4
+        P1 --> P2 --> P3 --> P4 --> P5
     end
 
     Start --> Process
 ```
 
-Note: When triggered by **update memory bank**, I MUST review every memory bank file, even if some don't require updates. Focus particularly on activeContext.md and progress.md as they track current state.
+Note: When triggered by **update memory bank**, I MUST review every memory bank file, even if some don't require updates. Focus particularly on activeContext.md, progress.md, and components/_index.md as they track current state and component relationships.
 
 ## Memory Management
 - Be mindful of space in memory bank files
