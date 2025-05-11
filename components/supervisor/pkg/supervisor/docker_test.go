@@ -223,7 +223,7 @@ func TestInsertCredentialsIntoConfig_Parsing(t *testing.T) {
 				"reg2.com:6000": {"auth": "token2"},
 				"https://index.docker.io/v1/": {"auth": "token3"}
 			}`,
-			expectedCount: 4,
+			expectedCount: 3,
 		},
 		{
 			name:              "empty imageAuth string",
@@ -346,7 +346,7 @@ func TestInsertCredentialsIntoConfig_Parsing(t *testing.T) {
 			}
 
 			if len(expectedAuthsMap) == 0 {
-				if resultConfig.Auths != nil && len(resultConfig.Auths) != 0 {
+				if len(resultConfig.Auths) != 0 {
 					t.Errorf("Expected empty auths, but got: %v", resultConfig.Auths)
 				}
 			} else {
