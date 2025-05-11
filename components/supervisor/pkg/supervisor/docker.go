@@ -337,9 +337,7 @@ func insertCredentialsIntoConfig(imageAuth string) (int, error) {
 			Auth: token,
 		}
 	}
-
 	if len(authConfig.Auths) == 0 {
-		log.Warn("authentication: no valid credentials found after parsing all entries")
 		return 0, nil
 	}
 
