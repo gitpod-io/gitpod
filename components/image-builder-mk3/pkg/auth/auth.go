@@ -390,7 +390,7 @@ func (a AllowedAuthFor) additionalAuth(domain string) *Authentication {
 			res.Password = segs[numSegs-1]
 		}
 	} else {
-		log.WithError(err).Warn("failed to decode base64 auth string in additionalAuth")
+		log.Errorf("failed getting additional auth")
 	}
 	return res
 }
