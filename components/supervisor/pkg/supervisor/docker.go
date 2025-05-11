@@ -314,26 +314,26 @@ func insertCredentialsIntoConfig(imageAuth string) (int, error) {
 	authenticationPerHost := strings.Split(imageAuth, ",")
 	for _, hostCredentialsEntry := range authenticationPerHost {
 		parts := strings.SplitN(hostCredentialsEntry, ":", 3)
-		var registryIdentifier string
+		var host string
 		var token string
 
 		switch len(parts) {
 		case 2:
-			registryIdentifier = parts[0]
+			host = parts[0]
 			token = parts[1]
 		case 3:
-			registryIdentifier = parts[0] + ":" + parts[1]
+			host = parts[0] + ":" + parts[1]
 			token = parts[2]
 		default:
 			log.Warnf("authentication: skipping credential (parts count %d not 2 or 3): '%s'", len(parts), hostCredentialsEntry)
 			continue
 		}
-		registryKey := registryIdentifier
-		if registryIdentifier == "docker.io" || strings.HasSuffix(registryIdentifier, ".docker.io") {
-			registryKey = "https://index.docker.io/v1/"
+
+		if host == "docker.io" || strings.HasSuffix(host, ".docker.io") {
+			host = "https://index.docker.io/v1/"
 		}
 
-		authConfig.Auths[registryKey] = RegistryAuth{
+		authConfig.Auths[host] = RegistryAuth{
 			Auth: token,
 		}
 	}
