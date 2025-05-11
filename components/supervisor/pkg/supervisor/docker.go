@@ -325,7 +325,6 @@ func insertCredentialsIntoConfig(imageAuth string) (int, error) {
 			host = parts[0] + ":" + parts[1]
 			token = parts[2]
 		default:
-			log.Warnf("authentication: skipping credential (parts count %d not 2 or 3): '%s'", len(parts), hostCredentialsEntry)
 			continue
 		}
 
