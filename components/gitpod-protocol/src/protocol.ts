@@ -307,12 +307,7 @@ export namespace EnvVar {
 
         (imageAuth.value || "")
             .split(",")
-            .map((e) =>
-                e
-                    .trim()
-                    .split(":")
-                    .map((part) => part.trim()),
-            )
+            .map((e) => e.split(":").map((part) => part.trim()))
             .forEach((parts) => {
                 const parsed = parse(parts);
                 if (parsed) {
