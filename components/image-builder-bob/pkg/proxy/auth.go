@@ -44,39 +44,50 @@ type authConfig struct {
 
 type MapAuthorizer map[string]authConfig
 
-func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
+func (a MapAuthorizer) Authorize(hostHeader string) (user, pass string, err error) {
 	defer func() {
 		log.WithFields(logrus.Fields{
-			"host": host,
+			"host": hostHeader,
 			"user": user,
 		}).Info("authorizing registry access")
 	}()
 
-	// Strip any port from the host if present
-	hostSlice := strings.Split(host, ":")
-	portStrippedHost := hostSlice[0]
-	var port string
-	if len(hostSlice) > 1 {
-		port = hostSlice[1]
+	parseHostHeader := func(hostHeader string) (string, string) {
+		hostHeaderSlice := strings.Split(hostHeader, ":")
+		hostname := strings.TrimSpace(hostHeaderSlice[0])
+		var port string
+		if len(hostHeaderSlice) > 1 {
+			port = strings.TrimSpace(hostHeaderSlice[1])
+		}
+		return hostname, port
 	}
+	hostname, port := parseHostHeader(hostHeader)
+	// gpl: Could be port 80 as well, but we don't know if we are servinc http or https, we assume https
+	if port == "" {
+		port = "443"
+	}
+	host := hostname + ":" + port
 
 	explicitHostMatcher := func() (authConfig, bool) {
-		eval := host
-		if port == "443" {
-			eval = portStrippedHost
+		// 1. precise host match
+		res, ok := a[host]
+		if ok {
+			return res, ok
 		}
-		res, ok := a[eval]
+
+		// 2. make sure we not have a hostname match
+		res, ok = a[hostname]
 		return res, ok
 	}
 	ecrHostMatcher := func() (authConfig, bool) {
-		if isECRRegistry(portStrippedHost) {
+		if isECRRegistry(hostname) {
 			res, ok := a[DummyECRRegistryDomain]
 			return res, ok
 		}
 		return authConfig{}, false
 	}
 	dockerHubHostMatcher := func() (authConfig, bool) {
-		if isDockerHubRegistry(portStrippedHost) {
+		if isDockerHubRegistry(hostname) {
 			res, ok := a["docker.io"]
 			return res, ok
 		}
