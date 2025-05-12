@@ -182,7 +182,7 @@ class TestEnvVar {
         const envVars: EnvVarWithValue[] = [
             {
                 name: EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME,
-                value: "justhost,hostonly:,:credonly,:::,",
+                value: "justhost,hostonly:,:credonly,:::,:,",
             },
         ];
         const result = EnvVar.getGitpodImageAuth(envVars);
@@ -199,7 +199,7 @@ class TestEnvVar {
         ];
         const result = EnvVar.getGitpodImageAuth(envVars);
         expect(result.size).to.equal(2);
-        expect(result.get("my-registry.foo.net ")).to.equal(" Zm9vOmJhcg==");
+        expect(result.get("my-registry.foo.net")).to.equal("Zm9vOmJhcg==");
         expect(result.get("my-registry2.bar.com")).to.equal("YWJjOmRlZg==");
     }
 }
