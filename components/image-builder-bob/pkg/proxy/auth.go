@@ -53,21 +53,30 @@ func (a MapAuthorizer) Authorize(host string) (user, pass string, err error) {
 	}()
 
 	// Strip any port from the host if present
-	host = strings.Split(host, ":")[0]
+	hostSlice := strings.Split(host, ":")
+	portStrippedHost := hostSlice[0]
+	var port string
+	if len(hostSlice) > 1 {
+		port = hostSlice[1]
+	}
 
 	explicitHostMatcher := func() (authConfig, bool) {
-		res, ok := a[host]
+		eval := host
+		if port == "443" {
+			eval = portStrippedHost
+		}
+		res, ok := a[eval]
 		return res, ok
 	}
 	ecrHostMatcher := func() (authConfig, bool) {
-		if isECRRegistry(host) {
+		if isECRRegistry(portStrippedHost) {
 			res, ok := a[DummyECRRegistryDomain]
 			return res, ok
 		}
 		return authConfig{}, false
 	}
 	dockerHubHostMatcher := func() (authConfig, bool) {
-		if isDockerHubRegistry(host) {
+		if isDockerHubRegistry(portStrippedHost) {
 			res, ok := a["docker.io"]
 			return res, ok
 		}
