@@ -60,6 +60,10 @@ type OrganizationServiceClient interface {
 	GetOrganizationMaintenanceMode(ctx context.Context, in *GetOrganizationMaintenanceModeRequest, opts ...grpc.CallOption) (*GetOrganizationMaintenanceModeResponse, error)
 	// SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
 	SetOrganizationMaintenanceMode(ctx context.Context, in *SetOrganizationMaintenanceModeRequest, opts ...grpc.CallOption) (*SetOrganizationMaintenanceModeResponse, error)
+	// GetScheduledMaintenanceNotification retrieves the scheduled maintenance notification settings for an organization.
+	GetScheduledMaintenanceNotification(ctx context.Context, in *GetScheduledMaintenanceNotificationRequest, opts ...grpc.CallOption) (*GetScheduledMaintenanceNotificationResponse, error)
+	// SetScheduledMaintenanceNotification sets the scheduled maintenance notification for an organization.
+	SetScheduledMaintenanceNotification(ctx context.Context, in *SetScheduledMaintenanceNotificationRequest, opts ...grpc.CallOption) (*SetScheduledMaintenanceNotificationResponse, error)
 }
 
 type organizationServiceClient struct {
@@ -214,6 +218,24 @@ func (c *organizationServiceClient) SetOrganizationMaintenanceMode(ctx context.C
 	return out, nil
 }
 
+func (c *organizationServiceClient) GetScheduledMaintenanceNotification(ctx context.Context, in *GetScheduledMaintenanceNotificationRequest, opts ...grpc.CallOption) (*GetScheduledMaintenanceNotificationResponse, error) {
+	out := new(GetScheduledMaintenanceNotificationResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.OrganizationService/GetScheduledMaintenanceNotification", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *organizationServiceClient) SetScheduledMaintenanceNotification(ctx context.Context, in *SetScheduledMaintenanceNotificationRequest, opts ...grpc.CallOption) (*SetScheduledMaintenanceNotificationResponse, error) {
+	out := new(SetScheduledMaintenanceNotificationResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.OrganizationService/SetScheduledMaintenanceNotification", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrganizationServiceServer is the server API for OrganizationService service.
 // All implementations must embed UnimplementedOrganizationServiceServer
 // for forward compatibility
@@ -252,6 +274,10 @@ type OrganizationServiceServer interface {
 	GetOrganizationMaintenanceMode(context.Context, *GetOrganizationMaintenanceModeRequest) (*GetOrganizationMaintenanceModeResponse, error)
 	// SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
 	SetOrganizationMaintenanceMode(context.Context, *SetOrganizationMaintenanceModeRequest) (*SetOrganizationMaintenanceModeResponse, error)
+	// GetScheduledMaintenanceNotification retrieves the scheduled maintenance notification settings for an organization.
+	GetScheduledMaintenanceNotification(context.Context, *GetScheduledMaintenanceNotificationRequest) (*GetScheduledMaintenanceNotificationResponse, error)
+	// SetScheduledMaintenanceNotification sets the scheduled maintenance notification for an organization.
+	SetScheduledMaintenanceNotification(context.Context, *SetScheduledMaintenanceNotificationRequest) (*SetScheduledMaintenanceNotificationResponse, error)
 	mustEmbedUnimplementedOrganizationServiceServer()
 }
 
@@ -306,6 +332,12 @@ func (UnimplementedOrganizationServiceServer) GetOrganizationMaintenanceMode(con
 }
 func (UnimplementedOrganizationServiceServer) SetOrganizationMaintenanceMode(context.Context, *SetOrganizationMaintenanceModeRequest) (*SetOrganizationMaintenanceModeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetOrganizationMaintenanceMode not implemented")
+}
+func (UnimplementedOrganizationServiceServer) GetScheduledMaintenanceNotification(context.Context, *GetScheduledMaintenanceNotificationRequest) (*GetScheduledMaintenanceNotificationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetScheduledMaintenanceNotification not implemented")
+}
+func (UnimplementedOrganizationServiceServer) SetScheduledMaintenanceNotification(context.Context, *SetScheduledMaintenanceNotificationRequest) (*SetScheduledMaintenanceNotificationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetScheduledMaintenanceNotification not implemented")
 }
 func (UnimplementedOrganizationServiceServer) mustEmbedUnimplementedOrganizationServiceServer() {}
 
@@ -608,6 +640,42 @@ func _OrganizationService_SetOrganizationMaintenanceMode_Handler(srv interface{}
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrganizationService_GetScheduledMaintenanceNotification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetScheduledMaintenanceNotificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganizationServiceServer).GetScheduledMaintenanceNotification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.OrganizationService/GetScheduledMaintenanceNotification",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganizationServiceServer).GetScheduledMaintenanceNotification(ctx, req.(*GetScheduledMaintenanceNotificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrganizationService_SetScheduledMaintenanceNotification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetScheduledMaintenanceNotificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganizationServiceServer).SetScheduledMaintenanceNotification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.OrganizationService/SetScheduledMaintenanceNotification",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganizationServiceServer).SetScheduledMaintenanceNotification(ctx, req.(*SetScheduledMaintenanceNotificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrganizationService_ServiceDesc is the grpc.ServiceDesc for OrganizationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -678,6 +746,14 @@ var OrganizationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetOrganizationMaintenanceMode",
 			Handler:    _OrganizationService_SetOrganizationMaintenanceMode_Handler,
+		},
+		{
+			MethodName: "GetScheduledMaintenanceNotification",
+			Handler:    _OrganizationService_GetScheduledMaintenanceNotification_Handler,
+		},
+		{
+			MethodName: "SetScheduledMaintenanceNotification",
+			Handler:    _OrganizationService_SetScheduledMaintenanceNotification_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -301,4 +301,44 @@ public class OrganizationServiceClient(
     ),
   )
 
+
+  /**
+   *  GetScheduledMaintenanceNotification retrieves the scheduled maintenance notification settings
+   * for an organization.
+   */
+  override suspend
+      fun getScheduledMaintenanceNotification(request: OrganizationOuterClass.GetScheduledMaintenanceNotificationRequest,
+      headers: Headers):
+      ResponseMessage<OrganizationOuterClass.GetScheduledMaintenanceNotificationResponse> =
+      client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.OrganizationService/GetScheduledMaintenanceNotification",
+      io.gitpod.publicapi.v1.OrganizationOuterClass.GetScheduledMaintenanceNotificationRequest::class,
+      io.gitpod.publicapi.v1.OrganizationOuterClass.GetScheduledMaintenanceNotificationResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
+
+  /**
+   *  SetScheduledMaintenanceNotification sets the scheduled maintenance notification for an
+   * organization.
+   */
+  override suspend
+      fun setScheduledMaintenanceNotification(request: OrganizationOuterClass.SetScheduledMaintenanceNotificationRequest,
+      headers: Headers):
+      ResponseMessage<OrganizationOuterClass.SetScheduledMaintenanceNotificationResponse> =
+      client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.OrganizationService/SetScheduledMaintenanceNotification",
+      io.gitpod.publicapi.v1.OrganizationOuterClass.SetScheduledMaintenanceNotificationRequest::class,
+      io.gitpod.publicapi.v1.OrganizationOuterClass.SetScheduledMaintenanceNotificationResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
 }

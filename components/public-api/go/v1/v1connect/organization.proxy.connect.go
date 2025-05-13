@@ -178,3 +178,23 @@ func (s *ProxyOrganizationServiceHandler) SetOrganizationMaintenanceMode(ctx con
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyOrganizationServiceHandler) GetScheduledMaintenanceNotification(ctx context.Context, req *connect_go.Request[v1.GetScheduledMaintenanceNotificationRequest]) (*connect_go.Response[v1.GetScheduledMaintenanceNotificationResponse], error) {
+	resp, err := s.Client.GetScheduledMaintenanceNotification(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyOrganizationServiceHandler) SetScheduledMaintenanceNotification(ctx context.Context, req *connect_go.Request[v1.SetScheduledMaintenanceNotificationRequest]) (*connect_go.Response[v1.SetScheduledMaintenanceNotificationResponse], error) {
+	resp, err := s.Client.SetScheduledMaintenanceNotification(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

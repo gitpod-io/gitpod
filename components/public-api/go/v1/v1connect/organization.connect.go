@@ -65,6 +65,10 @@ type OrganizationServiceClient interface {
 	GetOrganizationMaintenanceMode(context.Context, *connect_go.Request[v1.GetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.GetOrganizationMaintenanceModeResponse], error)
 	// SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
 	SetOrganizationMaintenanceMode(context.Context, *connect_go.Request[v1.SetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.SetOrganizationMaintenanceModeResponse], error)
+	// GetScheduledMaintenanceNotification retrieves the scheduled maintenance notification settings for an organization.
+	GetScheduledMaintenanceNotification(context.Context, *connect_go.Request[v1.GetScheduledMaintenanceNotificationRequest]) (*connect_go.Response[v1.GetScheduledMaintenanceNotificationResponse], error)
+	// SetScheduledMaintenanceNotification sets the scheduled maintenance notification for an organization.
+	SetScheduledMaintenanceNotification(context.Context, *connect_go.Request[v1.SetScheduledMaintenanceNotificationRequest]) (*connect_go.Response[v1.SetScheduledMaintenanceNotificationResponse], error)
 }
 
 // NewOrganizationServiceClient constructs a client for the gitpod.v1.OrganizationService service.
@@ -157,27 +161,39 @@ func NewOrganizationServiceClient(httpClient connect_go.HTTPClient, baseURL stri
 			baseURL+"/gitpod.v1.OrganizationService/SetOrganizationMaintenanceMode",
 			opts...,
 		),
+		getScheduledMaintenanceNotification: connect_go.NewClient[v1.GetScheduledMaintenanceNotificationRequest, v1.GetScheduledMaintenanceNotificationResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.OrganizationService/GetScheduledMaintenanceNotification",
+			opts...,
+		),
+		setScheduledMaintenanceNotification: connect_go.NewClient[v1.SetScheduledMaintenanceNotificationRequest, v1.SetScheduledMaintenanceNotificationResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.OrganizationService/SetScheduledMaintenanceNotification",
+			opts...,
+		),
 	}
 }
 
 // organizationServiceClient implements OrganizationServiceClient.
 type organizationServiceClient struct {
-	createOrganization               *connect_go.Client[v1.CreateOrganizationRequest, v1.CreateOrganizationResponse]
-	getOrganization                  *connect_go.Client[v1.GetOrganizationRequest, v1.GetOrganizationResponse]
-	updateOrganization               *connect_go.Client[v1.UpdateOrganizationRequest, v1.UpdateOrganizationResponse]
-	listOrganizations                *connect_go.Client[v1.ListOrganizationsRequest, v1.ListOrganizationsResponse]
-	deleteOrganization               *connect_go.Client[v1.DeleteOrganizationRequest, v1.DeleteOrganizationResponse]
-	getOrganizationInvitation        *connect_go.Client[v1.GetOrganizationInvitationRequest, v1.GetOrganizationInvitationResponse]
-	joinOrganization                 *connect_go.Client[v1.JoinOrganizationRequest, v1.JoinOrganizationResponse]
-	resetOrganizationInvitation      *connect_go.Client[v1.ResetOrganizationInvitationRequest, v1.ResetOrganizationInvitationResponse]
-	listOrganizationMembers          *connect_go.Client[v1.ListOrganizationMembersRequest, v1.ListOrganizationMembersResponse]
-	updateOrganizationMember         *connect_go.Client[v1.UpdateOrganizationMemberRequest, v1.UpdateOrganizationMemberResponse]
-	deleteOrganizationMember         *connect_go.Client[v1.DeleteOrganizationMemberRequest, v1.DeleteOrganizationMemberResponse]
-	getOrganizationSettings          *connect_go.Client[v1.GetOrganizationSettingsRequest, v1.GetOrganizationSettingsResponse]
-	updateOrganizationSettings       *connect_go.Client[v1.UpdateOrganizationSettingsRequest, v1.UpdateOrganizationSettingsResponse]
-	listOrganizationWorkspaceClasses *connect_go.Client[v1.ListOrganizationWorkspaceClassesRequest, v1.ListOrganizationWorkspaceClassesResponse]
-	getOrganizationMaintenanceMode   *connect_go.Client[v1.GetOrganizationMaintenanceModeRequest, v1.GetOrganizationMaintenanceModeResponse]
-	setOrganizationMaintenanceMode   *connect_go.Client[v1.SetOrganizationMaintenanceModeRequest, v1.SetOrganizationMaintenanceModeResponse]
+	createOrganization                  *connect_go.Client[v1.CreateOrganizationRequest, v1.CreateOrganizationResponse]
+	getOrganization                     *connect_go.Client[v1.GetOrganizationRequest, v1.GetOrganizationResponse]
+	updateOrganization                  *connect_go.Client[v1.UpdateOrganizationRequest, v1.UpdateOrganizationResponse]
+	listOrganizations                   *connect_go.Client[v1.ListOrganizationsRequest, v1.ListOrganizationsResponse]
+	deleteOrganization                  *connect_go.Client[v1.DeleteOrganizationRequest, v1.DeleteOrganizationResponse]
+	getOrganizationInvitation           *connect_go.Client[v1.GetOrganizationInvitationRequest, v1.GetOrganizationInvitationResponse]
+	joinOrganization                    *connect_go.Client[v1.JoinOrganizationRequest, v1.JoinOrganizationResponse]
+	resetOrganizationInvitation         *connect_go.Client[v1.ResetOrganizationInvitationRequest, v1.ResetOrganizationInvitationResponse]
+	listOrganizationMembers             *connect_go.Client[v1.ListOrganizationMembersRequest, v1.ListOrganizationMembersResponse]
+	updateOrganizationMember            *connect_go.Client[v1.UpdateOrganizationMemberRequest, v1.UpdateOrganizationMemberResponse]
+	deleteOrganizationMember            *connect_go.Client[v1.DeleteOrganizationMemberRequest, v1.DeleteOrganizationMemberResponse]
+	getOrganizationSettings             *connect_go.Client[v1.GetOrganizationSettingsRequest, v1.GetOrganizationSettingsResponse]
+	updateOrganizationSettings          *connect_go.Client[v1.UpdateOrganizationSettingsRequest, v1.UpdateOrganizationSettingsResponse]
+	listOrganizationWorkspaceClasses    *connect_go.Client[v1.ListOrganizationWorkspaceClassesRequest, v1.ListOrganizationWorkspaceClassesResponse]
+	getOrganizationMaintenanceMode      *connect_go.Client[v1.GetOrganizationMaintenanceModeRequest, v1.GetOrganizationMaintenanceModeResponse]
+	setOrganizationMaintenanceMode      *connect_go.Client[v1.SetOrganizationMaintenanceModeRequest, v1.SetOrganizationMaintenanceModeResponse]
+	getScheduledMaintenanceNotification *connect_go.Client[v1.GetScheduledMaintenanceNotificationRequest, v1.GetScheduledMaintenanceNotificationResponse]
+	setScheduledMaintenanceNotification *connect_go.Client[v1.SetScheduledMaintenanceNotificationRequest, v1.SetScheduledMaintenanceNotificationResponse]
 }
 
 // CreateOrganization calls gitpod.v1.OrganizationService.CreateOrganization.
@@ -263,6 +279,18 @@ func (c *organizationServiceClient) SetOrganizationMaintenanceMode(ctx context.C
 	return c.setOrganizationMaintenanceMode.CallUnary(ctx, req)
 }
 
+// GetScheduledMaintenanceNotification calls
+// gitpod.v1.OrganizationService.GetScheduledMaintenanceNotification.
+func (c *organizationServiceClient) GetScheduledMaintenanceNotification(ctx context.Context, req *connect_go.Request[v1.GetScheduledMaintenanceNotificationRequest]) (*connect_go.Response[v1.GetScheduledMaintenanceNotificationResponse], error) {
+	return c.getScheduledMaintenanceNotification.CallUnary(ctx, req)
+}
+
+// SetScheduledMaintenanceNotification calls
+// gitpod.v1.OrganizationService.SetScheduledMaintenanceNotification.
+func (c *organizationServiceClient) SetScheduledMaintenanceNotification(ctx context.Context, req *connect_go.Request[v1.SetScheduledMaintenanceNotificationRequest]) (*connect_go.Response[v1.SetScheduledMaintenanceNotificationResponse], error) {
+	return c.setScheduledMaintenanceNotification.CallUnary(ctx, req)
+}
+
 // OrganizationServiceHandler is an implementation of the gitpod.v1.OrganizationService service.
 type OrganizationServiceHandler interface {
 	// CreateOrganization creates a new Organization.
@@ -299,6 +327,10 @@ type OrganizationServiceHandler interface {
 	GetOrganizationMaintenanceMode(context.Context, *connect_go.Request[v1.GetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.GetOrganizationMaintenanceModeResponse], error)
 	// SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
 	SetOrganizationMaintenanceMode(context.Context, *connect_go.Request[v1.SetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.SetOrganizationMaintenanceModeResponse], error)
+	// GetScheduledMaintenanceNotification retrieves the scheduled maintenance notification settings for an organization.
+	GetScheduledMaintenanceNotification(context.Context, *connect_go.Request[v1.GetScheduledMaintenanceNotificationRequest]) (*connect_go.Response[v1.GetScheduledMaintenanceNotificationResponse], error)
+	// SetScheduledMaintenanceNotification sets the scheduled maintenance notification for an organization.
+	SetScheduledMaintenanceNotification(context.Context, *connect_go.Request[v1.SetScheduledMaintenanceNotificationRequest]) (*connect_go.Response[v1.SetScheduledMaintenanceNotificationResponse], error)
 }
 
 // NewOrganizationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -388,6 +420,16 @@ func NewOrganizationServiceHandler(svc OrganizationServiceHandler, opts ...conne
 		svc.SetOrganizationMaintenanceMode,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.OrganizationService/GetScheduledMaintenanceNotification", connect_go.NewUnaryHandler(
+		"/gitpod.v1.OrganizationService/GetScheduledMaintenanceNotification",
+		svc.GetScheduledMaintenanceNotification,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.OrganizationService/SetScheduledMaintenanceNotification", connect_go.NewUnaryHandler(
+		"/gitpod.v1.OrganizationService/SetScheduledMaintenanceNotification",
+		svc.SetScheduledMaintenanceNotification,
+		opts...,
+	))
 	return "/gitpod.v1.OrganizationService/", mux
 }
 
@@ -456,4 +498,12 @@ func (UnimplementedOrganizationServiceHandler) GetOrganizationMaintenanceMode(co
 
 func (UnimplementedOrganizationServiceHandler) SetOrganizationMaintenanceMode(context.Context, *connect_go.Request[v1.SetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.SetOrganizationMaintenanceModeResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.OrganizationService.SetOrganizationMaintenanceMode is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) GetScheduledMaintenanceNotification(context.Context, *connect_go.Request[v1.GetScheduledMaintenanceNotificationRequest]) (*connect_go.Response[v1.GetScheduledMaintenanceNotificationResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.OrganizationService.GetScheduledMaintenanceNotification is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) SetScheduledMaintenanceNotification(context.Context, *connect_go.Request[v1.SetScheduledMaintenanceNotificationRequest]) (*connect_go.Response[v1.SetScheduledMaintenanceNotificationResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.OrganizationService.SetScheduledMaintenanceNotification is not implemented"))
 }

@@ -135,4 +135,22 @@ public interface OrganizationServiceClientInterface {
       fun setOrganizationMaintenanceMode(request: OrganizationOuterClass.SetOrganizationMaintenanceModeRequest,
       headers: Headers = emptyMap()):
       ResponseMessage<OrganizationOuterClass.SetOrganizationMaintenanceModeResponse>
+
+  /**
+   *  GetScheduledMaintenanceNotification retrieves the scheduled maintenance notification settings
+   * for an organization.
+   */
+  public suspend
+      fun getScheduledMaintenanceNotification(request: OrganizationOuterClass.GetScheduledMaintenanceNotificationRequest,
+      headers: Headers = emptyMap()):
+      ResponseMessage<OrganizationOuterClass.GetScheduledMaintenanceNotificationResponse>
+
+  /**
+   *  SetScheduledMaintenanceNotification sets the scheduled maintenance notification for an
+   * organization.
+   */
+  public suspend
+      fun setScheduledMaintenanceNotification(request: OrganizationOuterClass.SetScheduledMaintenanceNotificationRequest,
+      headers: Headers = emptyMap()):
+      ResponseMessage<OrganizationOuterClass.SetScheduledMaintenanceNotificationResponse>
 }
