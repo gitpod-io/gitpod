@@ -28,7 +28,7 @@ This document details the technical design for the API and backend components of
           "message": string | undefined
         }
         ```
-    *   **Default Value (for the column in DB):** `{"enabled": false, "message": null}`
+    *   **Default Value (for the column in DB):** `{"enabled": false, "message": undefined}`
     *   **Nullable (column itself):** `false` (the column should always exist, its content defines state).
 *   **Migration:** A TypeORM migration script will be generated and applied to add this column with its default value.
 
@@ -53,14 +53,14 @@ This document details the technical design for the API and backend components of
     message GetScheduledMaintenanceNotificationResponse {
       bool is_enabled = 1;
       string message = 2; // The custom message stored, if any. Empty or not present if no custom message is set.
-                          // The frontend will use its own default if this is empty/null and is_enabled is true.
+                          // The frontend will use its own default if this is empty/undefined and is_enabled is true.
     }
 
     message SetScheduledMaintenanceNotificationRequest {
       string organization_id = 1;
       bool is_enabled = 2;
       optional string custom_message = 3; // User-provided custom message.
-                                          // If not provided or empty, the backend stores null/empty for the message.
+                                          // If not provided or empty, the backend stores undefined/empty for the message.
     }
 
     message SetScheduledMaintenanceNotificationResponse {
@@ -75,9 +75,9 @@ This document details the technical design for the API and backend components of
 *   **`getScheduledMaintenanceNotification` Implementation:**
     *   Input: `GetScheduledMaintenanceNotificationRequest`.
     *   Calls `this.orgService.getScheduledMaintenanceNotificationSettings(ctxUserId(), req.organizationId)`.
-    *   Maps the internal result (e.g., `{ enabled: boolean, message: string | null }`) to `GetScheduledMaintenanceNotificationResponse`.
+    *   Maps the internal result (e.g., `{ enabled: boolean, message: string | undefined }`) to `GetScheduledMaintenanceNotificationResponse`.
         *   `response.is_enabled = internalResult.enabled;`
-        *   `response.message = internalResult.message || "";` (Return empty string if message is null).
+        *   `response.message = internalResult.message || "";` (Return empty string if message is undefined).
 *   **`setScheduledMaintenanceNotification` Implementation:**
     *   Input: `SetScheduledMaintenanceNotificationRequest`.
     *   Calls `this.orgService.setScheduledMaintenanceNotificationSettings(ctxUserId(), req.organizationId, req.isEnabled, req.customMessage)`.
@@ -100,11 +100,11 @@ This document details the technical design for the API and backend components of
         *   Fetch `DBTeam` by `orgId` using `this.teamDB.findTeamById(orgId)`.
         *   If not found, throw `ApplicationError(ErrorCodes.NOT_FOUND)`.
         *   Let `dbNotificationConfig = team.maintenanceNotification;`
-        *   If `dbNotificationConfig` is null or parsing fails (though TypeORM usually handles JSON column parsing):
+        *   If `dbNotificationConfig` is undefined or parsing fails (though TypeORM usually handles JSON column parsing):
             *   Return `{ enabled: false, message: undefined }`.
         *   Else (valid JSON from DB):
-            *   Return `{ enabled: dbNotificationConfig.enabled, message: dbNotificationConfig.message === null ? undefined : dbNotificationConfig.message }`.
-*   **`setScheduledMaintenanceNotificationSettings(userId: string, orgId: string, isEnabled: boolean, customMessage?: string | null): Promise<MaintenanceNotificationSettings>` method:**
+            *   Return `{ enabled: dbNotificationConfig.enabled, message: dbNotificationConfig.message }`.
+*   **`setScheduledMaintenanceNotificationSettings(userId: string, orgId: string, isEnabled: boolean, customMessage?: string | undefined): Promise<MaintenanceNotificationSettings>` method:**
     *   Authorization: `await this.auth.checkPermissionOnOrganization(userId, "maintenance", orgId);`.
     *   Logic:
         *   Fetch `DBTeam`. If not found, throw `ApplicationError(ErrorCodes.NOT_FOUND)`.
@@ -115,11 +115,11 @@ This document details the technical design for the API and backend components of
               message: (customMessage && customMessage.trim() !== "") ? customMessage.trim() : undefined,
             };
             ```
-        *   Prepare the object to be stored in the DB (JSON will store `null` for `undefined` message):
+        *   Prepare the object to be stored in the DB:
             ```typescript
             const notificationConfigForDb = {
               enabled: newInternalNotificationConfig.enabled,
-              message: newInternalNotificationConfig.message === undefined ? null : newInternalNotificationConfig.message,
+              message: newInternalNotificationConfig.message,
             };
             ```
         *   Prepare update payload for `this.teamDB.updateTeam(orgId, updatePayload)`:
@@ -148,6 +148,5 @@ This document details the technical design for the API and backend components of
 *   If more detailed `DbAuditLog` entries are required (e.g., logging the actual message content changes), they can be added within the `setScheduledMaintenanceNotificationSettings` method in `OrganizationService`.
 
 ## 5. Open Questions / Considerations (Backend Specific)
-*   Ensuring the default value for the `maintenanceNotification` JSON column (`{"enabled": false, "message": null}`) is correctly applied by the migration and handled if the column is ever unexpectedly null.
 *   Error handling during JSON parsing from the DB (though TypeORM typically handles this well for JSON columns).
-*   The `message` field in `GetScheduledMaintenanceNotificationResponse` and `SetScheduledMaintenanceNotificationResponse` will be an empty string if no custom message is set (i.e., `null` in the DB). The frontend will be responsible for interpreting this as "use frontend default".
+*   The `message` field in `GetScheduledMaintenanceNotificationResponse` and `SetScheduledMaintenanceNotificationResponse` will be an empty string if no custom message is set. The frontend will be responsible for interpreting this as "use frontend default".
