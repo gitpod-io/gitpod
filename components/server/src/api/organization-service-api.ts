@@ -22,6 +22,8 @@ import {
     GetOrganizationResponse,
     GetOrganizationSettingsRequest,
     GetOrganizationSettingsResponse,
+    GetScheduledMaintenanceNotificationRequest,
+    GetScheduledMaintenanceNotificationResponse,
     JoinOrganizationRequest,
     JoinOrganizationResponse,
     ListOrganizationMembersRequest,
@@ -35,6 +37,8 @@ import {
     ResetOrganizationInvitationResponse,
     SetOrganizationMaintenanceModeRequest,
     SetOrganizationMaintenanceModeResponse,
+    SetScheduledMaintenanceNotificationRequest,
+    SetScheduledMaintenanceNotificationResponse,
     UpdateOrganizationMemberRequest,
     UpdateOrganizationMemberResponse,
     UpdateOrganizationRequest,
@@ -343,6 +347,45 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         const enabled = await this.orgService.setMaintenanceMode(ctxUserId(), req.organizationId, req.enabled);
         return new SetOrganizationMaintenanceModeResponse({
             enabled,
+        });
+    }
+
+    async getScheduledMaintenanceNotification(
+        req: GetScheduledMaintenanceNotificationRequest,
+        _: HandlerContext,
+    ): Promise<GetScheduledMaintenanceNotificationResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+
+        const settings = await this.orgService.getScheduledMaintenanceNotificationSettings(
+            ctxUserId(),
+            req.organizationId,
+        );
+        return new GetScheduledMaintenanceNotificationResponse({
+            isEnabled: settings.enabled,
+            message: settings.message,
+        });
+    }
+
+    async setScheduledMaintenanceNotification(
+        req: SetScheduledMaintenanceNotificationRequest,
+        _: HandlerContext,
+    ): Promise<SetScheduledMaintenanceNotificationResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+
+        const settings = await this.orgService.setScheduledMaintenanceNotificationSettings(
+            ctxUserId(),
+            req.organizationId,
+            req.isEnabled,
+            req.customMessage,
+        );
+
+        return new SetScheduledMaintenanceNotificationResponse({
+            isEnabled: settings.enabled,
+            message: settings.message,
         });
     }
 }
