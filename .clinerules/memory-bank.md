@@ -11,12 +11,10 @@ flowchart TD
     PB[projectbrief.md] --> PC[productContext.md]
     PB --> SP[systemPatterns.md]
     PB --> TC[techContext.md]
-    PB --> CI[components.md]
 
     PC --> AC[activeContext.md]
     SP --> AC
     TC --> AC
-    CI --> AC
 
     AC --> P[progress.md]
 ```
@@ -62,13 +60,6 @@ flowchart TD
    - Known issues
    - Evolution of project decisions
 
-7. `components.md`
-   - **Master index** for the per-component documentation in the `memory-bank/components/` directory
-   - Provides **keywords** for each component to facilitate searching for relevant detailed documentation
-   - Lists key components with direct links to their individual markdown files
-   - Serves as the primary entry point for discovering and navigating to **per-component documentation files**.
-   - **Instruction:** Use this index to search for keywords to identify specific component documentation files to read in depth.
-
 ### Additional Context
 Create additional files/folders within memory-bank/ when they help organize:
 - Complex feature documentation
@@ -79,9 +70,8 @@ Create additional files/folders within memory-bank/ when they help organize:
 
 #### Per-component Documentation
 - The `memory-bank/components/` directory houses individual Markdown files containing detailed documentation for each component
-- The main `memory-bank/components.md` file acts as a comprehensive **index** to these per-component files
-  - It includes keywords and direct links, and you **MUST use this index to search for keywords to identify the specific component documentation files to read in depth**
-- These individual component documents, as well as the main `components.md` index, should be updated whenever necessary
+- **Usage: search the documentation using the `find` CLI tool to identify component documentation files to read in depth**
+- Update the individual component documents whenever necessary
 
 ## Core Workflows
 
@@ -95,7 +85,8 @@ flowchart TD
     Plan --> Document[Document in Chat]
 
     CheckFiles -->|Yes| Verify[Verify Context]
-    Verify --> Strategy[Develop Strategy]
+    Verify --> SearchAndReadComponentDocumentation[Search relevant docs in memory-bank/components and read those docs]
+    SearchAndReadComponentDocumentation --> Strategy[Develop Strategy]
     Strategy --> Present[Present Approach]
 ```
 
@@ -103,7 +94,8 @@ flowchart TD
 ```mermaid
 flowchart TD
     Start[Start] --> Context[Check Memory Bank]
-    Context --> Update[Update Documentation]
+    Context --> SearchAndReadComponentDocumentation[Search relevant docs in memory-bank/components and read those docs]
+    SearchAndReadComponentDocumentation --> Update[Update Documentation]
     Update --> Execute[Execute Task]
     Execute --> Document[Document Changes]
 ```
