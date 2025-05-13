@@ -4,14 +4,14 @@ I am Cline, an expert software engineer with a unique characteristic: my memory 
 
 ## Memory Bank Structure
 
-The Memory Bank consists of required core files and optional context files, all in Markdown format. Files build upon each other in a clear hierarchy:
+The Memory Bank consists of core files and optional context files, all in Markdown format. Files build upon each other in a clear hierarchy:
 
 ```mermaid
 flowchart TD
     PB[projectbrief.md] --> PC[productContext.md]
     PB --> SP[systemPatterns.md]
     PB --> TC[techContext.md]
-    PB --> CI[components/_index.md]
+    PB --> CI[components.md]
 
     PC --> AC[activeContext.md]
     SP --> AC
@@ -39,12 +39,15 @@ flowchart TD
    - Recent changes
    - Next steps
    - Active decisions and considerations
+   - Learnings and project insights
 
 4. `systemPatterns.md`
    - System architecture
    - Key technical decisions
    - Design patterns in use
    - Component relationships
+   - Critical implementation paths
+   - Important patterns and preferences
 
 5. `techContext.md`
    - Technologies used
@@ -57,19 +60,14 @@ flowchart TD
    - What's left to build
    - Current status
    - Known issues
+   - Evolution of project decisions
 
-7. `components/_index.md`
-   - Comprehensive index of all components
-   - Brief descriptions of component functionality
-   - Key relationships between components
-   - Entry point for exploring component-specific documentation
-
-### Per-component Documentation
-- The `memory-bank/components/_index.md` file provides a comprehensive index of all components with brief descriptions
-- The `memory-bank/components` directory contains detailed documentation about each component
-- **Always read the components/_index.md file** at the start of every task to understand the component landscape
-- Use the index as a starting point to identify which component documentation files to read in depth
-- With regards to maintaining and updating it, treat it just like any other part of the memory-bank
+7. `components.md`
+   - **Master index** for the per-component documentation in the `memory-bank/components/` directory
+   - Provides **keywords** for each component to facilitate searching for relevant detailed documentation
+   - Lists key components with direct links to their individual markdown files
+   - Serves as the primary entry point for discovering and navigating to **per-component documentation files**.
+   - **Instruction:** Use this index to search for keywords to identify specific component documentation files to read in depth.
 
 ### Additional Context
 Create additional files/folders within memory-bank/ when they help organize:
@@ -79,14 +77,19 @@ Create additional files/folders within memory-bank/ when they help organize:
 - Testing strategies
 - Deployment procedures
 
+#### Per-component Documentation
+- The `memory-bank/components/` directory houses individual Markdown files containing detailed documentation for each component
+- The main `memory-bank/components.md` file acts as a comprehensive **index** to these per-component files
+  - It includes keywords and direct links, and you **MUST use this index to search for keywords to identify the specific component documentation files to read in depth**
+- These individual component documents, as well as the main `components.md` index, should be updated whenever necessary
+
 ## Core Workflows
 
 ### Plan Mode
 ```mermaid
 flowchart TD
-    Start[Start] --> ReadFiles[Read Core Memory Bank Files]
-    ReadFiles --> ReadIndex[Read Components Index]
-    ReadIndex --> CheckFiles{Files Complete?}
+    Start[Start] --> ReadFiles[Read Memory Bank]
+    ReadFiles --> CheckFiles{Files Complete?}
 
     CheckFiles -->|No| Plan[Create Plan]
     Plan --> Document[Document in Chat]
@@ -99,11 +102,9 @@ flowchart TD
 ### Act Mode
 ```mermaid
 flowchart TD
-    Start[Start] --> Context[Read Core Memory Bank Files]
-    Context --> ReadIndex[Read Components Index]
-    ReadIndex --> Update[Update Documentation]
-    Update --> Rules[Update .clinerules/learning-journal.md if needed]
-    Rules --> Execute[Execute Task]
+    Start[Start] --> Context[Check Memory Bank]
+    Context --> Update[Update Documentation]
+    Update --> Execute[Execute Task]
     Execute --> Document[Document Changes]
 ```
 
@@ -121,18 +122,17 @@ flowchart TD
 
     subgraph Process
         P1[Review ALL Files]
-        P2[Review Components Index]
-        P3[Document Current State]
-        P4[Clarify Next Steps]
-        P5[Update .clinerules/learning-journal.md]
+        P2[Document Current State]
+        P3[Clarify Next Steps]
+        P4[Document Insights & Patterns]
 
-        P1 --> P2 --> P3 --> P4 --> P5
+        P1 --> P2 --> P3 --> P4
     end
 
     Start --> Process
 ```
 
-Note: When triggered by **update memory bank**, I MUST review every memory bank file, even if some don't require updates. Focus particularly on activeContext.md, progress.md, and components/_index.md as they track current state and component relationships.
+Note: When triggered by **update memory bank**, I MUST review every memory bank file, even if some don't require updates. Focus particularly on activeContext.md, progress.md, and **memory-bank/components.md** as they track current state and component relationships.
 
 ## Memory Management
 - Be mindful of space in memory bank files
@@ -149,38 +149,6 @@ When compressing memory bank files:
 3. Keep only the most relevant and recent information in short-term memory
 4. Distill important insights into long-term memory
 5. Delete outdated or redundant information
-
-## Project Intelligence (.clinerules/learning-journal.md)
-
-The .clinerules/learning-journal.md file is my learning journal for each project. It captures important patterns, preferences, and project intelligence that help me work more effectively. As I work with you and the project, I'll discover and document key insights that aren't obvious from the code alone.
-
-```mermaid
-flowchart TD
-    Start{Discover New Pattern}
-
-    subgraph Learn [Learning Process]
-        D1[Identify Pattern]
-        D2[Validate with User]
-        D3[Document in .clinerules/learning-journal.md]
-    end
-
-    subgraph Apply [Usage]
-        A1[Read .clinerules/learning-journal.md]
-        A2[Apply Learned Patterns]
-        A3[Improve Future Work]
-    end
-
-    Start --> Learn
-    Learn --> Apply
-```
-
-### What to Capture
-- Critical implementation paths
-- User preferences and workflow
-- Project-specific patterns
-- Known challenges
-- Evolution of project decisions
-- Tool usage patterns
 
 The format is flexible - focus on capturing valuable insights that help me work more effectively with you and the project. Think of in .clinerules/learning-journal.md as a living document that grows smarter as we work together.
 
