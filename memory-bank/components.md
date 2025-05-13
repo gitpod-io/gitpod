@@ -16,6 +16,7 @@ This file serves as index for the per-component documentation in individual md f
 - [ide-service-api](components/ide-service-api.md)
 - [ide-metrics-api](components/ide-metrics-api.md)
 - [ws-manager-bridge-api](components/ws-manager-bridge-api.md)
+- [public-api](components/public-api.md)
 - [usage-api](components/usage-api.md)
 - [local-app-api](components/local-app-api.md)
 - [dashboard](components/dashboard.md)
