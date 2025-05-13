@@ -50,6 +50,7 @@ The Gitpod Protocol defines numerous core data structures, including:
 - `User`: User account information
 - `Identity`: Authentication provider identity
 - `Token`: Authentication tokens
+- `Organization` (defined in `src/teams-projects-protocol.ts`): Represents a team/organization, including its settings
 - `GitpodToken`: API tokens
 - `AuthProviderInfo`: Authentication provider metadata
 - `AuthProviderEntry`: Authentication provider configuration

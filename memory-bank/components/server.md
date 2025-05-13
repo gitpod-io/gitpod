@@ -40,6 +40,7 @@ The server is designed as a modular application using dependency injection (Inve
 - `src/auth/`: Authentication and authorization
 - `src/workspace/`: Workspace management
 - `src/user/`: User management
+- `src/orgs/`: Organization management
 - `src/prebuilds/`: Prebuild functionality
 - `src/billing/`: Billing and subscription management
 - `src/github/`, `src/gitlab/`, `src/bitbucket/`: SCM integrations
@@ -79,8 +80,9 @@ The Server is configured via environment variables and configuration files, incl
 The Server exposes multiple API endpoints:
 
 1. **User API**: User management, authentication, and preferences
-2. **Workspace API**: Workspace creation, management, and access
-3. **SCM Integration APIs**: GitHub, GitLab, Bitbucket webhooks and OAuth
+2. **Organization API**: Handles organization creation, settings, member management, and administrative functions like maintenance mode.
+3. **Workspace API**: Workspace creation, management, and access
+4. **SCM Integration APIs**: GitHub, GitLab, Bitbucket webhooks and OAuth
 4. **Billing API**: Subscription and payment management
 5. **WebSocket API**: Real-time communication with clients
 6. **Health and Metrics API**: System health and monitoring
