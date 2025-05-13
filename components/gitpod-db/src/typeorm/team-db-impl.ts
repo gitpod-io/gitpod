@@ -156,8 +156,8 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
 
     public async updateTeam(teamId: string, team: Pick<Team, "name" | "maintenanceMode">): Promise<Team> {
         const name = team.name && team.name.trim();
-        const maintenanceMode = team.maintenanceMode;
-        if (!name && !maintenanceMode) {
+        const maintenanceModeSet = team.maintenanceMode !== undefined;
+        if (!name && !maintenanceModeSet) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "No update provided");
         }
 
@@ -183,7 +183,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             }
 
             // Update maintenance mode if provided
-            if (maintenanceMode) {
+            if (maintenanceModeSet) {
                 existingTeam.maintenanceMode = team.maintenanceMode;
             }
 
