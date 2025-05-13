@@ -94,13 +94,6 @@ This script performs the following actions:
 - Generates code using buf based on the configuration in `buf.gen.yaml`
 - Updates license headers
 
-### Implementation Details
-The `generate.sh` script uses functions from the shared script at `scripts/protoc-generator.sh`:
-
-- `install_dependencies`: Installs required protoc plugins
-- `protoc_buf_generate`: Generates code using buf based on the configuration in `buf.gen.yaml`
-- `update_license`: Updates license headers in generated files
-
 The `buf.gen.yaml` file configures the code generation:
 - Generates Go code with appropriate module paths
 - Generates JavaScript and TypeScript code with gRPC support

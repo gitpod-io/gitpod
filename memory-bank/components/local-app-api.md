@@ -74,13 +74,6 @@ This script performs the following actions:
 - Generates Go code using `protoc-gen-go` and `protoc-gen-go-grpc`
 - Updates license headers
 
-### Implementation Details
-The `generate.sh` script uses functions from the shared script at `scripts/protoc-generator.sh` and defines some custom functions:
-
-- `install_dependencies`: Installs required protoc plugins
-- `local_go_protoc`: Generates Go code with specific include paths for third-party dependencies
-- `update_license`: Updates license headers in generated files
-
 The Local App API has a dependency on the Supervisor API for tunnel visibility definitions, which is included in the protoc generation process.
 
 ### Building After Code Generation
