@@ -6,7 +6,7 @@
 
 import { suite, test } from "@testdeck/mocha";
 import * as chai from "chai";
-import { SSHPublicKeyValue } from ".";
+import { SSHPublicKeyValue, EnvVar, EnvVarWithValue } from ".";
 
 const expect = chai.expect;
 
@@ -94,4 +94,120 @@ class TestSSHPublicKeyValue {
         ).to.throw("Key is invalid");
     }
 }
-module.exports = new TestSSHPublicKeyValue(); // Only to circumvent no usage warning :-/
+
+@suite
+class TestEnvVar {
+    @test
+    public testGetGitpodImageAuth_empty() {
+        const result = EnvVar.getGitpodImageAuth([]);
+        expect(result.size).to.equal(0);
+    }
+
+    @test
+    public testGetGitpodImageAuth_noRelevantVar() {
+        const envVars: EnvVarWithValue[] = [{ name: "OTHER_VAR", value: "some_value" }];
+        const result = EnvVar.getGitpodImageAuth(envVars);
+        expect(result.size).to.equal(0);
+    }
+
+    @test
+    public testGetGitpodImageAuth_singleEntryNoPort() {
+        const envVars: EnvVarWithValue[] = [
+            {
+                name: EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME,
+                value: "my-registry.foo.net:Zm9vOmJhcg==",
+            },
+        ];
+        const result = EnvVar.getGitpodImageAuth(envVars);
+        expect(result.size).to.equal(1);
+        expect(result.get("my-registry.foo.net")).to.equal("Zm9vOmJhcg==");
+    }
+
+    @test
+    public testGetGitpodImageAuth_singleEntryWithPort() {
+        const envVars: EnvVarWithValue[] = [
+            {
+                name: EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME,
+                value: "my-registry.foo.net:5000:Zm9vOmJhcg==",
+            },
+        ];
+        const result = EnvVar.getGitpodImageAuth(envVars);
+        expect(result.size).to.equal(1);
+        expect(result.get("my-registry.foo.net:5000")).to.equal("Zm9vOmJhcg==");
+    }
+
+    @test
+    public testGetGitpodImageAuth_multipleEntries() {
+        const envVars: EnvVarWithValue[] = [
+            {
+                name: EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME,
+                value: "my-registry.foo.net:Zm9vOmJhcg==,my-registry2.bar.com:YWJjOmRlZg==",
+            },
+        ];
+        const result = EnvVar.getGitpodImageAuth(envVars);
+        expect(result.size).to.equal(2);
+        expect(result.get("my-registry.foo.net")).to.equal("Zm9vOmJhcg==");
+        expect(result.get("my-registry2.bar.com")).to.equal("YWJjOmRlZg==");
+    }
+
+    @test
+    public testGetGitpodImageAuth_multipleEntriesWithPortAndMalformed() {
+        const envVars: EnvVarWithValue[] = [
+            {
+                name: EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME,
+                value: "my-registry.foo.net:5000:Zm9vOmJhcg==,my-registry2.bar.com:YWJjOmRlZg==,invalidEntry,another.host:anothercred",
+            },
+        ];
+        const result = EnvVar.getGitpodImageAuth(envVars);
+        expect(result.size).to.equal(3);
+        expect(result.get("my-registry2.bar.com")).to.equal("YWJjOmRlZg==");
+        expect(result.get("another.host")).to.equal("anothercred");
+        expect(result.get("my-registry.foo.net:5000")).to.equal("Zm9vOmJhcg==");
+    }
+
+    @test
+    public testGetGitpodImageAuth_emptyValue() {
+        const envVars: EnvVarWithValue[] = [
+            {
+                name: EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME,
+                value: "",
+            },
+        ];
+        const result = EnvVar.getGitpodImageAuth(envVars);
+        expect(result.size).to.equal(0);
+    }
+
+    @test
+    public testGetGitpodImageAuth_malformedEntries() {
+        const envVars: EnvVarWithValue[] = [
+            {
+                name: EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME,
+                value: "justhost,hostonly:,:credonly,:::,:,",
+            },
+        ];
+        const result = EnvVar.getGitpodImageAuth(envVars);
+        expect(result.size).to.equal(0);
+    }
+
+    @test
+    public testGetGitpodImageAuth_entriesWithSpaces() {
+        const envVars: EnvVarWithValue[] = [
+            {
+                name: EnvVar.GITPOD_IMAGE_AUTH_ENV_VAR_NAME,
+                value: " my-registry.foo.net : Zm9vOmJhcg== ,  my-registry2.bar.com:YWJjOmRlZg==  ",
+            },
+        ];
+        const result = EnvVar.getGitpodImageAuth(envVars);
+        expect(result.size).to.equal(2);
+        expect(result.get("my-registry.foo.net")).to.equal("Zm9vOmJhcg==");
+        expect(result.get("my-registry2.bar.com")).to.equal("YWJjOmRlZg==");
+    }
+}
+
+// Exporting both test suites
+const testSSHPublicKeyValue = new TestSSHPublicKeyValue();
+const testEnvVar = new TestEnvVar();
+module.exports = {
+    testSSHPublicKeyValue,
+    testEnvVar,
+};

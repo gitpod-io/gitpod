@@ -312,18 +312,28 @@ func insertCredentialsIntoConfig(imageAuth string) (int, error) {
 		Auths: make(map[string]RegistryAuth),
 	}
 	authenticationPerHost := strings.Split(imageAuth, ",")
-	for _, hostCredentials := range authenticationPerHost {
-		parts := strings.SplitN(hostCredentials, ":", 2)
-		if len(parts) < 2 {
+	for _, hostCredentialsEntry := range authenticationPerHost {
+		parts := strings.SplitN(hostCredentialsEntry, ":", 3)
+		var host string
+		var token string
+
+		switch len(parts) {
+		case 2:
+			host = parts[0]
+			token = parts[1]
+		case 3:
+			host = parts[0] + ":" + parts[1]
+			token = parts[2]
+		default:
 			continue
 		}
-		host := parts[0]
+
 		if host == "docker.io" || strings.HasSuffix(host, ".docker.io") {
 			host = "https://index.docker.io/v1/"
 		}
 
 		authConfig.Auths[host] = RegistryAuth{
-			Auth: parts[1],
+			Auth: token,
 		}
 	}
 	if len(authConfig.Auths) == 0 {

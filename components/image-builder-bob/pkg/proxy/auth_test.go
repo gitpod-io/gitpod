@@ -32,7 +32,7 @@ func TestAuthorize(t *testing.T) {
 			},
 		},
 		{
-			name:        "docker auth format - valid credentials - host with port",
+			name:        "docker auth format - valid credentials - host with :443 port",
 			constructor: NewAuthorizerFromDockerEnvVar,
 			input:       `{"auths": {"registry.example.com": {"auth": "dXNlcjpwYXNz"}}}`, // base64(user:pass)
 			testHost:    "registry.example.com:443",
@@ -108,6 +108,26 @@ func TestAuthorize(t *testing.T) {
 			expected: expectation{
 				user: "",
 				pass: "",
+			},
+		},
+		{
+			name:        "Docker Hub",
+			constructor: NewAuthorizerFromEnvVar,
+			input:       `{"docker.io": {"auth": "dXNlcjpwYXNz"}}`,
+			testHost:    "registry-1.docker.io",
+			expected: expectation{
+				user: "user",
+				pass: "pass",
+			},
+		},
+		{
+			name:        "docker auth format - valid credentials - host with :5000 port",
+			constructor: NewAuthorizerFromDockerEnvVar,
+			input:       `{"auths": {"registry.example.com:5000": {"auth": "dXNlcjpwYXNz"}}}`, // base64(user:pass)
+			testHost:    "registry.example.com:5000",
+			expected: expectation{
+				user: "user",
+				pass: "pass",
 			},
 		},
 	}

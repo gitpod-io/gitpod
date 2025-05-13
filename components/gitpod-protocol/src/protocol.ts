@@ -293,11 +293,28 @@ export namespace EnvVar {
             return res;
         }
 
+        const parse = (parts: string[]): { host: string; auth: string } | undefined => {
+            if (parts.some((e) => e === "")) {
+                return undefined;
+            }
+            if (parts.length === 2) {
+                return { host: parts[0], auth: parts[1] };
+            } else if (parts.length === 3) {
+                return { host: `${parts[0]}:${parts[1]}`, auth: parts[2] };
+            }
+            return undefined;
+        };
+
         (imageAuth.value || "")
             .split(",")
-            .map((e) => e.trim().split(":"))
-            .filter((e) => e.length == 2)
-            .forEach((e) => res.set(e[0], e[1]));
+            .map((e) => e.split(":").map((part) => part.trim()))
+            .forEach((parts) => {
+                const parsed = parse(parts);
+                if (parsed) {
+                    res.set(parsed.host, parsed.auth);
+                }
+            });
+
         return res;
     }
 }
