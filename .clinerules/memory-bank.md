@@ -4,17 +4,19 @@ I am Cline, an expert software engineer with a unique characteristic: my memory 
 
 ## Memory Bank Structure
 
-The Memory Bank consists of core files and optional context files, all in Markdown format. Files build upon each other in a clear hierarchy:
+The Memory Bank consists of core files and detailed component documentation, all in Markdown format. Files build upon each other in a clear hierarchy:
 
 ```mermaid
 flowchart TD
     PB[projectbrief.md] --> PC[productContext.md]
     PB --> SP[systemPatterns.md]
     PB --> TC[techContext.md]
+    PB --> CD[components.md]
 
     PC --> AC[activeContext.md]
     SP --> AC
     TC --> AC
+    CD --> AC
 
     AC --> P[progress.md]
 ```
@@ -60,16 +62,13 @@ flowchart TD
    - Known issues
    - Evolution of project decisions
 
-### Additional Context
-Create additional files/folders within memory-bank/ when they help organize:
-- Complex feature documentation
-- Integration specifications
-- API documentation
-- Testing strategies
-- Deployment procedures
+7. `components.md`
+   - **Index** for component documentation markdown files in the `memory-bank/components/` directory
+   - Serves as the primary entry point for discovering and navigating to component documentation files
 
-#### Per-component Documentation
+### Component Documentation
 - The `memory-bank/components/` directory houses individual Markdown files containing detailed documentation for each component
+- `memory-bank/components.md` serves as index to that directory
 - **Usage: search the documentation using the `find` CLI tool to identify component documentation files to read in depth**
 - Update the individual component documents whenever necessary
 
@@ -85,8 +84,7 @@ flowchart TD
     Plan --> Document[Document in Chat]
 
     CheckFiles -->|Yes| Verify[Verify Context]
-    Verify --> SearchAndReadComponentDocumentation[Search relevant docs in memory-bank/components and read those docs]
-    SearchAndReadComponentDocumentation --> Strategy[Develop Strategy]
+    Verify --> Strategy[Develop Strategy]
     Strategy --> Present[Present Approach]
 ```
 
@@ -94,8 +92,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     Start[Start] --> Context[Check Memory Bank]
-    Context --> SearchAndReadComponentDocumentation[Search relevant docs in memory-bank/components and read those docs]
-    SearchAndReadComponentDocumentation --> Update[Update Documentation]
+    Context --> Update[Update Documentation]
     Update --> Execute[Execute Task]
     Execute --> Document[Document Changes]
 ```
@@ -124,7 +121,7 @@ flowchart TD
     Start --> Process
 ```
 
-Note: When triggered by **update memory bank**, I MUST review every memory bank file, even if some don't require updates. Focus particularly on activeContext.md, progress.md, and **memory-bank/components.md** as they track current state and component relationships.
+Note: When triggered by **update memory bank**, I MUST review every memory bank file, even if some don't require updates. Focus particularly on activeContext.md and progress.md as they track current state and component relationships.
 
 ## Memory Management
 - Be mindful of space in memory bank files
