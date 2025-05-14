@@ -10,6 +10,8 @@ import { Button } from "@podkit/buttons/Button";
 import { useMaintenanceNotification } from "../data/maintenande-mode/maintenance-notification-query";
 import { useSetMaintenanceNotificationMutation } from "../data/maintenande-mode/maintenance-notification-mutation";
 import Alert from "../components/Alert";
+import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
+import { Heading3 } from "@podkit/typography/Headings";
 
 export const MaintenanceNotificationCard: FC = () => {
     const { isNotificationEnabled, notificationMessage, isLoading } = useMaintenanceNotification();
@@ -63,13 +65,11 @@ export const MaintenanceNotificationCard: FC = () => {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 mb-4">
+        <ConfigurationSettingsField>
             <div className="flex justify-between items-center mb-4">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-                        Scheduled Maintenance Notification
-                    </h3>
-                    <p className="text-gray-500 dark:text-gray-400">
+                    <Heading3>Scheduled Maintenance Notification</Heading3>
+                    <p className="text-pk-content-tertiary">
                         Display a notification banner to inform users about upcoming maintenance.
                     </p>
                 </div>
@@ -131,20 +131,17 @@ export const MaintenanceNotificationCard: FC = () => {
                 )}
             </div>
 
-            {/* Preview section */}
-            {isNotificationEnabled && (
-                <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</label>
-                    <Alert type="warning" className="mb-0">
-                        <div className="flex items-center">
-                            <span className="font-semibold">Scheduled Maintenance:</span>
-                            <span className="ml-2">
-                                {message || "Maintenance is scheduled for this system. Please save your work."}
-                            </span>
-                        </div>
-                    </Alert>
-                </div>
-            )}
-        </div>
+            <div className="mt-4">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Preview</label>
+                <Alert type="warning" className="mb-0">
+                    <div className="flex items-center">
+                        <span className="font-semibold">Scheduled Maintenance:</span>
+                        <span className="ml-2">
+                            {message || "Maintenance is scheduled for this system. Please save your work."}
+                        </span>
+                    </div>
+                </Alert>
+            </div>
+        </ConfigurationSettingsField>
     );
 };

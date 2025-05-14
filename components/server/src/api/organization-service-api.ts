@@ -358,7 +358,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
-        const settings = await this.orgService.getMaintenanceNotificationSettings(ctxUserId(), req.organizationId);
+        const settings = await this.orgService.getMaintenanceNotification(ctxUserId(), req.organizationId);
         return new GetMaintenanceNotificationResponse({
             isEnabled: settings.enabled,
             message: settings.message,
@@ -373,7 +373,7 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
         }
 
-        const settings = await this.orgService.setMaintenanceNotificationSettings(
+        const settings = await this.orgService.setMaintenanceNotification(
             ctxUserId(),
             req.organizationId,
             req.isEnabled,

@@ -19,7 +19,7 @@ import { getGitpodService } from "./service/service";
 import { useOrgBillingMode } from "./data/billing-mode/org-billing-mode-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { MaintenanceModeBanner } from "./org-admin/MaintenanceModeBanner";
-import { ScheduledMaintenanceBanner } from "./org-admin/ScheduledMaintenanceBanner";
+import { MaintenanceNotificationBanner } from "./org-admin/MaintenanceNotificationBanner";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 const PRIVACY_POLICY_LAST_UPDATED = "2024-12-03";
@@ -213,7 +213,7 @@ export function AppNotifications() {
     return (
         <div className="app-container pt-2">
             <MaintenanceModeBanner />
-            <ScheduledMaintenanceBanner />
+            <MaintenanceNotificationBanner />
             {topNotification && (
                 <Alert
                     type={topNotification.type}

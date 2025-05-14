@@ -9,6 +9,8 @@ import { useToast } from "../components/toasts/Toasts";
 import { Button } from "@podkit/buttons/Button";
 import { useMaintenanceMode } from "../data/maintenande-mode/maintenance-mode-query";
 import { useSetMaintenanceModeMutation } from "../data/maintenande-mode/maintenance-mode-mutation";
+import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
+import { Heading3 } from "@podkit/typography/Headings";
 
 export const MaintenanceModeCard: FC = () => {
     const { isMaintenanceMode, isLoading } = useMaintenanceMode();
@@ -31,11 +33,11 @@ export const MaintenanceModeCard: FC = () => {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 mb-4">
+        <ConfigurationSettingsField>
             <div className="flex justify-between items-center">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">Maintenance Mode</h3>
-                    <p className="text-gray-500 dark:text-gray-400">
+                    <Heading3>Maintenance Mode</Heading3>
+                    <p className="textpk-content-tertiary">
                         When enabled, users cannot start new workspaces and a notification is displayed.
                     </p>
                 </div>
@@ -47,6 +49,6 @@ export const MaintenanceModeCard: FC = () => {
                     {isLoading ? "Loading..." : isMaintenanceMode ? "Disable" : "Enable"}
                 </Button>
             </div>
-        </div>
+        </ConfigurationSettingsField>
     );
 };

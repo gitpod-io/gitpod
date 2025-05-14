@@ -37,7 +37,7 @@ const AdminPage: React.FC = () => {
                 subtitle="Manage your organization's infrastructure and settings."
             />
             <div className="app-container py-6">
-                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Infrastructure Rollout</h2>
+                <h2 className="text-2xl font-semibold text-pk-content-primary mb-4">Infrastructure Rollout</h2>
 
                 {userLoading ||
                     orgLoading ||

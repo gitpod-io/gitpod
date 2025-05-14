@@ -777,7 +777,7 @@ export class OrganizationService {
      */
     public async getMaintenanceMode(userId: string, orgId: string): Promise<boolean> {
         // Using write_settings permission as it's available to owners and installation admins
-        await this.auth.checkPermissionOnOrganization(userId, "write_settings", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
 
         const team = await this.teamDB.findTeamById(orgId);
         if (!team) {
@@ -819,15 +819,14 @@ export class OrganizationService {
     }
 
     /**
-     * Gets the scheduled maintenance notification settings for an organization.
+     * Gets the scheduled maintenance notification for an organization.
      *
      * @param userId The ID of the user making the request
      * @param orgId The ID of the organization
-     * @returns The notification settings (enabled status and custom message)
+     * @returns The notification (enabled status and custom message)
      */
-    public async getMaintenanceNotificationSettings(userId: string, orgId: string): Promise<MaintenanceNotification> {
-        // Using maintenance permission as it's available to owners and installation admins
-        await this.auth.checkPermissionOnOrganization(userId, "maintenance", orgId);
+    public async getMaintenanceNotification(userId: string, orgId: string): Promise<MaintenanceNotification> {
+        await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
 
         const team = await this.teamDB.findTeamById(orgId);
         if (!team) {
@@ -846,15 +845,15 @@ export class OrganizationService {
     }
 
     /**
-     * Sets the scheduled maintenance notification settings for an organization.
+     * Sets the scheduled maintenance notification for an organization.
      *
      * @param userId The ID of the user making the request
      * @param orgId The ID of the organization
      * @param isEnabled Whether the notification should be enabled
      * @param customMessage Optional custom message for the notification
-     * @returns The updated notification settings
+     * @returns The updated notification
      */
-    public async setMaintenanceNotificationSettings(
+    public async setMaintenanceNotification(
         userId: string,
         orgId: string,
         isEnabled: boolean,
@@ -862,6 +861,10 @@ export class OrganizationService {
     ): Promise<MaintenanceNotification> {
         // Using maintenance permission as it's available to owners and installation admins
         await this.auth.checkPermissionOnOrganization(userId, "maintenance", orgId);
+
+        if (customMessage && customMessage.length > 255) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Custom message exceeds 255 characters");
+        }
 
         const team = await this.teamDB.findTeamById(orgId);
         if (!team) {

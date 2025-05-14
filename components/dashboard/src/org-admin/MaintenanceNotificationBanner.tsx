@@ -9,7 +9,7 @@ import Alert from "../components/Alert";
 import { useMaintenanceNotification } from "../data/maintenande-mode/maintenance-notification-query";
 import { useMaintenanceMode } from "../data/maintenande-mode/maintenance-mode-query";
 
-export const ScheduledMaintenanceBanner: FC = () => {
+export const MaintenanceNotificationBanner: FC = () => {
     const { isNotificationEnabled, notificationMessage } = useMaintenanceNotification();
     const { isMaintenanceMode } = useMaintenanceMode();
 

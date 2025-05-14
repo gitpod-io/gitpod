@@ -20,6 +20,9 @@ import { toRemoteURL } from "../projects/render-utils";
 import { displayTime } from "../usage/UsageEntry";
 import { Timestamp } from "@bufbuild/protobuf";
 import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator";
+import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
+import { Heading3 } from "../components/typography/headings";
+import Tooltip from "../components/Tooltip";
 
 interface RunningWorkspacesCardProps {}
 
@@ -115,30 +118,41 @@ export const RunningWorkspacesCard: FC<RunningWorkspacesCardProps> = () => {
         );
     }
 
+    const stopAllWorkspacesButton = (
+        <Button
+            variant="destructive"
+            onClick={() => setIsStopAllModalOpen(true)}
+            disabled={!isMaintenanceMode || isStoppingAll || isLoading || runningWorkspaces.length === 0}
+        >
+            Stop All Workspaces
+        </Button>
+    );
+
     return (
-        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 mt-6">
+        <ConfigurationSettingsField>
             <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-                    Currently Running Workspaces ({runningWorkspaces.length})
-                </h3>
-                <Button
-                    variant="destructive"
-                    onClick={() => setIsStopAllModalOpen(true)}
-                    disabled={!isMaintenanceMode || isStoppingAll || isLoading || runningWorkspaces.length === 0}
-                >
-                    {!isMaintenanceMode ? "Enable Maintenance Mode to Stop All" : "Stop All Workspaces"}
-                </Button>
+                <Heading3>Currently Running Workspaces ({runningWorkspaces.length})</Heading3>
+                {!isMaintenanceMode ? (
+                    <Tooltip content="Enable maintenance mode to stop all workspaces">
+                        {stopAllWorkspacesButton}
+                    </Tooltip>
+                ) : (
+                    stopAllWorkspacesButton
+                )}
             </div>
             {runningWorkspaces.length === 0 && !isLoading ? (
-                <p className="text-gray-500 dark:text-gray-400">No workspaces are currently running.</p>
+                <p className="text-pk-content-tertiary">No workspaces are currently running.</p>
             ) : (
                 <ItemsList className="text-gray-400 dark:text-gray-500">
-                    <Item header={true} className="grid grid-cols-5 gap-x-3 bg-pk-surface-secondary dark:bg-gray-700">
-                        <ItemField className="col-span-1 my-auto font-semibold">Status</ItemField>
-                        <ItemField className="col-span-1 my-auto font-semibold">Workspace ID</ItemField>
-                        <ItemField className="col-span-1 my-auto font-semibold">User</ItemField>
-                        <ItemField className="col-span-1 my-auto font-semibold">Project</ItemField>
-                        <ItemField className="col-span-1 my-auto font-semibold">Started</ItemField>
+                    <Item
+                        header={true}
+                        className="grid grid-cols-[1fr_3fr_3fr_3fr_3fr] gap-x-3 bg-pk-surface-secondary dark:bg-gray-700"
+                    >
+                        <ItemField className="my-auto font-semibold">Status</ItemField>
+                        <ItemField className="my-auto font-semibold">Workspace ID</ItemField>
+                        <ItemField className="my-auto font-semibold">User</ItemField>
+                        <ItemField className="my-auto font-semibold">Project</ItemField>
+                        <ItemField className="my-auto font-semibold">Started</ItemField>
                     </Item>
                     {runningWorkspaces.map((session) => {
                         const workspace = session.workspace;
@@ -155,23 +169,23 @@ export const RunningWorkspacesCard: FC<RunningWorkspacesCardProps> = () => {
                         return (
                             <Item
                                 key={session.id}
-                                className="grid grid-cols-5 gap-x-3 hover:bg-gray-50 dark:hover:bg-gray-750"
+                                className="grid grid-cols-[1fr_3fr_3fr_3fr_3fr] gap-x-3 hover:bg-gray-50 dark:hover:bg-gray-750"
                             >
-                                <ItemField className="col-span-1 my-auto truncate">
+                                <ItemField className="my-auto truncate">
                                     <WorkspaceStatusIndicator status={status} />
                                 </ItemField>
-                                <ItemField className="col-span-1 my-auto truncate font-mono text-xs">
+                                <ItemField className="my-auto truncate font-mono text-xs">
                                     <span title={workspace?.id}>{workspace?.id || "-"}</span>
                                 </ItemField>
-                                <ItemField className="col-span-1 my-auto truncate">
+                                <ItemField className="my-auto truncate">
                                     <span title={owner?.name}>{owner?.name || "-"}</span>
                                 </ItemField>
-                                <ItemField className="col-span-1 my-auto truncate">
+                                <ItemField className="my-auto truncate">
                                     <span title={projectContextURL ? toRemoteURL(projectContextURL) : ""}>
                                         {projectContextURL ? toRemoteURL(projectContextURL) : "-"}
                                     </span>
                                 </ItemField>
-                                <ItemField className="col-span-1 my-auto truncate">
+                                <ItemField className="my-auto truncate">
                                     <span title={startedTimeString}>{startedTimeString}</span>
                                 </ItemField>
                             </Item>
@@ -190,10 +204,9 @@ export const RunningWorkspacesCard: FC<RunningWorkspacesCardProps> = () => {
             >
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                     Are you sure you want to stop all {runningWorkspaces.length} currently running workspaces in this
-                    organization? Workspaces will be backed up before stopping. This action cannot be undone for the
-                    stop process itself.
+                    organization? Workspaces will be backed up before stopping. This action cannot be undone.
                 </p>
             </ConfirmationModal>
-        </div>
+        </ConfigurationSettingsField>
     );
 };

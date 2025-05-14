@@ -17,9 +17,9 @@ export const MaintenanceModeBanner: FC = () => {
 
     return (
         <Alert type="warning" className="mb-2">
-            <div className="flex items-center">
+            <div className="flex items-center flex-wrap gap-2">
                 <span className="font-semibold">System is in maintenance mode.</span>
-                <span className="ml-2">Starting new workspaces is currently disabled.</span>
+                <span>Starting new workspaces is currently disabled.</span>
             </div>
         </Alert>
     );
