@@ -128,7 +128,7 @@ export default function OrganizationSelector() {
                 link: "/settings",
             });
 
-            if (isOwner) {
+            if (isOwner && isDedicated) {
                 // Add Admin link for owners
                 linkEntries.push({
                     title: "Organization Administration",
