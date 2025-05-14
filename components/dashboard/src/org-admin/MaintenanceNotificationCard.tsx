@@ -7,12 +7,13 @@
 import { FC, useState, useEffect } from "react";
 import { useToast } from "../components/toasts/Toasts";
 import { Button } from "@podkit/buttons/Button";
-import { useMaintenanceNotification } from "../data/maintenance-notification-query";
+import { useMaintenanceNotification } from "../data/maintenande-mode/maintenance-notification-query";
+import { useSetMaintenanceNotificationMutation } from "../data/maintenande-mode/maintenance-notification-mutation";
 import Alert from "../components/Alert";
 
 export const MaintenanceNotificationCard: FC = () => {
-    const { isNotificationEnabled, notificationMessage, isLoading, setMaintenanceNotification } =
-        useMaintenanceNotification();
+    const { isNotificationEnabled, notificationMessage, isLoading } = useMaintenanceNotification();
+    const setMaintenanceNotificationMutation = useSetMaintenanceNotificationMutation();
     const [message, setMessage] = useState(notificationMessage);
     const [isEditing, setIsEditing] = useState(false);
     const toast = useToast();
@@ -25,7 +26,10 @@ export const MaintenanceNotificationCard: FC = () => {
     const toggleNotification = async () => {
         try {
             const newState = !isNotificationEnabled;
-            const result = await setMaintenanceNotification(newState, message);
+            const result = await setMaintenanceNotificationMutation.mutateAsync({
+                isEnabled: newState,
+                customMessage: message,
+            });
 
             toast.toast({
                 message: `Maintenance notification ${result.enabled ? "enabled" : "disabled"}`,
@@ -41,7 +45,10 @@ export const MaintenanceNotificationCard: FC = () => {
 
     const saveMessage = async () => {
         try {
-            await setMaintenanceNotification(isNotificationEnabled, message);
+            await setMaintenanceNotificationMutation.mutateAsync({
+                isEnabled: isNotificationEnabled,
+                customMessage: message,
+            });
 
             toast.toast({
                 message: "Maintenance notification message updated",

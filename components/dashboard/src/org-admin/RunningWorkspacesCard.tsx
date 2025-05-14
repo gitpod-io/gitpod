@@ -12,7 +12,7 @@ import { useWorkspaceSessions } from "../data/insights/list-workspace-sessions-q
 import { Button } from "@podkit/buttons/Button";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { useToast } from "../components/toasts/Toasts";
-import { useMaintenanceMode } from "../data/maintenance-mode-query";
+import { useMaintenanceMode } from "../data/maintenande-mode/maintenance-mode-query";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import Alert from "../components/Alert";
 import Spinner from "../icons/Spinner.svg";

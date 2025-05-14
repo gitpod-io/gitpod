@@ -4,16 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCurrentOrg } from "./organizations/orgs-query";
-import { organizationClient } from "../service/public-api";
+import { useQuery } from "@tanstack/react-query";
+import { useCurrentOrg } from "../organizations/orgs-query";
+import { organizationClient } from "../../service/public-api";
 import { MaintenanceNotification } from "@gitpod/gitpod-protocol";
 
 export const maintenanceNotificationQueryKey = (orgId: string) => ["maintenance-notification", orgId];
 
 export const useMaintenanceNotification = () => {
     const { data: org } = useCurrentOrg();
-    const queryClient = useQueryClient();
 
     const { data, isLoading } = useQuery<MaintenanceNotification>(
         maintenanceNotificationQueryKey(org?.id || ""),
@@ -40,38 +39,9 @@ export const useMaintenanceNotification = () => {
         },
     );
 
-    const setMaintenanceNotification = async (
-        isEnabled: boolean,
-        customMessage?: string,
-    ): Promise<MaintenanceNotification> => {
-        if (!org?.id) return { enabled: false, message: "" };
-
-        try {
-            const response = await organizationClient.setMaintenanceNotification({
-                organizationId: org.id,
-                isEnabled,
-                customMessage,
-            });
-
-            const result: MaintenanceNotification = {
-                enabled: response.isEnabled,
-                message: response.message,
-            };
-
-            // Update the cache
-            queryClient.setQueryData(maintenanceNotificationQueryKey(org.id), result);
-
-            return result;
-        } catch (error) {
-            console.error("Failed to set maintenance notification", error);
-            return { enabled: false };
-        }
-    };
-
     return {
         isNotificationEnabled: data?.enabled || false,
         notificationMessage: data?.message,
         isLoading,
-        setMaintenanceNotification,
     };
 };

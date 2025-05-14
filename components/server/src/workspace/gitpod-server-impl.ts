@@ -1394,7 +1394,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async updateTeam(
         ctx: TraceContext,
         teamId: string,
-        team: Partial<Pick<Team, "name" | "maintenanceMode">>,
+        team: Partial<Pick<Team, "name" | "maintenanceMode" | "maintenanceNotification">>,
     ): Promise<Team> {
         traceAPIParams(ctx, { teamId, team });
         const user = await this.checkUser("updateTeam");

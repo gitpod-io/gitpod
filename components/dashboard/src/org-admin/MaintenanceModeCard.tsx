@@ -7,16 +7,18 @@
 import { FC } from "react";
 import { useToast } from "../components/toasts/Toasts";
 import { Button } from "@podkit/buttons/Button";
-import { useMaintenanceMode } from "../data/maintenance-mode-query";
+import { useMaintenanceMode } from "../data/maintenande-mode/maintenance-mode-query";
+import { useSetMaintenanceModeMutation } from "../data/maintenande-mode/maintenance-mode-mutation";
 
 export const MaintenanceModeCard: FC = () => {
-    const { isMaintenanceMode, isLoading, setMaintenanceMode } = useMaintenanceMode();
+    const { isMaintenanceMode, isLoading } = useMaintenanceMode();
+    const setMaintenanceModeMutation = useSetMaintenanceModeMutation();
     const toast = useToast();
 
     const toggleMaintenanceMode = async () => {
         try {
             const newState = !isMaintenanceMode;
-            const result = await setMaintenanceMode(newState);
+            const result = await setMaintenanceModeMutation.mutateAsync({ enabled: newState });
 
             toast.toast({
                 message: `Maintenance mode ${result ? "enabled" : "disabled"}`,

@@ -6,8 +6,8 @@
 
 import { FC } from "react";
 import Alert from "../components/Alert";
-import { useMaintenanceNotification } from "../data/maintenance-notification-query";
-import { useMaintenanceMode } from "../data/maintenance-mode-query";
+import { useMaintenanceNotification } from "../data/maintenande-mode/maintenance-notification-query";
+import { useMaintenanceMode } from "../data/maintenande-mode/maintenance-mode-query";
 
 export const ScheduledMaintenanceBanner: FC = () => {
     const { isNotificationEnabled, notificationMessage } = useMaintenanceNotification();
