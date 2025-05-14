@@ -211,6 +211,16 @@ export function isClusterMaintenanceError(err: any): boolean {
     );
 }
 
+export function isMaintenanceModeError(err: any): boolean {
+    if (!(err instanceof ApplicationError)) {
+        return false;
+    }
+    if (err.code !== ErrorCodes.PRECONDITION_FAILED) {
+        return false;
+    }
+    return err.data?.maintenanceMode === true;
+}
+
 @injectable()
 export class WorkspaceStarter {
     static readonly STARTING_PHASES: WorkspaceInstancePhase[] = ["preparing", "building", "pending"];
@@ -604,16 +614,12 @@ export class WorkspaceStarter {
 
         // Get the organization's maintenance mode status
         const org = await this.orgService.getOrganization(user.id, workspace.organizationId);
-        if (!org.maintenanceMode) {
-            throw new StartInstanceError(
-                "maintenanceMode",
-                new Error(
-                    "Cannot start workspace: The organization is currently in maintenance mode. Please try again later or contact your organization administrator.",
-                ),
+        if (org.maintenanceMode) {
+            throw new ApplicationError(
+                ErrorCodes.PRECONDITION_FAILED,
+                "Cannot start workspace: The organization is currently in maintenance mode. Please try again later or contact your organization administrator.",
+                { maintenanceMode: true },
             );
-            // throw new ApplicationError(
-            //     ErrorCodes.PRECONDITION_FAILED,
-            // );
         }
     }
 
@@ -763,6 +769,9 @@ export class WorkspaceStarter {
                     err = new Error(
                         "We're in the middle of an update. We'll be back to normal soon. Please try again in a few minutes.",
                     );
+                }
+                if (isMaintenanceModeError(err)) {
+                    failReason = "maintenanceMode";
                 }
                 await this.failInstanceStart({ span }, err, workspace, instance);
                 err = new StartInstanceError(failReason, err);
