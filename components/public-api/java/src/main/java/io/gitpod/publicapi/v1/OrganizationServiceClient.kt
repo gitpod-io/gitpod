@@ -301,4 +301,41 @@ public class OrganizationServiceClient(
     ),
   )
 
+
+  /**
+   *  GetMaintenanceNotification retrieves the maintenance notification settings for an
+   * organization.
+   */
+  override suspend
+      fun getMaintenanceNotification(request: OrganizationOuterClass.GetMaintenanceNotificationRequest,
+      headers: Headers): ResponseMessage<OrganizationOuterClass.GetMaintenanceNotificationResponse>
+      = client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.OrganizationService/GetMaintenanceNotification",
+      io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest::class,
+      io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
+
+  /**
+   *  SetMaintenanceNotification sets the maintenance notification for an organization.
+   */
+  override suspend
+      fun setMaintenanceNotification(request: OrganizationOuterClass.SetMaintenanceNotificationRequest,
+      headers: Headers): ResponseMessage<OrganizationOuterClass.SetMaintenanceNotificationResponse>
+      = client.unary(
+    request,
+    headers,
+    MethodSpec(
+    "gitpod.v1.OrganizationService/SetMaintenanceNotification",
+      io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest::class,
+      io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse::class,
+      StreamType.UNARY,
+    ),
+  )
+
 }

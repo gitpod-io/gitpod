@@ -5,7 +5,7 @@
  */
 
 import { FC } from "react";
-import Alert from "./Alert";
+import Alert from "../components/Alert";
 import { useMaintenanceMode } from "../data/maintenance-mode-query";
 
 export const MaintenanceModeBanner: FC = () => {

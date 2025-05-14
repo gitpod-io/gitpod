@@ -154,10 +154,14 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         return soleOwnedTeams;
     }
 
-    public async updateTeam(teamId: string, team: Pick<Team, "name" | "maintenanceMode">): Promise<Team> {
+    public async updateTeam(
+        teamId: string,
+        team: Pick<Team, "name" | "maintenanceMode" | "maintenanceNotification">,
+    ): Promise<Team> {
         const name = team.name && team.name.trim();
         const maintenanceModeSet = team.maintenanceMode !== undefined;
-        if (!name && !maintenanceModeSet) {
+        const maintenanceNotificationSet = team.maintenanceNotification !== undefined;
+        if (!name && !maintenanceModeSet && !maintenanceNotificationSet) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "No update provided");
         }
 
@@ -185,6 +189,11 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             // Update maintenance mode if provided
             if (maintenanceModeSet) {
                 existingTeam.maintenanceMode = team.maintenanceMode;
+            }
+
+            // Update maintenance notification if provided
+            if (maintenanceNotificationSet) {
+                existingTeam.maintenanceNotification = team.maintenanceNotification;
             }
 
             return teamRepo.save(existingTeam);

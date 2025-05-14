@@ -14,6 +14,7 @@ import {
     WorkspaceTimeoutDuration,
     OrgMemberRole,
     User,
+    MaintenanceNotification,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -145,7 +146,7 @@ export class OrganizationService {
     async updateOrganization(
         userId: string,
         orgId: string,
-        changes: Partial<Pick<Organization, "name" | "maintenanceMode">>,
+        changes: Partial<Pick<Organization, "name" | "maintenanceMode" | "maintenanceNotification">>,
     ): Promise<Organization> {
         await this.auth.checkPermissionOnOrganization(userId, "write_info", orgId);
         return this.teamDB.updateTeam(orgId, changes);
@@ -815,5 +816,67 @@ export class OrganizationService {
         });
 
         return enabled;
+    }
+
+    /**
+     * Gets the scheduled maintenance notification settings for an organization.
+     *
+     * @param userId The ID of the user making the request
+     * @param orgId The ID of the organization
+     * @returns The notification settings (enabled status and custom message)
+     */
+    public async getMaintenanceNotificationSettings(userId: string, orgId: string): Promise<MaintenanceNotification> {
+        // Using maintenance permission as it's available to owners and installation admins
+        await this.auth.checkPermissionOnOrganization(userId, "maintenance", orgId);
+
+        const team = await this.teamDB.findTeamById(orgId);
+        if (!team) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
+        }
+
+        // If the maintenanceNotification field doesn't exist or is invalid, return default values
+        if (!team.maintenanceNotification) {
+            return { enabled: false, message: undefined };
+        }
+
+        return {
+            enabled: team.maintenanceNotification.enabled,
+            message: team.maintenanceNotification.message,
+        };
+    }
+
+    /**
+     * Sets the scheduled maintenance notification settings for an organization.
+     *
+     * @param userId The ID of the user making the request
+     * @param orgId The ID of the organization
+     * @param isEnabled Whether the notification should be enabled
+     * @param customMessage Optional custom message for the notification
+     * @returns The updated notification settings
+     */
+    public async setMaintenanceNotificationSettings(
+        userId: string,
+        orgId: string,
+        isEnabled: boolean,
+        customMessage?: string,
+    ): Promise<MaintenanceNotification> {
+        // Using maintenance permission as it's available to owners and installation admins
+        await this.auth.checkPermissionOnOrganization(userId, "maintenance", orgId);
+
+        const team = await this.teamDB.findTeamById(orgId);
+        if (!team) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
+        }
+
+        // Prepare the new notification config
+        const newNotificationConfig = {
+            enabled: isEnabled,
+            message: customMessage?.trim() || undefined,
+        };
+
+        // Update the team with the new notification config
+        await this.teamDB.updateTeam(orgId, { maintenanceNotification: newNotificationConfig });
+
+        return newNotificationConfig;
     }
 }

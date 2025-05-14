@@ -60,6 +60,10 @@ type OrganizationServiceClient interface {
 	GetOrganizationMaintenanceMode(ctx context.Context, in *GetOrganizationMaintenanceModeRequest, opts ...grpc.CallOption) (*GetOrganizationMaintenanceModeResponse, error)
 	// SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
 	SetOrganizationMaintenanceMode(ctx context.Context, in *SetOrganizationMaintenanceModeRequest, opts ...grpc.CallOption) (*SetOrganizationMaintenanceModeResponse, error)
+	// GetMaintenanceNotification retrieves the maintenance notification settings for an organization.
+	GetMaintenanceNotification(ctx context.Context, in *GetMaintenanceNotificationRequest, opts ...grpc.CallOption) (*GetMaintenanceNotificationResponse, error)
+	// SetMaintenanceNotification sets the maintenance notification for an organization.
+	SetMaintenanceNotification(ctx context.Context, in *SetMaintenanceNotificationRequest, opts ...grpc.CallOption) (*SetMaintenanceNotificationResponse, error)
 }
 
 type organizationServiceClient struct {
@@ -214,6 +218,24 @@ func (c *organizationServiceClient) SetOrganizationMaintenanceMode(ctx context.C
 	return out, nil
 }
 
+func (c *organizationServiceClient) GetMaintenanceNotification(ctx context.Context, in *GetMaintenanceNotificationRequest, opts ...grpc.CallOption) (*GetMaintenanceNotificationResponse, error) {
+	out := new(GetMaintenanceNotificationResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.OrganizationService/GetMaintenanceNotification", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *organizationServiceClient) SetMaintenanceNotification(ctx context.Context, in *SetMaintenanceNotificationRequest, opts ...grpc.CallOption) (*SetMaintenanceNotificationResponse, error) {
+	out := new(SetMaintenanceNotificationResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.v1.OrganizationService/SetMaintenanceNotification", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrganizationServiceServer is the server API for OrganizationService service.
 // All implementations must embed UnimplementedOrganizationServiceServer
 // for forward compatibility
@@ -252,6 +274,10 @@ type OrganizationServiceServer interface {
 	GetOrganizationMaintenanceMode(context.Context, *GetOrganizationMaintenanceModeRequest) (*GetOrganizationMaintenanceModeResponse, error)
 	// SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
 	SetOrganizationMaintenanceMode(context.Context, *SetOrganizationMaintenanceModeRequest) (*SetOrganizationMaintenanceModeResponse, error)
+	// GetMaintenanceNotification retrieves the maintenance notification settings for an organization.
+	GetMaintenanceNotification(context.Context, *GetMaintenanceNotificationRequest) (*GetMaintenanceNotificationResponse, error)
+	// SetMaintenanceNotification sets the maintenance notification for an organization.
+	SetMaintenanceNotification(context.Context, *SetMaintenanceNotificationRequest) (*SetMaintenanceNotificationResponse, error)
 	mustEmbedUnimplementedOrganizationServiceServer()
 }
 
@@ -306,6 +332,12 @@ func (UnimplementedOrganizationServiceServer) GetOrganizationMaintenanceMode(con
 }
 func (UnimplementedOrganizationServiceServer) SetOrganizationMaintenanceMode(context.Context, *SetOrganizationMaintenanceModeRequest) (*SetOrganizationMaintenanceModeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetOrganizationMaintenanceMode not implemented")
+}
+func (UnimplementedOrganizationServiceServer) GetMaintenanceNotification(context.Context, *GetMaintenanceNotificationRequest) (*GetMaintenanceNotificationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMaintenanceNotification not implemented")
+}
+func (UnimplementedOrganizationServiceServer) SetMaintenanceNotification(context.Context, *SetMaintenanceNotificationRequest) (*SetMaintenanceNotificationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetMaintenanceNotification not implemented")
 }
 func (UnimplementedOrganizationServiceServer) mustEmbedUnimplementedOrganizationServiceServer() {}
 
@@ -608,6 +640,42 @@ func _OrganizationService_SetOrganizationMaintenanceMode_Handler(srv interface{}
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrganizationService_GetMaintenanceNotification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMaintenanceNotificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganizationServiceServer).GetMaintenanceNotification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.OrganizationService/GetMaintenanceNotification",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganizationServiceServer).GetMaintenanceNotification(ctx, req.(*GetMaintenanceNotificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrganizationService_SetMaintenanceNotification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetMaintenanceNotificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrganizationServiceServer).SetMaintenanceNotification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.v1.OrganizationService/SetMaintenanceNotification",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrganizationServiceServer).SetMaintenanceNotification(ctx, req.(*SetMaintenanceNotificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrganizationService_ServiceDesc is the grpc.ServiceDesc for OrganizationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -678,6 +746,14 @@ var OrganizationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetOrganizationMaintenanceMode",
 			Handler:    _OrganizationService_SetOrganizationMaintenanceMode_Handler,
+		},
+		{
+			MethodName: "GetMaintenanceNotification",
+			Handler:    _OrganizationService_GetMaintenanceNotification_Handler,
+		},
+		{
+			MethodName: "SetMaintenanceNotification",
+			Handler:    _OrganizationService_SetMaintenanceNotification_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

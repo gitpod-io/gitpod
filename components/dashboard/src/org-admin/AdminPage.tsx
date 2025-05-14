@@ -13,6 +13,7 @@ import Header from "../components/Header";
 import { SpinnerLoader } from "../components/Loader";
 import { RunningWorkspacesCard } from "./RunningWorkspacesCard";
 import { MaintenanceModeCard } from "./MaintenanceModeCard";
+import { MaintenanceNotificationCard } from "./MaintenanceNotificationCard";
 
 const AdminPage: React.FC = () => {
     const history = useHistory();
@@ -54,6 +55,7 @@ const AdminPage: React.FC = () => {
 
                 {currentOrg && (
                     <>
+                        <MaintenanceNotificationCard />
                         <MaintenanceModeCard />
                         <RunningWorkspacesCard />
                     </>

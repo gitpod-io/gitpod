@@ -9,7 +9,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationMemberRequest, DeleteOrganizationMemberResponse, DeleteOrganizationRequest, DeleteOrganizationResponse, GetOrganizationInvitationRequest, GetOrganizationInvitationResponse, GetOrganizationMaintenanceModeRequest, GetOrganizationMaintenanceModeResponse, GetOrganizationRequest, GetOrganizationResponse, GetOrganizationSettingsRequest, GetOrganizationSettingsResponse, JoinOrganizationRequest, JoinOrganizationResponse, ListOrganizationMembersRequest, ListOrganizationMembersResponse, ListOrganizationsRequest, ListOrganizationsResponse, ListOrganizationWorkspaceClassesRequest, ListOrganizationWorkspaceClassesResponse, ResetOrganizationInvitationRequest, ResetOrganizationInvitationResponse, SetOrganizationMaintenanceModeRequest, SetOrganizationMaintenanceModeResponse, UpdateOrganizationMemberRequest, UpdateOrganizationMemberResponse, UpdateOrganizationRequest, UpdateOrganizationResponse, UpdateOrganizationSettingsRequest, UpdateOrganizationSettingsResponse } from "./organization_pb.js";
+import { CreateOrganizationRequest, CreateOrganizationResponse, DeleteOrganizationMemberRequest, DeleteOrganizationMemberResponse, DeleteOrganizationRequest, DeleteOrganizationResponse, GetMaintenanceNotificationRequest, GetMaintenanceNotificationResponse, GetOrganizationInvitationRequest, GetOrganizationInvitationResponse, GetOrganizationMaintenanceModeRequest, GetOrganizationMaintenanceModeResponse, GetOrganizationRequest, GetOrganizationResponse, GetOrganizationSettingsRequest, GetOrganizationSettingsResponse, JoinOrganizationRequest, JoinOrganizationResponse, ListOrganizationMembersRequest, ListOrganizationMembersResponse, ListOrganizationsRequest, ListOrganizationsResponse, ListOrganizationWorkspaceClassesRequest, ListOrganizationWorkspaceClassesResponse, ResetOrganizationInvitationRequest, ResetOrganizationInvitationResponse, SetMaintenanceNotificationRequest, SetMaintenanceNotificationResponse, SetOrganizationMaintenanceModeRequest, SetOrganizationMaintenanceModeResponse, UpdateOrganizationMemberRequest, UpdateOrganizationMemberResponse, UpdateOrganizationRequest, UpdateOrganizationResponse, UpdateOrganizationSettingsRequest, UpdateOrganizationSettingsResponse } from "./organization_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -194,6 +194,28 @@ export const OrganizationService = {
       name: "SetOrganizationMaintenanceMode",
       I: SetOrganizationMaintenanceModeRequest,
       O: SetOrganizationMaintenanceModeResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * GetMaintenanceNotification retrieves the maintenance notification settings for an organization.
+     *
+     * @generated from rpc gitpod.v1.OrganizationService.GetMaintenanceNotification
+     */
+    getMaintenanceNotification: {
+      name: "GetMaintenanceNotification",
+      I: GetMaintenanceNotificationRequest,
+      O: GetMaintenanceNotificationResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * SetMaintenanceNotification sets the maintenance notification for an organization.
+     *
+     * @generated from rpc gitpod.v1.OrganizationService.SetMaintenanceNotification
+     */
+    setMaintenanceNotification: {
+      name: "SetMaintenanceNotification",
+      I: SetMaintenanceNotificationRequest,
+      O: SetMaintenanceNotificationResponse,
       kind: MethodKind.Unary,
     },
   }

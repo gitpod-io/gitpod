@@ -22,6 +22,8 @@ import {
     GetOrganizationResponse,
     GetOrganizationSettingsRequest,
     GetOrganizationSettingsResponse,
+    GetMaintenanceNotificationRequest,
+    GetMaintenanceNotificationResponse,
     JoinOrganizationRequest,
     JoinOrganizationResponse,
     ListOrganizationMembersRequest,
@@ -35,6 +37,8 @@ import {
     ResetOrganizationInvitationResponse,
     SetOrganizationMaintenanceModeRequest,
     SetOrganizationMaintenanceModeResponse,
+    SetMaintenanceNotificationRequest,
+    SetMaintenanceNotificationResponse,
     UpdateOrganizationMemberRequest,
     UpdateOrganizationMemberResponse,
     UpdateOrganizationRequest,
@@ -343,6 +347,42 @@ export class OrganizationServiceAPI implements ServiceImpl<typeof OrganizationSe
         const enabled = await this.orgService.setMaintenanceMode(ctxUserId(), req.organizationId, req.enabled);
         return new SetOrganizationMaintenanceModeResponse({
             enabled,
+        });
+    }
+
+    async getMaintenanceNotification(
+        req: GetMaintenanceNotificationRequest,
+        _: HandlerContext,
+    ): Promise<GetMaintenanceNotificationResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+
+        const settings = await this.orgService.getMaintenanceNotificationSettings(ctxUserId(), req.organizationId);
+        return new GetMaintenanceNotificationResponse({
+            isEnabled: settings.enabled,
+            message: settings.message,
+        });
+    }
+
+    async setMaintenanceNotification(
+        req: SetMaintenanceNotificationRequest,
+        _: HandlerContext,
+    ): Promise<SetMaintenanceNotificationResponse> {
+        if (!uuidValidate(req.organizationId)) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+
+        const settings = await this.orgService.setMaintenanceNotificationSettings(
+            ctxUserId(),
+            req.organizationId,
+            req.isEnabled,
+            req.customMessage,
+        );
+
+        return new SetMaintenanceNotificationResponse({
+            isEnabled: settings.enabled,
+            message: settings.message,
         });
     }
 }

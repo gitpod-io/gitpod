@@ -1999,3 +1999,193 @@ export class SetOrganizationMaintenanceModeResponse extends Message<SetOrganizat
     return proto3.util.equals(SetOrganizationMaintenanceModeResponse, a, b);
   }
 }
+
+/**
+ * @generated from message gitpod.v1.GetMaintenanceNotificationRequest
+ */
+export class GetMaintenanceNotificationRequest extends Message<GetMaintenanceNotificationRequest> {
+  /**
+   * organization_id is the ID of the organization to retrieve the notification settings for.
+   *
+   * @generated from field: string organization_id = 1;
+   */
+  organizationId = "";
+
+  constructor(data?: PartialMessage<GetMaintenanceNotificationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetMaintenanceNotificationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetMaintenanceNotificationRequest {
+    return new GetMaintenanceNotificationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetMaintenanceNotificationRequest {
+    return new GetMaintenanceNotificationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetMaintenanceNotificationRequest {
+    return new GetMaintenanceNotificationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetMaintenanceNotificationRequest | PlainMessage<GetMaintenanceNotificationRequest> | undefined, b: GetMaintenanceNotificationRequest | PlainMessage<GetMaintenanceNotificationRequest> | undefined): boolean {
+    return proto3.util.equals(GetMaintenanceNotificationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.GetMaintenanceNotificationResponse
+ */
+export class GetMaintenanceNotificationResponse extends Message<GetMaintenanceNotificationResponse> {
+  /**
+   * is_enabled indicates whether the  maintenance notification is enabled.
+   *
+   * @generated from field: bool is_enabled = 1;
+   */
+  isEnabled = false;
+
+  /**
+   * message is the custom message stored, if any. Empty or not present if no custom message is set.
+   * The frontend will use its own default if this is empty/undefined and is_enabled is true.
+   *
+   * @generated from field: string message = 2;
+   */
+  message = "";
+
+  constructor(data?: PartialMessage<GetMaintenanceNotificationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.GetMaintenanceNotificationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "is_enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetMaintenanceNotificationResponse {
+    return new GetMaintenanceNotificationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetMaintenanceNotificationResponse {
+    return new GetMaintenanceNotificationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetMaintenanceNotificationResponse {
+    return new GetMaintenanceNotificationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetMaintenanceNotificationResponse | PlainMessage<GetMaintenanceNotificationResponse> | undefined, b: GetMaintenanceNotificationResponse | PlainMessage<GetMaintenanceNotificationResponse> | undefined): boolean {
+    return proto3.util.equals(GetMaintenanceNotificationResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.SetMaintenanceNotificationRequest
+ */
+export class SetMaintenanceNotificationRequest extends Message<SetMaintenanceNotificationRequest> {
+  /**
+   * organization_id is the ID of the organization to set the notification settings for.
+   *
+   * @generated from field: string organization_id = 1;
+   */
+  organizationId = "";
+
+  /**
+   * is_enabled indicates whether the  maintenance notification should be enabled or disabled.
+   *
+   * @generated from field: bool is_enabled = 2;
+   */
+  isEnabled = false;
+
+  /**
+   * custom_message is the user-provided custom message for the notification.
+   * If not provided or empty, the backend stores undefined/empty for the message.
+   *
+   * @generated from field: optional string custom_message = 3;
+   */
+  customMessage?: string;
+
+  constructor(data?: PartialMessage<SetMaintenanceNotificationRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.SetMaintenanceNotificationRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "is_enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 3, name: "custom_message", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetMaintenanceNotificationRequest {
+    return new SetMaintenanceNotificationRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetMaintenanceNotificationRequest {
+    return new SetMaintenanceNotificationRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetMaintenanceNotificationRequest {
+    return new SetMaintenanceNotificationRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SetMaintenanceNotificationRequest | PlainMessage<SetMaintenanceNotificationRequest> | undefined, b: SetMaintenanceNotificationRequest | PlainMessage<SetMaintenanceNotificationRequest> | undefined): boolean {
+    return proto3.util.equals(SetMaintenanceNotificationRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.v1.SetMaintenanceNotificationResponse
+ */
+export class SetMaintenanceNotificationResponse extends Message<SetMaintenanceNotificationResponse> {
+  /**
+   * is_enabled indicates the new notification enabled status after the update.
+   *
+   * @generated from field: bool is_enabled = 1;
+   */
+  isEnabled = false;
+
+  /**
+   * message is the custom message that is now stored, if any.
+   *
+   * @generated from field: optional string message = 2;
+   */
+  message?: string;
+
+  constructor(data?: PartialMessage<SetMaintenanceNotificationResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "gitpod.v1.SetMaintenanceNotificationResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "is_enabled", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "message", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetMaintenanceNotificationResponse {
+    return new SetMaintenanceNotificationResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetMaintenanceNotificationResponse {
+    return new SetMaintenanceNotificationResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetMaintenanceNotificationResponse {
+    return new SetMaintenanceNotificationResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SetMaintenanceNotificationResponse | PlainMessage<SetMaintenanceNotificationResponse> | undefined, b: SetMaintenanceNotificationResponse | PlainMessage<SetMaintenanceNotificationResponse> | undefined): boolean {
+    return proto3.util.equals(SetMaintenanceNotificationResponse, a, b);
+  }
+}

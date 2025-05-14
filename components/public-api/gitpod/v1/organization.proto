@@ -153,6 +153,12 @@ service OrganizationService {
 
   // SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
   rpc SetOrganizationMaintenanceMode(SetOrganizationMaintenanceModeRequest) returns (SetOrganizationMaintenanceModeResponse) {}
+
+  // GetMaintenanceNotification retrieves the maintenance notification settings for an organization.
+  rpc GetMaintenanceNotification(GetMaintenanceNotificationRequest) returns (GetMaintenanceNotificationResponse) {}
+
+  // SetMaintenanceNotification sets the maintenance notification for an organization.
+  rpc SetMaintenanceNotification(SetMaintenanceNotificationRequest) returns (SetMaintenanceNotificationResponse) {}
 }
 
 message ListOrganizationWorkspaceClassesRequest {
@@ -407,4 +413,38 @@ message SetOrganizationMaintenanceModeRequest {
 message SetOrganizationMaintenanceModeResponse {
   // enabled indicates the new maintenance mode status after the update.
   bool enabled = 1;
+}
+
+message GetMaintenanceNotificationRequest {
+  // organization_id is the ID of the organization to retrieve the notification settings for.
+  string organization_id = 1;
+}
+
+message GetMaintenanceNotificationResponse {
+  // is_enabled indicates whether the  maintenance notification is enabled.
+  bool is_enabled = 1;
+
+  // message is the custom message stored, if any. Empty or not present if no custom message is set.
+  // The frontend will use its own default if this is empty/undefined and is_enabled is true.
+  string message = 2;
+}
+
+message SetMaintenanceNotificationRequest {
+  // organization_id is the ID of the organization to set the notification settings for.
+  string organization_id = 1;
+
+  // is_enabled indicates whether the  maintenance notification should be enabled or disabled.
+  bool is_enabled = 2;
+
+  // custom_message is the user-provided custom message for the notification.
+  // If not provided or empty, the backend stores undefined/empty for the message.
+  optional string custom_message = 3;
+}
+
+message SetMaintenanceNotificationResponse {
+  // is_enabled indicates the new notification enabled status after the update.
+  bool is_enabled = 1;
+
+  // message is the custom message that is now stored, if any.
+  optional string message = 2;
 }

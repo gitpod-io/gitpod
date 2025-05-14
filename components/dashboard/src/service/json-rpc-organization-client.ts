@@ -22,6 +22,8 @@ import {
     GetOrganizationResponse,
     GetOrganizationSettingsRequest,
     GetOrganizationSettingsResponse,
+    GetMaintenanceNotificationRequest,
+    GetMaintenanceNotificationResponse,
     JoinOrganizationRequest,
     JoinOrganizationResponse,
     ListOrganizationMembersRequest,
@@ -35,6 +37,8 @@ import {
     ResetOrganizationInvitationResponse,
     SetOrganizationMaintenanceModeRequest,
     SetOrganizationMaintenanceModeResponse,
+    SetMaintenanceNotificationRequest,
+    SetMaintenanceNotificationResponse,
     UpdateOrganizationMemberRequest,
     UpdateOrganizationMemberResponse,
     UpdateOrganizationRequest,
@@ -299,7 +303,7 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
         }
         const result = await getGitpodService().server.getTeam(request.organizationId);
         return new GetOrganizationMaintenanceModeResponse({
-            enabled: result.maintenanceMode,
+            enabled: !!result.maintenanceMode,
         });
     }
 
@@ -314,7 +318,40 @@ export class JsonRpcOrganizationClient implements PromiseClient<typeof Organizat
             maintenanceMode: request.enabled,
         });
         return new SetOrganizationMaintenanceModeResponse({
-            enabled: result.maintenanceMode,
+            enabled: !!result.maintenanceMode,
+        });
+    }
+
+    async getMaintenanceNotification(
+        request: PartialMessage<GetMaintenanceNotificationRequest>,
+        options?: CallOptions | undefined,
+    ): Promise<GetMaintenanceNotificationResponse> {
+        if (!request.organizationId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+        const result = await getGitpodService().server.getTeam(request.organizationId);
+        return new GetMaintenanceNotificationResponse({
+            isEnabled: result.maintenanceNotification?.enabled || false,
+            message: result.maintenanceNotification?.message || "",
+        });
+    }
+
+    async setMaintenanceNotification(
+        request: PartialMessage<SetMaintenanceNotificationRequest>,
+        options?: CallOptions | undefined,
+    ): Promise<SetMaintenanceNotificationResponse> {
+        if (!request.organizationId) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organizationId is required");
+        }
+        const result = await getGitpodService().server.updateTeam(request.organizationId, {
+            maintenanceNotification: {
+                enabled: !!request.isEnabled,
+                message: request.customMessage,
+            },
+        });
+        return new SetMaintenanceNotificationResponse({
+            isEnabled: result.maintenanceNotification?.enabled || false,
+            message: result.maintenanceNotification?.message || "",
         });
     }
 }
