@@ -76,6 +76,7 @@ import { PublicAPIConverter } from "@gitpod/public-api-common/lib/public-api-con
 import { WatchWorkspaceStatusResponse } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { ContextParser } from "./context-parser-service";
 import { scrubber, TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
+import { WorkspacePermission } from "../authorization/definitions";
 
 export const GIT_STATUS_LENGTH_CAP_BYTES = 4096;
 
@@ -304,13 +305,22 @@ export class WorkspaceService {
     }
 
     // Internal method for allowing for additional DBs to be passed in
-    private async doGetWorkspace(userId: string, workspaceId: string, db: WorkspaceDB = this.db): Promise<Workspace> {
+    private async doGetWorkspace(
+        userId: string,
+        workspaceId: string,
+        db: WorkspaceDB = this.db,
+        stopOnly: boolean = false,
+    ): Promise<Workspace> {
         const workspace = await db.findById(workspaceId);
 
         if (workspace?.type === "prebuild" && workspace.projectId) {
             await this.auth.checkPermissionOnProject(userId, "read_prebuild", workspace.projectId);
         } else {
-            await this.auth.checkPermissionOnWorkspace(userId, "access", workspaceId);
+            let effectivePermission: WorkspacePermission = "access";
+            if (stopOnly) {
+                effectivePermission = "stop";
+            }
+            await this.auth.checkPermissionOnWorkspace(userId, effectivePermission, workspaceId);
         }
 
         // TODO(gpl) We might want to add || !!workspace.softDeleted here in the future, but we were unsure how that would affect existing clients
@@ -366,12 +376,13 @@ export class WorkspaceService {
             await this.auth.checkPermissionOnWorkspace(userId, "stop", workspaceId);
         }
 
-        const workspace = await this.doGetWorkspace(userId, workspaceId);
+        const workspace = await this.doGetWorkspace(userId, workspaceId, this.db, true);
         const instance = await this.db.findRunningInstance(workspace.id);
         if (!instance) {
             // there's no instance running - we're done
             return;
         }
+
         await this.workspaceStarter.stopWorkspaceInstance({}, instance.id, instance.region, reason, policy);
         this.asyncUpdateDeletionEligibilityTime(userId, workspaceId, true);
     }
