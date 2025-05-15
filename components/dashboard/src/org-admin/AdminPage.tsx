@@ -14,6 +14,7 @@ import { SpinnerLoader } from "../components/Loader";
 import { RunningWorkspacesCard } from "./RunningWorkspacesCard";
 import { MaintenanceModeCard } from "./MaintenanceModeCard";
 import { MaintenanceNotificationCard } from "./MaintenanceNotificationCard";
+import { Heading2 } from "@podkit/typography/Headings";
 
 const AdminPage: React.FC = () => {
     const history = useHistory();
@@ -33,8 +34,8 @@ const AdminPage: React.FC = () => {
     return (
         <div className="flex flex-col w-full">
             <Header title="Organization Administration" subtitle="Manage Infrastructure Rollouts." />
-            <div className="app-container py-6">
-                <h2 className="text-2xl font-semibold text-pk-content-primary mb-4">Infrastructure Rollout</h2>
+            <div className="app-container py-6 flex flex-col gap-4">
+                <Heading2>Infrastructure Rollout</Heading2>
 
                 {userLoading ||
                     orgLoading ||

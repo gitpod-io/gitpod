@@ -7,8 +7,8 @@
 import { FC } from "react";
 import { useToast } from "../components/toasts/Toasts";
 import { Button } from "@podkit/buttons/Button";
-import { useMaintenanceMode } from "../data/maintenande-mode/maintenance-mode-query";
-import { useSetMaintenanceModeMutation } from "../data/maintenande-mode/maintenance-mode-mutation";
+import { useMaintenanceMode } from "../data/maintenance-mode/maintenance-mode-query";
+import { useSetMaintenanceModeMutation } from "../data/maintenance-mode/maintenance-mode-mutation";
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
 import { Heading3 } from "@podkit/typography/Headings";
 
@@ -37,7 +37,7 @@ export const MaintenanceModeCard: FC = () => {
             <div className="flex justify-between items-center">
                 <div>
                     <Heading3>Maintenance Mode</Heading3>
-                    <p className="textpk-content-tertiary">
+                    <p className="text-pk-content-tertiary">
                         When enabled, users cannot start new workspaces and a notification is displayed.
                     </p>
                 </div>

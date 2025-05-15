@@ -12,7 +12,7 @@ import { useWorkspaceSessions } from "../data/insights/list-workspace-sessions-q
 import { Button } from "@podkit/buttons/Button";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { useToast } from "../components/toasts/Toasts";
-import { useMaintenanceMode } from "../data/maintenande-mode/maintenance-mode-query";
+import { useMaintenanceMode } from "../data/maintenance-mode/maintenance-mode-query";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import Alert from "../components/Alert";
 import Spinner from "../icons/Spinner.svg";
@@ -24,13 +24,11 @@ import { ConfigurationSettingsField } from "../repositories/detail/Configuration
 import { Heading3 } from "../components/typography/headings";
 import Tooltip from "../components/Tooltip";
 
-interface RunningWorkspacesCardProps {}
-
 const isWorkspaceNotStopped = (session: WorkspaceSession): boolean => {
     return session.workspace?.status?.phase?.name !== WorkspacePhase_Phase.STOPPED;
 };
 
-export const RunningWorkspacesCard: FC<RunningWorkspacesCardProps> = () => {
+export const RunningWorkspacesCard: FC<{}> = () => {
     const lookbackHours = 48;
     const [isStopAllModalOpen, setIsStopAllModalOpen] = useState(false);
     const [isStoppingAll, setIsStoppingAll] = useState(false);
@@ -202,7 +200,7 @@ export const RunningWorkspacesCard: FC<RunningWorkspacesCardProps> = () => {
                 buttonType="destructive"
                 buttonDisabled={isStoppingAll}
             >
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+                <p className="text-sm text-pk-content-secondary">
                     Are you sure you want to stop all {runningWorkspaces.length} currently running workspaces in this
                     organization? Workspaces will be backed up before stopping. This action cannot be undone.
                 </p>

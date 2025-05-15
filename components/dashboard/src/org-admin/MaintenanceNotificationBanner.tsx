@@ -6,16 +6,16 @@
 
 import { FC } from "react";
 import Alert from "../components/Alert";
-import { useMaintenanceNotification } from "../data/maintenande-mode/maintenance-notification-query";
-import { useMaintenanceMode } from "../data/maintenande-mode/maintenance-mode-query";
+import { useMaintenanceNotification } from "../data/maintenance-mode/maintenance-notification-query";
+import { useMaintenanceMode } from "../data/maintenance-mode/maintenance-mode-query";
 import { DEFAULT_MESSAGE } from "./MaintenanceNotificationCard";
 
 export const MaintenanceNotificationBanner: FC = () => {
     const { isNotificationEnabled, notificationMessage } = useMaintenanceNotification();
     const { isMaintenanceMode } = useMaintenanceMode();
 
-    // As per requirement R4.5, if both maintenance mode and scheduled notification
-    // are enabled, only show the maintenance mode notification
+    // if both maintenance mode and scheduled notification are enabled,
+    // only show the maintenance mode notification
     if (isMaintenanceMode || !isNotificationEnabled) {
         return null;
     }

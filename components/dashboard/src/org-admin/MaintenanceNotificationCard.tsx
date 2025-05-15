@@ -7,8 +7,8 @@
 import { FC, useState, useEffect } from "react";
 import { useToast } from "../components/toasts/Toasts";
 import { Button } from "@podkit/buttons/Button";
-import { useMaintenanceNotification } from "../data/maintenande-mode/maintenance-notification-query";
-import { useSetMaintenanceNotificationMutation } from "../data/maintenande-mode/maintenance-notification-mutation";
+import { useMaintenanceNotification } from "../data/maintenance-mode/maintenance-notification-query";
+import { useSetMaintenanceNotificationMutation } from "../data/maintenance-mode/maintenance-notification-mutation";
 import Alert from "../components/Alert";
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
 import { Heading3 } from "@podkit/typography/Headings";
@@ -89,7 +89,7 @@ export const MaintenanceNotificationCard: FC = () => {
             <div className="mt-4">
                 <label
                     htmlFor="maintenance-message"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    className="block text-sm font-medium text-pk-content-secondary mb-2"
                 >
                     Notification Message
                 </label>
@@ -118,7 +118,7 @@ export const MaintenanceNotificationCard: FC = () => {
                     </div>
                 ) : (
                     <div>
-                        <div className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 min-h-[4rem]">
+                        <div className="px-3 py-2 border border-pk-border-base rounded-md bg-pk-surface-secondary text-pk-content-secondary min-h-[4rem]">
                             {message}
                         </div>
                         <div className="mt-2 flex justify-end">
@@ -131,11 +131,11 @@ export const MaintenanceNotificationCard: FC = () => {
             </div>
 
             <div className="mt-4">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Preview</label>
+                <label className="block text-sm font-semibold text-pk-content-secondary mb-2">Preview</label>
                 <Alert type="warning" className="mb-0">
-                    <div className="flex items-center">
+                    <div className="flex items-center flex-wrap gap-2">
                         <span className="font-semibold">Scheduled Maintenance:</span>
-                        <span className="ml-2">{message}</span>
+                        <span>{message}</span>
                     </div>
                 </Alert>
             </div>
