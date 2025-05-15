@@ -33,7 +33,7 @@ const AdminPage: React.FC = () => {
 
     return (
         <div className="flex flex-col w-full">
-            <Header title="Organization Administration" subtitle="Manage Infrastructure Rollouts." />
+            <Header title="Organization Administration" subtitle="Manage Infrastructure Rollouts" />
             <div className="app-container py-6 flex flex-col gap-4">
                 <Heading2>Infrastructure Rollout</Heading2>
 
