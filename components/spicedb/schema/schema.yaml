@@ -80,6 +80,9 @@ schema: |-
 
       permission read_audit_logs = owner + installation->admin
 
+      // Maintenance mode permission
+      permission maintenance = owner + installation->admin
+
       // Operations on Organization's Members
       permission read_members = member + owner + installation->admin
       permission invite_members = member + owner + installation->admin
@@ -143,7 +146,7 @@ schema: |-
       // Note: All of this is modelled after current behavior.
       // There are a lot of improvements we can make here in the light of Organizations, but we explicitly do that as a separate step
       permission start = owner
-      permission stop = owner + org->installation_admin
+      permission stop = owner + org->installation_admin + org->owner
       permission delete = owner
 
       // Whether a user can read basic info/metadata of a workspace

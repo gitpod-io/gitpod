@@ -79,6 +79,7 @@ const ConfigurationDetailPage = React.lazy(
 );
 
 const PrebuildListPage = React.lazy(() => import(/* webpackPrefetch: true */ "../prebuilds/list/PrebuildListPage"));
+const AdminPage = React.lazy(() => import(/* webpackPrefetch: true */ "../org-admin/AdminPage"));
 
 export const AppRoutes = () => {
     const hash = getURLHash();
@@ -205,6 +206,7 @@ export const AppRoutes = () => {
                             {/* TODO: migrate other org settings pages underneath /settings prefix so we can utilize nested routes */}
                             <Route exact path="/billing" component={TeamUsageBasedBilling} />
                             <Route exact path="/sso" component={SSO} />
+                            <Route exact path="/org-admin" component={AdminPage} />
 
                             <Route exact path={`/prebuilds`} component={PrebuildListPage} />
                             <Route path="/prebuilds/:prebuildId" component={PrebuildDetailPage} />

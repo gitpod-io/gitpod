@@ -18,6 +18,8 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { getGitpodService } from "./service/service";
 import { useOrgBillingMode } from "./data/billing-mode/org-billing-mode-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
+import { MaintenanceModeBanner } from "./org-admin/MaintenanceModeBanner";
+import { MaintenanceNotificationBanner } from "./org-admin/MaintenanceNotificationBanner";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 const PRIVACY_POLICY_LAST_UPDATED = "2024-12-03";
@@ -208,29 +210,29 @@ export function AppNotifications() {
         setTopNotification(undefined);
     }, [topNotification, setTopNotification]);
 
-    if (!topNotification) {
-        return <></>;
-    }
-
     return (
         <div className="app-container pt-2">
-            <Alert
-                type={topNotification.type}
-                closable={topNotification.id !== "gitpod-classic-sunset"} // Only show close button if it's not the sunset notification
-                onClose={() => {
-                    if (!topNotification.preventDismiss) {
-                        dismissNotification();
-                    } else {
-                        if (topNotification.onClose) {
-                            topNotification.onClose();
+            <MaintenanceModeBanner />
+            <MaintenanceNotificationBanner />
+            {topNotification && (
+                <Alert
+                    type={topNotification.type}
+                    closable={topNotification.id !== "gitpod-classic-sunset"} // Only show close button if it's not the sunset notification
+                    onClose={() => {
+                        if (!topNotification.preventDismiss) {
+                            dismissNotification();
+                        } else {
+                            if (topNotification.onClose) {
+                                topNotification.onClose();
+                            }
                         }
-                    }
-                }}
-                showIcon={true}
-                className="flex rounded mb-2 w-full"
-            >
-                <span>{topNotification.message}</span>
-            </Alert>
+                    }}
+                    showIcon={true}
+                    className="flex rounded mb-2 w-full"
+                >
+                    <span>{topNotification.message}</span>
+                </Alert>
+            )}
         </div>
     );
 }

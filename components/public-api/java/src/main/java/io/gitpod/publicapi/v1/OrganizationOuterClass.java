@@ -31343,6 +31343,4851 @@ java.lang.String defaultValue) {
 
   }
 
+  public interface GetOrganizationMaintenanceModeRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.GetOrganizationMaintenanceModeRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to retrieve the maintenance mode status for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    java.lang.String getOrganizationId();
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to retrieve the maintenance mode status for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    com.google.protobuf.ByteString
+        getOrganizationIdBytes();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.GetOrganizationMaintenanceModeRequest}
+   */
+  public static final class GetOrganizationMaintenanceModeRequest extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.GetOrganizationMaintenanceModeRequest)
+      GetOrganizationMaintenanceModeRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        GetOrganizationMaintenanceModeRequest.class.getName());
+    }
+    // Use GetOrganizationMaintenanceModeRequest.newBuilder() to construct.
+    private GetOrganizationMaintenanceModeRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private GetOrganizationMaintenanceModeRequest() {
+      organizationId_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetOrganizationMaintenanceModeRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetOrganizationMaintenanceModeRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest.class, io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest.Builder.class);
+    }
+
+    public static final int ORGANIZATION_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object organizationId_ = "";
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to retrieve the maintenance mode status for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    @java.lang.Override
+    public java.lang.String getOrganizationId() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        organizationId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to retrieve the maintenance mode status for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getOrganizationIdBytes() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        organizationId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, organizationId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, organizationId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest other = (io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest) obj;
+
+      if (!getOrganizationId()
+          .equals(other.getOrganizationId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ORGANIZATION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getOrganizationId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.GetOrganizationMaintenanceModeRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.GetOrganizationMaintenanceModeRequest)
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetOrganizationMaintenanceModeRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetOrganizationMaintenanceModeRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest.class, io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        organizationId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetOrganizationMaintenanceModeRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest build() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest buildPartial() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest result = new io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.organizationId_ = organizationId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest) {
+          return mergeFrom((io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest other) {
+        if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest.getDefaultInstance()) return this;
+        if (!other.getOrganizationId().isEmpty()) {
+          organizationId_ = other.organizationId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                organizationId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object organizationId_ = "";
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to retrieve the maintenance mode status for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The organizationId.
+       */
+      public java.lang.String getOrganizationId() {
+        java.lang.Object ref = organizationId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          organizationId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to retrieve the maintenance mode status for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The bytes for organizationId.
+       */
+      public com.google.protobuf.ByteString
+          getOrganizationIdBytes() {
+        java.lang.Object ref = organizationId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          organizationId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to retrieve the maintenance mode status for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to retrieve the maintenance mode status for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOrganizationId() {
+        organizationId_ = getDefaultInstance().getOrganizationId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to retrieve the maintenance mode status for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The bytes for organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.GetOrganizationMaintenanceModeRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.GetOrganizationMaintenanceModeRequest)
+    private static final io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest();
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<GetOrganizationMaintenanceModeRequest>
+        PARSER = new com.google.protobuf.AbstractParser<GetOrganizationMaintenanceModeRequest>() {
+      @java.lang.Override
+      public GetOrganizationMaintenanceModeRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<GetOrganizationMaintenanceModeRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GetOrganizationMaintenanceModeRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface GetOrganizationMaintenanceModeResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.GetOrganizationMaintenanceModeResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * enabled indicates whether maintenance mode is enabled for the organization.
+     * </pre>
+     *
+     * <code>bool enabled = 1 [json_name = "enabled"];</code>
+     * @return The enabled.
+     */
+    boolean getEnabled();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.GetOrganizationMaintenanceModeResponse}
+   */
+  public static final class GetOrganizationMaintenanceModeResponse extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.GetOrganizationMaintenanceModeResponse)
+      GetOrganizationMaintenanceModeResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        GetOrganizationMaintenanceModeResponse.class.getName());
+    }
+    // Use GetOrganizationMaintenanceModeResponse.newBuilder() to construct.
+    private GetOrganizationMaintenanceModeResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private GetOrganizationMaintenanceModeResponse() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetOrganizationMaintenanceModeResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetOrganizationMaintenanceModeResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse.class, io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse.Builder.class);
+    }
+
+    public static final int ENABLED_FIELD_NUMBER = 1;
+    private boolean enabled_ = false;
+    /**
+     * <pre>
+     * enabled indicates whether maintenance mode is enabled for the organization.
+     * </pre>
+     *
+     * <code>bool enabled = 1 [json_name = "enabled"];</code>
+     * @return The enabled.
+     */
+    @java.lang.Override
+    public boolean getEnabled() {
+      return enabled_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (enabled_ != false) {
+        output.writeBool(1, enabled_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (enabled_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, enabled_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse other = (io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse) obj;
+
+      if (getEnabled()
+          != other.getEnabled()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ENABLED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getEnabled());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.GetOrganizationMaintenanceModeResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.GetOrganizationMaintenanceModeResponse)
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetOrganizationMaintenanceModeResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetOrganizationMaintenanceModeResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse.class, io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        enabled_ = false;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetOrganizationMaintenanceModeResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse build() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse buildPartial() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse result = new io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.enabled_ = enabled_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse) {
+          return mergeFrom((io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse other) {
+        if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse.getDefaultInstance()) return this;
+        if (other.getEnabled() != false) {
+          setEnabled(other.getEnabled());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                enabled_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean enabled_ ;
+      /**
+       * <pre>
+       * enabled indicates whether maintenance mode is enabled for the organization.
+       * </pre>
+       *
+       * <code>bool enabled = 1 [json_name = "enabled"];</code>
+       * @return The enabled.
+       */
+      @java.lang.Override
+      public boolean getEnabled() {
+        return enabled_;
+      }
+      /**
+       * <pre>
+       * enabled indicates whether maintenance mode is enabled for the organization.
+       * </pre>
+       *
+       * <code>bool enabled = 1 [json_name = "enabled"];</code>
+       * @param value The enabled to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEnabled(boolean value) {
+
+        enabled_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * enabled indicates whether maintenance mode is enabled for the organization.
+       * </pre>
+       *
+       * <code>bool enabled = 1 [json_name = "enabled"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearEnabled() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        enabled_ = false;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.GetOrganizationMaintenanceModeResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.GetOrganizationMaintenanceModeResponse)
+    private static final io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse();
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<GetOrganizationMaintenanceModeResponse>
+        PARSER = new com.google.protobuf.AbstractParser<GetOrganizationMaintenanceModeResponse>() {
+      @java.lang.Override
+      public GetOrganizationMaintenanceModeResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<GetOrganizationMaintenanceModeResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GetOrganizationMaintenanceModeResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.GetOrganizationMaintenanceModeResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SetOrganizationMaintenanceModeRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.SetOrganizationMaintenanceModeRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to set the maintenance mode status for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    java.lang.String getOrganizationId();
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to set the maintenance mode status for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    com.google.protobuf.ByteString
+        getOrganizationIdBytes();
+
+    /**
+     * <pre>
+     * enabled indicates whether maintenance mode should be enabled or disabled.
+     * </pre>
+     *
+     * <code>bool enabled = 2 [json_name = "enabled"];</code>
+     * @return The enabled.
+     */
+    boolean getEnabled();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.SetOrganizationMaintenanceModeRequest}
+   */
+  public static final class SetOrganizationMaintenanceModeRequest extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.SetOrganizationMaintenanceModeRequest)
+      SetOrganizationMaintenanceModeRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        SetOrganizationMaintenanceModeRequest.class.getName());
+    }
+    // Use SetOrganizationMaintenanceModeRequest.newBuilder() to construct.
+    private SetOrganizationMaintenanceModeRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private SetOrganizationMaintenanceModeRequest() {
+      organizationId_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetOrganizationMaintenanceModeRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetOrganizationMaintenanceModeRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest.class, io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest.Builder.class);
+    }
+
+    public static final int ORGANIZATION_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object organizationId_ = "";
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to set the maintenance mode status for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    @java.lang.Override
+    public java.lang.String getOrganizationId() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        organizationId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to set the maintenance mode status for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getOrganizationIdBytes() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        organizationId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int ENABLED_FIELD_NUMBER = 2;
+    private boolean enabled_ = false;
+    /**
+     * <pre>
+     * enabled indicates whether maintenance mode should be enabled or disabled.
+     * </pre>
+     *
+     * <code>bool enabled = 2 [json_name = "enabled"];</code>
+     * @return The enabled.
+     */
+    @java.lang.Override
+    public boolean getEnabled() {
+      return enabled_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, organizationId_);
+      }
+      if (enabled_ != false) {
+        output.writeBool(2, enabled_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, organizationId_);
+      }
+      if (enabled_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(2, enabled_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest other = (io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest) obj;
+
+      if (!getOrganizationId()
+          .equals(other.getOrganizationId())) return false;
+      if (getEnabled()
+          != other.getEnabled()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ORGANIZATION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getOrganizationId().hashCode();
+      hash = (37 * hash) + ENABLED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getEnabled());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.SetOrganizationMaintenanceModeRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.SetOrganizationMaintenanceModeRequest)
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetOrganizationMaintenanceModeRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetOrganizationMaintenanceModeRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest.class, io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        organizationId_ = "";
+        enabled_ = false;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetOrganizationMaintenanceModeRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest build() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest buildPartial() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest result = new io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.organizationId_ = organizationId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.enabled_ = enabled_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest) {
+          return mergeFrom((io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest other) {
+        if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest.getDefaultInstance()) return this;
+        if (!other.getOrganizationId().isEmpty()) {
+          organizationId_ = other.organizationId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (other.getEnabled() != false) {
+          setEnabled(other.getEnabled());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                organizationId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 16: {
+                enabled_ = input.readBool();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object organizationId_ = "";
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to set the maintenance mode status for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The organizationId.
+       */
+      public java.lang.String getOrganizationId() {
+        java.lang.Object ref = organizationId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          organizationId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to set the maintenance mode status for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The bytes for organizationId.
+       */
+      public com.google.protobuf.ByteString
+          getOrganizationIdBytes() {
+        java.lang.Object ref = organizationId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          organizationId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to set the maintenance mode status for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to set the maintenance mode status for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOrganizationId() {
+        organizationId_ = getDefaultInstance().getOrganizationId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to set the maintenance mode status for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The bytes for organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private boolean enabled_ ;
+      /**
+       * <pre>
+       * enabled indicates whether maintenance mode should be enabled or disabled.
+       * </pre>
+       *
+       * <code>bool enabled = 2 [json_name = "enabled"];</code>
+       * @return The enabled.
+       */
+      @java.lang.Override
+      public boolean getEnabled() {
+        return enabled_;
+      }
+      /**
+       * <pre>
+       * enabled indicates whether maintenance mode should be enabled or disabled.
+       * </pre>
+       *
+       * <code>bool enabled = 2 [json_name = "enabled"];</code>
+       * @param value The enabled to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEnabled(boolean value) {
+
+        enabled_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * enabled indicates whether maintenance mode should be enabled or disabled.
+       * </pre>
+       *
+       * <code>bool enabled = 2 [json_name = "enabled"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearEnabled() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        enabled_ = false;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.SetOrganizationMaintenanceModeRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.SetOrganizationMaintenanceModeRequest)
+    private static final io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest();
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SetOrganizationMaintenanceModeRequest>
+        PARSER = new com.google.protobuf.AbstractParser<SetOrganizationMaintenanceModeRequest>() {
+      @java.lang.Override
+      public SetOrganizationMaintenanceModeRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SetOrganizationMaintenanceModeRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SetOrganizationMaintenanceModeRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SetOrganizationMaintenanceModeResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.SetOrganizationMaintenanceModeResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * enabled indicates the new maintenance mode status after the update.
+     * </pre>
+     *
+     * <code>bool enabled = 1 [json_name = "enabled"];</code>
+     * @return The enabled.
+     */
+    boolean getEnabled();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.SetOrganizationMaintenanceModeResponse}
+   */
+  public static final class SetOrganizationMaintenanceModeResponse extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.SetOrganizationMaintenanceModeResponse)
+      SetOrganizationMaintenanceModeResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        SetOrganizationMaintenanceModeResponse.class.getName());
+    }
+    // Use SetOrganizationMaintenanceModeResponse.newBuilder() to construct.
+    private SetOrganizationMaintenanceModeResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private SetOrganizationMaintenanceModeResponse() {
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetOrganizationMaintenanceModeResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetOrganizationMaintenanceModeResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse.class, io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse.Builder.class);
+    }
+
+    public static final int ENABLED_FIELD_NUMBER = 1;
+    private boolean enabled_ = false;
+    /**
+     * <pre>
+     * enabled indicates the new maintenance mode status after the update.
+     * </pre>
+     *
+     * <code>bool enabled = 1 [json_name = "enabled"];</code>
+     * @return The enabled.
+     */
+    @java.lang.Override
+    public boolean getEnabled() {
+      return enabled_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (enabled_ != false) {
+        output.writeBool(1, enabled_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (enabled_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, enabled_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse other = (io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse) obj;
+
+      if (getEnabled()
+          != other.getEnabled()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ENABLED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getEnabled());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.SetOrganizationMaintenanceModeResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.SetOrganizationMaintenanceModeResponse)
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetOrganizationMaintenanceModeResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetOrganizationMaintenanceModeResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse.class, io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        enabled_ = false;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetOrganizationMaintenanceModeResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse build() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse buildPartial() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse result = new io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.enabled_ = enabled_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse) {
+          return mergeFrom((io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse other) {
+        if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse.getDefaultInstance()) return this;
+        if (other.getEnabled() != false) {
+          setEnabled(other.getEnabled());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                enabled_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean enabled_ ;
+      /**
+       * <pre>
+       * enabled indicates the new maintenance mode status after the update.
+       * </pre>
+       *
+       * <code>bool enabled = 1 [json_name = "enabled"];</code>
+       * @return The enabled.
+       */
+      @java.lang.Override
+      public boolean getEnabled() {
+        return enabled_;
+      }
+      /**
+       * <pre>
+       * enabled indicates the new maintenance mode status after the update.
+       * </pre>
+       *
+       * <code>bool enabled = 1 [json_name = "enabled"];</code>
+       * @param value The enabled to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEnabled(boolean value) {
+
+        enabled_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * enabled indicates the new maintenance mode status after the update.
+       * </pre>
+       *
+       * <code>bool enabled = 1 [json_name = "enabled"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearEnabled() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        enabled_ = false;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.SetOrganizationMaintenanceModeResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.SetOrganizationMaintenanceModeResponse)
+    private static final io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse();
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SetOrganizationMaintenanceModeResponse>
+        PARSER = new com.google.protobuf.AbstractParser<SetOrganizationMaintenanceModeResponse>() {
+      @java.lang.Override
+      public SetOrganizationMaintenanceModeResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SetOrganizationMaintenanceModeResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SetOrganizationMaintenanceModeResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.SetOrganizationMaintenanceModeResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface GetMaintenanceNotificationRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.GetMaintenanceNotificationRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to retrieve the notification settings for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    java.lang.String getOrganizationId();
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to retrieve the notification settings for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    com.google.protobuf.ByteString
+        getOrganizationIdBytes();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.GetMaintenanceNotificationRequest}
+   */
+  public static final class GetMaintenanceNotificationRequest extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.GetMaintenanceNotificationRequest)
+      GetMaintenanceNotificationRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        GetMaintenanceNotificationRequest.class.getName());
+    }
+    // Use GetMaintenanceNotificationRequest.newBuilder() to construct.
+    private GetMaintenanceNotificationRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private GetMaintenanceNotificationRequest() {
+      organizationId_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetMaintenanceNotificationRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetMaintenanceNotificationRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest.class, io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest.Builder.class);
+    }
+
+    public static final int ORGANIZATION_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object organizationId_ = "";
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to retrieve the notification settings for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    @java.lang.Override
+    public java.lang.String getOrganizationId() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        organizationId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to retrieve the notification settings for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getOrganizationIdBytes() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        organizationId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, organizationId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, organizationId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest other = (io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest) obj;
+
+      if (!getOrganizationId()
+          .equals(other.getOrganizationId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ORGANIZATION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getOrganizationId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.GetMaintenanceNotificationRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.GetMaintenanceNotificationRequest)
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetMaintenanceNotificationRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetMaintenanceNotificationRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest.class, io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        organizationId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetMaintenanceNotificationRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest build() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest buildPartial() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest result = new io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.organizationId_ = organizationId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest) {
+          return mergeFrom((io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest other) {
+        if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest.getDefaultInstance()) return this;
+        if (!other.getOrganizationId().isEmpty()) {
+          organizationId_ = other.organizationId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                organizationId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object organizationId_ = "";
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to retrieve the notification settings for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The organizationId.
+       */
+      public java.lang.String getOrganizationId() {
+        java.lang.Object ref = organizationId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          organizationId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to retrieve the notification settings for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The bytes for organizationId.
+       */
+      public com.google.protobuf.ByteString
+          getOrganizationIdBytes() {
+        java.lang.Object ref = organizationId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          organizationId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to retrieve the notification settings for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to retrieve the notification settings for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOrganizationId() {
+        organizationId_ = getDefaultInstance().getOrganizationId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to retrieve the notification settings for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The bytes for organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.GetMaintenanceNotificationRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.GetMaintenanceNotificationRequest)
+    private static final io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest();
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<GetMaintenanceNotificationRequest>
+        PARSER = new com.google.protobuf.AbstractParser<GetMaintenanceNotificationRequest>() {
+      @java.lang.Override
+      public GetMaintenanceNotificationRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<GetMaintenanceNotificationRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GetMaintenanceNotificationRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface GetMaintenanceNotificationResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.GetMaintenanceNotificationResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * is_enabled indicates whether the  maintenance notification is enabled.
+     * </pre>
+     *
+     * <code>bool is_enabled = 1 [json_name = "isEnabled"];</code>
+     * @return The isEnabled.
+     */
+    boolean getIsEnabled();
+
+    /**
+     * <pre>
+     * message is the custom message stored, if any. Empty or not present if no custom message is set.
+     * The frontend will use its own default if this is empty/undefined and is_enabled is true.
+     * </pre>
+     *
+     * <code>string message = 2 [json_name = "message"];</code>
+     * @return The message.
+     */
+    java.lang.String getMessage();
+    /**
+     * <pre>
+     * message is the custom message stored, if any. Empty or not present if no custom message is set.
+     * The frontend will use its own default if this is empty/undefined and is_enabled is true.
+     * </pre>
+     *
+     * <code>string message = 2 [json_name = "message"];</code>
+     * @return The bytes for message.
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.GetMaintenanceNotificationResponse}
+   */
+  public static final class GetMaintenanceNotificationResponse extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.GetMaintenanceNotificationResponse)
+      GetMaintenanceNotificationResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        GetMaintenanceNotificationResponse.class.getName());
+    }
+    // Use GetMaintenanceNotificationResponse.newBuilder() to construct.
+    private GetMaintenanceNotificationResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private GetMaintenanceNotificationResponse() {
+      message_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetMaintenanceNotificationResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetMaintenanceNotificationResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse.class, io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse.Builder.class);
+    }
+
+    public static final int IS_ENABLED_FIELD_NUMBER = 1;
+    private boolean isEnabled_ = false;
+    /**
+     * <pre>
+     * is_enabled indicates whether the  maintenance notification is enabled.
+     * </pre>
+     *
+     * <code>bool is_enabled = 1 [json_name = "isEnabled"];</code>
+     * @return The isEnabled.
+     */
+    @java.lang.Override
+    public boolean getIsEnabled() {
+      return isEnabled_;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object message_ = "";
+    /**
+     * <pre>
+     * message is the custom message stored, if any. Empty or not present if no custom message is set.
+     * The frontend will use its own default if this is empty/undefined and is_enabled is true.
+     * </pre>
+     *
+     * <code>string message = 2 [json_name = "message"];</code>
+     * @return The message.
+     */
+    @java.lang.Override
+    public java.lang.String getMessage() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        message_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * message is the custom message stored, if any. Empty or not present if no custom message is set.
+     * The frontend will use its own default if this is empty/undefined and is_enabled is true.
+     * </pre>
+     *
+     * <code>string message = 2 [json_name = "message"];</code>
+     * @return The bytes for message.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        message_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (isEnabled_ != false) {
+        output.writeBool(1, isEnabled_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(message_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, message_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (isEnabled_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, isEnabled_);
+      }
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(message_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, message_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse other = (io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse) obj;
+
+      if (getIsEnabled()
+          != other.getIsEnabled()) return false;
+      if (!getMessage()
+          .equals(other.getMessage())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + IS_ENABLED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getIsEnabled());
+      hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
+      hash = (53 * hash) + getMessage().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.GetMaintenanceNotificationResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.GetMaintenanceNotificationResponse)
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetMaintenanceNotificationResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetMaintenanceNotificationResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse.class, io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        isEnabled_ = false;
+        message_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_GetMaintenanceNotificationResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse build() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse buildPartial() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse result = new io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.isEnabled_ = isEnabled_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.message_ = message_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse) {
+          return mergeFrom((io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse other) {
+        if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse.getDefaultInstance()) return this;
+        if (other.getIsEnabled() != false) {
+          setIsEnabled(other.getIsEnabled());
+        }
+        if (!other.getMessage().isEmpty()) {
+          message_ = other.message_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                isEnabled_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 18: {
+                message_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean isEnabled_ ;
+      /**
+       * <pre>
+       * is_enabled indicates whether the  maintenance notification is enabled.
+       * </pre>
+       *
+       * <code>bool is_enabled = 1 [json_name = "isEnabled"];</code>
+       * @return The isEnabled.
+       */
+      @java.lang.Override
+      public boolean getIsEnabled() {
+        return isEnabled_;
+      }
+      /**
+       * <pre>
+       * is_enabled indicates whether the  maintenance notification is enabled.
+       * </pre>
+       *
+       * <code>bool is_enabled = 1 [json_name = "isEnabled"];</code>
+       * @param value The isEnabled to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIsEnabled(boolean value) {
+
+        isEnabled_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * is_enabled indicates whether the  maintenance notification is enabled.
+       * </pre>
+       *
+       * <code>bool is_enabled = 1 [json_name = "isEnabled"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearIsEnabled() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        isEnabled_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object message_ = "";
+      /**
+       * <pre>
+       * message is the custom message stored, if any. Empty or not present if no custom message is set.
+       * The frontend will use its own default if this is empty/undefined and is_enabled is true.
+       * </pre>
+       *
+       * <code>string message = 2 [json_name = "message"];</code>
+       * @return The message.
+       */
+      public java.lang.String getMessage() {
+        java.lang.Object ref = message_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          message_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * message is the custom message stored, if any. Empty or not present if no custom message is set.
+       * The frontend will use its own default if this is empty/undefined and is_enabled is true.
+       * </pre>
+       *
+       * <code>string message = 2 [json_name = "message"];</code>
+       * @return The bytes for message.
+       */
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        java.lang.Object ref = message_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          message_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * message is the custom message stored, if any. Empty or not present if no custom message is set.
+       * The frontend will use its own default if this is empty/undefined and is_enabled is true.
+       * </pre>
+       *
+       * <code>string message = 2 [json_name = "message"];</code>
+       * @param value The message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        message_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * message is the custom message stored, if any. Empty or not present if no custom message is set.
+       * The frontend will use its own default if this is empty/undefined and is_enabled is true.
+       * </pre>
+       *
+       * <code>string message = 2 [json_name = "message"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMessage() {
+        message_ = getDefaultInstance().getMessage();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * message is the custom message stored, if any. Empty or not present if no custom message is set.
+       * The frontend will use its own default if this is empty/undefined and is_enabled is true.
+       * </pre>
+       *
+       * <code>string message = 2 [json_name = "message"];</code>
+       * @param value The bytes for message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        message_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.GetMaintenanceNotificationResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.GetMaintenanceNotificationResponse)
+    private static final io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse();
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<GetMaintenanceNotificationResponse>
+        PARSER = new com.google.protobuf.AbstractParser<GetMaintenanceNotificationResponse>() {
+      @java.lang.Override
+      public GetMaintenanceNotificationResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<GetMaintenanceNotificationResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GetMaintenanceNotificationResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.GetMaintenanceNotificationResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SetMaintenanceNotificationRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.SetMaintenanceNotificationRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to set the notification settings for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    java.lang.String getOrganizationId();
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to set the notification settings for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    com.google.protobuf.ByteString
+        getOrganizationIdBytes();
+
+    /**
+     * <pre>
+     * is_enabled indicates whether the  maintenance notification should be enabled or disabled.
+     * </pre>
+     *
+     * <code>bool is_enabled = 2 [json_name = "isEnabled"];</code>
+     * @return The isEnabled.
+     */
+    boolean getIsEnabled();
+
+    /**
+     * <pre>
+     * custom_message is the user-provided custom message for the notification.
+     * If not provided or empty, the backend stores undefined/empty for the message.
+     * </pre>
+     *
+     * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+     * @return Whether the customMessage field is set.
+     */
+    boolean hasCustomMessage();
+    /**
+     * <pre>
+     * custom_message is the user-provided custom message for the notification.
+     * If not provided or empty, the backend stores undefined/empty for the message.
+     * </pre>
+     *
+     * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+     * @return The customMessage.
+     */
+    java.lang.String getCustomMessage();
+    /**
+     * <pre>
+     * custom_message is the user-provided custom message for the notification.
+     * If not provided or empty, the backend stores undefined/empty for the message.
+     * </pre>
+     *
+     * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+     * @return The bytes for customMessage.
+     */
+    com.google.protobuf.ByteString
+        getCustomMessageBytes();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.SetMaintenanceNotificationRequest}
+   */
+  public static final class SetMaintenanceNotificationRequest extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.SetMaintenanceNotificationRequest)
+      SetMaintenanceNotificationRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        SetMaintenanceNotificationRequest.class.getName());
+    }
+    // Use SetMaintenanceNotificationRequest.newBuilder() to construct.
+    private SetMaintenanceNotificationRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private SetMaintenanceNotificationRequest() {
+      organizationId_ = "";
+      customMessage_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetMaintenanceNotificationRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetMaintenanceNotificationRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest.class, io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int ORGANIZATION_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object organizationId_ = "";
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to set the notification settings for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The organizationId.
+     */
+    @java.lang.Override
+    public java.lang.String getOrganizationId() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        organizationId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * organization_id is the ID of the organization to set the notification settings for.
+     * </pre>
+     *
+     * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+     * @return The bytes for organizationId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getOrganizationIdBytes() {
+      java.lang.Object ref = organizationId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        organizationId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int IS_ENABLED_FIELD_NUMBER = 2;
+    private boolean isEnabled_ = false;
+    /**
+     * <pre>
+     * is_enabled indicates whether the  maintenance notification should be enabled or disabled.
+     * </pre>
+     *
+     * <code>bool is_enabled = 2 [json_name = "isEnabled"];</code>
+     * @return The isEnabled.
+     */
+    @java.lang.Override
+    public boolean getIsEnabled() {
+      return isEnabled_;
+    }
+
+    public static final int CUSTOM_MESSAGE_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object customMessage_ = "";
+    /**
+     * <pre>
+     * custom_message is the user-provided custom message for the notification.
+     * If not provided or empty, the backend stores undefined/empty for the message.
+     * </pre>
+     *
+     * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+     * @return Whether the customMessage field is set.
+     */
+    @java.lang.Override
+    public boolean hasCustomMessage() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <pre>
+     * custom_message is the user-provided custom message for the notification.
+     * If not provided or empty, the backend stores undefined/empty for the message.
+     * </pre>
+     *
+     * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+     * @return The customMessage.
+     */
+    @java.lang.Override
+    public java.lang.String getCustomMessage() {
+      java.lang.Object ref = customMessage_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        customMessage_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * custom_message is the user-provided custom message for the notification.
+     * If not provided or empty, the backend stores undefined/empty for the message.
+     * </pre>
+     *
+     * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+     * @return The bytes for customMessage.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getCustomMessageBytes() {
+      java.lang.Object ref = customMessage_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        customMessage_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 1, organizationId_);
+      }
+      if (isEnabled_ != false) {
+        output.writeBool(2, isEnabled_);
+      }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 3, customMessage_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessage.isStringEmpty(organizationId_)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, organizationId_);
+      }
+      if (isEnabled_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(2, isEnabled_);
+      }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(3, customMessage_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest other = (io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest) obj;
+
+      if (!getOrganizationId()
+          .equals(other.getOrganizationId())) return false;
+      if (getIsEnabled()
+          != other.getIsEnabled()) return false;
+      if (hasCustomMessage() != other.hasCustomMessage()) return false;
+      if (hasCustomMessage()) {
+        if (!getCustomMessage()
+            .equals(other.getCustomMessage())) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ORGANIZATION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getOrganizationId().hashCode();
+      hash = (37 * hash) + IS_ENABLED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getIsEnabled());
+      if (hasCustomMessage()) {
+        hash = (37 * hash) + CUSTOM_MESSAGE_FIELD_NUMBER;
+        hash = (53 * hash) + getCustomMessage().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.SetMaintenanceNotificationRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.SetMaintenanceNotificationRequest)
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetMaintenanceNotificationRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetMaintenanceNotificationRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest.class, io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        organizationId_ = "";
+        isEnabled_ = false;
+        customMessage_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetMaintenanceNotificationRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest build() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest buildPartial() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest result = new io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.organizationId_ = organizationId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.isEnabled_ = isEnabled_;
+        }
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.customMessage_ = customMessage_;
+          to_bitField0_ |= 0x00000001;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest) {
+          return mergeFrom((io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest other) {
+        if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest.getDefaultInstance()) return this;
+        if (!other.getOrganizationId().isEmpty()) {
+          organizationId_ = other.organizationId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (other.getIsEnabled() != false) {
+          setIsEnabled(other.getIsEnabled());
+        }
+        if (other.hasCustomMessage()) {
+          customMessage_ = other.customMessage_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                organizationId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 16: {
+                isEnabled_ = input.readBool();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
+              case 26: {
+                customMessage_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object organizationId_ = "";
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to set the notification settings for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The organizationId.
+       */
+      public java.lang.String getOrganizationId() {
+        java.lang.Object ref = organizationId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          organizationId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to set the notification settings for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return The bytes for organizationId.
+       */
+      public com.google.protobuf.ByteString
+          getOrganizationIdBytes() {
+        java.lang.Object ref = organizationId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          organizationId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to set the notification settings for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to set the notification settings for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOrganizationId() {
+        organizationId_ = getDefaultInstance().getOrganizationId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * organization_id is the ID of the organization to set the notification settings for.
+       * </pre>
+       *
+       * <code>string organization_id = 1 [json_name = "organizationId"];</code>
+       * @param value The bytes for organizationId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrganizationIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        organizationId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private boolean isEnabled_ ;
+      /**
+       * <pre>
+       * is_enabled indicates whether the  maintenance notification should be enabled or disabled.
+       * </pre>
+       *
+       * <code>bool is_enabled = 2 [json_name = "isEnabled"];</code>
+       * @return The isEnabled.
+       */
+      @java.lang.Override
+      public boolean getIsEnabled() {
+        return isEnabled_;
+      }
+      /**
+       * <pre>
+       * is_enabled indicates whether the  maintenance notification should be enabled or disabled.
+       * </pre>
+       *
+       * <code>bool is_enabled = 2 [json_name = "isEnabled"];</code>
+       * @param value The isEnabled to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIsEnabled(boolean value) {
+
+        isEnabled_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * is_enabled indicates whether the  maintenance notification should be enabled or disabled.
+       * </pre>
+       *
+       * <code>bool is_enabled = 2 [json_name = "isEnabled"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearIsEnabled() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        isEnabled_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object customMessage_ = "";
+      /**
+       * <pre>
+       * custom_message is the user-provided custom message for the notification.
+       * If not provided or empty, the backend stores undefined/empty for the message.
+       * </pre>
+       *
+       * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+       * @return Whether the customMessage field is set.
+       */
+      public boolean hasCustomMessage() {
+        return ((bitField0_ & 0x00000004) != 0);
+      }
+      /**
+       * <pre>
+       * custom_message is the user-provided custom message for the notification.
+       * If not provided or empty, the backend stores undefined/empty for the message.
+       * </pre>
+       *
+       * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+       * @return The customMessage.
+       */
+      public java.lang.String getCustomMessage() {
+        java.lang.Object ref = customMessage_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          customMessage_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * custom_message is the user-provided custom message for the notification.
+       * If not provided or empty, the backend stores undefined/empty for the message.
+       * </pre>
+       *
+       * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+       * @return The bytes for customMessage.
+       */
+      public com.google.protobuf.ByteString
+          getCustomMessageBytes() {
+        java.lang.Object ref = customMessage_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          customMessage_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * custom_message is the user-provided custom message for the notification.
+       * If not provided or empty, the backend stores undefined/empty for the message.
+       * </pre>
+       *
+       * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+       * @param value The customMessage to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCustomMessage(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        customMessage_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * custom_message is the user-provided custom message for the notification.
+       * If not provided or empty, the backend stores undefined/empty for the message.
+       * </pre>
+       *
+       * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCustomMessage() {
+        customMessage_ = getDefaultInstance().getCustomMessage();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * custom_message is the user-provided custom message for the notification.
+       * If not provided or empty, the backend stores undefined/empty for the message.
+       * </pre>
+       *
+       * <code>optional string custom_message = 3 [json_name = "customMessage"];</code>
+       * @param value The bytes for customMessage to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCustomMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        customMessage_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.SetMaintenanceNotificationRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.SetMaintenanceNotificationRequest)
+    private static final io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest();
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SetMaintenanceNotificationRequest>
+        PARSER = new com.google.protobuf.AbstractParser<SetMaintenanceNotificationRequest>() {
+      @java.lang.Override
+      public SetMaintenanceNotificationRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SetMaintenanceNotificationRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SetMaintenanceNotificationRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SetMaintenanceNotificationResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:gitpod.v1.SetMaintenanceNotificationResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <pre>
+     * is_enabled indicates the new notification enabled status after the update.
+     * </pre>
+     *
+     * <code>bool is_enabled = 1 [json_name = "isEnabled"];</code>
+     * @return The isEnabled.
+     */
+    boolean getIsEnabled();
+
+    /**
+     * <pre>
+     * message is the custom message that is now stored, if any.
+     * </pre>
+     *
+     * <code>optional string message = 2 [json_name = "message"];</code>
+     * @return Whether the message field is set.
+     */
+    boolean hasMessage();
+    /**
+     * <pre>
+     * message is the custom message that is now stored, if any.
+     * </pre>
+     *
+     * <code>optional string message = 2 [json_name = "message"];</code>
+     * @return The message.
+     */
+    java.lang.String getMessage();
+    /**
+     * <pre>
+     * message is the custom message that is now stored, if any.
+     * </pre>
+     *
+     * <code>optional string message = 2 [json_name = "message"];</code>
+     * @return The bytes for message.
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+  }
+  /**
+   * Protobuf type {@code gitpod.v1.SetMaintenanceNotificationResponse}
+   */
+  public static final class SetMaintenanceNotificationResponse extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:gitpod.v1.SetMaintenanceNotificationResponse)
+      SetMaintenanceNotificationResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    static {
+      com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 27,
+        /* patch= */ 2,
+        /* suffix= */ "",
+        SetMaintenanceNotificationResponse.class.getName());
+    }
+    // Use SetMaintenanceNotificationResponse.newBuilder() to construct.
+    private SetMaintenanceNotificationResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+    }
+    private SetMaintenanceNotificationResponse() {
+      message_ = "";
+    }
+
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetMaintenanceNotificationResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetMaintenanceNotificationResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse.class, io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse.Builder.class);
+    }
+
+    private int bitField0_;
+    public static final int IS_ENABLED_FIELD_NUMBER = 1;
+    private boolean isEnabled_ = false;
+    /**
+     * <pre>
+     * is_enabled indicates the new notification enabled status after the update.
+     * </pre>
+     *
+     * <code>bool is_enabled = 1 [json_name = "isEnabled"];</code>
+     * @return The isEnabled.
+     */
+    @java.lang.Override
+    public boolean getIsEnabled() {
+      return isEnabled_;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object message_ = "";
+    /**
+     * <pre>
+     * message is the custom message that is now stored, if any.
+     * </pre>
+     *
+     * <code>optional string message = 2 [json_name = "message"];</code>
+     * @return Whether the message field is set.
+     */
+    @java.lang.Override
+    public boolean hasMessage() {
+      return ((bitField0_ & 0x00000001) != 0);
+    }
+    /**
+     * <pre>
+     * message is the custom message that is now stored, if any.
+     * </pre>
+     *
+     * <code>optional string message = 2 [json_name = "message"];</code>
+     * @return The message.
+     */
+    @java.lang.Override
+    public java.lang.String getMessage() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        message_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * message is the custom message that is now stored, if any.
+     * </pre>
+     *
+     * <code>optional string message = 2 [json_name = "message"];</code>
+     * @return The bytes for message.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        message_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (isEnabled_ != false) {
+        output.writeBool(1, isEnabled_);
+      }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        com.google.protobuf.GeneratedMessage.writeString(output, 2, message_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (isEnabled_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, isEnabled_);
+      }
+      if (((bitField0_ & 0x00000001) != 0)) {
+        size += com.google.protobuf.GeneratedMessage.computeStringSize(2, message_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse)) {
+        return super.equals(obj);
+      }
+      io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse other = (io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse) obj;
+
+      if (getIsEnabled()
+          != other.getIsEnabled()) return false;
+      if (hasMessage() != other.hasMessage()) return false;
+      if (hasMessage()) {
+        if (!getMessage()
+            .equals(other.getMessage())) return false;
+      }
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + IS_ENABLED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getIsEnabled());
+      if (hasMessage()) {
+        hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
+        hash = (53 * hash) + getMessage().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessage
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code gitpod.v1.SetMaintenanceNotificationResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:gitpod.v1.SetMaintenanceNotificationResponse)
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetMaintenanceNotificationResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetMaintenanceNotificationResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse.class, io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse.Builder.class);
+      }
+
+      // Construct using io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        isEnabled_ = false;
+        message_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.internal_static_gitpod_v1_SetMaintenanceNotificationResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse getDefaultInstanceForType() {
+        return io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse build() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse buildPartial() {
+        io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse result = new io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.isEnabled_ = isEnabled_;
+        }
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.message_ = message_;
+          to_bitField0_ |= 0x00000001;
+        }
+        result.bitField0_ |= to_bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse) {
+          return mergeFrom((io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse other) {
+        if (other == io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse.getDefaultInstance()) return this;
+        if (other.getIsEnabled() != false) {
+          setIsEnabled(other.getIsEnabled());
+        }
+        if (other.hasMessage()) {
+          message_ = other.message_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                isEnabled_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 18: {
+                message_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean isEnabled_ ;
+      /**
+       * <pre>
+       * is_enabled indicates the new notification enabled status after the update.
+       * </pre>
+       *
+       * <code>bool is_enabled = 1 [json_name = "isEnabled"];</code>
+       * @return The isEnabled.
+       */
+      @java.lang.Override
+      public boolean getIsEnabled() {
+        return isEnabled_;
+      }
+      /**
+       * <pre>
+       * is_enabled indicates the new notification enabled status after the update.
+       * </pre>
+       *
+       * <code>bool is_enabled = 1 [json_name = "isEnabled"];</code>
+       * @param value The isEnabled to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIsEnabled(boolean value) {
+
+        isEnabled_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * is_enabled indicates the new notification enabled status after the update.
+       * </pre>
+       *
+       * <code>bool is_enabled = 1 [json_name = "isEnabled"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearIsEnabled() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        isEnabled_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object message_ = "";
+      /**
+       * <pre>
+       * message is the custom message that is now stored, if any.
+       * </pre>
+       *
+       * <code>optional string message = 2 [json_name = "message"];</code>
+       * @return Whether the message field is set.
+       */
+      public boolean hasMessage() {
+        return ((bitField0_ & 0x00000002) != 0);
+      }
+      /**
+       * <pre>
+       * message is the custom message that is now stored, if any.
+       * </pre>
+       *
+       * <code>optional string message = 2 [json_name = "message"];</code>
+       * @return The message.
+       */
+      public java.lang.String getMessage() {
+        java.lang.Object ref = message_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          message_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * message is the custom message that is now stored, if any.
+       * </pre>
+       *
+       * <code>optional string message = 2 [json_name = "message"];</code>
+       * @return The bytes for message.
+       */
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        java.lang.Object ref = message_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          message_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * message is the custom message that is now stored, if any.
+       * </pre>
+       *
+       * <code>optional string message = 2 [json_name = "message"];</code>
+       * @param value The message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        message_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * message is the custom message that is now stored, if any.
+       * </pre>
+       *
+       * <code>optional string message = 2 [json_name = "message"];</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMessage() {
+        message_ = getDefaultInstance().getMessage();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * message is the custom message that is now stored, if any.
+       * </pre>
+       *
+       * <code>optional string message = 2 [json_name = "message"];</code>
+       * @param value The bytes for message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        message_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:gitpod.v1.SetMaintenanceNotificationResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:gitpod.v1.SetMaintenanceNotificationResponse)
+    private static final io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse();
+    }
+
+    public static io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SetMaintenanceNotificationResponse>
+        PARSER = new com.google.protobuf.AbstractParser<SetMaintenanceNotificationResponse>() {
+      @java.lang.Override
+      public SetMaintenanceNotificationResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SetMaintenanceNotificationResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SetMaintenanceNotificationResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.gitpod.publicapi.v1.OrganizationOuterClass.SetMaintenanceNotificationResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_gitpod_v1_Organization_descriptor;
   private static final
@@ -31528,6 +36373,46 @@ java.lang.String defaultValue) {
   private static final
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_gitpod_v1_DeleteOrganizationMemberResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_GetOrganizationMaintenanceModeRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_GetOrganizationMaintenanceModeRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_GetOrganizationMaintenanceModeResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_GetOrganizationMaintenanceModeResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_SetOrganizationMaintenanceModeRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_SetOrganizationMaintenanceModeRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_SetOrganizationMaintenanceModeResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_SetOrganizationMaintenanceModeResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_GetMaintenanceNotificationRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_GetMaintenanceNotificationRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_GetMaintenanceNotificationResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_GetMaintenanceNotificationResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_SetMaintenanceNotificationRequest_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_SetMaintenanceNotificationRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_gitpod_v1_SetMaintenanceNotificationResponse_descriptor;
+  private static final
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_gitpod_v1_SetMaintenanceNotificationResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -31708,56 +36593,89 @@ java.lang.String defaultValue) {
       "leteOrganizationMemberRequest\022\'\n\017organiz" +
       "ation_id\030\001 \001(\tR\016organizationId\022\027\n\007user_i" +
       "d\030\002 \001(\tR\006userId\"\"\n DeleteOrganizationMem" +
-      "berResponse*\224\001\n\020OrganizationRole\022!\n\035ORGA" +
-      "NIZATION_ROLE_UNSPECIFIED\020\000\022\033\n\027ORGANIZAT" +
-      "ION_ROLE_OWNER\020\001\022\034\n\030ORGANIZATION_ROLE_ME" +
-      "MBER\020\002\022\"\n\036ORGANIZATION_ROLE_COLLABORATOR" +
-      "\020\003*t\n\026OrganizationPermission\022\'\n#ORGANIZA" +
-      "TION_PERMISSION_UNSPECIFIED\020\000\0221\n-ORGANIZ" +
-      "ATION_PERMISSION_START_ARBITRARY_REPOS\020\001" +
-      "2\276\014\n\023OrganizationService\022c\n\022CreateOrgani" +
-      "zation\022$.gitpod.v1.CreateOrganizationReq" +
-      "uest\032%.gitpod.v1.CreateOrganizationRespo" +
-      "nse\"\000\022Z\n\017GetOrganization\022!.gitpod.v1.Get" +
-      "OrganizationRequest\032\".gitpod.v1.GetOrgan" +
-      "izationResponse\"\000\022c\n\022UpdateOrganization\022" +
-      "$.gitpod.v1.UpdateOrganizationRequest\032%." +
-      "gitpod.v1.UpdateOrganizationResponse\"\000\022`" +
-      "\n\021ListOrganizations\022#.gitpod.v1.ListOrga" +
-      "nizationsRequest\032$.gitpod.v1.ListOrganiz" +
-      "ationsResponse\"\000\022c\n\022DeleteOrganization\022$" +
-      ".gitpod.v1.DeleteOrganizationRequest\032%.g" +
-      "itpod.v1.DeleteOrganizationResponse\"\000\022x\n" +
-      "\031GetOrganizationInvitation\022+.gitpod.v1.G" +
-      "etOrganizationInvitationRequest\032,.gitpod" +
-      ".v1.GetOrganizationInvitationResponse\"\000\022" +
-      "]\n\020JoinOrganization\022\".gitpod.v1.JoinOrga" +
-      "nizationRequest\032#.gitpod.v1.JoinOrganiza" +
-      "tionResponse\"\000\022~\n\033ResetOrganizationInvit" +
-      "ation\022-.gitpod.v1.ResetOrganizationInvit" +
-      "ationRequest\032..gitpod.v1.ResetOrganizati" +
-      "onInvitationResponse\"\000\022r\n\027ListOrganizati" +
-      "onMembers\022).gitpod.v1.ListOrganizationMe" +
-      "mbersRequest\032*.gitpod.v1.ListOrganizatio" +
-      "nMembersResponse\"\000\022u\n\030UpdateOrganization" +
-      "Member\022*.gitpod.v1.UpdateOrganizationMem" +
-      "berRequest\032+.gitpod.v1.UpdateOrganizatio" +
-      "nMemberResponse\"\000\022u\n\030DeleteOrganizationM" +
-      "ember\022*.gitpod.v1.DeleteOrganizationMemb" +
-      "erRequest\032+.gitpod.v1.DeleteOrganization" +
-      "MemberResponse\"\000\022r\n\027GetOrganizationSetti" +
-      "ngs\022).gitpod.v1.GetOrganizationSettingsR" +
-      "equest\032*.gitpod.v1.GetOrganizationSettin" +
-      "gsResponse\"\000\022{\n\032UpdateOrganizationSettin" +
-      "gs\022,.gitpod.v1.UpdateOrganizationSetting" +
-      "sRequest\032-.gitpod.v1.UpdateOrganizationS" +
-      "ettingsResponse\"\000\022\215\001\n ListOrganizationWo" +
-      "rkspaceClasses\0222.gitpod.v1.ListOrganizat" +
-      "ionWorkspaceClassesRequest\0323.gitpod.v1.L" +
-      "istOrganizationWorkspaceClassesResponse\"" +
-      "\000BQ\n\026io.gitpod.publicapi.v1Z7github.com/" +
-      "gitpod-io/gitpod/components/public-api/g" +
-      "o/v1b\006proto3"
+      "berResponse\"P\n%GetOrganizationMaintenanc" +
+      "eModeRequest\022\'\n\017organization_id\030\001 \001(\tR\016o" +
+      "rganizationId\"B\n&GetOrganizationMaintena" +
+      "nceModeResponse\022\030\n\007enabled\030\001 \001(\010R\007enable" +
+      "d\"j\n%SetOrganizationMaintenanceModeReque" +
+      "st\022\'\n\017organization_id\030\001 \001(\tR\016organizatio" +
+      "nId\022\030\n\007enabled\030\002 \001(\010R\007enabled\"B\n&SetOrga" +
+      "nizationMaintenanceModeResponse\022\030\n\007enabl" +
+      "ed\030\001 \001(\010R\007enabled\"L\n!GetMaintenanceNotif" +
+      "icationRequest\022\'\n\017organization_id\030\001 \001(\tR" +
+      "\016organizationId\"]\n\"GetMaintenanceNotific" +
+      "ationResponse\022\035\n\nis_enabled\030\001 \001(\010R\tisEna" +
+      "bled\022\030\n\007message\030\002 \001(\tR\007message\"\252\001\n!SetMa" +
+      "intenanceNotificationRequest\022\'\n\017organiza" +
+      "tion_id\030\001 \001(\tR\016organizationId\022\035\n\nis_enab" +
+      "led\030\002 \001(\010R\tisEnabled\022*\n\016custom_message\030\003" +
+      " \001(\tH\000R\rcustomMessage\210\001\001B\021\n\017_custom_mess" +
+      "age\"n\n\"SetMaintenanceNotificationRespons" +
+      "e\022\035\n\nis_enabled\030\001 \001(\010R\tisEnabled\022\035\n\007mess" +
+      "age\030\002 \001(\tH\000R\007message\210\001\001B\n\n\010_message*\224\001\n\020" +
+      "OrganizationRole\022!\n\035ORGANIZATION_ROLE_UN" +
+      "SPECIFIED\020\000\022\033\n\027ORGANIZATION_ROLE_OWNER\020\001" +
+      "\022\034\n\030ORGANIZATION_ROLE_MEMBER\020\002\022\"\n\036ORGANI" +
+      "ZATION_ROLE_COLLABORATOR\020\003*t\n\026Organizati" +
+      "onPermission\022\'\n#ORGANIZATION_PERMISSION_" +
+      "UNSPECIFIED\020\000\0221\n-ORGANIZATION_PERMISSION" +
+      "_START_ARBITRARY_REPOS\020\0012\314\020\n\023Organizatio" +
+      "nService\022c\n\022CreateOrganization\022$.gitpod." +
+      "v1.CreateOrganizationRequest\032%.gitpod.v1" +
+      ".CreateOrganizationResponse\"\000\022Z\n\017GetOrga" +
+      "nization\022!.gitpod.v1.GetOrganizationRequ" +
+      "est\032\".gitpod.v1.GetOrganizationResponse\"" +
+      "\000\022c\n\022UpdateOrganization\022$.gitpod.v1.Upda" +
+      "teOrganizationRequest\032%.gitpod.v1.Update" +
+      "OrganizationResponse\"\000\022`\n\021ListOrganizati" +
+      "ons\022#.gitpod.v1.ListOrganizationsRequest" +
+      "\032$.gitpod.v1.ListOrganizationsResponse\"\000" +
+      "\022c\n\022DeleteOrganization\022$.gitpod.v1.Delet" +
+      "eOrganizationRequest\032%.gitpod.v1.DeleteO" +
+      "rganizationResponse\"\000\022x\n\031GetOrganization" +
+      "Invitation\022+.gitpod.v1.GetOrganizationIn" +
+      "vitationRequest\032,.gitpod.v1.GetOrganizat" +
+      "ionInvitationResponse\"\000\022]\n\020JoinOrganizat" +
+      "ion\022\".gitpod.v1.JoinOrganizationRequest\032" +
+      "#.gitpod.v1.JoinOrganizationResponse\"\000\022~" +
+      "\n\033ResetOrganizationInvitation\022-.gitpod.v" +
+      "1.ResetOrganizationInvitationRequest\032..g" +
+      "itpod.v1.ResetOrganizationInvitationResp" +
+      "onse\"\000\022r\n\027ListOrganizationMembers\022).gitp" +
+      "od.v1.ListOrganizationMembersRequest\032*.g" +
+      "itpod.v1.ListOrganizationMembersResponse" +
+      "\"\000\022u\n\030UpdateOrganizationMember\022*.gitpod." +
+      "v1.UpdateOrganizationMemberRequest\032+.git" +
+      "pod.v1.UpdateOrganizationMemberResponse\"" +
+      "\000\022u\n\030DeleteOrganizationMember\022*.gitpod.v" +
+      "1.DeleteOrganizationMemberRequest\032+.gitp" +
+      "od.v1.DeleteOrganizationMemberResponse\"\000" +
+      "\022r\n\027GetOrganizationSettings\022).gitpod.v1." +
+      "GetOrganizationSettingsRequest\032*.gitpod." +
+      "v1.GetOrganizationSettingsResponse\"\000\022{\n\032" +
+      "UpdateOrganizationSettings\022,.gitpod.v1.U" +
+      "pdateOrganizationSettingsRequest\032-.gitpo" +
+      "d.v1.UpdateOrganizationSettingsResponse\"" +
+      "\000\022\215\001\n ListOrganizationWorkspaceClasses\0222" +
+      ".gitpod.v1.ListOrganizationWorkspaceClas" +
+      "sesRequest\0323.gitpod.v1.ListOrganizationW" +
+      "orkspaceClassesResponse\"\000\022\207\001\n\036GetOrganiz" +
+      "ationMaintenanceMode\0220.gitpod.v1.GetOrga" +
+      "nizationMaintenanceModeRequest\0321.gitpod." +
+      "v1.GetOrganizationMaintenanceModeRespons" +
+      "e\"\000\022\207\001\n\036SetOrganizationMaintenanceMode\0220" +
+      ".gitpod.v1.SetOrganizationMaintenanceMod" +
+      "eRequest\0321.gitpod.v1.SetOrganizationMain" +
+      "tenanceModeResponse\"\000\022{\n\032GetMaintenanceN" +
+      "otification\022,.gitpod.v1.GetMaintenanceNo" +
+      "tificationRequest\032-.gitpod.v1.GetMainten" +
+      "anceNotificationResponse\"\000\022{\n\032SetMainten" +
+      "anceNotification\022,.gitpod.v1.SetMaintena" +
+      "nceNotificationRequest\032-.gitpod.v1.SetMa" +
+      "intenanceNotificationResponse\"\000BQ\n\026io.gi" +
+      "tpod.publicapi.v1Z7github.com/gitpod-io/" +
+      "gitpod/components/public-api/go/v1b\006prot" +
+      "o3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -31989,6 +36907,54 @@ java.lang.String defaultValue) {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_gitpod_v1_DeleteOrganizationMemberResponse_descriptor,
         new java.lang.String[] { });
+    internal_static_gitpod_v1_GetOrganizationMaintenanceModeRequest_descriptor =
+      getDescriptor().getMessageTypes().get(34);
+    internal_static_gitpod_v1_GetOrganizationMaintenanceModeRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_GetOrganizationMaintenanceModeRequest_descriptor,
+        new java.lang.String[] { "OrganizationId", });
+    internal_static_gitpod_v1_GetOrganizationMaintenanceModeResponse_descriptor =
+      getDescriptor().getMessageTypes().get(35);
+    internal_static_gitpod_v1_GetOrganizationMaintenanceModeResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_GetOrganizationMaintenanceModeResponse_descriptor,
+        new java.lang.String[] { "Enabled", });
+    internal_static_gitpod_v1_SetOrganizationMaintenanceModeRequest_descriptor =
+      getDescriptor().getMessageTypes().get(36);
+    internal_static_gitpod_v1_SetOrganizationMaintenanceModeRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_SetOrganizationMaintenanceModeRequest_descriptor,
+        new java.lang.String[] { "OrganizationId", "Enabled", });
+    internal_static_gitpod_v1_SetOrganizationMaintenanceModeResponse_descriptor =
+      getDescriptor().getMessageTypes().get(37);
+    internal_static_gitpod_v1_SetOrganizationMaintenanceModeResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_SetOrganizationMaintenanceModeResponse_descriptor,
+        new java.lang.String[] { "Enabled", });
+    internal_static_gitpod_v1_GetMaintenanceNotificationRequest_descriptor =
+      getDescriptor().getMessageTypes().get(38);
+    internal_static_gitpod_v1_GetMaintenanceNotificationRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_GetMaintenanceNotificationRequest_descriptor,
+        new java.lang.String[] { "OrganizationId", });
+    internal_static_gitpod_v1_GetMaintenanceNotificationResponse_descriptor =
+      getDescriptor().getMessageTypes().get(39);
+    internal_static_gitpod_v1_GetMaintenanceNotificationResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_GetMaintenanceNotificationResponse_descriptor,
+        new java.lang.String[] { "IsEnabled", "Message", });
+    internal_static_gitpod_v1_SetMaintenanceNotificationRequest_descriptor =
+      getDescriptor().getMessageTypes().get(40);
+    internal_static_gitpod_v1_SetMaintenanceNotificationRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_SetMaintenanceNotificationRequest_descriptor,
+        new java.lang.String[] { "OrganizationId", "IsEnabled", "CustomMessage", });
+    internal_static_gitpod_v1_SetMaintenanceNotificationResponse_descriptor =
+      getDescriptor().getMessageTypes().get(41);
+    internal_static_gitpod_v1_SetMaintenanceNotificationResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_gitpod_v1_SetMaintenanceNotificationResponse_descriptor,
+        new java.lang.String[] { "IsEnabled", "Message", });
     descriptor.resolveAllFeaturesImmutable();
     io.gitpod.publicapi.v1.Pagination.getDescriptor();
     io.gitpod.publicapi.v1.WorkspaceOuterClass.getDescriptor();

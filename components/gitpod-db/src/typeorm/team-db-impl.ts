@@ -154,9 +154,14 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         return soleOwnedTeams;
     }
 
-    public async updateTeam(teamId: string, team: Pick<Team, "name">): Promise<Team> {
+    public async updateTeam(
+        teamId: string,
+        team: Pick<Team, "name" | "maintenanceMode" | "maintenanceNotification">,
+    ): Promise<Team> {
         const name = team.name && team.name.trim();
-        if (!name) {
+        const maintenanceModeSet = team.maintenanceMode !== undefined;
+        const maintenanceNotificationSet = team.maintenanceNotification !== undefined;
+        if (!name && !maintenanceModeSet && !maintenanceNotificationSet) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "No update provided");
         }
 
@@ -169,19 +174,27 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
                 throw new ApplicationError(ErrorCodes.NOT_FOUND, "Organization not found");
             }
 
-            // no changes
-            if (existingTeam.name === name) {
-                return existingTeam;
+            // Update name if provided
+            if (name) {
+                if (name.length > 32) {
+                    throw new ApplicationError(
+                        ErrorCodes.INVALID_VALUE,
+                        "The name must be between 1 and 32 characters long",
+                    );
+                }
+                existingTeam.name = name;
+                existingTeam.slug = await this.createUniqueSlug(teamRepo, name);
             }
 
-            if (name.length > 32) {
-                throw new ApplicationError(
-                    ErrorCodes.INVALID_VALUE,
-                    "The name must be between 1 and 32 characters long",
-                );
+            // Update maintenance mode if provided
+            if (maintenanceModeSet) {
+                existingTeam.maintenanceMode = team.maintenanceMode;
             }
-            existingTeam.name = name;
-            existingTeam.slug = await this.createUniqueSlug(teamRepo, name);
+
+            // Update maintenance notification if provided
+            if (maintenanceNotificationSet) {
+                existingTeam.maintenanceNotification = team.maintenanceNotification;
+            }
 
             return teamRepo.save(existingTeam);
         });

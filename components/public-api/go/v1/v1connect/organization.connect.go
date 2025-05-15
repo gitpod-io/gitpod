@@ -61,6 +61,14 @@ type OrganizationServiceClient interface {
 	// ListOrganizationWorkspaceClasses lists workspace classes of a
 	// Organization.
 	ListOrganizationWorkspaceClasses(context.Context, *connect_go.Request[v1.ListOrganizationWorkspaceClassesRequest]) (*connect_go.Response[v1.ListOrganizationWorkspaceClassesResponse], error)
+	// GetOrganizationMaintenanceMode retrieves the maintenance mode status for an organization.
+	GetOrganizationMaintenanceMode(context.Context, *connect_go.Request[v1.GetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.GetOrganizationMaintenanceModeResponse], error)
+	// SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
+	SetOrganizationMaintenanceMode(context.Context, *connect_go.Request[v1.SetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.SetOrganizationMaintenanceModeResponse], error)
+	// GetMaintenanceNotification retrieves the maintenance notification settings for an organization.
+	GetMaintenanceNotification(context.Context, *connect_go.Request[v1.GetMaintenanceNotificationRequest]) (*connect_go.Response[v1.GetMaintenanceNotificationResponse], error)
+	// SetMaintenanceNotification sets the maintenance notification for an organization.
+	SetMaintenanceNotification(context.Context, *connect_go.Request[v1.SetMaintenanceNotificationRequest]) (*connect_go.Response[v1.SetMaintenanceNotificationResponse], error)
 }
 
 // NewOrganizationServiceClient constructs a client for the gitpod.v1.OrganizationService service.
@@ -143,6 +151,26 @@ func NewOrganizationServiceClient(httpClient connect_go.HTTPClient, baseURL stri
 			baseURL+"/gitpod.v1.OrganizationService/ListOrganizationWorkspaceClasses",
 			opts...,
 		),
+		getOrganizationMaintenanceMode: connect_go.NewClient[v1.GetOrganizationMaintenanceModeRequest, v1.GetOrganizationMaintenanceModeResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.OrganizationService/GetOrganizationMaintenanceMode",
+			opts...,
+		),
+		setOrganizationMaintenanceMode: connect_go.NewClient[v1.SetOrganizationMaintenanceModeRequest, v1.SetOrganizationMaintenanceModeResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.OrganizationService/SetOrganizationMaintenanceMode",
+			opts...,
+		),
+		getMaintenanceNotification: connect_go.NewClient[v1.GetMaintenanceNotificationRequest, v1.GetMaintenanceNotificationResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.OrganizationService/GetMaintenanceNotification",
+			opts...,
+		),
+		setMaintenanceNotification: connect_go.NewClient[v1.SetMaintenanceNotificationRequest, v1.SetMaintenanceNotificationResponse](
+			httpClient,
+			baseURL+"/gitpod.v1.OrganizationService/SetMaintenanceNotification",
+			opts...,
+		),
 	}
 }
 
@@ -162,6 +190,10 @@ type organizationServiceClient struct {
 	getOrganizationSettings          *connect_go.Client[v1.GetOrganizationSettingsRequest, v1.GetOrganizationSettingsResponse]
 	updateOrganizationSettings       *connect_go.Client[v1.UpdateOrganizationSettingsRequest, v1.UpdateOrganizationSettingsResponse]
 	listOrganizationWorkspaceClasses *connect_go.Client[v1.ListOrganizationWorkspaceClassesRequest, v1.ListOrganizationWorkspaceClassesResponse]
+	getOrganizationMaintenanceMode   *connect_go.Client[v1.GetOrganizationMaintenanceModeRequest, v1.GetOrganizationMaintenanceModeResponse]
+	setOrganizationMaintenanceMode   *connect_go.Client[v1.SetOrganizationMaintenanceModeRequest, v1.SetOrganizationMaintenanceModeResponse]
+	getMaintenanceNotification       *connect_go.Client[v1.GetMaintenanceNotificationRequest, v1.GetMaintenanceNotificationResponse]
+	setMaintenanceNotification       *connect_go.Client[v1.SetMaintenanceNotificationRequest, v1.SetMaintenanceNotificationResponse]
 }
 
 // CreateOrganization calls gitpod.v1.OrganizationService.CreateOrganization.
@@ -235,6 +267,28 @@ func (c *organizationServiceClient) ListOrganizationWorkspaceClasses(ctx context
 	return c.listOrganizationWorkspaceClasses.CallUnary(ctx, req)
 }
 
+// GetOrganizationMaintenanceMode calls
+// gitpod.v1.OrganizationService.GetOrganizationMaintenanceMode.
+func (c *organizationServiceClient) GetOrganizationMaintenanceMode(ctx context.Context, req *connect_go.Request[v1.GetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.GetOrganizationMaintenanceModeResponse], error) {
+	return c.getOrganizationMaintenanceMode.CallUnary(ctx, req)
+}
+
+// SetOrganizationMaintenanceMode calls
+// gitpod.v1.OrganizationService.SetOrganizationMaintenanceMode.
+func (c *organizationServiceClient) SetOrganizationMaintenanceMode(ctx context.Context, req *connect_go.Request[v1.SetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.SetOrganizationMaintenanceModeResponse], error) {
+	return c.setOrganizationMaintenanceMode.CallUnary(ctx, req)
+}
+
+// GetMaintenanceNotification calls gitpod.v1.OrganizationService.GetMaintenanceNotification.
+func (c *organizationServiceClient) GetMaintenanceNotification(ctx context.Context, req *connect_go.Request[v1.GetMaintenanceNotificationRequest]) (*connect_go.Response[v1.GetMaintenanceNotificationResponse], error) {
+	return c.getMaintenanceNotification.CallUnary(ctx, req)
+}
+
+// SetMaintenanceNotification calls gitpod.v1.OrganizationService.SetMaintenanceNotification.
+func (c *organizationServiceClient) SetMaintenanceNotification(ctx context.Context, req *connect_go.Request[v1.SetMaintenanceNotificationRequest]) (*connect_go.Response[v1.SetMaintenanceNotificationResponse], error) {
+	return c.setMaintenanceNotification.CallUnary(ctx, req)
+}
+
 // OrganizationServiceHandler is an implementation of the gitpod.v1.OrganizationService service.
 type OrganizationServiceHandler interface {
 	// CreateOrganization creates a new Organization.
@@ -267,6 +321,14 @@ type OrganizationServiceHandler interface {
 	// ListOrganizationWorkspaceClasses lists workspace classes of a
 	// Organization.
 	ListOrganizationWorkspaceClasses(context.Context, *connect_go.Request[v1.ListOrganizationWorkspaceClassesRequest]) (*connect_go.Response[v1.ListOrganizationWorkspaceClassesResponse], error)
+	// GetOrganizationMaintenanceMode retrieves the maintenance mode status for an organization.
+	GetOrganizationMaintenanceMode(context.Context, *connect_go.Request[v1.GetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.GetOrganizationMaintenanceModeResponse], error)
+	// SetOrganizationMaintenanceMode sets the maintenance mode status for an organization.
+	SetOrganizationMaintenanceMode(context.Context, *connect_go.Request[v1.SetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.SetOrganizationMaintenanceModeResponse], error)
+	// GetMaintenanceNotification retrieves the maintenance notification settings for an organization.
+	GetMaintenanceNotification(context.Context, *connect_go.Request[v1.GetMaintenanceNotificationRequest]) (*connect_go.Response[v1.GetMaintenanceNotificationResponse], error)
+	// SetMaintenanceNotification sets the maintenance notification for an organization.
+	SetMaintenanceNotification(context.Context, *connect_go.Request[v1.SetMaintenanceNotificationRequest]) (*connect_go.Response[v1.SetMaintenanceNotificationResponse], error)
 }
 
 // NewOrganizationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -346,6 +408,26 @@ func NewOrganizationServiceHandler(svc OrganizationServiceHandler, opts ...conne
 		svc.ListOrganizationWorkspaceClasses,
 		opts...,
 	))
+	mux.Handle("/gitpod.v1.OrganizationService/GetOrganizationMaintenanceMode", connect_go.NewUnaryHandler(
+		"/gitpod.v1.OrganizationService/GetOrganizationMaintenanceMode",
+		svc.GetOrganizationMaintenanceMode,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.OrganizationService/SetOrganizationMaintenanceMode", connect_go.NewUnaryHandler(
+		"/gitpod.v1.OrganizationService/SetOrganizationMaintenanceMode",
+		svc.SetOrganizationMaintenanceMode,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.OrganizationService/GetMaintenanceNotification", connect_go.NewUnaryHandler(
+		"/gitpod.v1.OrganizationService/GetMaintenanceNotification",
+		svc.GetMaintenanceNotification,
+		opts...,
+	))
+	mux.Handle("/gitpod.v1.OrganizationService/SetMaintenanceNotification", connect_go.NewUnaryHandler(
+		"/gitpod.v1.OrganizationService/SetMaintenanceNotification",
+		svc.SetMaintenanceNotification,
+		opts...,
+	))
 	return "/gitpod.v1.OrganizationService/", mux
 }
 
@@ -406,4 +488,20 @@ func (UnimplementedOrganizationServiceHandler) UpdateOrganizationSettings(contex
 
 func (UnimplementedOrganizationServiceHandler) ListOrganizationWorkspaceClasses(context.Context, *connect_go.Request[v1.ListOrganizationWorkspaceClassesRequest]) (*connect_go.Response[v1.ListOrganizationWorkspaceClassesResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.OrganizationService.ListOrganizationWorkspaceClasses is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) GetOrganizationMaintenanceMode(context.Context, *connect_go.Request[v1.GetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.GetOrganizationMaintenanceModeResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.OrganizationService.GetOrganizationMaintenanceMode is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) SetOrganizationMaintenanceMode(context.Context, *connect_go.Request[v1.SetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.SetOrganizationMaintenanceModeResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.OrganizationService.SetOrganizationMaintenanceMode is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) GetMaintenanceNotification(context.Context, *connect_go.Request[v1.GetMaintenanceNotificationRequest]) (*connect_go.Response[v1.GetMaintenanceNotificationResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.OrganizationService.GetMaintenanceNotification is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) SetMaintenanceNotification(context.Context, *connect_go.Request[v1.SetMaintenanceNotificationRequest]) (*connect_go.Response[v1.SetMaintenanceNotificationResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.v1.OrganizationService.SetMaintenanceNotification is not implemented"))
 }

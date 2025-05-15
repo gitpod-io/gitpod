@@ -127,6 +127,17 @@ export default function OrganizationSelector() {
                 separator: false,
                 link: "/settings",
             });
+
+            if (isOwner && isDedicated) {
+                // Add Admin link for owners
+                linkEntries.push({
+                    title: "Organization Administration",
+                    customContent: <LinkEntry>Organization Administration</LinkEntry>,
+                    active: false,
+                    separator: false,
+                    link: "/org-admin",
+                });
+            }
         }
     }
 

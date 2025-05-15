@@ -14,6 +14,7 @@ import {
     WorkspaceTimeoutDuration,
     OrgMemberRole,
     User,
+    MaintenanceNotification,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -145,7 +146,7 @@ export class OrganizationService {
     async updateOrganization(
         userId: string,
         orgId: string,
-        changes: Pick<Organization, "name">,
+        changes: Partial<Pick<Organization, "name" | "maintenanceMode" | "maintenanceNotification">>,
     ): Promise<Organization> {
         await this.auth.checkPermissionOnOrganization(userId, "write_info", orgId);
         return this.teamDB.updateTeam(orgId, changes);
@@ -765,5 +766,118 @@ export class OrganizationService {
             return availableClasses;
         }
         return allClasses;
+    }
+
+    /**
+     * Gets the maintenance mode status for an organization.
+     *
+     * @param userId The ID of the user making the request
+     * @param orgId The ID of the organization
+     * @returns A boolean indicating whether maintenance mode is enabled
+     */
+    public async getMaintenanceMode(userId: string, orgId: string): Promise<boolean> {
+        await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
+
+        const team = await this.teamDB.findTeamById(orgId);
+        if (!team) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
+        }
+
+        return !!team.maintenanceMode;
+    }
+
+    /**
+     * Sets the maintenance mode status for an organization.
+     *
+     * @param userId The ID of the user making the request
+     * @param orgId The ID of the organization
+     * @param enabled Whether maintenance mode should be enabled
+     * @returns A boolean indicating the new maintenance mode status
+     */
+    public async setMaintenanceMode(userId: string, orgId: string, enabled: boolean): Promise<boolean> {
+        await this.auth.checkPermissionOnOrganization(userId, "maintenance", orgId);
+
+        const team = await this.teamDB.findTeamById(orgId);
+        if (!team) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
+        }
+
+        await this.teamDB.updateTeam(orgId, { maintenanceMode: enabled });
+
+        // Track the maintenance mode change
+        this.analytics.track({
+            userId,
+            event: enabled ? "maintenance_mode_enabled" : "maintenance_mode_disabled",
+            properties: {
+                organization_id: orgId,
+            },
+        });
+
+        return enabled;
+    }
+
+    /**
+     * Gets the scheduled maintenance notification for an organization.
+     *
+     * @param userId The ID of the user making the request
+     * @param orgId The ID of the organization
+     * @returns The notification (enabled status and custom message)
+     */
+    public async getMaintenanceNotification(userId: string, orgId: string): Promise<MaintenanceNotification> {
+        await this.auth.checkPermissionOnOrganization(userId, "read_info", orgId);
+
+        const team = await this.teamDB.findTeamById(orgId);
+        if (!team) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
+        }
+
+        // If the maintenanceNotification field doesn't exist or is invalid, return default values
+        if (!team.maintenanceNotification) {
+            return { enabled: false, message: undefined };
+        }
+
+        return {
+            enabled: team.maintenanceNotification.enabled,
+            message: team.maintenanceNotification.message,
+        };
+    }
+
+    /**
+     * Sets the scheduled maintenance notification for an organization.
+     *
+     * @param userId The ID of the user making the request
+     * @param orgId The ID of the organization
+     * @param isEnabled Whether the notification should be enabled
+     * @param customMessage Optional custom message for the notification
+     * @returns The updated notification
+     */
+    public async setMaintenanceNotification(
+        userId: string,
+        orgId: string,
+        isEnabled: boolean,
+        customMessage?: string,
+    ): Promise<MaintenanceNotification> {
+        // Using maintenance permission as it's available to owners and installation admins
+        await this.auth.checkPermissionOnOrganization(userId, "maintenance", orgId);
+
+        if (customMessage && customMessage.length > 255) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Custom message exceeds 255 characters");
+        }
+
+        const team = await this.teamDB.findTeamById(orgId);
+        if (!team) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
+        }
+
+        // Prepare the new notification config
+        const newNotificationConfig = {
+            enabled: isEnabled,
+            message: customMessage?.trim() || undefined,
+        };
+
+        // Update the team with the new notification config
+        await this.teamDB.updateTeam(orgId, { maintenanceNotification: newNotificationConfig });
+
+        return newNotificationConfig;
     }
 }

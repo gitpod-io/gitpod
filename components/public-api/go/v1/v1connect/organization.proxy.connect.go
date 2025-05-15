@@ -158,3 +158,43 @@ func (s *ProxyOrganizationServiceHandler) ListOrganizationWorkspaceClasses(ctx c
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyOrganizationServiceHandler) GetOrganizationMaintenanceMode(ctx context.Context, req *connect_go.Request[v1.GetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.GetOrganizationMaintenanceModeResponse], error) {
+	resp, err := s.Client.GetOrganizationMaintenanceMode(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyOrganizationServiceHandler) SetOrganizationMaintenanceMode(ctx context.Context, req *connect_go.Request[v1.SetOrganizationMaintenanceModeRequest]) (*connect_go.Response[v1.SetOrganizationMaintenanceModeResponse], error) {
+	resp, err := s.Client.SetOrganizationMaintenanceMode(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyOrganizationServiceHandler) GetMaintenanceNotification(ctx context.Context, req *connect_go.Request[v1.GetMaintenanceNotificationRequest]) (*connect_go.Response[v1.GetMaintenanceNotificationResponse], error) {
+	resp, err := s.Client.GetMaintenanceNotification(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
+func (s *ProxyOrganizationServiceHandler) SetMaintenanceNotification(ctx context.Context, req *connect_go.Request[v1.SetMaintenanceNotificationRequest]) (*connect_go.Response[v1.SetMaintenanceNotificationResponse], error) {
+	resp, err := s.Client.SetMaintenanceNotification(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

@@ -2227,6 +2227,437 @@ func (*DeleteOrganizationMemberResponse) Descriptor() ([]byte, []int) {
 	return file_gitpod_v1_organization_proto_rawDescGZIP(), []int{33}
 }
 
+type GetOrganizationMaintenanceModeRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// organization_id is the ID of the organization to retrieve the maintenance mode status for.
+	OrganizationId string `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+}
+
+func (x *GetOrganizationMaintenanceModeRequest) Reset() {
+	*x = GetOrganizationMaintenanceModeRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_organization_proto_msgTypes[34]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetOrganizationMaintenanceModeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOrganizationMaintenanceModeRequest) ProtoMessage() {}
+
+func (x *GetOrganizationMaintenanceModeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_organization_proto_msgTypes[34]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOrganizationMaintenanceModeRequest.ProtoReflect.Descriptor instead.
+func (*GetOrganizationMaintenanceModeRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_organization_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *GetOrganizationMaintenanceModeRequest) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+type GetOrganizationMaintenanceModeResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// enabled indicates whether maintenance mode is enabled for the organization.
+	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+}
+
+func (x *GetOrganizationMaintenanceModeResponse) Reset() {
+	*x = GetOrganizationMaintenanceModeResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_organization_proto_msgTypes[35]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetOrganizationMaintenanceModeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOrganizationMaintenanceModeResponse) ProtoMessage() {}
+
+func (x *GetOrganizationMaintenanceModeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_organization_proto_msgTypes[35]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOrganizationMaintenanceModeResponse.ProtoReflect.Descriptor instead.
+func (*GetOrganizationMaintenanceModeResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_organization_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *GetOrganizationMaintenanceModeResponse) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+type SetOrganizationMaintenanceModeRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// organization_id is the ID of the organization to set the maintenance mode status for.
+	OrganizationId string `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	// enabled indicates whether maintenance mode should be enabled or disabled.
+	Enabled bool `protobuf:"varint,2,opt,name=enabled,proto3" json:"enabled,omitempty"`
+}
+
+func (x *SetOrganizationMaintenanceModeRequest) Reset() {
+	*x = SetOrganizationMaintenanceModeRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_organization_proto_msgTypes[36]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetOrganizationMaintenanceModeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetOrganizationMaintenanceModeRequest) ProtoMessage() {}
+
+func (x *SetOrganizationMaintenanceModeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_organization_proto_msgTypes[36]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetOrganizationMaintenanceModeRequest.ProtoReflect.Descriptor instead.
+func (*SetOrganizationMaintenanceModeRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_organization_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *SetOrganizationMaintenanceModeRequest) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+func (x *SetOrganizationMaintenanceModeRequest) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+type SetOrganizationMaintenanceModeResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// enabled indicates the new maintenance mode status after the update.
+	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+}
+
+func (x *SetOrganizationMaintenanceModeResponse) Reset() {
+	*x = SetOrganizationMaintenanceModeResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_organization_proto_msgTypes[37]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetOrganizationMaintenanceModeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetOrganizationMaintenanceModeResponse) ProtoMessage() {}
+
+func (x *SetOrganizationMaintenanceModeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_organization_proto_msgTypes[37]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetOrganizationMaintenanceModeResponse.ProtoReflect.Descriptor instead.
+func (*SetOrganizationMaintenanceModeResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_organization_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *SetOrganizationMaintenanceModeResponse) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+type GetMaintenanceNotificationRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// organization_id is the ID of the organization to retrieve the notification settings for.
+	OrganizationId string `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+}
+
+func (x *GetMaintenanceNotificationRequest) Reset() {
+	*x = GetMaintenanceNotificationRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_organization_proto_msgTypes[38]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetMaintenanceNotificationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMaintenanceNotificationRequest) ProtoMessage() {}
+
+func (x *GetMaintenanceNotificationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_organization_proto_msgTypes[38]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMaintenanceNotificationRequest.ProtoReflect.Descriptor instead.
+func (*GetMaintenanceNotificationRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_organization_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *GetMaintenanceNotificationRequest) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+type GetMaintenanceNotificationResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// is_enabled indicates whether the  maintenance notification is enabled.
+	IsEnabled bool `protobuf:"varint,1,opt,name=is_enabled,json=isEnabled,proto3" json:"is_enabled,omitempty"`
+	// message is the custom message stored, if any. Empty or not present if no custom message is set.
+	// The frontend will use its own default if this is empty/undefined and is_enabled is true.
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+}
+
+func (x *GetMaintenanceNotificationResponse) Reset() {
+	*x = GetMaintenanceNotificationResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_organization_proto_msgTypes[39]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetMaintenanceNotificationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMaintenanceNotificationResponse) ProtoMessage() {}
+
+func (x *GetMaintenanceNotificationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_organization_proto_msgTypes[39]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMaintenanceNotificationResponse.ProtoReflect.Descriptor instead.
+func (*GetMaintenanceNotificationResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_organization_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *GetMaintenanceNotificationResponse) GetIsEnabled() bool {
+	if x != nil {
+		return x.IsEnabled
+	}
+	return false
+}
+
+func (x *GetMaintenanceNotificationResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type SetMaintenanceNotificationRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// organization_id is the ID of the organization to set the notification settings for.
+	OrganizationId string `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	// is_enabled indicates whether the  maintenance notification should be enabled or disabled.
+	IsEnabled bool `protobuf:"varint,2,opt,name=is_enabled,json=isEnabled,proto3" json:"is_enabled,omitempty"`
+	// custom_message is the user-provided custom message for the notification.
+	// If not provided or empty, the backend stores undefined/empty for the message.
+	CustomMessage *string `protobuf:"bytes,3,opt,name=custom_message,json=customMessage,proto3,oneof" json:"custom_message,omitempty"`
+}
+
+func (x *SetMaintenanceNotificationRequest) Reset() {
+	*x = SetMaintenanceNotificationRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_organization_proto_msgTypes[40]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetMaintenanceNotificationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetMaintenanceNotificationRequest) ProtoMessage() {}
+
+func (x *SetMaintenanceNotificationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_organization_proto_msgTypes[40]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetMaintenanceNotificationRequest.ProtoReflect.Descriptor instead.
+func (*SetMaintenanceNotificationRequest) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_organization_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *SetMaintenanceNotificationRequest) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+func (x *SetMaintenanceNotificationRequest) GetIsEnabled() bool {
+	if x != nil {
+		return x.IsEnabled
+	}
+	return false
+}
+
+func (x *SetMaintenanceNotificationRequest) GetCustomMessage() string {
+	if x != nil && x.CustomMessage != nil {
+		return *x.CustomMessage
+	}
+	return ""
+}
+
+type SetMaintenanceNotificationResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// is_enabled indicates the new notification enabled status after the update.
+	IsEnabled bool `protobuf:"varint,1,opt,name=is_enabled,json=isEnabled,proto3" json:"is_enabled,omitempty"`
+	// message is the custom message that is now stored, if any.
+	Message *string `protobuf:"bytes,2,opt,name=message,proto3,oneof" json:"message,omitempty"`
+}
+
+func (x *SetMaintenanceNotificationResponse) Reset() {
+	*x = SetMaintenanceNotificationResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_gitpod_v1_organization_proto_msgTypes[41]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetMaintenanceNotificationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetMaintenanceNotificationResponse) ProtoMessage() {}
+
+func (x *SetMaintenanceNotificationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gitpod_v1_organization_proto_msgTypes[41]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetMaintenanceNotificationResponse.ProtoReflect.Descriptor instead.
+func (*SetMaintenanceNotificationResponse) Descriptor() ([]byte, []int) {
+	return file_gitpod_v1_organization_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *SetMaintenanceNotificationResponse) GetIsEnabled() bool {
+	if x != nil {
+		return x.IsEnabled
+	}
+	return false
+}
+
+func (x *SetMaintenanceNotificationResponse) GetMessage() string {
+	if x != nil && x.Message != nil {
+		return *x.Message
+	}
+	return ""
+}
+
 type OnboardingSettings_WelcomeMessage struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2247,7 +2678,7 @@ type OnboardingSettings_WelcomeMessage struct {
 func (x *OnboardingSettings_WelcomeMessage) Reset() {
 	*x = OnboardingSettings_WelcomeMessage{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gitpod_v1_organization_proto_msgTypes[34]
+		mi := &file_gitpod_v1_organization_proto_msgTypes[42]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2260,7 +2691,7 @@ func (x *OnboardingSettings_WelcomeMessage) String() string {
 func (*OnboardingSettings_WelcomeMessage) ProtoMessage() {}
 
 func (x *OnboardingSettings_WelcomeMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_gitpod_v1_organization_proto_msgTypes[34]
+	mi := &file_gitpod_v1_organization_proto_msgTypes[42]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2735,7 +3166,56 @@ var file_gitpod_v1_organization_proto_rawDesc = []byte{
 	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22,
 	0x22, 0x0a, 0x20, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a,
 	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x2a, 0x94, 0x01, 0x0a, 0x10, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61,
+	0x6e, 0x73, 0x65, 0x22, 0x50, 0x0a, 0x25, 0x47, 0x65, 0x74, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69,
+	0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63,
+	0x65, 0x4d, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x27, 0x0a, 0x0f,
+	0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x49, 0x64, 0x22, 0x42, 0x0a, 0x26, 0x47, 0x65, 0x74, 0x4f, 0x72, 0x67, 0x61,
+	0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61,
+	0x6e, 0x63, 0x65, 0x4d, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x18, 0x0a, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08,
+	0x52, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x22, 0x6a, 0x0a, 0x25, 0x53, 0x65, 0x74,
+	0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x61, 0x69, 0x6e,
+	0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4d, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x27, 0x0a, 0x0f, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x6f, 0x72, 0x67,
+	0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x65,
+	0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x65, 0x6e,
+	0x61, 0x62, 0x6c, 0x65, 0x64, 0x22, 0x42, 0x0a, 0x26, 0x53, 0x65, 0x74, 0x4f, 0x72, 0x67, 0x61,
+	0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61,
+	0x6e, 0x63, 0x65, 0x4d, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x18, 0x0a, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08,
+	0x52, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x22, 0x4c, 0x0a, 0x21, 0x47, 0x65, 0x74,
+	0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4e, 0x6f, 0x74, 0x69, 0x66,
+	0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x27,
+	0x0a, 0x0f, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x64, 0x22, 0x5d, 0x0a, 0x22, 0x47, 0x65, 0x74, 0x4d, 0x61,
+	0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1d, 0x0a,
+	0x0a, 0x69, 0x73, 0x5f, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x08, 0x52, 0x09, 0x69, 0x73, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x12, 0x18, 0x0a, 0x07,
+	0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d,
+	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0xaa, 0x01, 0x0a, 0x21, 0x53, 0x65, 0x74, 0x4d, 0x61,
+	0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x27, 0x0a, 0x0f,
+	0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x49, 0x64, 0x12, 0x1d, 0x0a, 0x0a, 0x69, 0x73, 0x5f, 0x65, 0x6e, 0x61, 0x62,
+	0x6c, 0x65, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x69, 0x73, 0x45, 0x6e, 0x61,
+	0x62, 0x6c, 0x65, 0x64, 0x12, 0x2a, 0x0a, 0x0e, 0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x5f, 0x6d,
+	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x0d,
+	0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x88, 0x01, 0x01,
+	0x42, 0x11, 0x0a, 0x0f, 0x5f, 0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x5f, 0x6d, 0x65, 0x73, 0x73,
+	0x61, 0x67, 0x65, 0x22, 0x6e, 0x0a, 0x22, 0x53, 0x65, 0x74, 0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65,
+	0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1d, 0x0a, 0x0a, 0x69, 0x73, 0x5f,
+	0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x69,
+	0x73, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x12, 0x1d, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73,
+	0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x07, 0x6d, 0x65, 0x73,
+	0x73, 0x61, 0x67, 0x65, 0x88, 0x01, 0x01, 0x42, 0x0a, 0x0a, 0x08, 0x5f, 0x6d, 0x65, 0x73, 0x73,
+	0x61, 0x67, 0x65, 0x2a, 0x94, 0x01, 0x0a, 0x10, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61,
 	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x6f, 0x6c, 0x65, 0x12, 0x21, 0x0a, 0x1d, 0x4f, 0x52, 0x47, 0x41,
 	0x4e, 0x49, 0x5a, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x52, 0x4f, 0x4c, 0x45, 0x5f, 0x55, 0x4e,
 	0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x1b, 0x0a, 0x17, 0x4f,
@@ -2752,7 +3232,7 @@ var file_gitpod_v1_organization_proto_rawDesc = []byte{
 	0x2d, 0x4f, 0x52, 0x47, 0x41, 0x4e, 0x49, 0x5a, 0x41, 0x54, 0x49, 0x4f, 0x4e, 0x5f, 0x50, 0x45,
 	0x52, 0x4d, 0x49, 0x53, 0x53, 0x49, 0x4f, 0x4e, 0x5f, 0x53, 0x54, 0x41, 0x52, 0x54, 0x5f, 0x41,
 	0x52, 0x42, 0x49, 0x54, 0x52, 0x41, 0x52, 0x59, 0x5f, 0x52, 0x45, 0x50, 0x4f, 0x53, 0x10, 0x01,
-	0x32, 0xbe, 0x0c, 0x0a, 0x13, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f,
+	0x32, 0xcc, 0x10, 0x0a, 0x13, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f,
 	0x6e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x63, 0x0a, 0x12, 0x43, 0x72, 0x65, 0x61,
 	0x74, 0x65, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x24,
 	0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74,
@@ -2852,12 +3332,45 @@ var file_gitpod_v1_organization_proto_rawDesc = []byte{
 	0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x72, 0x67, 0x61, 0x6e,
 	0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
 	0x43, 0x6c, 0x61, 0x73, 0x73, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
-	0x00, 0x42, 0x51, 0x0a, 0x16, 0x69, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x70,
-	0x75, 0x62, 0x6c, 0x69, 0x63, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x5a, 0x37, 0x67, 0x69, 0x74,
-	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2d, 0x69,
-	0x6f, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2f, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65,
-	0x6e, 0x74, 0x73, 0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x61, 0x70, 0x69, 0x2f, 0x67,
-	0x6f, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x00, 0x12, 0x87, 0x01, 0x0a, 0x1e, 0x47, 0x65, 0x74, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65,
+	0x4d, 0x6f, 0x64, 0x65, 0x12, 0x30, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31,
+	0x2e, 0x47, 0x65, 0x74, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4d, 0x6f, 0x64, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x31, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e,
+	0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4d, 0x6f, 0x64,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x87, 0x01, 0x0a, 0x1e,
+	0x53, 0x65, 0x74, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d,
+	0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4d, 0x6f, 0x64, 0x65, 0x12, 0x30,
+	0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x74, 0x4f, 0x72,
+	0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65,
+	0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4d, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x31, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x74,
+	0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x61, 0x69, 0x6e,
+	0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4d, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x7b, 0x0a, 0x1a, 0x47, 0x65, 0x74, 0x4d, 0x61, 0x69, 0x6e,
+	0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x12, 0x2c, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e,
+	0x47, 0x65, 0x74, 0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4e, 0x6f,
+	0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x2d, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65,
+	0x74, 0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4e, 0x6f, 0x74, 0x69,
+	0x66, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x00, 0x12, 0x7b, 0x0a, 0x1a, 0x53, 0x65, 0x74, 0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e,
+	0x61, 0x6e, 0x63, 0x65, 0x4e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x12, 0x2c, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x74,
+	0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4e, 0x6f, 0x74, 0x69, 0x66,
+	0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2d,
+	0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x74, 0x4d, 0x61,
+	0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x4e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42,
+	0x51, 0x0a, 0x16, 0x69, 0x6f, 0x2e, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2e, 0x70, 0x75, 0x62,
+	0x6c, 0x69, 0x63, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x5a, 0x37, 0x67, 0x69, 0x74, 0x68, 0x75,
+	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2d, 0x69, 0x6f, 0x2f,
+	0x67, 0x69, 0x74, 0x70, 0x6f, 0x64, 0x2f, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74,
+	0x73, 0x2f, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x2d, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x6f, 0x2f,
+	0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2873,7 +3386,7 @@ func file_gitpod_v1_organization_proto_rawDescGZIP() []byte {
 }
 
 var file_gitpod_v1_organization_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_gitpod_v1_organization_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
+var file_gitpod_v1_organization_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
 var file_gitpod_v1_organization_proto_goTypes = []interface{}{
 	(OrganizationRole)(0),                            // 0: gitpod.v1.OrganizationRole
 	(OrganizationPermission)(0),                      // 1: gitpod.v1.OrganizationPermission
@@ -2912,32 +3425,40 @@ var file_gitpod_v1_organization_proto_goTypes = []interface{}{
 	(*UpdateOrganizationMemberResponse)(nil),         // 34: gitpod.v1.UpdateOrganizationMemberResponse
 	(*DeleteOrganizationMemberRequest)(nil),          // 35: gitpod.v1.DeleteOrganizationMemberRequest
 	(*DeleteOrganizationMemberResponse)(nil),         // 36: gitpod.v1.DeleteOrganizationMemberResponse
-	(*OnboardingSettings_WelcomeMessage)(nil),        // 37: gitpod.v1.OnboardingSettings.WelcomeMessage
-	nil,                           // 38: gitpod.v1.OrganizationSettings.PinnedEditorVersionsEntry
-	nil,                           // 39: gitpod.v1.UpdateOrganizationSettingsRequest.PinnedEditorVersionsEntry
-	(*timestamppb.Timestamp)(nil), // 40: google.protobuf.Timestamp
-	(*PaginationRequest)(nil),     // 41: gitpod.v1.PaginationRequest
-	(*PaginationResponse)(nil),    // 42: gitpod.v1.PaginationResponse
-	(*WorkspaceClass)(nil),        // 43: gitpod.v1.WorkspaceClass
-	(*durationpb.Duration)(nil),   // 44: google.protobuf.Duration
+	(*GetOrganizationMaintenanceModeRequest)(nil),    // 37: gitpod.v1.GetOrganizationMaintenanceModeRequest
+	(*GetOrganizationMaintenanceModeResponse)(nil),   // 38: gitpod.v1.GetOrganizationMaintenanceModeResponse
+	(*SetOrganizationMaintenanceModeRequest)(nil),    // 39: gitpod.v1.SetOrganizationMaintenanceModeRequest
+	(*SetOrganizationMaintenanceModeResponse)(nil),   // 40: gitpod.v1.SetOrganizationMaintenanceModeResponse
+	(*GetMaintenanceNotificationRequest)(nil),        // 41: gitpod.v1.GetMaintenanceNotificationRequest
+	(*GetMaintenanceNotificationResponse)(nil),       // 42: gitpod.v1.GetMaintenanceNotificationResponse
+	(*SetMaintenanceNotificationRequest)(nil),        // 43: gitpod.v1.SetMaintenanceNotificationRequest
+	(*SetMaintenanceNotificationResponse)(nil),       // 44: gitpod.v1.SetMaintenanceNotificationResponse
+	(*OnboardingSettings_WelcomeMessage)(nil),        // 45: gitpod.v1.OnboardingSettings.WelcomeMessage
+	nil,                           // 46: gitpod.v1.OrganizationSettings.PinnedEditorVersionsEntry
+	nil,                           // 47: gitpod.v1.UpdateOrganizationSettingsRequest.PinnedEditorVersionsEntry
+	(*timestamppb.Timestamp)(nil), // 48: google.protobuf.Timestamp
+	(*PaginationRequest)(nil),     // 49: gitpod.v1.PaginationRequest
+	(*PaginationResponse)(nil),    // 50: gitpod.v1.PaginationResponse
+	(*WorkspaceClass)(nil),        // 51: gitpod.v1.WorkspaceClass
+	(*durationpb.Duration)(nil),   // 52: google.protobuf.Duration
 }
 var file_gitpod_v1_organization_proto_depIdxs = []int32{
-	40, // 0: gitpod.v1.Organization.creation_time:type_name -> google.protobuf.Timestamp
+	48, // 0: gitpod.v1.Organization.creation_time:type_name -> google.protobuf.Timestamp
 	0,  // 1: gitpod.v1.OrganizationMember.role:type_name -> gitpod.v1.OrganizationRole
-	40, // 2: gitpod.v1.OrganizationMember.member_since:type_name -> google.protobuf.Timestamp
+	48, // 2: gitpod.v1.OrganizationMember.member_since:type_name -> google.protobuf.Timestamp
 	0,  // 3: gitpod.v1.RoleRestrictionEntry.role:type_name -> gitpod.v1.OrganizationRole
 	1,  // 4: gitpod.v1.RoleRestrictionEntry.permissions:type_name -> gitpod.v1.OrganizationPermission
-	37, // 5: gitpod.v1.OnboardingSettings.welcome_message:type_name -> gitpod.v1.OnboardingSettings.WelcomeMessage
-	38, // 6: gitpod.v1.OrganizationSettings.pinned_editor_versions:type_name -> gitpod.v1.OrganizationSettings.PinnedEditorVersionsEntry
+	45, // 5: gitpod.v1.OnboardingSettings.welcome_message:type_name -> gitpod.v1.OnboardingSettings.WelcomeMessage
+	46, // 6: gitpod.v1.OrganizationSettings.pinned_editor_versions:type_name -> gitpod.v1.OrganizationSettings.PinnedEditorVersionsEntry
 	12, // 7: gitpod.v1.OrganizationSettings.timeout_settings:type_name -> gitpod.v1.TimeoutSettings
 	5,  // 8: gitpod.v1.OrganizationSettings.role_restrictions:type_name -> gitpod.v1.RoleRestrictionEntry
 	6,  // 9: gitpod.v1.OrganizationSettings.onboarding_settings:type_name -> gitpod.v1.OnboardingSettings
-	41, // 10: gitpod.v1.ListOrganizationWorkspaceClassesRequest.pagination:type_name -> gitpod.v1.PaginationRequest
-	42, // 11: gitpod.v1.ListOrganizationWorkspaceClassesResponse.pagination:type_name -> gitpod.v1.PaginationResponse
-	43, // 12: gitpod.v1.ListOrganizationWorkspaceClassesResponse.workspace_classes:type_name -> gitpod.v1.WorkspaceClass
+	49, // 10: gitpod.v1.ListOrganizationWorkspaceClassesRequest.pagination:type_name -> gitpod.v1.PaginationRequest
+	50, // 11: gitpod.v1.ListOrganizationWorkspaceClassesResponse.pagination:type_name -> gitpod.v1.PaginationResponse
+	51, // 12: gitpod.v1.ListOrganizationWorkspaceClassesResponse.workspace_classes:type_name -> gitpod.v1.WorkspaceClass
 	3,  // 13: gitpod.v1.UpdateOrganizationResponse.organization:type_name -> gitpod.v1.Organization
-	44, // 14: gitpod.v1.TimeoutSettings.inactivity:type_name -> google.protobuf.Duration
-	39, // 15: gitpod.v1.UpdateOrganizationSettingsRequest.pinned_editor_versions:type_name -> gitpod.v1.UpdateOrganizationSettingsRequest.PinnedEditorVersionsEntry
+	52, // 14: gitpod.v1.TimeoutSettings.inactivity:type_name -> google.protobuf.Duration
+	47, // 15: gitpod.v1.UpdateOrganizationSettingsRequest.pinned_editor_versions:type_name -> gitpod.v1.UpdateOrganizationSettingsRequest.PinnedEditorVersionsEntry
 	12, // 16: gitpod.v1.UpdateOrganizationSettingsRequest.timeout_settings:type_name -> gitpod.v1.TimeoutSettings
 	5,  // 17: gitpod.v1.UpdateOrganizationSettingsRequest.role_restrictions:type_name -> gitpod.v1.RoleRestrictionEntry
 	6,  // 18: gitpod.v1.UpdateOrganizationSettingsRequest.onboarding_settings:type_name -> gitpod.v1.OnboardingSettings
@@ -2945,13 +3466,13 @@ var file_gitpod_v1_organization_proto_depIdxs = []int32{
 	7,  // 20: gitpod.v1.GetOrganizationSettingsResponse.settings:type_name -> gitpod.v1.OrganizationSettings
 	3,  // 21: gitpod.v1.CreateOrganizationResponse.organization:type_name -> gitpod.v1.Organization
 	3,  // 22: gitpod.v1.GetOrganizationResponse.organization:type_name -> gitpod.v1.Organization
-	41, // 23: gitpod.v1.ListOrganizationsRequest.pagination:type_name -> gitpod.v1.PaginationRequest
+	49, // 23: gitpod.v1.ListOrganizationsRequest.pagination:type_name -> gitpod.v1.PaginationRequest
 	2,  // 24: gitpod.v1.ListOrganizationsRequest.scope:type_name -> gitpod.v1.ListOrganizationsRequest.Scope
 	3,  // 25: gitpod.v1.ListOrganizationsResponse.organizations:type_name -> gitpod.v1.Organization
-	42, // 26: gitpod.v1.ListOrganizationsResponse.pagination:type_name -> gitpod.v1.PaginationResponse
-	41, // 27: gitpod.v1.ListOrganizationMembersRequest.pagination:type_name -> gitpod.v1.PaginationRequest
+	50, // 26: gitpod.v1.ListOrganizationsResponse.pagination:type_name -> gitpod.v1.PaginationResponse
+	49, // 27: gitpod.v1.ListOrganizationMembersRequest.pagination:type_name -> gitpod.v1.PaginationRequest
 	4,  // 28: gitpod.v1.ListOrganizationMembersResponse.members:type_name -> gitpod.v1.OrganizationMember
-	42, // 29: gitpod.v1.ListOrganizationMembersResponse.pagination:type_name -> gitpod.v1.PaginationResponse
+	50, // 29: gitpod.v1.ListOrganizationMembersResponse.pagination:type_name -> gitpod.v1.PaginationResponse
 	0,  // 30: gitpod.v1.UpdateOrganizationMemberRequest.role:type_name -> gitpod.v1.OrganizationRole
 	4,  // 31: gitpod.v1.UpdateOrganizationMemberResponse.member:type_name -> gitpod.v1.OrganizationMember
 	17, // 32: gitpod.v1.OrganizationService.CreateOrganization:input_type -> gitpod.v1.CreateOrganizationRequest
@@ -2968,22 +3489,30 @@ var file_gitpod_v1_organization_proto_depIdxs = []int32{
 	15, // 43: gitpod.v1.OrganizationService.GetOrganizationSettings:input_type -> gitpod.v1.GetOrganizationSettingsRequest
 	13, // 44: gitpod.v1.OrganizationService.UpdateOrganizationSettings:input_type -> gitpod.v1.UpdateOrganizationSettingsRequest
 	8,  // 45: gitpod.v1.OrganizationService.ListOrganizationWorkspaceClasses:input_type -> gitpod.v1.ListOrganizationWorkspaceClassesRequest
-	18, // 46: gitpod.v1.OrganizationService.CreateOrganization:output_type -> gitpod.v1.CreateOrganizationResponse
-	20, // 47: gitpod.v1.OrganizationService.GetOrganization:output_type -> gitpod.v1.GetOrganizationResponse
-	11, // 48: gitpod.v1.OrganizationService.UpdateOrganization:output_type -> gitpod.v1.UpdateOrganizationResponse
-	22, // 49: gitpod.v1.OrganizationService.ListOrganizations:output_type -> gitpod.v1.ListOrganizationsResponse
-	24, // 50: gitpod.v1.OrganizationService.DeleteOrganization:output_type -> gitpod.v1.DeleteOrganizationResponse
-	26, // 51: gitpod.v1.OrganizationService.GetOrganizationInvitation:output_type -> gitpod.v1.GetOrganizationInvitationResponse
-	28, // 52: gitpod.v1.OrganizationService.JoinOrganization:output_type -> gitpod.v1.JoinOrganizationResponse
-	30, // 53: gitpod.v1.OrganizationService.ResetOrganizationInvitation:output_type -> gitpod.v1.ResetOrganizationInvitationResponse
-	32, // 54: gitpod.v1.OrganizationService.ListOrganizationMembers:output_type -> gitpod.v1.ListOrganizationMembersResponse
-	34, // 55: gitpod.v1.OrganizationService.UpdateOrganizationMember:output_type -> gitpod.v1.UpdateOrganizationMemberResponse
-	36, // 56: gitpod.v1.OrganizationService.DeleteOrganizationMember:output_type -> gitpod.v1.DeleteOrganizationMemberResponse
-	16, // 57: gitpod.v1.OrganizationService.GetOrganizationSettings:output_type -> gitpod.v1.GetOrganizationSettingsResponse
-	14, // 58: gitpod.v1.OrganizationService.UpdateOrganizationSettings:output_type -> gitpod.v1.UpdateOrganizationSettingsResponse
-	9,  // 59: gitpod.v1.OrganizationService.ListOrganizationWorkspaceClasses:output_type -> gitpod.v1.ListOrganizationWorkspaceClassesResponse
-	46, // [46:60] is the sub-list for method output_type
-	32, // [32:46] is the sub-list for method input_type
+	37, // 46: gitpod.v1.OrganizationService.GetOrganizationMaintenanceMode:input_type -> gitpod.v1.GetOrganizationMaintenanceModeRequest
+	39, // 47: gitpod.v1.OrganizationService.SetOrganizationMaintenanceMode:input_type -> gitpod.v1.SetOrganizationMaintenanceModeRequest
+	41, // 48: gitpod.v1.OrganizationService.GetMaintenanceNotification:input_type -> gitpod.v1.GetMaintenanceNotificationRequest
+	43, // 49: gitpod.v1.OrganizationService.SetMaintenanceNotification:input_type -> gitpod.v1.SetMaintenanceNotificationRequest
+	18, // 50: gitpod.v1.OrganizationService.CreateOrganization:output_type -> gitpod.v1.CreateOrganizationResponse
+	20, // 51: gitpod.v1.OrganizationService.GetOrganization:output_type -> gitpod.v1.GetOrganizationResponse
+	11, // 52: gitpod.v1.OrganizationService.UpdateOrganization:output_type -> gitpod.v1.UpdateOrganizationResponse
+	22, // 53: gitpod.v1.OrganizationService.ListOrganizations:output_type -> gitpod.v1.ListOrganizationsResponse
+	24, // 54: gitpod.v1.OrganizationService.DeleteOrganization:output_type -> gitpod.v1.DeleteOrganizationResponse
+	26, // 55: gitpod.v1.OrganizationService.GetOrganizationInvitation:output_type -> gitpod.v1.GetOrganizationInvitationResponse
+	28, // 56: gitpod.v1.OrganizationService.JoinOrganization:output_type -> gitpod.v1.JoinOrganizationResponse
+	30, // 57: gitpod.v1.OrganizationService.ResetOrganizationInvitation:output_type -> gitpod.v1.ResetOrganizationInvitationResponse
+	32, // 58: gitpod.v1.OrganizationService.ListOrganizationMembers:output_type -> gitpod.v1.ListOrganizationMembersResponse
+	34, // 59: gitpod.v1.OrganizationService.UpdateOrganizationMember:output_type -> gitpod.v1.UpdateOrganizationMemberResponse
+	36, // 60: gitpod.v1.OrganizationService.DeleteOrganizationMember:output_type -> gitpod.v1.DeleteOrganizationMemberResponse
+	16, // 61: gitpod.v1.OrganizationService.GetOrganizationSettings:output_type -> gitpod.v1.GetOrganizationSettingsResponse
+	14, // 62: gitpod.v1.OrganizationService.UpdateOrganizationSettings:output_type -> gitpod.v1.UpdateOrganizationSettingsResponse
+	9,  // 63: gitpod.v1.OrganizationService.ListOrganizationWorkspaceClasses:output_type -> gitpod.v1.ListOrganizationWorkspaceClassesResponse
+	38, // 64: gitpod.v1.OrganizationService.GetOrganizationMaintenanceMode:output_type -> gitpod.v1.GetOrganizationMaintenanceModeResponse
+	40, // 65: gitpod.v1.OrganizationService.SetOrganizationMaintenanceMode:output_type -> gitpod.v1.SetOrganizationMaintenanceModeResponse
+	42, // 66: gitpod.v1.OrganizationService.GetMaintenanceNotification:output_type -> gitpod.v1.GetMaintenanceNotificationResponse
+	44, // 67: gitpod.v1.OrganizationService.SetMaintenanceNotification:output_type -> gitpod.v1.SetMaintenanceNotificationResponse
+	50, // [50:68] is the sub-list for method output_type
+	32, // [32:50] is the sub-list for method input_type
 	32, // [32:32] is the sub-list for extension type_name
 	32, // [32:32] is the sub-list for extension extendee
 	0,  // [0:32] is the sub-list for field type_name
@@ -3406,6 +3935,102 @@ func file_gitpod_v1_organization_proto_init() {
 			}
 		}
 		file_gitpod_v1_organization_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetOrganizationMaintenanceModeRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_organization_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetOrganizationMaintenanceModeResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_organization_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SetOrganizationMaintenanceModeRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_organization_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SetOrganizationMaintenanceModeResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_organization_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetMaintenanceNotificationRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_organization_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetMaintenanceNotificationResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_organization_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SetMaintenanceNotificationRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_organization_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SetMaintenanceNotificationResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_gitpod_v1_organization_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*OnboardingSettings_WelcomeMessage); i {
 			case 0:
 				return &v.state
@@ -3424,14 +4049,16 @@ func file_gitpod_v1_organization_proto_init() {
 	file_gitpod_v1_organization_proto_msgTypes[9].OneofWrappers = []interface{}{}
 	file_gitpod_v1_organization_proto_msgTypes[10].OneofWrappers = []interface{}{}
 	file_gitpod_v1_organization_proto_msgTypes[30].OneofWrappers = []interface{}{}
-	file_gitpod_v1_organization_proto_msgTypes[34].OneofWrappers = []interface{}{}
+	file_gitpod_v1_organization_proto_msgTypes[40].OneofWrappers = []interface{}{}
+	file_gitpod_v1_organization_proto_msgTypes[41].OneofWrappers = []interface{}{}
+	file_gitpod_v1_organization_proto_msgTypes[42].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_gitpod_v1_organization_proto_rawDesc,
 			NumEnums:      3,
-			NumMessages:   37,
+			NumMessages:   45,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

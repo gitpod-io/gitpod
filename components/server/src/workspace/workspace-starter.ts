@@ -211,6 +211,16 @@ export function isClusterMaintenanceError(err: any): boolean {
     );
 }
 
+export function isMaintenanceModeError(err: any): boolean {
+    if (!(err instanceof ApplicationError)) {
+        return false;
+    }
+    if (err.code !== ErrorCodes.PRECONDITION_FAILED) {
+        return false;
+    }
+    return err.data?.maintenanceMode === true;
+}
+
 @injectable()
 export class WorkspaceStarter {
     static readonly STARTING_PHASES: WorkspaceInstancePhase[] = ["preparing", "building", "pending"];
@@ -590,6 +600,29 @@ export class WorkspaceStarter {
         }
     }
 
+    /**
+     * Checks if the organization is in maintenance mode and if the user has permission to bypass it.
+     *
+     * @param user The user trying to start the workspace
+     * @param workspace The workspace to be started
+     * @throws ApplicationError if the organization is in maintenance mode and the user doesn't have permission to bypass it
+     */
+    private async checkMaintenanceMode(user: User, workspace: Workspace): Promise<void> {
+        if (!workspace.organizationId) {
+            return;
+        }
+
+        // Get the organization's maintenance mode status
+        const org = await this.orgService.getOrganization(user.id, workspace.organizationId);
+        if (org.maintenanceMode) {
+            throw new ApplicationError(
+                ErrorCodes.PRECONDITION_FAILED,
+                "Cannot start workspace: The organization is currently in maintenance mode. Please try again later or contact your organization administrator.",
+                { maintenanceMode: true },
+            );
+        }
+    }
+
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself.
     private async actuallyStartWorkspace(
         ctx: TraceContext,
@@ -630,6 +663,9 @@ export class WorkspaceStarter {
                     return;
                 }
             }
+
+            // check maintenance mode: throw application error if the organization is in maintenance mode
+            await this.checkMaintenanceMode(user, workspace);
 
             // build workspace image
             const additionalAuth = envVars.gitpodImageAuth || new Map<string, string>();
@@ -733,6 +769,9 @@ export class WorkspaceStarter {
                     err = new Error(
                         "We're in the middle of an update. We'll be back to normal soon. Please try again in a few minutes.",
                     );
+                }
+                if (isMaintenanceModeError(err)) {
+                    failReason = "maintenanceMode";
                 }
                 await this.failInstanceStart({ span }, err, workspace, instance);
                 err = new StartInstanceError(failReason, err);

@@ -217,6 +217,12 @@ export interface Organization {
     slug?: string;
     creationTime: string;
     markedDeleted?: boolean;
+    maintenanceMode?: boolean;
+    maintenanceNotification?: MaintenanceNotification;
+}
+export interface MaintenanceNotification {
+    enabled: boolean;
+    message?: string;
 }
 
 export interface OrganizationSettings {
