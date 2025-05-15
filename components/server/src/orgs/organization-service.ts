@@ -797,7 +797,7 @@ export class OrganizationService {
      */
     public async setMaintenanceMode(userId: string, orgId: string, enabled: boolean): Promise<boolean> {
         // Using write_settings permission as it's available to owners and installation admins
-        await this.auth.checkPermissionOnOrganization(userId, "write_settings", orgId);
+        await this.auth.checkPermissionOnOrganization(userId, "maintenance", orgId);
 
         const team = await this.teamDB.findTeamById(orgId);
         if (!team) {
