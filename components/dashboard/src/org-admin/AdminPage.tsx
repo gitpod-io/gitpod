@@ -32,10 +32,7 @@ const AdminPage: React.FC = () => {
 
     return (
         <div className="flex flex-col w-full">
-            <Header
-                title="Organization Administration"
-                subtitle="Manage your organization's infrastructure and settings."
-            />
+            <Header title="Organization Administration" subtitle="Manage Infrastructure Rollouts." />
             <div className="app-container py-6">
                 <h2 className="text-2xl font-semibold text-pk-content-primary mb-4">Infrastructure Rollout</h2>
 

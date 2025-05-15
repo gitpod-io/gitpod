@@ -13,16 +13,19 @@ import Alert from "../components/Alert";
 import { ConfigurationSettingsField } from "../repositories/detail/ConfigurationSettingsField";
 import { Heading3 } from "@podkit/typography/Headings";
 
+export const DEFAULT_MESSAGE =
+    "On XX-YY-ZZZZ from HH:MM to HH:MM UTC. Workspaces will be stopped and cannot be started during this time.";
+
 export const MaintenanceNotificationCard: FC = () => {
     const { isNotificationEnabled, notificationMessage, isLoading } = useMaintenanceNotification();
     const setMaintenanceNotificationMutation = useSetMaintenanceNotificationMutation();
-    const [message, setMessage] = useState(notificationMessage);
+    const [message, setMessage] = useState(notificationMessage || DEFAULT_MESSAGE);
     const [isEditing, setIsEditing] = useState(false);
     const toast = useToast();
 
     // Update local state when the data from the API changes
     useEffect(() => {
-        setMessage(notificationMessage);
+        setMessage(notificationMessage || DEFAULT_MESSAGE);
     }, [notificationMessage]);
 
     const toggleNotification = async () => {
@@ -104,7 +107,7 @@ export const MaintenanceNotificationCard: FC = () => {
                             <Button
                                 variant="secondary"
                                 onClick={() => {
-                                    setMessage(notificationMessage);
+                                    setMessage(notificationMessage || DEFAULT_MESSAGE);
                                     setIsEditing(false);
                                 }}
                             >
@@ -116,11 +119,7 @@ export const MaintenanceNotificationCard: FC = () => {
                 ) : (
                     <div>
                         <div className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 min-h-[4rem]">
-                            {message || (
-                                <span className="text-gray-400 dark:text-gray-500 italic">
-                                    Default message will be used
-                                </span>
-                            )}
+                            {message}
                         </div>
                         <div className="mt-2 flex justify-end">
                             <Button variant="secondary" onClick={() => setIsEditing(true)}>
@@ -136,9 +135,7 @@ export const MaintenanceNotificationCard: FC = () => {
                 <Alert type="warning" className="mb-0">
                     <div className="flex items-center">
                         <span className="font-semibold">Scheduled Maintenance:</span>
-                        <span className="ml-2">
-                            {message || "Maintenance is scheduled for this system. Please save your work."}
-                        </span>
+                        <span className="ml-2">{message}</span>
                     </div>
                 </Alert>
             </div>

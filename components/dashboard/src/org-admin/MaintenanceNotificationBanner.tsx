@@ -8,6 +8,7 @@ import { FC } from "react";
 import Alert from "../components/Alert";
 import { useMaintenanceNotification } from "../data/maintenande-mode/maintenance-notification-query";
 import { useMaintenanceMode } from "../data/maintenande-mode/maintenance-mode-query";
+import { DEFAULT_MESSAGE } from "./MaintenanceNotificationCard";
 
 export const MaintenanceNotificationBanner: FC = () => {
     const { isNotificationEnabled, notificationMessage } = useMaintenanceNotification();
@@ -19,8 +20,7 @@ export const MaintenanceNotificationBanner: FC = () => {
         return null;
     }
 
-    const defaultMessage = "Maintenance is scheduled for this system. Please save your work.";
-    const displayMessage = notificationMessage || defaultMessage;
+    const displayMessage = notificationMessage || DEFAULT_MESSAGE;
 
     return (
         <Alert type="warning" className="mb-2">
