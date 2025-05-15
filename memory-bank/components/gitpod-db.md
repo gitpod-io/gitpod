@@ -49,7 +49,7 @@ The Gitpod DB component defines numerous entities that map to database tables, i
 - **User**: User accounts and profiles
 - **Workspace**: Workspace metadata and configuration
 - **WorkspaceInstance**: Running workspace instances
-- **Team**: Team organization and membership
+- **Team**: Represents an "Organization" within Gitpod, storing its core details, membership, and organization-level state. The entity is named `DBTeam` for historical reasons.
 - **Project**: Project configuration and settings
 - **Identity**: User identity and authentication
 - **Token**: Authentication tokens and credentials

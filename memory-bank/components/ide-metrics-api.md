@@ -86,15 +86,6 @@ This script performs the following actions:
 - Generates Java code
 - Updates license headers
 
-### Implementation Details
-The `generate.sh` script uses functions from the shared script at `scripts/protoc-generator.sh` and defines some custom functions:
-
-- `install_dependencies`: Installs required protoc plugins
-- `local_go_protoc`: Generates Go code with specific include paths
-- `go_protoc_gateway`: Generates gRPC Gateway code for REST endpoints
-- `local_java_protoc`: Generates Java code
-- `update_license`: Updates license headers in generated files
-
 The IDE Metrics API is unique in that it generates both gRPC and REST API endpoints using the gRPC Gateway, and it also generates Java code for use in JetBrains IDE plugins.
 
 ### Building After Code Generation

@@ -119,14 +119,6 @@ This script performs the following actions:
 - Patches the generated TypeScript code for compatibility
 - Updates license headers
 
-### Implementation Details
-The `generate.sh` script uses functions from the shared script at `scripts/protoc-generator.sh`:
-
-- `install_dependencies`: Installs required protoc plugins
-- `go_protoc`: Generates Go code
-- `typescript_protoc`: Generates TypeScript code
-- `update_license`: Updates license headers in generated files
-
 Additionally, the script:
 - Generates mock implementations using `mockgen` for testing
 - Updates JSON tags in the generated Go code using `gomodifytags`

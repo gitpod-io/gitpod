@@ -149,14 +149,6 @@ This script performs the following actions:
 - Updates license headers
 - Removes trailing whitespace from Java files
 
-### Implementation Details
-The `generate.sh` script uses functions from the shared script at `scripts/protoc-generator.sh` and defines some custom functions:
-
-- `install_dependencies`: Installs required protoc plugins
-- `local_go_protoc`: Generates Go code with specific include paths for third-party dependencies
-- `go_protoc_gateway`: Generates gRPC Gateway code for REST endpoints
-- `update_license`: Updates license headers in generated files
-
 The `generate-java.sh` script:
 - Temporarily modifies proto files to handle Java reserved keywords
 - Downloads the gRPC Java plugin if needed

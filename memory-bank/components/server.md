@@ -21,7 +21,7 @@ The primary purposes of the Server component are:
 
 The Server operates as an Express.js application with several key components:
 
-1. **API Server**: Provides HTTP and WebSocket endpoints for client communication
+1. **API Server**: Provides HTTP and WebSocket endpoints for client communication. It also directly hosts and implements `gitpod.v1` gRPC services (defined in `.proto` files within `components/public-api/`) for programmatic access.
 2. **Authentication System**: Handles user authentication and session management
 3. **Database Interface**: Interacts with the database for persistent storage
 4. **WebSocket Manager**: Manages real-time communication with clients
@@ -40,6 +40,7 @@ The server is designed as a modular application using dependency injection (Inve
 - `src/auth/`: Authentication and authorization
 - `src/workspace/`: Workspace management
 - `src/user/`: User management
+- `src/orgs/`: Organization management
 - `src/prebuilds/`: Prebuild functionality
 - `src/billing/`: Billing and subscription management
 - `src/github/`, `src/gitlab/`, `src/bitbucket/`: SCM integrations
@@ -79,8 +80,9 @@ The Server is configured via environment variables and configuration files, incl
 The Server exposes multiple API endpoints:
 
 1. **User API**: User management, authentication, and preferences
-2. **Workspace API**: Workspace creation, management, and access
-3. **SCM Integration APIs**: GitHub, GitLab, Bitbucket webhooks and OAuth
+2. **Organization API**: Handles organization creation, settings, member management, and administrative functions like maintenance mode.
+3. **Workspace API**: Workspace creation, management, and access
+4. **SCM Integration APIs**: GitHub, GitLab, Bitbucket webhooks and OAuth
 4. **Billing API**: Subscription and payment management
 5. **WebSocket API**: Real-time communication with clients
 6. **Health and Metrics API**: System health and monitoring
@@ -94,7 +96,7 @@ The Server supports multiple authentication methods:
 3. **OAuth Integration**: With GitHub, GitLab, Bitbucket, etc.
 4. **Personal Access Tokens**: For programmatic access
 
-Authorization is handled through a combination of user roles, permissions, and access controls.
+Authorization is handled through a combination of user roles and permissions, leveraging SpiceDB for fine-grained access control checks within its service implementations (including for gRPC services).
 
 ## Integration Points
 

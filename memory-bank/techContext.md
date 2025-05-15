@@ -19,7 +19,8 @@
 ### Infrastructure
 - **Kubernetes**: Container orchestration platform
 - **Docker**: Containerization technology
-- **MySQL**: Primary database for persistent data
+- **MySQL**: Primary database for persistent data.
+    - TypeORM is used as the ORM
 - **Redis**: Caching and ephemeral data storage
 - **Helm**: Kubernetes package management
 - **Terraform**: Infrastructure as code for deployment
