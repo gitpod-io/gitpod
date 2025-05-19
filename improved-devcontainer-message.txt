@@ -1,0 +1,24 @@
+# Improved DevContainer Error Message
+
+## Current message:
+"failed to start dev container, see logs for details"
+
+## Improved message:
+"DevContainer configuration failed to apply. Using a basic recovery environment instead. Your custom tools and extensions may be unavailable."
+
+## Alternative (shorter version):
+"Using basic recovery environment. Custom tools unavailable. See logs for details."
+
+## Explanation:
+The improved message:
+1. Clearly states what happened (DevContainer failed)
+2. Explains what's happening now (using recovery environment)
+3. Sets expectations for the user (custom tools unavailable)
+4. Uses plain language without internal terminology
+5. Is concise enough for a UI error message
+6. Accurately describes the recovery container scenario
+
+This message helps users understand:
+- Their workspace is still usable (just in a limited way)
+- Their custom configuration didn't apply
+- They need to check logs for more details if they want to fix the issue
