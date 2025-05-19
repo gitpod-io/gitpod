@@ -22,7 +22,7 @@ import { MaintenanceModeBanner } from "./org-admin/MaintenanceModeBanner";
 import { MaintenanceNotificationBanner } from "./org-admin/MaintenanceNotificationBanner";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
-const PRIVACY_POLICY_LAST_UPDATED = "2024-12-03";
+const PRIVACY_POLICY_LAST_UPDATED = "2025-05-16";
 
 interface Notification {
     id: string;
