@@ -30,6 +30,7 @@ import (
 
 const (
 	workspaceIndex = "workspaceIndex"
+	ipAddressIndex = "ipAddressIndex"
 )
 
 // getPortStr extracts the port part from a given URL string. Returns "" if parsing fails or port is not specified.
@@ -77,6 +78,15 @@ func NewCRDWorkspaceInfoProvider(client client.Client, scheme *runtime.Scheme) (
 
 			return nil, xerrors.Errorf("object is not a WorkspaceInfo")
 		},
+		ipAddressIndex: func(obj interface{}) ([]string, error) {
+			if workspaceInfo, ok := obj.(*common.WorkspaceInfo); ok {
+				if workspaceInfo.IPAddress == "" {
+					return nil, nil
+				}
+				return []string{workspaceInfo.IPAddress}, nil
+			}
+			return nil, xerrors.Errorf("object is not a WorkspaceInfo")
+		},
 	}
 	contextIndexers := cache.Indexers{
 		workspaceIndex: func(obj interface{}) ([]string, error) {
@@ -96,29 +106,65 @@ func NewCRDWorkspaceInfoProvider(client client.Client, scheme *runtime.Scheme) (
 	}, nil
 }
 
-// WorkspaceInfo return the WorkspaceInfo available for the given workspaceID.
+// WorkspaceInfo returns the WorkspaceInfo for the given workspaceID.
+// It performs validation to ensure the workspace is unique and properly associated with its IP address.
 func (r *CRDWorkspaceInfoProvider) WorkspaceInfo(workspaceID string) *common.WorkspaceInfo {
 	workspaces, err := r.store.ByIndex(workspaceIndex, workspaceID)
 	if err != nil {
 		return nil
 	}
 
-	if len(workspaces) >= 1 {
-		if len(workspaces) != 1 {
-			log.Warnf("multiple instances (%d) for workspace %s", len(workspaces), workspaceID)
-		}
-
-		sort.Slice(workspaces, func(i, j int) bool {
-			a := workspaces[i].(*common.WorkspaceInfo)
-			b := workspaces[j].(*common.WorkspaceInfo)
-
-			return a.StartedAt.After(b.StartedAt)
-		})
-
-		return workspaces[0].(*common.WorkspaceInfo)
+	if len(workspaces) == 0 {
+		return nil
 	}
 
-	return nil
+	if len(workspaces) > 1 {
+		log.WithField("workspaceID", workspaceID).WithField("instanceCount", len(workspaces)).Warn("multiple workspace instances found")
+	}
+
+	sort.Slice(workspaces, func(i, j int) bool {
+		a := workspaces[i].(*common.WorkspaceInfo)
+		b := workspaces[j].(*common.WorkspaceInfo)
+		return a.StartedAt.After(b.StartedAt)
+	})
+
+	wsInfo := workspaces[0].(*common.WorkspaceInfo)
+
+	if wsInfo.IPAddress == "" {
+		return wsInfo
+	}
+
+	wsInfos, err := r.workspacesInfoByIPAddress(wsInfo.IPAddress)
+	if err != nil {
+		log.WithError(err).WithField("workspaceID", workspaceID).WithField("ipAddress", wsInfo.IPAddress).Error("failed to get workspaces by IP address")
+		return nil
+	}
+
+	if len(wsInfos) > 1 {
+		log.WithField("workspaceID", workspaceID).WithField("ipAddress", wsInfo.IPAddress).WithField("workspaceCount", len(wsInfos)).Warn("multiple workspaces found for IP address")
+		return nil
+	}
+
+	if len(wsInfos) == 1 && wsInfos[0].WorkspaceID != workspaceID {
+		log.WithField("workspaceID", workspaceID).WithField("ipAddress", wsInfo.IPAddress).WithField("foundWorkspaceID", wsInfos[0].WorkspaceID).Warn("workspace IP address conflict detected")
+		return nil
+	}
+
+	return wsInfo
+}
+
+func (r *CRDWorkspaceInfoProvider) workspacesInfoByIPAddress(ipAddress string) ([]*common.WorkspaceInfo, error) {
+	workspaces := make([]*common.WorkspaceInfo, 0)
+
+	objs, err := r.store.ByIndex(ipAddressIndex, ipAddress)
+	if err != nil {
+		return nil, err
+	}
+	for _, w := range objs {
+		workspaces = append(workspaces, w.(*common.WorkspaceInfo))
+	}
+
+	return workspaces, nil
 }
 
 func (r *CRDWorkspaceInfoProvider) AcquireContext(ctx context.Context, workspaceID string, port string) (context.Context, string, error) {
