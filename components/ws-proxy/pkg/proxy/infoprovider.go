@@ -134,23 +134,31 @@ func (r *CRDWorkspaceInfoProvider) WorkspaceInfo(workspaceID string) *common.Wor
 		return wsInfo
 	}
 
-	wsInfos, err := r.workspacesInfoByIPAddress(wsInfo.IPAddress)
-	if err != nil {
-		log.WithError(err).WithField("workspaceID", workspaceID).WithField("ipAddress", wsInfo.IPAddress).Error("failed to get workspaces by IP address")
-		return nil
-	}
-
-	if len(wsInfos) > 1 {
-		log.WithField("workspaceID", workspaceID).WithField("ipAddress", wsInfo.IPAddress).WithField("workspaceCount", len(wsInfos)).Warn("multiple workspaces found for IP address")
-		return nil
-	}
-
-	if len(wsInfos) == 1 && wsInfos[0].WorkspaceID != workspaceID {
-		log.WithField("workspaceID", workspaceID).WithField("ipAddress", wsInfo.IPAddress).WithField("foundWorkspaceID", wsInfos[0].WorkspaceID).Warn("workspace IP address conflict detected")
+	if conflict, err := r.validateIPAddressConflict(workspaceID, wsInfo.IPAddress); conflict || err != nil {
 		return nil
 	}
 
 	return wsInfo
+}
+
+func (r *CRDWorkspaceInfoProvider) validateIPAddressConflict(workspaceID, ipAddress string) (bool, error) {
+	wsInfos, err := r.workspacesInfoByIPAddress(ipAddress)
+	if err != nil {
+		log.WithError(err).WithField("workspaceID", workspaceID).WithField("ipAddress", ipAddress).Error("failed to get workspaces by IP address")
+		return true, err
+	}
+
+	if len(wsInfos) > 1 {
+		log.WithField("workspaceID", workspaceID).WithField("ipAddress", ipAddress).WithField("workspaceCount", len(wsInfos)).Warn("multiple workspaces found for IP address")
+		return true, nil
+	}
+
+	if len(wsInfos) == 1 && wsInfos[0].WorkspaceID != workspaceID {
+		log.WithField("workspaceID", workspaceID).WithField("ipAddress", ipAddress).WithField("foundWorkspaceID", wsInfos[0].WorkspaceID).Warn("workspace IP address conflict detected")
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (r *CRDWorkspaceInfoProvider) workspacesInfoByIPAddress(ipAddress string) ([]*common.WorkspaceInfo, error) {
