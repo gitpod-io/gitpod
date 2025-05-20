@@ -1,6 +1,7 @@
 # How to upgrade Kubernetes dependencies
 
 General steps:
+ 1. Check https://github.com/kubernetes/kubernetes/releases for the Kubernetes version. E.g. we use EKS 1.31, latest 1.31 Kubernetes release is 1.31.8 which is Kubernetes version 31.8. Run `./go-get-kubernetes.sh 31.8`.
  1. modify target versions in `go-update-wc-deps.sh`
  1. run `./go-update-wc-deps.sh`
    1. if it fails, fix the test/code, and run it again until all tests are good - except `install/installer`
