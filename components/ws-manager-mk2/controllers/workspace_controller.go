@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -615,7 +616,7 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&corev1.Node{}, &handler.Funcs{
 			// Only enqueue events for workspaces when the node gets deleted,
 			// such that we can trigger their cleanup.
-			DeleteFunc: func(ctx context.Context, e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
+			DeleteFunc: func(ctx context.Context, e event.TypedDeleteEvent[client.Object], queue workqueue.TypedRateLimitingInterface[reconcile.Request]) {
 				if e.Object == nil {
 					return
 				}

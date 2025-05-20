@@ -18,9 +18,9 @@ WORKSPACE_CLUSTER_DEPENDENCIES["github.com/containerd/containerd"]="1.6.36"
 WORKSPACE_CLUSTER_DEPENDENCIES["github.com/moby/buildkit"]="0.12.5"
 WORKSPACE_CLUSTER_DEPENDENCIES["github.com/opencontainers/runc"]="1.1.14"
 # Reasoning for this version: https://pkg.go.dev/sigs.k8s.io/controller-runtime#section-readme
-WORKSPACE_CLUSTER_DEPENDENCIES["sigs.k8s.io/controller-runtime"]="0.18.7"
+WORKSPACE_CLUSTER_DEPENDENCIES["sigs.k8s.io/controller-runtime"]="0.19.7"
 # Prefix matches
-WORKSPACE_CLUSTER_DEPENDENCIES["k8s.io/"]="0.30.9"
+WORKSPACE_CLUSTER_DEPENDENCIES["k8s.io/"]="0.31.8"
 
 # loop through keys of each associative array
 for key in "${!WORKSPACE_CLUSTER_DEPENDENCIES[@]}"
@@ -40,7 +40,7 @@ do
         # list all package to update, in case "key" is a prefix
         PACKAGES=$(grep -o "[[:space:]]${key}[^ ]*" go.mod | tr -d "[:blank:]" | sort | uniq)
         for p in ${PACKAGES}; do
-            if [[ "$p" == k8s.io/klog* ]] || [[ "$p" == k8s.io/utils* ]] || [[ "$p" == k8s.io/kube-openapi* ]]  || [[ "$p" == k8s.io/gengo* ]]; then
+            if [[ "$p" == k8s.io/klog* ]] || [[ "$p" == k8s.io/utils* ]] || [[ "$p" == k8s.io/kube-openapi* ]]  || [[ "$p" == k8s.io/gengo* ]] || [[ "$p" == k8s.io/legacy-cloud-providers* ]]; then
                 # special case imported indirectly, we don't want to update these. Also, they have different versions.
                 echo "Ignoring ${p}..."
                 continue
@@ -58,6 +58,8 @@ do
         popd
     done
 done
+
+leeway link
 
 echo ""
 echo "========== Done updating, doing tidy and testing now =========="
