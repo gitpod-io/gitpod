@@ -273,6 +273,7 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 			}
 
 			config, _, exists := pm.configs.Get(port.Port)
+			// don't serve ports that are configured to be ignored-completely
 			if exists && config.OnOpen == "ignore-completely" {
 				continue
 			}
@@ -794,6 +795,10 @@ func (pm *Manager) getStatus() []*api.PortsStatus {
 	res := make([]*api.PortsStatus, 0, len(pm.state))
 	for port := range pm.state {
 		status := pm.getPortStatus(port)
+		// make sure they are not listed in ports list
+		if status.OnOpen == api.PortsStatus_ignore_completely {
+			continue
+		}
 		res = append(res, status)
 	}
 	sort.SliceStable(res, func(i, j int) bool {
