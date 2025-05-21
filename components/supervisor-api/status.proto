@@ -223,6 +223,7 @@ message PortsStatus {
         open_preview = 2;
         notify = 3;
         notify_private = 4;
+        ignore_completely = 5;
     }
 
     // Action hint on open
