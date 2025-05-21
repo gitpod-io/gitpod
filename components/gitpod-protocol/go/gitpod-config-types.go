@@ -150,7 +150,7 @@ type PortsItems struct {
 	// Port name.
 	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 
-	// What to do when a service on this port was detected. 'notify' (default) will show a notification asking the user what to do. 'open-browser' will open a new browser tab. 'open-preview' will open in the preview on the right of the IDE. 'ignore' will do nothing.
+	// What to do when a service on this port was detected. 'notify' (default) will show a notification asking the user what to do. 'open-browser' will open a new browser tab. 'open-preview' will open in the preview on the right of the IDE. 'ignore' will do nothing. 'ignore-completely' will do nothing and prevent port forwarding.
 	OnOpen string `yaml:"onOpen,omitempty" json:"onOpen,omitempty"`
 
 	// The port number (e.g. 1337) or range (e.g. 3000-3999) to expose.
