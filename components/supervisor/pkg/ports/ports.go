@@ -272,6 +272,11 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 				continue
 			}
 
+			config, _, exists := pm.configs.Get(port.Port)
+			if exists && config.OnOpen == "ignore-completely" {
+				continue
+			}
+
 			current, exists := servedMap[port.Port]
 			if !exists || (!port.BoundToLocalhost && current.BoundToLocalhost) {
 				servedMap[port.Port] = port
@@ -789,9 +794,7 @@ func (pm *Manager) getStatus() []*api.PortsStatus {
 	res := make([]*api.PortsStatus, 0, len(pm.state))
 	for port := range pm.state {
 		status := pm.getPortStatus(port)
-		if status.OnOpen != api.PortsStatus_ignore_completely {
-			res = append(res, status)
-		}
+		res = append(res, status)
 	}
 	sort.SliceStable(res, func(i, j int) bool {
 		// Max number of port 65536
