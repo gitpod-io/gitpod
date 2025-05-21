@@ -109,12 +109,11 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	if workspace.Status.Runtime.HostIP == "" && pod.Status.HostIP != "" {
 		workspace.Status.Runtime.HostIP = pod.Status.HostIP
 	}
-	if workspace.Status.Runtime.PodIP == "" && pod.Status.PodIP != "" {
-		workspace.Status.Runtime.PodIP = pod.Status.PodIP
-	}
 	if workspace.Status.Runtime.PodName == "" && pod.Name != "" {
 		workspace.Status.Runtime.PodName = pod.Name
 	}
+
+	workspace.Status.Runtime.PodIP = pod.Status.PodIP
 
 	// Check if the node has disappeared. If so, ws-daemon has also disappeared and we need to
 	// mark the workspace backup as failed if it didn't complete disposal yet.
