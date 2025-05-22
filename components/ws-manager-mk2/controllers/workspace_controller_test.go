@@ -218,6 +218,40 @@ var _ = Describe("WorkspaceController", func() {
 			})
 		})
 
+		It("should handle workspace failure with unknown exit code", func() {
+			ws := newWorkspace(uuid.NewString(), "default")
+			m := collectMetricCounts(wsMetrics, ws)
+			pod := createWorkspaceExpectPod(ws)
+
+			markReady(ws)
+
+			// Update Pod with failed exit status.
+			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
+				pod.Status.ContainerStatuses = append(pod.Status.ContainerStatuses, corev1.ContainerStatus{
+					LastTerminationState: corev1.ContainerState{
+						Terminated: &corev1.ContainerStateTerminated{
+							ExitCode: containerUnknownExitCode,
+						},
+					},
+				})
+			})
+
+			// Controller should detect container exit and add Failed condition.
+			expectConditionEventually(ws, string(workspacev1.WorkspaceConditionFailed), metav1.ConditionTrue, "")
+
+			expectFinalizerAndMarkBackupCompleted(ws, pod)
+
+			expectWorkspaceCleanup(ws, pod)
+
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				restores:      1,
+				startFailures: 0,
+				failures:      1,
+				stops:         map[StopReason]int{StopReasonFailed: 1},
+				backups:       1,
+			})
+		})
+
 		It("should clean up timed out workspaces", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
 			m := collectMetricCounts(wsMetrics, ws)

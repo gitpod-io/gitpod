@@ -439,10 +439,12 @@ func (r *WorkspaceReconciler) extractFailure(ctx context.Context, ws *workspacev
 				if !ws.IsHeadless() {
 					return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that", cs.Name), nil
 				}
-			} else if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerUnknownExitCode {
+			} else if !isPodBeingDeleted(pod) && terminationState.ExitCode == containerUnknownExitCode {
+				return fmt.Sprintf("workspace container %s terminated for an unknown reason: (%s) %s", cs.Name, terminationState.Reason, terminationState.Message), nil
+			} else if !isPodBeingDeleted(pod) {
 				// if a container is terminated and it wasn't because of either:
 				//  - regular shutdown
-				//  - the exit code "UNKNOWN" (which might be caused by an intermittent issue and is handled in extractStatusFromPod)
+				//  - the exit code "UNKNOWN" (which might be caused by an intermittent issue
 				//  - another known error
 				// then we report it as UNKNOWN
 				phase := workspacev1.WorkspacePhaseUnknown
