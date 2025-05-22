@@ -319,14 +319,24 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 
 	status := pm.getStatus()
 	log.WithField("ports", fmt.Sprintf("%+v", status)).Debug("ports changed")
+
+	// Collect subscriptions that need to be closed
+	var toClose []*Subscription
 	for sub := range pm.subscriptions {
 		select {
 		case sub.updates <- status:
 		case <-time.After(5 * time.Second):
 			log.Error("ports subscription droped out")
-			_ = sub.Close()
+			toClose = append(toClose, sub)
 		}
 	}
+
+	// Close subscriptions after releasing the lock
+	go func() {
+		for _, sub := range toClose {
+			_ = sub.Close()
+		}
+	}()
 }
 
 func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
