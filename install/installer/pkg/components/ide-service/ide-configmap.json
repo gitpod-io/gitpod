@@ -8,11 +8,11 @@
         "type": "browser",
         "logo": "{{.IdeLogoBase}}/vscode.svg",
         "label": "Browser",
-        "image": "{{.Repository}}/ide/code:commit-4483885bb11ab66b7906e81952af47ec0be6db09",
+        "image": "{{.Repository}}/ide/code:commit-e62d71dde81f736d8a4c6b07c5483e5caed40d7b",
         "latestImage": "{{.ResolvedCodeBrowserImageLatest}}",
         "imageLayers": [
-          "{{.Repository}}/ide/gitpod-code-web:commit-89f0bc5aa6682e507c40d3eaa2df68b6984c8b98",
-          "{{.Repository}}/ide/code-codehelper:commit-6a6052fe11cde3c702ced508c32538b274216779"
+          "{{.Repository}}/ide/gitpod-code-web:commit-e62d71dde81f736d8a4c6b07c5483e5caed40d7b",
+          "{{.Repository}}/ide/code-codehelper:commit-6385d6f4c904ce2b8d298c5f8c115090aa5f6488"
         ],
         "latestImageLayers": [
           "{{.CodeWebExtensionImage}}",
