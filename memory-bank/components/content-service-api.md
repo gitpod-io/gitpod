@@ -98,13 +98,6 @@ This script performs the following actions:
 - Generates TypeScript code
 - Updates license headers
 
-### Implementation Details
-The `generate.sh` script uses functions from the shared script at `scripts/protoc-generator.sh`, which provides common functionality for all API components:
-
-- `install_dependencies`: Installs required protoc plugins
-- `protoc_buf_generate`: Uses the `buf` tool to generate code based on the configuration in `buf.gen.yaml`
-- `update_license`: Updates license headers in generated files
-
 ### Building After Code Generation
 After regenerating the code, you may need to rebuild components that depend on the Content Service API. This typically involves:
 

@@ -108,17 +108,13 @@ The schema defines various permissions for each entity type:
 
 ## Configuration
 
-The SpiceDB component is configured through a YAML schema file:
+The SpiceDB component's core configuration is its schema, defined in `components/spicedb/schema/schema.yaml`. This YAML file is central to Gitpod's authorization model and specifies:
+- **Object Definitions**: The types of resources being protected (e.g., `user`, `organization`, `project`, `workspace`).
+- **Relations**: How different objects can be related to each other (e.g., an `organization` has an `owner` which is a `user`; a `project` belongs to an `org`).
+- **Permissions**: What actions can be performed on objects, and how these permissions are derived from relations (e.g., `permission write_settings = owner + installation->admin` for an `organization`).
+- **Validation & Assertions**: Rules and tests to ensure the schema's integrity and correctness.
 
-```yaml
-schema/schema.yaml
-```
-
-This file defines:
-- Entity types (user, organization, project, workspace)
-- Relationships between entities
-- Permissions derived from these relationships
-- Validation rules and assertions for testing
+New permissions (like the `maintenance` permission for organizations) are added by modifying this schema file. Other components, such as the `server` component, then use a SpiceDB client to check these permissions at runtime to authorize operations.
 
 ## Integration Points
 

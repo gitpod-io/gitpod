@@ -126,7 +126,7 @@ Note: When triggered by **update memory bank**, I MUST review every memory bank 
   - Short-term memory (activeContext.md, progress.md): Detailed, recent, specific
   - Long-term memory (systemPatterns.md, techContext.md, projectbrief.md): Compressed, patterns, principles
 - Apply this strategy on every interaction with the memory bank
-- Use "compress memory bank" trigger to perform a compression run
+- Use **compress memory bank** trigger to perform a compression run
 
 When compressing memory bank files:
 1. Focus on patterns over instances

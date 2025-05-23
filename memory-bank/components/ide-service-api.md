@@ -105,14 +105,6 @@ This script performs the following actions:
 - Generates TypeScript code using `ts_proto`
 - Updates license headers
 
-### Implementation Details
-The `generate.sh` script uses functions from the shared script at `scripts/protoc-generator.sh`:
-
-- `install_dependencies`: Installs required protoc plugins
-- `go_protoc`: Generates Go code
-- `typescript_ts_protoc`: Generates TypeScript code using ts_proto
-- `update_license`: Updates license headers in generated files
-
 The IDE Service API generates TypeScript code using the ts_proto plugin, which creates more modern TypeScript interfaces compared to the standard protoc TypeScript generator.
 
 ### Building After Code Generation

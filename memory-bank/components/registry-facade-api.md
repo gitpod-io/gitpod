@@ -86,13 +86,6 @@ This script performs the following actions:
 - Generates Go code using `protoc-gen-go` and `protoc-gen-go-grpc`
 - Updates license headers
 
-### Implementation Details
-The `generate.sh` script uses functions from the shared script at `scripts/protoc-generator.sh`:
-
-- `install_dependencies`: Installs required protoc plugins
-- `go_protoc`: Generates Go code
-- `update_license`: Updates license headers in generated files
-
 The Registry Facade API is relatively simple compared to other APIs, focusing primarily on defining the structure of image specifications rather than complex service interactions.
 
 ### Building After Code Generation
