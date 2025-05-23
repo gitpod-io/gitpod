@@ -1,68 +1,50 @@
 # Product Context: Gitpod
 
 ## Why Gitpod Exists
-Gitpod was created to solve the fundamental problem of development environment inconsistency and setup time. Traditional development workflows require developers to manually set up and maintain their development environments, leading to:
+Gitpod addresses development environment inconsistency and setup time challenges through ephemeral, automated cloud environments.
 
-1. **"Works on my machine" problems**: Inconsistent environments across team members
-2. **Onboarding friction**: New team members spending days setting up their environment
-3. **Context switching costs**: Significant time lost when switching between projects
-4. **Resource limitations**: Local machines struggling with resource-intensive development tasks
-5. **Configuration drift**: Environments becoming inconsistent over time
+### Key Challenges Solved
+| Challenge | Description |
+|-----------|-------------|
+| Environment Inconsistency | Eliminates "works on my machine" problems |
+| Onboarding Friction | Reduces new team member setup from days to seconds |
+| Context Switching | Minimizes project switching overhead |
+| Resource Limitations | Overcomes local machine constraints |
+| Configuration Drift | Prevents environments from becoming inconsistent |
 
-Gitpod addresses these challenges by providing ephemeral, automated, and consistent development environments in the cloud.
+## Value Proposition by Stakeholder
 
-## Problems Gitpod Solves
-
-### For Individual Developers
-- Eliminates environment setup and maintenance time
-- Provides consistent, reproducible environments
-- Enables development from any device with a browser
-- Reduces local resource constraints (CPU, memory, storage)
-- Simplifies context switching between projects
-
-### For Teams
-- Ensures all team members work in identical environments
-- Dramatically reduces onboarding time for new developers
-- Improves collaboration through shared workspaces
-- Streamlines code review processes
-- Reduces infrastructure management overhead
-
-### For Organizations
-- Enhances security through containerized environments
-- Improves productivity by eliminating environment-related issues
-- Enables standardization of development tools and practices
-- Provides flexibility for remote and distributed teams
-- Reduces costs associated with powerful local development machines
+| Stakeholder | Benefits |
+|-------------|----------|
+| **Individual Developers** | • Zero environment setup/maintenance<br>• Consistent environments<br>• Device-agnostic development<br>• Unlimited resources<br>• Effortless project switching |
+| **Teams** | • Identical environments<br>• Rapid onboarding<br>• Enhanced collaboration<br>• Streamlined code reviews<br>• Reduced infrastructure overhead |
+| **Organizations** | • Improved security<br>• Increased productivity<br>• Standardized tooling<br>• Remote work enablement<br>• Hardware cost reduction |
 
 ## How Gitpod Works
-
-1. **Environment Definition**: Developers define their environment in a `.gitpod.yml` file, specifying dependencies, tools, and configurations.
-
-2. **Prebuilding**: Gitpod continuously prebuilds environments for branches, similar to CI systems, preparing environments before they're needed.
-
-3. **Instant Start**: When a developer starts a workspace, Gitpod spins up a container with the prebuild results, providing a ready-to-code environment in seconds.
-
-4. **Development**: Developers work in a familiar IDE interface (VS Code, JetBrains) with full access to all necessary tools and resources.
-
-5. **Collaboration**: Developers can share workspaces, create snapshots, and collaborate in real-time.
-
-6. **Integration**: Gitpod integrates with GitHub, GitLab, Bitbucket, and Azure DevOps, providing seamless workflow integration.
+1. **Define**: Environment specified in `.gitpod.yml`
+2. **Prebuild**: Environments prepared in advance (CI-like)
+3. **Start**: Container spins up with prebuild results
+4. **Develop**: Work in familiar IDE (VS Code, JetBrains)
+5. **Collaborate**: Share workspaces and snapshots
+6. **Integrate**: Seamless Git platform workflow
 
 ## User Experience Goals
-
-- **Instant Readiness**: Environments should be ready to code within seconds
-- **Familiarity**: Provide the same experience as local development
-- **Seamless Integration**: Work naturally with existing tools and workflows
-- **Minimal Configuration**: Make it easy to define and maintain environment configurations
-- **Reliability**: Ensure consistent, reproducible environments every time
-- **Performance**: Deliver responsive, high-performance development experiences
-- **Accessibility**: Enable development from any device with a browser
+| Goal | Description |
+|------|-------------|
+| Instant Readiness | Ready to code within seconds |
+| Familiarity | Same experience as local development |
+| Seamless Integration | Works with existing tools and workflows |
+| Minimal Configuration | Easy environment definition |
+| Reliability | Consistent, reproducible environments |
+| Performance | Responsive development experience |
+| Accessibility | Development from any device |
 
 ## Key Differentiators
-
-- **Ephemeral Environments**: Fresh environment for each task, eliminating configuration drift
-- **Prebuilds**: Environments prepared before they're needed, eliminating wait time
-- **Git Integration**: Deep integration with git platforms for seamless workflow
-- **Open Source**: Core platform is open source, providing transparency and extensibility
-- **Enterprise Ready**: Supports self-hosted deployments with enterprise-grade security and compliance features
-- **IDE Flexibility**: Supports multiple IDEs including VS Code and JetBrains products
+| Differentiator | Advantage |
+|----------------|-----------|
+| Ephemeral Environments | Fresh environment per task, eliminating drift |
+| Prebuilds | Zero wait time with prepared environments |
+| Git Integration | Seamless workflow with major platforms |
+| Open Source | Transparency and extensibility |
+| Enterprise Ready | Self-hosted with security and compliance |
+| IDE Flexibility | Supports VS Code and JetBrains products |
