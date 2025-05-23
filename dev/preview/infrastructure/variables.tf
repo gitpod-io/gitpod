@@ -23,7 +23,7 @@ variable "vm_type" {
 variable "vm_image" {
   type        = string
   description = "The VM image"
-  default     = "gitpod-k3s-202411272101"
+  default     = "gitpod-k3s-202505222027"
 }
 
 variable "cert_issuer" {
