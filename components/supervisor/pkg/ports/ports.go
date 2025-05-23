@@ -272,6 +272,12 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 				continue
 			}
 
+			config, _, exists := pm.configs.Get(port.Port)
+			// don't serve ports that are configured to be ignored-completely
+			if exists && config.OnOpen == "ignore-completely" {
+				continue
+			}
+
 			current, exists := servedMap[port.Port]
 			if !exists || (!port.BoundToLocalhost && current.BoundToLocalhost) {
 				servedMap[port.Port] = port
@@ -624,6 +630,9 @@ func getOnOpenAction(config *gitpod.PortConfig, port uint32) api.PortsStatus_OnO
 		}
 		return api.PortsStatus_notify_private
 	}
+	if config.OnOpen == "ignore-completely" {
+		return api.PortsStatus_ignore_completely
+	}
 	if config.OnOpen == "ignore" {
 		return api.PortsStatus_ignore
 	}
@@ -785,7 +794,12 @@ func (pm *Manager) Subscribe() (*Subscription, error) {
 func (pm *Manager) getStatus() []*api.PortsStatus {
 	res := make([]*api.PortsStatus, 0, len(pm.state))
 	for port := range pm.state {
-		res = append(res, pm.getPortStatus(port))
+		status := pm.getPortStatus(port)
+		// make sure they are not listed in ports list
+		if status.OnOpen == api.PortsStatus_ignore_completely {
+			continue
+		}
+		res = append(res, status)
 	}
 	sort.SliceStable(res, func(i, j int) bool {
 		// Max number of port 65536

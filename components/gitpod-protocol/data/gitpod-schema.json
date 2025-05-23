@@ -24,9 +24,10 @@
                             "open-browser",
                             "open-preview",
                             "notify",
-                            "ignore"
+                            "ignore",
+                            "ignore-completely"
                         ],
-                        "description": "What to do when a service on this port was detected. 'notify' (default) will show a notification asking the user what to do. 'open-browser' will open a new browser tab. 'open-preview' will open in the preview on the right of the IDE. 'ignore' will do nothing."
+                        "description": "What to do when a service on this port was detected. 'notify' (default) will show a notification asking the user what to do. 'open-browser' will open a new browser tab. 'open-preview' will open in the preview on the right of the IDE. 'ignore' will do nothing. 'ignore-completely' will do nothing and prevent port forwarding."
                     },
                     "visibility": {
                         "type": "string",

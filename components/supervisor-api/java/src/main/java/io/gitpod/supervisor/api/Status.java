@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2025 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -9862,6 +9862,10 @@ public final class Status {
        * <code>notify_private = 4;</code>
        */
       notify_private(4),
+      /**
+       * <code>ignore_completely = 5;</code>
+       */
+      ignore_completely(5),
       UNRECOGNIZED(-1),
       ;
 
@@ -9885,6 +9889,10 @@ public final class Status {
        * <code>notify_private = 4;</code>
        */
       public static final int notify_private_VALUE = 4;
+      /**
+       * <code>ignore_completely = 5;</code>
+       */
+      public static final int ignore_completely_VALUE = 5;
 
 
       public final int getNumber() {
@@ -9916,6 +9924,7 @@ public final class Status {
           case 2: return open_preview;
           case 3: return notify;
           case 4: return notify_private;
+          case 5: return ignore_completely;
           default: return null;
         }
       }
@@ -16889,69 +16898,69 @@ public final class Status {
       "or.TunnelVisiblity\022:\n\007clients\030\003 \003(\0132).su" +
       "pervisor.TunneledPortInfo.ClientsEntry\032." +
       "\n\014ClientsEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001" +
-      "(\r:\0028\001\"\204\003\n\013PortsStatus\022\022\n\nlocal_port\030\001 \001" +
+      "(\r:\0028\001\"\233\003\n\013PortsStatus\022\022\n\nlocal_port\030\001 \001" +
       "(\r\022\016\n\006served\030\004 \001(\010\022,\n\007exposed\030\005 \001(\0132\033.su" +
       "pervisor.ExposedPortInfo\0223\n\rauto_exposur" +
       "e\030\007 \001(\0162\034.supervisor.PortAutoExposure\022.\n" +
       "\010tunneled\030\006 \001(\0132\034.supervisor.TunneledPor" +
       "tInfo\022\023\n\013description\030\010 \001(\t\022\014\n\004name\030\t \001(\t" +
       "\0225\n\007on_open\030\n \001(\0162$.supervisor.PortsStat" +
-      "us.OnOpenAction\"^\n\014OnOpenAction\022\n\n\006ignor" +
+      "us.OnOpenAction\"u\n\014OnOpenAction\022\n\n\006ignor" +
       "e\020\000\022\020\n\014open_browser\020\001\022\020\n\014open_preview\020\002\022" +
-      "\n\n\006notify\020\003\022\022\n\016notify_private\020\004J\004\010\002\020\003\"%\n" +
-      "\022TasksStatusRequest\022\017\n\007observe\030\001 \001(\010\"<\n\023" +
-      "TasksStatusResponse\022%\n\005tasks\030\001 \003(\0132\026.sup" +
-      "ervisor.TaskStatus\"\204\001\n\nTaskStatus\022\n\n\002id\030" +
-      "\001 \001(\t\022$\n\005state\030\002 \001(\0162\025.supervisor.TaskSt" +
-      "ate\022\020\n\010terminal\030\003 \001(\t\0222\n\014presentation\030\004 " +
-      "\001(\0132\034.supervisor.TaskPresentation\"D\n\020Tas" +
-      "kPresentation\022\014\n\004name\030\001 \001(\t\022\017\n\007open_in\030\002" +
-      " \001(\t\022\021\n\topen_mode\030\003 \001(\t\"\027\n\025ResourcesStat" +
-      "uRequest\"n\n\027ResourcesStatusResponse\022*\n\006m" +
-      "emory\030\001 \001(\0132\032.supervisor.ResourceStatus\022" +
-      "\'\n\003cpu\030\002 \001(\0132\032.supervisor.ResourceStatus" +
-      "\"c\n\016ResourceStatus\022\014\n\004used\030\001 \001(\003\022\r\n\005limi" +
-      "t\030\002 \001(\003\0224\n\010severity\030\003 \001(\0162\".supervisor.R" +
-      "esourceStatusSeverity*C\n\rContentSource\022\016" +
-      "\n\nfrom_other\020\000\022\017\n\013from_backup\020\001\022\021\n\rfrom_" +
-      "prebuild\020\002*?\n\016PortVisibility\022\026\n\022private_" +
-      "visibility\020\000\022\025\n\021public_visibility\020\001*#\n\014P" +
-      "ortProtocol\022\010\n\004http\020\000\022\t\n\005https\020\001*e\n\023OnPo" +
-      "rtExposedAction\022\n\n\006ignore\020\000\022\020\n\014open_brow" +
-      "ser\020\001\022\020\n\014open_preview\020\002\022\n\n\006notify\020\003\022\022\n\016n" +
-      "otify_private\020\004*9\n\020PortAutoExposure\022\n\n\006t" +
-      "rying\020\000\022\r\n\tsucceeded\020\001\022\n\n\006failed\020\002*1\n\tTa" +
-      "skState\022\013\n\007opening\020\000\022\013\n\007running\020\001\022\n\n\006clo" +
-      "sed\020\002*=\n\026ResourceStatusSeverity\022\n\n\006norma" +
-      "l\020\000\022\013\n\007warning\020\001\022\n\n\006danger\020\0022\377\007\n\rStatusS" +
-      "ervice\022\266\001\n\020SupervisorStatus\022#.supervisor" +
-      ".SupervisorStatusRequest\032$.supervisor.Su" +
-      "pervisorStatusResponse\"W\202\323\344\223\002Q\022\025/v1/stat" +
-      "us/supervisorZ8\0226/v1/status/supervisor/w" +
-      "illShutdown/{willShutdown=true}\022\203\001\n\tIDES" +
-      "tatus\022\034.supervisor.IDEStatusRequest\032\035.su" +
-      "pervisor.IDEStatusResponse\"9\202\323\344\223\0023\022\016/v1/" +
-      "status/ideZ!\022\037/v1/status/ide/wait/{wait=" +
-      "true}\022\227\001\n\rContentStatus\022 .supervisor.Con" +
-      "tentStatusRequest\032!.supervisor.ContentSt" +
-      "atusResponse\"A\202\323\344\223\002;\022\022/v1/status/content" +
-      "Z%\022#/v1/status/content/wait/{wait=true}\022" +
-      "l\n\014BackupStatus\022\037.supervisor.BackupStatu" +
-      "sRequest\032 .supervisor.BackupStatusRespon" +
-      "se\"\031\202\323\344\223\002\023\022\021/v1/status/backup\022\225\001\n\013PortsS" +
-      "tatus\022\036.supervisor.PortsStatusRequest\032\037." +
-      "supervisor.PortsStatusResponse\"C\202\323\344\223\002=\022\020" +
-      "/v1/status/portsZ)\022\'/v1/status/ports/obs" +
-      "erve/{observe=true}0\001\022\225\001\n\013TasksStatus\022\036." +
-      "supervisor.TasksStatusRequest\032\037.supervis" +
-      "or.TasksStatusResponse\"C\202\323\344\223\002=\022\020/v1/stat" +
-      "us/tasksZ)\022\'/v1/status/tasks/observe/{ob" +
-      "serve=true}0\001\022w\n\017ResourcesStatus\022!.super" +
-      "visor.ResourcesStatuRequest\032#.supervisor" +
-      ".ResourcesStatusResponse\"\034\202\323\344\223\002\026\022\024/v1/st" +
-      "atus/resourcesBF\n\030io.gitpod.supervisor.a" +
-      "piZ*github.com/gitpod-io/gitpod/supervis" +
-      "or/apib\006proto3"
+      "\n\n\006notify\020\003\022\022\n\016notify_private\020\004\022\025\n\021ignor" +
+      "e_completely\020\005J\004\010\002\020\003\"%\n\022TasksStatusReque" +
+      "st\022\017\n\007observe\030\001 \001(\010\"<\n\023TasksStatusRespon" +
+      "se\022%\n\005tasks\030\001 \003(\0132\026.supervisor.TaskStatu" +
+      "s\"\204\001\n\nTaskStatus\022\n\n\002id\030\001 \001(\t\022$\n\005state\030\002 " +
+      "\001(\0162\025.supervisor.TaskState\022\020\n\010terminal\030\003" +
+      " \001(\t\0222\n\014presentation\030\004 \001(\0132\034.supervisor." +
+      "TaskPresentation\"D\n\020TaskPresentation\022\014\n\004" +
+      "name\030\001 \001(\t\022\017\n\007open_in\030\002 \001(\t\022\021\n\topen_mode" +
+      "\030\003 \001(\t\"\027\n\025ResourcesStatuRequest\"n\n\027Resou" +
+      "rcesStatusResponse\022*\n\006memory\030\001 \001(\0132\032.sup" +
+      "ervisor.ResourceStatus\022\'\n\003cpu\030\002 \001(\0132\032.su" +
+      "pervisor.ResourceStatus\"c\n\016ResourceStatu" +
+      "s\022\014\n\004used\030\001 \001(\003\022\r\n\005limit\030\002 \001(\003\0224\n\010severi" +
+      "ty\030\003 \001(\0162\".supervisor.ResourceStatusSeve" +
+      "rity*C\n\rContentSource\022\016\n\nfrom_other\020\000\022\017\n" +
+      "\013from_backup\020\001\022\021\n\rfrom_prebuild\020\002*?\n\016Por" +
+      "tVisibility\022\026\n\022private_visibility\020\000\022\025\n\021p" +
+      "ublic_visibility\020\001*#\n\014PortProtocol\022\010\n\004ht" +
+      "tp\020\000\022\t\n\005https\020\001*e\n\023OnPortExposedAction\022\n" +
+      "\n\006ignore\020\000\022\020\n\014open_browser\020\001\022\020\n\014open_pre" +
+      "view\020\002\022\n\n\006notify\020\003\022\022\n\016notify_private\020\004*9" +
+      "\n\020PortAutoExposure\022\n\n\006trying\020\000\022\r\n\tsuccee" +
+      "ded\020\001\022\n\n\006failed\020\002*1\n\tTaskState\022\013\n\007openin" +
+      "g\020\000\022\013\n\007running\020\001\022\n\n\006closed\020\002*=\n\026Resource" +
+      "StatusSeverity\022\n\n\006normal\020\000\022\013\n\007warning\020\001\022" +
+      "\n\n\006danger\020\0022\377\007\n\rStatusService\022\266\001\n\020Superv" +
+      "isorStatus\022#.supervisor.SupervisorStatus" +
+      "Request\032$.supervisor.SupervisorStatusRes" +
+      "ponse\"W\202\323\344\223\002Q\022\025/v1/status/supervisorZ8\0226" +
+      "/v1/status/supervisor/willShutdown/{will" +
+      "Shutdown=true}\022\203\001\n\tIDEStatus\022\034.superviso" +
+      "r.IDEStatusRequest\032\035.supervisor.IDEStatu" +
+      "sResponse\"9\202\323\344\223\0023\022\016/v1/status/ideZ!\022\037/v1" +
+      "/status/ide/wait/{wait=true}\022\227\001\n\rContent" +
+      "Status\022 .supervisor.ContentStatusRequest" +
+      "\032!.supervisor.ContentStatusResponse\"A\202\323\344" +
+      "\223\002;\022\022/v1/status/contentZ%\022#/v1/status/co" +
+      "ntent/wait/{wait=true}\022l\n\014BackupStatus\022\037" +
+      ".supervisor.BackupStatusRequest\032 .superv" +
+      "isor.BackupStatusResponse\"\031\202\323\344\223\002\023\022\021/v1/s" +
+      "tatus/backup\022\225\001\n\013PortsStatus\022\036.superviso" +
+      "r.PortsStatusRequest\032\037.supervisor.PortsS" +
+      "tatusResponse\"C\202\323\344\223\002=\022\020/v1/status/portsZ" +
+      ")\022\'/v1/status/ports/observe/{observe=tru" +
+      "e}0\001\022\225\001\n\013TasksStatus\022\036.supervisor.TasksS" +
+      "tatusRequest\032\037.supervisor.TasksStatusRes" +
+      "ponse\"C\202\323\344\223\002=\022\020/v1/status/tasksZ)\022\'/v1/s" +
+      "tatus/tasks/observe/{observe=true}0\001\022w\n\017" +
+      "ResourcesStatus\022!.supervisor.ResourcesSt" +
+      "atuRequest\032#.supervisor.ResourcesStatusR" +
+      "esponse\"\034\202\323\344\223\002\026\022\024/v1/status/resourcesBF\n" +
+      "\030io.gitpod.supervisor.apiZ*github.com/gi" +
+      "tpod-io/gitpod/supervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
