@@ -46,7 +46,7 @@ func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, confi
 		T: tunneled,
 
 		forceUpdates:       make(chan struct{}, 1),
-		closeSubscriptions: make(chan *Subscription, maxSubscriptions),
+		closeSubscriptions: make(chan *Subscription, maxSubscriptions*2),
 
 		internal:     internal,
 		proxies:      make(map[uint32]*localhostProxy),
@@ -772,7 +772,8 @@ func (pm *Manager) Subscribe() (*Subscription, error) {
 	}
 
 	if len(pm.subscriptions) > maxSubscriptions {
-		return nil, ErrTooManySubscriptions
+		return nil, fmt.Errorf("too many subscriptions: %d", len(pm.subscriptions))
+		// return nil, ErrTooManySubscriptions
 	}
 
 	sub := &Subscription{updates: make(chan []*api.PortsStatus, 5)}
