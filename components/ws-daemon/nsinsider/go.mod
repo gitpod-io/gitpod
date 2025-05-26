@@ -1,8 +1,10 @@
 module github.com/gitpod-io/gitpod/ws-daemon/nsinsider
 
-go 1.22.0
+go 1.24
 
-toolchain go1.23.3
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000

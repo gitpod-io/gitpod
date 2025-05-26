@@ -1,8 +1,10 @@
 module github.com/gitpod-io/gitpod/registry-facade
 
-go 1.23.0
+go 1.24
 
-toolchain go1.23.3
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	github.com/alicebob/miniredis/v2 v2.32.1

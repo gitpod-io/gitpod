@@ -1,8 +1,10 @@
 module github.com/gitpod-io/gitpod/changelog
 
-go 1.23.0
+go 1.24
 
-toolchain go1.23.3
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	github.com/google/go-github/v38 v38.1.0

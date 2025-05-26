@@ -1,6 +1,10 @@
 module gitpod-io/mixin-utils
 
-go 1.15
+go 1.24
+
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect

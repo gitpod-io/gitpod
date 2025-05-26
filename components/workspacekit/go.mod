@@ -1,8 +1,10 @@
 module github.com/gitpod-io/gitpod/workspacekit
 
-go 1.22.0
+go 1.24
 
-toolchain go1.23.3
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 replace github.com/seccomp/libseccomp-golang => github.com/gitpod-io/libseccomp-golang v0.9.2-0.20220701021458-9bf1c833815b
 

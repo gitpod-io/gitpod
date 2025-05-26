@@ -1,6 +1,10 @@
 module github.com/gitpod-io/gitpod/gitpod-protocol
 
-go 1.22
+go 1.24
+
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	github.com/golang/mock v1.6.0

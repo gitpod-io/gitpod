@@ -1,6 +1,10 @@
 module github.com/gitpod-io/gitpod/components/spicedb/codegen
 
-go 1.22
+go 1.24
+
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	github.com/authzed/spicedb v1.24.0
