@@ -45,8 +45,7 @@ func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, confi
 		C: config,
 		T: tunneled,
 
-		forceUpdates:       make(chan struct{}, 1),
-		closeSubscriptions: make(chan *Subscription, maxSubscriptions*2),
+		forceUpdates: make(chan struct{}, 1),
 
 		internal:     internal,
 		proxies:      make(map[uint32]*localhostProxy),
@@ -81,8 +80,7 @@ type Manager struct {
 	C ConfigInterace
 	T TunneledPortsInterface
 
-	forceUpdates       chan struct{}
-	closeSubscriptions chan *Subscription
+	forceUpdates chan struct{}
 
 	internal     map[uint32]struct{}
 	proxies      map[uint32]*localhostProxy
