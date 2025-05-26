@@ -1001,7 +1001,7 @@ export interface PrebuiltWorkspaceUpdatable {
     contextUrl?: string;
 }
 
-export type PortOnOpen = "open-browser" | "open-preview" | "notify" | "ignore";
+export type PortOnOpen = "open-browser" | "open-preview" | "notify" | "ignore" | "ignore-completely";
 
 export interface PortConfig {
     port: number;
