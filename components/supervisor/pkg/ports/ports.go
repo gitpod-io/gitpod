@@ -45,7 +45,8 @@ func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, confi
 		C: config,
 		T: tunneled,
 
-		forceUpdates: make(chan struct{}, 1),
+		forceUpdates:       make(chan struct{}, 1),
+		closeSubscriptions: make(chan *Subscription, maxSubscriptions),
 
 		internal:     internal,
 		proxies:      make(map[uint32]*localhostProxy),
@@ -80,7 +81,8 @@ type Manager struct {
 	C ConfigInterace
 	T TunneledPortsInterface
 
-	forceUpdates chan struct{}
+	forceUpdates       chan struct{}
+	closeSubscriptions chan *Subscription
 
 	internal     map[uint32]struct{}
 	proxies      map[uint32]*localhostProxy
@@ -172,6 +174,10 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		select {
 		case <-pm.forceUpdates:
 			forceUpdate = true
+		case sub := <-pm.closeSubscriptions:
+			pm.mu.Lock()
+			delete(pm.subscriptions, sub)
+			pm.mu.Unlock()
 		case exposed = <-exposedUpdates:
 			if exposed == nil {
 				if ctx.Err() == nil {
@@ -772,14 +778,14 @@ func (pm *Manager) Subscribe() (*Subscription, error) {
 	sub := &Subscription{updates: make(chan []*api.PortsStatus, 5)}
 	var once sync.Once
 	sub.Close = func() error {
-		pm.mu.Lock()
-		defer pm.mu.Unlock()
-
 		once.Do(func() {
 			close(sub.updates)
 		})
-		delete(pm.subscriptions, sub)
-
+		select {
+		case pm.closeSubscriptions <- sub:
+		default:
+			log.Error("closeSubscriptions channel is full")
+		}
 		return nil
 	}
 	pm.subscriptions[sub] = struct{}{}

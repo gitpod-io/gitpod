@@ -87,9 +87,9 @@ func NewGitpodExposedPorts(workspaceID string, instanceID string, workspaceUrl s
 		WorkspaceUrl:  workspaceUrl,
 		gitpodService: gitpodService,
 
-		// allow clients to submit 30 expose requests without blocking
-		requests:           make(chan *exposePortRequest, 30),
-		localExposedNotice: make(chan struct{}, 30),
+		// allow clients to submit 3000 expose requests without blocking
+		requests:           make(chan *exposePortRequest, 3000),
+		localExposedNotice: make(chan struct{}, 3000),
 	}
 }
 
