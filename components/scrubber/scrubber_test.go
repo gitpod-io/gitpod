@@ -22,6 +22,10 @@ func TestValue(t *testing.T) {
 		{Name: "empty string"},
 		{Name: "email", Value: "foo@bar.com", Expectation: "[redacted:email]"},
 		{Name: "email in text", Value: "The email is foo@bar.com or bar@foo.com", Expectation: "The email is [redacted:email] or [redacted:email]"},
+		{Name: "GitLab Git URL in text", Value: "Content initialization failed: cannot initialize workspace: git initializer gitClone: git clone --depth=1 --shallow-submodules https://gitlab.com/acme-corp/web/frontend/services/deployment-manager.git --config http.version=HTTP/1.1 . failed (exit status 128)", Expectation: "Content initialization failed: cannot initialize workspace: git initializer gitClone: git clone --depth=1 --shallow-submodules [redacted:md5:aa0dfa0c402612a8314b8e7c4326a395:url] --config http.version=HTTP/1.1 . failed (exit status 128)"},
+		{Name: "Non-git URL not scrubbed", Value: "API call to https://api.example.com/endpoint failed", Expectation: "API call to https://api.example.com/endpoint failed"},
+		{Name: "Mixed URLs", Value: "Clone from https://github.com/user/repo.git then visit https://docs.gitpod.io/configure", Expectation: "Clone from [redacted:md5:3c5467d320a0b72072bc609f12e7d879:url] then visit https://docs.gitpod.io/configure"},
+		{Name: "HTTP Git URL", Value: "git clone http://internal-git.company.com/project.git", Expectation: "git clone [redacted:md5:11774800a9c933d1181c479ea207cdff:url]"},
 	}
 
 	for _, test := range tests {

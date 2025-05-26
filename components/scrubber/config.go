@@ -32,7 +32,9 @@ var (
 	}
 
 	// HashedValues are regular expressions which - when matched - cause the entire value to be hashed
-	HashedValues = map[string]*regexp.Regexp{}
+	HashedValues = map[string]*regexp.Regexp{
+		"url": regexp.MustCompile(`https?://[^\s]+\.git\b`),
+	}
 
 	// RedactedValues are regular expressions which - when matched - cause the entire value to be redacted
 	RedactedValues = map[string]*regexp.Regexp{

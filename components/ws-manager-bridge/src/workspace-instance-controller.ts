@@ -20,6 +20,7 @@ import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { PrebuildUpdater } from "./prebuild-updater";
 import { RedisPublisher } from "@gitpod/gitpod-db/lib";
 import { durationLongerThanSeconds } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { scrubber } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 export const WorkspaceInstanceController = Symbol("WorkspaceInstanceController");
 
@@ -286,17 +287,20 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
 
         try {
             await this.userDB.trace({ span }).deleteGitpodTokensNamedLike(ownerUserID, `${instance.id}-%`);
+            // Scrub properties that might contain sensitive data like URLs
+            const scrubbedProperties = scrubber.scrub({
+                instanceId: instance.id,
+                workspaceId: instance.workspaceId,
+                stoppingTime: new Date(instance.stoppingTime!),
+                conditions: instance.status.conditions,
+                timeout: instance.status.timeout,
+            });
+
             this.analytics.track({
                 userId: ownerUserID,
                 event: "workspace_stopped",
                 messageId: `bridge-wsstopped-${instance.id}`,
-                properties: {
-                    instanceId: instance.id,
-                    workspaceId: instance.workspaceId,
-                    stoppingTime: new Date(instance.stoppingTime!),
-                    conditions: instance.status.conditions,
-                    timeout: instance.status.timeout,
-                },
+                properties: scrubbedProperties,
                 timestamp: new Date(instance.stoppedTime!),
             });
         } catch (err) {
