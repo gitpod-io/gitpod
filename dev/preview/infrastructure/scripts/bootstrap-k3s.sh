@@ -12,6 +12,7 @@ export SERVICE_DNS_IP
 /usr/local/bin/install-k3s.sh \
   --token "1234" \
   --node-ip "$SERVICE_DNS_IP" \
+  --tls-san "${preview_name}.preview.gitpod-dev.com" \
   --node-label "cloud.google.com/gke-nodepool=control-plane-pool" \
   --container-runtime-endpoint=/var/run/containerd/containerd.sock \
   --write-kubeconfig-mode 444 \
