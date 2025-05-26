@@ -97,4 +97,6 @@ echo "Patching grafana deployment"
 kubectl \
     --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
     --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    patch deployments.apps -n monitoring-satellite grafana --type=json -p="[{'op': 'remove', 'path': '/spec/template/spec/nodeSelector'}]"
+    patch deployments.apps -n monitoring-satellite grafana --type=json \
+    -p='[{"op": "test", "path": "/spec/template/spec/nodeSelector"}, {"op": "remove", "path": "/spec/template/spec/nodeSelector"}]' \
+    2>/dev/null || true
