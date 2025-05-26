@@ -77,7 +77,8 @@ resource "google_compute_address" "static-preview-ip" {
 locals {
   vm_name = "preview-${var.preview_name}"
   bootstrap_script = templatefile("${path.module}/../../scripts/bootstrap-k3s.sh", {
-    vm_name = local.vm_name
+    vm_name      = local.vm_name
+    preview_name = var.preview_name
   })
 
   trustmanager_script = file("${path.module}/../../scripts/install-trustmanager.sh")

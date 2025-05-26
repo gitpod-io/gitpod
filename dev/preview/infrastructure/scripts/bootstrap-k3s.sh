@@ -9,6 +9,7 @@ export INSTALL_K3S_SKIP_DOWNLOAD=true
 SERVICE_DNS_IP="$(hostname -I | cut -d ' ' -f1)"
 export SERVICE_DNS_IP
 
+# shellcheck disable=SC2154
 /usr/local/bin/install-k3s.sh \
   --token "1234" \
   --node-ip "$SERVICE_DNS_IP" \
@@ -24,6 +25,7 @@ export SERVICE_DNS_IP
   --kubelet-arg cgroup-driver=systemd \
   --kubelet-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \
   --kube-apiserver-arg feature-gates=LocalStorageCapacityIsolationFSQuotaMonitoring=true \
+  --tls-san "${preview_name}.preview.gitpod-dev.com" \
   --cluster-init
 
 # Seems like this is a bit flaky now, with k3s not always being ready, and the labeling
