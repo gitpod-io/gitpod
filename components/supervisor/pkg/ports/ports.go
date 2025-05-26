@@ -127,7 +127,7 @@ type managedPort struct {
 // Subscription is a Subscription to status updates
 type Subscription struct {
 	updates chan []*api.PortsStatus
-	Close   func() error
+	Close   func(lock bool) error
 }
 
 // Updates returns the updates channel
@@ -153,7 +153,7 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		pm.mu.Unlock()
 
 		for _, s := range subs {
-			_ = s.Close()
+			_ = s.Close(true)
 		}
 	}()
 	defer cancel()
@@ -174,10 +174,6 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		select {
 		case <-pm.forceUpdates:
 			forceUpdate = true
-		case sub := <-pm.closeSubscriptions:
-			pm.mu.Lock()
-			delete(pm.subscriptions, sub)
-			pm.mu.Unlock()
 		case exposed = <-exposedUpdates:
 			if exposed == nil {
 				if ctx.Err() == nil {
@@ -330,7 +326,7 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 		case sub.updates <- status:
 		case <-time.After(5 * time.Second):
 			log.Error("ports subscription droped out")
-			_ = sub.Close()
+			_ = sub.Close(false)
 		}
 	}
 }
@@ -778,15 +774,15 @@ func (pm *Manager) Subscribe() (*Subscription, error) {
 
 	sub := &Subscription{updates: make(chan []*api.PortsStatus, 5)}
 	var once sync.Once
-	sub.Close = func() error {
+	sub.Close = func(lock bool) error {
+		if lock {
+			pm.mu.Lock()
+			defer pm.mu.Unlock()
+		}
 		once.Do(func() {
 			close(sub.updates)
 		})
-		select {
-		case pm.closeSubscriptions <- sub:
-		default:
-			log.Error("closeSubscriptions channel is full")
-		}
+		delete(pm.subscriptions, sub)
 		return nil
 	}
 	pm.subscriptions[sub] = struct{}{}

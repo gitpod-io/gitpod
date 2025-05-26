@@ -684,7 +684,7 @@ func TestPortsUpdateState(t *testing.T) {
 			}
 			go func() {
 				defer wg.Done()
-				defer sub.Close()
+				defer sub.Close(true)
 
 				for up := range sub.Updates() {
 					updts = append(updts, up)
@@ -878,7 +878,7 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 				// update
 				case <-sub.Updates():
 				}
-				sub.Close()
+				sub.Close(true)
 			}
 			return nil
 		})

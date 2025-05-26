@@ -243,7 +243,7 @@ func (s *statusService) PortsStatus(req *api.PortsStatusRequest, srv api.StatusS
 	if err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
-	defer sub.Close()
+	defer sub.Close(true)
 
 	for {
 		select {
