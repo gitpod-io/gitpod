@@ -311,7 +311,7 @@ RUN curl -fsSL "https://get.sdkman.io" | bash \
 # above, we are adding the sdkman init to .bashrc (executing sdkman-init.sh does that), because one is executed on interactive shells, the other for non-interactive shells (e.g. plugin-host)
 ENV GRADLE_USER_HOME=/workspace/.gradle/
 
-ENV NODE_VERSION=18.20.4
+ENV NODE_VERSION=22.15.1
 
 ENV PNPM_HOME=/root/.pnpm
 ENV PATH=/root/.nvm/versions/node/v${NODE_VERSION}/bin:/root/.yarn/bin:${PNPM_HOME}:$PATH
