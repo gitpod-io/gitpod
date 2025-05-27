@@ -29,6 +29,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -336,9 +337,10 @@ func Run(options ...RunOption) {
 		}
 	}
 
+	terminalNoDeadlineExceeded := watchTerminalNoDeadlineExceeded(ctx, exps, host)
 	willShutdownCtx, fireWillShutdown := context.WithCancel(ctx)
 	termMux := terminal.NewMux()
-	termMuxSrv := terminal.NewMuxTerminalService(termMux)
+	termMuxSrv := terminal.NewMuxTerminalService(termMux, terminalNoDeadlineExceeded)
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	if cfg.WorkspaceRoot != "" {
 		termMuxSrv.DefaultWorkdirProvider = func() string {
@@ -580,6 +582,36 @@ func getIDENotReadyShutdownDuration(ctx context.Context, exps experiments.Client
 		}
 		return true, duration
 	}
+}
+
+func watchTerminalNoDeadlineExceeded(ctx context.Context, exps experiments.Client, gitpodHost string) *atomic.Bool {
+	newBool := func(v bool) *atomic.Bool {
+		r := atomic.Bool{}
+		r.Store(v)
+		return &r
+	}
+	if exps == nil {
+		return newBool(false)
+	}
+
+	value := exps.GetBoolValue(ctx, "supervisor_terminal_no_deadline_exceeded", false, experiments.Attributes{GitpodHost: gitpodHost})
+	result := newBool(value)
+
+	go (func() {
+		t := time.NewTicker(30 * time.Second)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				value := exps.GetBoolValue(ctx, "supervisor_terminal_no_deadline_exceeded", false, experiments.Attributes{GitpodHost: gitpodHost})
+				result.Store(value)
+			}
+		}
+	})()
+
+	return result
 }
 
 func isShallowRepository(rootDir string) bool {

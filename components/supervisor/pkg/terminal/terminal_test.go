@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -20,6 +21,12 @@ import (
 
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
+
+func newBool(b bool) *atomic.Bool {
+	result := atomic.Bool{}
+	result.Store(b)
+	return &result
+}
 
 func TestTitle(t *testing.T) {
 	t.Skip("skipping flakey tests")
@@ -59,7 +66,7 @@ func TestTitle(t *testing.T) {
 			}
 			defer os.RemoveAll(tmpWorkdir)
 
-			terminalService := NewMuxTerminalService(mux)
+			terminalService := NewMuxTerminalService(mux, newBool(true))
 			terminalService.DefaultWorkdir = tmpWorkdir
 
 			term, err := terminalService.OpenWithOptions(ctx, &api.OpenTerminalRequest{}, TermOptions{
@@ -197,7 +204,7 @@ func TestAnnotations(t *testing.T) {
 			mux := NewMux()
 			defer mux.Close(ctx)
 
-			terminalService := NewMuxTerminalService(mux)
+			terminalService := NewMuxTerminalService(mux, newBool(true))
 			var err error
 			if test.Opts == nil {
 				_, err = terminalService.Open(ctx, test.Req)
@@ -248,7 +255,7 @@ func TestTerminals(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			terminalService := NewMuxTerminalService(NewMux())
+			terminalService := NewMuxTerminalService(NewMux(), newBool(true))
 			resp, err := terminalService.Open(context.Background(), &api.OpenTerminalRequest{})
 			if err != nil {
 				t.Fatal(err)
@@ -329,7 +336,7 @@ func TestWorkDirProvider(t *testing.T) {
 	mux := NewMux()
 	defer mux.Close(ctx)
 
-	terminalService := NewMuxTerminalService(mux)
+	terminalService := NewMuxTerminalService(mux, newBool(true))
 
 	type AssertWorkDirTest struct {
 		expectedWorkDir string
