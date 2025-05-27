@@ -84,7 +84,7 @@ var validateClusterCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Printf(out)
+		fmt.Print(out)
 		return nil
 	},
 }

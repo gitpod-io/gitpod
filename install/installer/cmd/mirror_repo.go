@@ -16,7 +16,7 @@ var mirrorRepoCmd = &cobra.Command{
 	Use:   "repo",
 	Short: "Get original image repo for this installer",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Printf(config.GitpodContainerRegistry)
+		fmt.Print(config.GitpodContainerRegistry)
 		return nil
 	},
 }

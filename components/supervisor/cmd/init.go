@@ -92,7 +92,7 @@ var initCmd = &cobra.Command{
 				if ignoreUnexpectedExitCode.Load() {
 					return
 				}
-				log.WithError(fmt.Errorf(logs)).Fatal("supervisor run error with unexpected exit code")
+				log.WithError(fmt.Errorf("%s", logs)).Fatal("supervisor run error with unexpected exit code")
 			}
 		}
 		go func() {

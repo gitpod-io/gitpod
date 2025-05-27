@@ -30,41 +30,41 @@ func categorizeRPCError(err error) *connect.Error {
 	if rpcErr := new(jsonrpc2.Error); errors.As(err, &rpcErr) {
 		switch rpcErr.Code {
 		case 400:
-			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf(rpcErr.Message))
+			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s", rpcErr.Message))
 		// components/gitpod-protocol/src/messaging/error.ts
 		case 401:
-			return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf(rpcErr.Message))
+			return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("%s", rpcErr.Message))
 		// components/gitpod-protocol/src/messaging/error.ts
 		case 403:
-			return connect.NewError(connect.CodePermissionDenied, fmt.Errorf(rpcErr.Message))
+			return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("%s", rpcErr.Message))
 		// components/gitpod-protocol/src/messaging/error.ts
 		case 404:
-			return connect.NewError(connect.CodeNotFound, fmt.Errorf(rpcErr.Message))
+			return connect.NewError(connect.CodeNotFound, fmt.Errorf("%s", rpcErr.Message))
 		// components/gitpod-protocol/src/messaging/error.ts
 		case 409:
-			return connect.NewError(connect.CodeAlreadyExists, fmt.Errorf(rpcErr.Message))
+			return connect.NewError(connect.CodeAlreadyExists, fmt.Errorf("%s", rpcErr.Message))
 		case 412:
-			return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf(rpcErr.Message))
+			return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("%s", rpcErr.Message))
 		case 429:
-			return connect.NewError(connect.CodeResourceExhausted, fmt.Errorf(rpcErr.Message))
+			return connect.NewError(connect.CodeResourceExhausted, fmt.Errorf("%s", rpcErr.Message))
 		case 470:
-			return connect.NewError(connect.CodePermissionDenied, fmt.Errorf(rpcErr.Message))
+			return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("%s", rpcErr.Message))
 		case -32603:
-			return connect.NewError(connect.CodeInternal, fmt.Errorf(rpcErr.Message))
+			return connect.NewError(connect.CodeInternal, fmt.Errorf("%s", rpcErr.Message))
 		}
 		// components/gitpod-protocol/src/messaging/error.ts - user errors
 		if rpcErr.Code >= 400 && rpcErr.Code < 500 {
-			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf(rpcErr.Message))
+			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s", rpcErr.Message))
 		}
-		return connect.NewError(connect.CodeInternal, fmt.Errorf(rpcErr.Message))
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("%s", rpcErr.Message))
 	}
 
 	if errors.Is(err, context.Canceled) {
-		return connect.NewError(connect.CodeDeadlineExceeded, fmt.Errorf("Request timed out"))
+		return connect.NewError(connect.CodeDeadlineExceeded, fmt.Errorf("%s", "Request timed out"))
 	}
 
 	if handshakeErr := new(protocol.ErrBadHandshake); errors.As(err, &handshakeErr) {
-		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("Failed to establish caller identity"))
+		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("%s", "Failed to establish caller identity"))
 	}
 
 	return connect.NewError(connect.CodeInternal, err)

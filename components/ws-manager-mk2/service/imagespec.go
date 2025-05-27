@@ -32,7 +32,7 @@ func (is *WorkspaceImageSpecProvider) GetImageSpec(ctx context.Context, req *reg
 		return nil, status.Errorf(codes.NotFound, "not found")
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "%s", err.Error())
 	}
 
 	return &regapi.GetImageSpecResponse{

@@ -26,7 +26,7 @@ func main() {
 	err := content.RunInitializerChild(statsFd)
 	if err != nil {
 		errfd := os.NewFile(content.RUN_INITIALIZER_CHILD_ERROUT_FD, "errout")
-		_, _ = fmt.Fprintf(errfd, err.Error())
+		_, _ = fmt.Fprintf(errfd, "%s", err.Error())
 
 		os.Exit(content.FAIL_CONTENT_INITIALIZER_EXIT_CODE)
 	}

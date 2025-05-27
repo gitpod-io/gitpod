@@ -70,7 +70,7 @@ func (h *Housekeeping) doHousekeeping(ctx context.Context) (errs []error) {
 
 		var err error
 		if len(msgs) > 0 {
-			err = fmt.Errorf(strings.Join(msgs, ". "))
+			err = fmt.Errorf("%s", strings.Join(msgs, ". "))
 		}
 		tracing.FinishSpan(span, &err)
 	}()

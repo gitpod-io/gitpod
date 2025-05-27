@@ -195,7 +195,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	storage, err := class.Container.Limits.StorageQuantity()
 	if err != nil {
 		msg := fmt.Sprintf("workspace class %s has invalid storage quantity: %v", class.Name, err)
-		return nil, status.Errorf(codes.InvalidArgument, msg)
+		return nil, status.Errorf(codes.InvalidArgument, "%s", msg)
 	}
 
 	annotations := make(map[string]string)
@@ -690,7 +690,7 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 		}
 
 		if sso.Status.Error != "" {
-			return true, fmt.Errorf(sso.Status.Error)
+			return true, fmt.Errorf("%s", sso.Status.Error)
 		}
 
 		if sso.Status.URL != "" {
