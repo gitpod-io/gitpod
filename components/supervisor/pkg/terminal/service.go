@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -26,7 +27,7 @@ import (
 )
 
 // NewMuxTerminalService creates a new terminal service.
-func NewMuxTerminalService(m *Mux) *MuxTerminalService {
+func NewMuxTerminalService(m *Mux, terminalNoDeadlineExceeded *atomic.Bool) *MuxTerminalService {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "/bin/bash"
@@ -36,6 +37,8 @@ func NewMuxTerminalService(m *Mux) *MuxTerminalService {
 		DefaultWorkdir: "/workspace",
 		DefaultShell:   shell,
 		Env:            os.Environ(),
+
+		terminalNoDeadlineExceeded: terminalNoDeadlineExceeded,
 	}
 }
 
@@ -52,6 +55,8 @@ type MuxTerminalService struct {
 	Env                []string
 	DefaultCreds       *syscall.Credential
 	DefaultAmbientCaps []uintptr
+
+	terminalNoDeadlineExceeded *atomic.Bool
 
 	api.UnimplementedTerminalServiceServer
 }
@@ -286,6 +291,9 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 			err = resp.Send(message)
 		case err = <-errchan:
 		case <-resp.Context().Done():
+			if srv.terminalNoDeadlineExceeded.Load() {
+				return nil
+			}
 			return status.Error(codes.DeadlineExceeded, resp.Context().Err().Error())
 		}
 		if err == io.EOF {
