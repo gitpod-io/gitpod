@@ -125,7 +125,7 @@ type managedPort struct {
 // Subscription is a Subscription to status updates
 type Subscription struct {
 	updates chan []*api.PortsStatus
-	Close   func() error
+	Close   func(lock bool) error
 }
 
 // Updates returns the updates channel
@@ -151,7 +151,7 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		pm.mu.Unlock()
 
 		for _, s := range subs {
-			_ = s.Close()
+			_ = s.Close(true)
 		}
 	}()
 	defer cancel()
@@ -324,7 +324,7 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 		case sub.updates <- status:
 		case <-time.After(5 * time.Second):
 			log.Error("ports subscription droped out")
-			_ = sub.Close()
+			_ = sub.Close(false)
 		}
 	}
 }
@@ -766,20 +766,21 @@ func (pm *Manager) Subscribe() (*Subscription, error) {
 	}
 
 	if len(pm.subscriptions) > maxSubscriptions {
-		return nil, ErrTooManySubscriptions
+		return nil, fmt.Errorf("too many subscriptions: %d", len(pm.subscriptions))
+		// return nil, ErrTooManySubscriptions
 	}
 
 	sub := &Subscription{updates: make(chan []*api.PortsStatus, 5)}
 	var once sync.Once
-	sub.Close = func() error {
-		pm.mu.Lock()
-		defer pm.mu.Unlock()
-
+	sub.Close = func(lock bool) error {
+		if lock {
+			pm.mu.Lock()
+			defer pm.mu.Unlock()
+		}
 		once.Do(func() {
 			close(sub.updates)
 		})
 		delete(pm.subscriptions, sub)
-
 		return nil
 	}
 	pm.subscriptions[sub] = struct{}{}

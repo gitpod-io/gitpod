@@ -684,7 +684,7 @@ func TestPortsUpdateState(t *testing.T) {
 			}
 			go func() {
 				defer wg.Done()
-				defer sub.Close()
+				defer sub.Close(true)
 
 				for up := range sub.Updates() {
 					updts = append(updts, up)
@@ -864,8 +864,8 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 		}
 	}()
 
-	eg, _ := errgroup.WithContext(context.Background())
 	for i := 0; i < maxSubscriptions; i++ {
+		eg, _ := errgroup.WithContext(context.Background())
 		eg.Go(func() error {
 			for j := 0; j < subscribes; j++ {
 				sub, err := pm.Subscribe()
@@ -878,16 +878,17 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 				// update
 				case <-sub.Updates():
 				}
-				sub.Close()
+				sub.Close(true)
 			}
 			return nil
 		})
+		err := eg.Wait()
+		if err != nil {
+			t.Fatal(err)
+		}
+		time.Sleep(50 * time.Millisecond)
 	}
-	err := eg.Wait()
 	close(subscribing)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	wg.Wait()
 }
