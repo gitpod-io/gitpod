@@ -53,7 +53,16 @@ export class AuditLogService {
             action: method,
             args: argsScrubbed,
         };
-        log.info("audit", new TrustedValue(logEntry));
+        // The args param contains workspace IDs and other sensitive data. Since
+        // it's quite hard to detect them, best way is to simply not log it at
+        // all. It's still part of the audit database but does not appear in the
+        // component logs.
+        const logEntryForLogging = {
+            ...logEntry,
+            args: ["[redacted]"],
+        };
+
+        log.info("audit", new TrustedValue(logEntryForLogging));
         await this.dbAuditLog.recordAuditLog(logEntry);
     }
 
