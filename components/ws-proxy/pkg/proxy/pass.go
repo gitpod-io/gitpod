@@ -5,6 +5,7 @@
 package proxy
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -36,6 +37,9 @@ func (ppc *proxyPassConfig) appendResponseHandler(handler responseHandler) {
 
 // proxyPassOpt allows to compose ProxyHandler options.
 type proxyPassOpt func(h *proxyPassConfig)
+
+// createHttpTransportOpt allows to compose create http Transport options.
+type createHttpTransportOpt func(h *http.Transport)
 
 // errorHandler is a function that handles an error that occurred during proxying of a HTTP request.
 type errorHandler func(http.ResponseWriter, *http.Request, error)
@@ -218,10 +222,16 @@ func withErrorHandler(h errorHandler) proxyPassOpt {
 	}
 }
 
-func createDefaultTransport(config *TransportConfig) http.RoundTripper {
-	// TODO equivalent of client_max_body_size 2048m; necessary ???
-	// this is based on http.DefaultTransport, with some values exposed to config
-	return instrumentClientMetrics(&http.Transport{
+func withSkipTLSVerify() createHttpTransportOpt {
+	return func(tr *http.Transport) {
+		tr.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	}
+}
+
+func createDefaultTransport(config *TransportConfig, opts ...createHttpTransportOpt) http.RoundTripper {
+	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout:   time.Duration(config.ConnectTimeout), // default: 30s
@@ -234,7 +244,13 @@ func createDefaultTransport(config *TransportConfig) http.RoundTripper {
 		IdleConnTimeout:       time.Duration(config.IdleConnTimeout), // default: 90s
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
-	})
+	}
+	for _, o := range opts {
+		o(transport)
+	}
+	// TODO equivalent of client_max_body_size 2048m; necessary ???
+	// this is based on http.DefaultTransport, with some values exposed to config
+	return instrumentClientMetrics(transport)
 }
 
 // tell the browser to cache for 1 year and don't ask the server during this period.

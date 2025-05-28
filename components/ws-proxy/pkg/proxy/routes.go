@@ -10,7 +10,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	crand "crypto/rand"
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
@@ -532,6 +531,8 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig, infoP
 		return err
 	}
 
+	portTransport := createDefaultTransport(config.Config.TransportConfig, withSkipTLSVerify())
+
 	r.Use(logHandler)
 	r.Use(config.WorkspaceAuthHandler)
 	// filter all session cookies
@@ -564,9 +565,7 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig, infoP
 				withHTTPErrorHandler(showPortNotFoundPage),
 				withXFrameOptionsFilter(),
 				func(h *proxyPassConfig) {
-					h.Transport = &http.Transport{
-						TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-					}
+					h.Transport = portTransport
 				},
 			)(rw, r)
 		},
