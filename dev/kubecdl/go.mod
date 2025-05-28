@@ -1,6 +1,10 @@
 module github.com/gitpod-io/gitpod/kubecdl
 
-go 1.22
+go 1.24
+
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	github.com/sirupsen/logrus v1.9.3

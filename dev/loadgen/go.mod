@@ -1,8 +1,10 @@
 module github.com/gitpod-io/gitpod/loadgen
 
-go 1.22.0
+go 1.24
 
-toolchain go1.23.3
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	github.com/cheggaaa/pb/v3 v3.0.5

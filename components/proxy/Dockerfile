@@ -4,11 +4,11 @@
 
 FROM caddy:2.7.6-builder AS withgo
 
-RUN go install golang.org/dl/go1.23.1@latest && \
-    go1.23.1 download && \
+RUN go install golang.org/dl/go1.24.3@latest && \
+    go1.24.3 download && \
     rm -rf /usr/local/go && \
     mv /go /usr/local/go && \
-    mv /usr/local/go/bin/go1.23.1 /usr/local/go/bin/go
+    mv /usr/local/go/bin/go1.24.3 /usr/local/go/bin/go
 
 FROM withgo AS builder
 

@@ -136,7 +136,7 @@ func DownloadManifest(ctx context.Context, baseURL string) (res *Manifest, err e
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf(resp.Status)
+		return nil, fmt.Errorf("%s", resp.Status)
 	}
 
 	var mf Manifest

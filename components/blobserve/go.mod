@@ -1,8 +1,10 @@
 module github.com/gitpod-io/gitpod/blobserve
 
-go 1.23.0
+go 1.24
 
-toolchain go1.23.3
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	github.com/containerd/containerd v1.6.36
@@ -97,7 +99,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
-	github.com/moby/sys/mountinfo v0.7.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect

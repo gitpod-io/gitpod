@@ -600,7 +600,7 @@ func workspaceSSHUsername(ctx context.Context, workspaceIP string, workspacekitP
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf(fmt.Sprintf("unexpected status: %v (%v)", string(result), resp.StatusCode))
+		return "", fmt.Errorf("unexpected status: %v (%v)", string(result), resp.StatusCode)
 	}
 
 	return string(result), nil

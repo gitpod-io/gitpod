@@ -122,11 +122,11 @@ func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 			}},
 			{Name: "KUBE_DOMAIN", Value: "svc.cluster.local"},
 			{Name: "LOG_LEVEL", Value: strings.ToLower(logLevel)},
-			// TODO(gpl): This is our bandaid for https:://tldr.fail, until we upgrade from Go 1.23 to 1.24
+			// TODO(gpl): This is our bandaid for https:://tldr.fail
 			// See these issues for details:
 			//  - https://linear.app/gitpod/issue/CLC-1264/investigate-public-api-server-connectivity-issues-during-sso-login#comment-f2daa302
 			//  - https://linear.app/gitpod/issue/CLC-1067/go-upgrade-from-123x-to-124x-once-available for details
-			{Name: "GODEBUG", Value: "tlskyber=0"},
+			{Name: "GODEBUG", Value: "tlsmlkem=0"},
 		},
 		ProxyEnv(cfg),
 	)

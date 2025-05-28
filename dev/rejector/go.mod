@@ -1,6 +1,10 @@
 module gitpod.io/rejector/v2
 
-go 1.22.2
+go 1.24
+
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	k8s.io/api v0.31.8

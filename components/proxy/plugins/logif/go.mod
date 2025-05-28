@@ -1,8 +1,10 @@
 module github.com/gitpod-io/gitpod/proxy/plugins/logif
 
-go 1.23.0
+go 1.24
 
-toolchain go1.23.3
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 replace github.com/gitpod-io/gitpod/proxy/plugins/jsonselect => ../jsonselect
 

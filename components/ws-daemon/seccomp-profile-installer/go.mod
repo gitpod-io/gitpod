@@ -1,6 +1,10 @@
 module github.com/gitpod-io/gitpod/ws-daemon/seccomp-profile-installer
 
-go 1.22
+go 1.24
+
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	github.com/containerd/containerd v1.6.36

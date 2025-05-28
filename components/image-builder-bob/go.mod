@@ -1,8 +1,10 @@
 module github.com/gitpod-io/gitpod/image-builder/bob
 
-go 1.23.0
+go 1.24
 
-toolchain go1.23.3
+toolchain go1.24.3
+
+godebug tlsmlkem=0
 
 require (
 	github.com/containerd/console v1.0.3
