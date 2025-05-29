@@ -38,3 +38,5 @@ require (
 	google.golang.org/grpc v1.59.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 )
+
+replace github.com/garyburd/redigo => github.com/gomodule/redigo v1.9.2 // original repo removed from github

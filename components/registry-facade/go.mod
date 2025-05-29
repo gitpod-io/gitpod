@@ -354,3 +354,5 @@ replace k8s.io/endpointslice => k8s.io/endpointslice v0.31.9 // leeway indirect 
 replace k8s.io/kms => k8s.io/kms v0.31.9 // leeway indirect from components/common-go:lib
 
 replace k8s.io/cri-client => k8s.io/cri-client v0.31.9 // leeway indirect from components/common-go:lib
+
+replace github.com/garyburd/redigo => github.com/gomodule/redigo v1.9.2 // original repo removed from github
