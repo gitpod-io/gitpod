@@ -10,7 +10,7 @@ export const redactedFields = ["auth_", "password", "token", "key", "jwt", "secr
 export const hashedFields = ["contextURL", "workspaceID", "username"];
 
 // hashedValues are regular expressions which when matched cause the entire value to be hashed
-export const hashedValues = new Map<string, RegExp>([]);
+export const hashedValues = new Map<string, RegExp>([["url", /https?:\/\/[^\s]+\.git\b/g]]);
 // redactedValues are regular expressions which when matched cause the entire value to be redacted
 export const redactedValues = new Map<string, RegExp>([
     // https://html.spec.whatwg.org/multipage/input.html#email-state-(type=email)
