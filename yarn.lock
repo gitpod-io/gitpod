@@ -24,14 +24,14 @@
     jsonpointer "^5.0.0"
     leven "^3.1.0"
 
-"@authzed/authzed-node@^1.2.2":
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/@authzed/authzed-node/-/authzed-node-1.2.2.tgz#a1f1fed945d1746ff933c938e6e4068c179e5be6"
-  integrity sha512-Br25e/1K4dmBIXqqCodvdcT3Ii2N3TSHYpwPrh8PCyhswgiVbUhiXO/PHuqIqEmlC6N1F78FEvlNiyGK4VXw6g==
+"@authzed/authzed-node@^1.3.1":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@authzed/authzed-node/-/authzed-node-1.3.1.tgz#2e408df6d1526a65fc96fd12bee8765eb05781de"
+  integrity sha512-u7lGPIlBSs6PoReVCG1MSt0zaPucGb6Zg7wXJIJ7uOXtCWEb2w3GN9GYGDapM8gkT4R1suZv2W3UHZhG9QWnSQ==
   dependencies:
-    "@grpc/grpc-js" "^1.12.5"
-    "@protobuf-ts/runtime" "^2.9.4"
-    "@protobuf-ts/runtime-rpc" "^2.9.4"
+    "@grpc/grpc-js" "^1.13.3"
+    "@protobuf-ts/runtime" "^2.9.6"
+    "@protobuf-ts/runtime-rpc" "^2.9.6"
     google-protobuf "^3.21.4"
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.4", "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.16.0", "@babel/code-frame@^7.22.10", "@babel/code-frame@^7.22.5", "@babel/code-frame@^7.8.3":
@@ -1562,10 +1562,10 @@
     "@gitbeaker/core" "^39.12.0"
     "@gitbeaker/requester-utils" "^39.12.0"
 
-"@grpc/grpc-js@1.12.6", "@grpc/grpc-js@^1.12.5":
-  version "1.12.6"
-  resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-1.12.6.tgz#a3586ffdfb6a1f5cd5b4866dec9074c4a1e65472"
-  integrity sha512-JXUj6PI0oqqzTGvKtzOkxtpsyPRNsrmhh41TtIz/zEB6J+AUiZZ0dxWzcMwO9Ns5rmSPuMdghlTbUuqIM48d3Q==
+"@grpc/grpc-js@1.13.4", "@grpc/grpc-js@^1.13.3":
+  version "1.13.4"
+  resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-1.13.4.tgz#922fbc496e229c5fa66802d2369bf181c1df1c5a"
+  integrity sha512-GsFaMXCkMqkKIvwCQjCrwH+GHbPKBjhwo/8ZuUkWHqbI73Kky9I+pQltrlT0+MWpedCoosda53lgjYfyEPgxBg==
   dependencies:
     "@grpc/proto-loader" "^0.7.13"
     "@js-sdsl/ordered-map" "^4.4.2"
@@ -2333,17 +2333,17 @@
     readable-stream "^3.6.0"
     split2 "^4.0.0"
 
-"@protobuf-ts/runtime-rpc@^2.9.4":
-  version "2.9.4"
-  resolved "https://registry.yarnpkg.com/@protobuf-ts/runtime-rpc/-/runtime-rpc-2.9.4.tgz#d6ab2316c0ba67ce5a08863bb23203a837ff2a3b"
-  integrity sha512-y9L9JgnZxXFqH5vD4d7j9duWvIJ7AShyBRoNKJGhu9Q27qIbchfzli66H9RvrQNIFk5ER7z1Twe059WZGqERcA==
+"@protobuf-ts/runtime-rpc@^2.9.6":
+  version "2.11.0"
+  resolved "https://registry.yarnpkg.com/@protobuf-ts/runtime-rpc/-/runtime-rpc-2.11.0.tgz#8c988cadbf3899e4968b44fd34a0898416a463b1"
+  integrity sha512-g/oMPym5LjVyCc3nlQc6cHer0R3CyleBos4p7CjRNzdKuH/FlRXzfQYo6EN5uv8vLtn7zEK9Cy4YBKvHStIaag==
   dependencies:
-    "@protobuf-ts/runtime" "^2.9.4"
+    "@protobuf-ts/runtime" "^2.11.0"
 
-"@protobuf-ts/runtime@^2.9.4":
-  version "2.9.4"
-  resolved "https://registry.yarnpkg.com/@protobuf-ts/runtime/-/runtime-2.9.4.tgz#db8a78b1c409e26d258ca39464f4757d804add8f"
-  integrity sha512-vHRFWtJJB/SiogWDF0ypoKfRIZ41Kq+G9cEFj6Qm1eQaAhJ1LDFvgZ7Ja4tb3iLOQhz0PaoPnnOijF1qmEqTxg==
+"@protobuf-ts/runtime@^2.11.0", "@protobuf-ts/runtime@^2.9.6":
+  version "2.11.0"
+  resolved "https://registry.yarnpkg.com/@protobuf-ts/runtime/-/runtime-2.11.0.tgz#81bf541189276947ab1ccab8ffd47fb9b7f4185f"
+  integrity sha512-DfpRpUiNvPC3Kj48CmlU4HaIEY1Myh++PIumMmohBAk8/k0d2CkxYxJfPyUAxfuUfl97F4AvuCu1gXmfOG7OJQ==
 
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
