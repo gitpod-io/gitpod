@@ -53,6 +53,10 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
+// PROXIED_GRPC_SERVICE_PREFIX is the prefix used for proxied gRPC services.
+// It is used to avoid conflicts with the original service names in metrics, and to filter out proxied services in SLIs etc.
+const PROXIED_GRPC_SERVICE_PREFIX = "proxied"
+
 var (
 	// ServiceName is the name we use for tracing/logging
 	ServiceName = "ws-manager-mk2"
@@ -258,9 +262,12 @@ func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, maint
 	grpcMetrics.EnableHandlingTimeHistogram()
 	metrics.Registry.MustRegister(grpcMetrics)
 
+	// Create interceptor for prefixing the proxied gRPC service names, to avoid conflicts with the original service names in metrics
+	grpcServicePrefixer := &imgproxy.ServiceNamePrefixerInterceptor{Prefix: PROXIED_GRPC_SERVICE_PREFIX}
+
 	grpcOpts := common_grpc.ServerOptionsWithInterceptors(
-		[]grpc.StreamServerInterceptor{grpcMetrics.StreamServerInterceptor()},
-		[]grpc.UnaryServerInterceptor{grpcMetrics.UnaryServerInterceptor(), ratelimits.UnaryInterceptor()},
+		[]grpc.StreamServerInterceptor{grpcServicePrefixer.StreamServerInterceptor(), grpcMetrics.StreamServerInterceptor()},
+		[]grpc.UnaryServerInterceptor{grpcServicePrefixer.UnaryServerInterceptor(), grpcMetrics.UnaryServerInterceptor(), ratelimits.UnaryInterceptor()},
 	)
 	if cfg.RPCServer.TLS.CA != "" && cfg.RPCServer.TLS.Certificate != "" && cfg.RPCServer.TLS.PrivateKey != "" {
 		tlsConfig, err := common_grpc.ClientAuthTLSConfig(

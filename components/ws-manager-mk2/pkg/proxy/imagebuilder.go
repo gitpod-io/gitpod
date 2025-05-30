@@ -6,8 +6,14 @@ package proxy
 
 import (
 	"context"
+	"errors"
+	"io"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/image-builder/api"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -58,7 +64,7 @@ func forwardStream[R ProtoMessage](ctx context.Context, recv func() (R, error), 
 	for {
 		resp, err := recv()
 		if err != nil {
-			return err
+			return handleProxyError(err)
 		}
 
 		// generic hack, can't compare R to nil because R's default value is unclear (not even sure this is nil)
@@ -69,9 +75,47 @@ func forwardStream[R ProtoMessage](ctx context.Context, recv func() (R, error), 
 		}
 		err = send(resp)
 		if err != nil {
-			return err
+			return handleProxyError(err)
 		}
 	}
 
 	return nil
+}
+
+// handleProxyError ensures all errors have proper gRPC status codes
+func handleProxyError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	// If it's already a gRPC status error, check for DeadlineExceeded
+	if st, ok := status.FromError(err); ok {
+		if st.Code() == codes.DeadlineExceeded {
+			// Return nil (OK) for DeadlineExceeded as requested
+			return nil
+		}
+
+		log.WithError(err).WithField("code", status.Code(err)).Error("unexpected error while sending stream response upstream")
+		return err
+	}
+
+	// Handle context errors
+	if errors.Is(err, context.DeadlineExceeded) {
+		// Return nil (OK) for DeadlineExceeded
+		return nil
+	}
+
+	if errors.Is(err, io.EOF) {
+		// Return nil (OK) for EOF, which is a normal when the client ends the stream
+		return nil
+	}
+
+	log.WithError(err).Error("unexpected error while sending stream response upstream")
+
+	if errors.Is(err, context.Canceled) {
+		return status.Error(codes.Canceled, err.Error())
+	}
+
+	// Wrap any other error as Internal
+	return status.Error(codes.Internal, err.Error())
 }
