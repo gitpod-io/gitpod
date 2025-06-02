@@ -57,7 +57,7 @@ export class SpiceDBAuthorizer {
             const timer = spicedbClientLatency.startTimer();
             let error: Error | undefined;
             try {
-                const response = await this.call("[spicedb] Failed to perform authorization check.", (client) =>
+                const response = await this.call("[spicedb] Error performing authorization check.", (client) =>
                     client.checkPermission(req, this.callOptions),
                 );
                 const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
@@ -185,14 +185,15 @@ export class SpiceDBAuthorizer {
     private async call<T>(description: string, code: (client: v1.ZedPromiseClientInterface) => Promise<T>): Promise<T> {
         const MAX_ATTEMPTS = 3;
         let attempt = 0;
-        while (attempt++ < 3) {
+        while (attempt++ < MAX_ATTEMPTS) {
             try {
                 const checkClient = attempt > 1; // the last client error'd out, so check if we should get a new one
                 const client = this.clientProvider.getClient(checkClient);
-                return code(client);
+                return await code(client);
             } catch (err) {
                 // Check: Is this a "no connection to upstream" error? If yes, retry here, to work around grpc/grpc-js bugs introducing high latency for re-tries
                 if (
+                    isGrpcError(err) &&
                     (err.code === grpc.status.DEADLINE_EXCEEDED || err.code === grpc.status.UNAVAILABLE) &&
                     attempt < MAX_ATTEMPTS
                 ) {
