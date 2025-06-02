@@ -260,7 +260,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 				BaseRef: req.BaseImageNameResolved,
 			})
 			if err != nil {
-				return err
+				return handleFailedBuildStreamResponse(err, "cannot send build response")
 			}
 			return nil
 		}
@@ -307,7 +307,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 			BaseRef: baseref,
 		})
 		if err != nil {
-			return err
+			return handleFailedBuildStreamResponse(err, "cannot send build response")
 		}
 		return nil
 	}
@@ -322,11 +322,12 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 
 	randomUUID, err := uuid.NewRandom()
 	if err != nil {
-		return
+		return status.Errorf(codes.Internal, "failed to generate build ID: %v", err)
 	}
+	buildID := randomUUID.String()
+	log := log.WithField("buildID", buildID)
 
 	var (
-		buildID        = randomUUID.String()
 		buildBase      = "false"
 		contextPath    = "."
 		dockerfilePath = "Dockerfile"
@@ -368,7 +369,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 
 	pbaseref, err := reference.ParseNormalizedNamed(baseref)
 	if err != nil {
-		return xerrors.Errorf("cannot parse baseref: %v", err)
+		return status.Errorf(codes.InvalidArgument, "cannot parse baseref: %v", err)
 	}
 	bobBaseref := "localhost:8080/base"
 	if r, ok := pbaseref.(reference.Digested); ok {
@@ -384,7 +385,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		})
 		additionalAuth, err = json.Marshal(ath)
 		if err != nil {
-			return xerrors.Errorf("cannot marshal additional auth: %w", err)
+			return status.Errorf(codes.InvalidArgument, "cannot marshal additional auth: %v", err)
 		}
 	}
 
@@ -432,7 +433,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 						Name:  "WORKSPACEKIT_BOBPROXY_ADDITIONALAUTH",
 						Value: string(additionalAuth),
 					},
-					{Name: "SUPERVISOR_DEBUG_ENABLE", Value: fmt.Sprintf("%v", log.Log.Logger.IsLevelEnabled(logrus.DebugLevel))},
+					{Name: "SUPERVISOR_DEBUG_ENABLE", Value: fmt.Sprintf("%v", log.Logger.IsLevelEnabled(logrus.DebugLevel))},
 				},
 			},
 			Type: wsmanapi.WorkspaceType_IMAGEBUILD,
@@ -476,8 +477,8 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 
 		err := resp.Send(update)
 		if err != nil {
-			log.WithError(err).Error("cannot forward build update - dropping listener")
-			return status.Errorf(codes.Unknown, "cannot send update: %v", err)
+			log.WithError(err).Info("cannot forward build update - dropping listener")
+			return handleFailedBuildStreamResponse(err, "cannot send update")
 		}
 
 		if update.Status == protocol.BuildStatus_done_failure || update.Status == protocol.BuildStatus_done_success {
@@ -555,8 +556,8 @@ func (o *Orchestrator) Logs(req *protocol.LogsRequest, resp protocol.ImageBuilde
 
 		err := resp.Send(update)
 		if err != nil {
-			log.WithError(err).Error("cannot forward log output - dropping listener")
-			return status.Errorf(codes.Unknown, "cannot send log output: %v", err)
+			log.WithError(err).Info("cannot forward log output - dropping listener")
+			return handleFailedBuildStreamResponse(err, "cannot send log output")
 		}
 	}
 
@@ -707,6 +708,33 @@ func (o *Orchestrator) getWorkspaceImageRef(ctx context.Context, baseref string)
 
 	dst := hash.Sum([]byte{})
 	return fmt.Sprintf("%s:%x", o.Config.WorkspaceImageRepository, dst), nil
+}
+
+func handleFailedBuildStreamResponse(err error, msg string) error {
+	if err == nil {
+		// OK is OK
+		return nil
+	}
+
+	// If the error is a context.DeadlineExceeded, we return nil (OK) as requested.
+	if errors.Is(err, context.DeadlineExceeded) {
+		// Return nil (OK) for DeadlineExceeded
+		return nil
+	}
+
+	// If it's already a gRPC status error, check for DeadlineExceeded
+	if st, ok := status.FromError(err); ok {
+		if st.Code() == codes.DeadlineExceeded {
+			// Return nil (OK) for DeadlineExceeded as requested
+			return nil
+		}
+
+		log.WithError(err).WithField("code", status.Code(err)).Error(fmt.Sprintf("unexpected error while sending build response: %s", msg))
+		return err
+	}
+
+	log.WithError(err).Error(fmt.Sprintf("unexpected error while sending build response: %s", msg))
+	return status.Errorf(codes.Unavailable, "%s: %v", msg, err)
 }
 
 // parentCantCancelContext is a bit of a hack. We have some operations which we want to keep alive even after clients
