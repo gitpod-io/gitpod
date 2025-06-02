@@ -1242,11 +1242,19 @@ export class WorkspaceStarter {
                 additionalAuth,
             );
 
+            // Resolve feature flag with user context
+            const useRetryClient = await getExperimentsClientForBackend().getValueAsync(
+                "imagebuilder_retry_resolve",
+                false,
+                { user },
+            );
+
             const req = new BuildRequest();
             req.setSource(src);
             req.setAuth(auth);
             req.setForceRebuild(forceRebuild);
             req.setTriggeredBy(user.id);
+            req.setUseRetryClient(useRetryClient);
             if (!ignoreBaseImageresolvedAndRebuildBase && !forceRebuild && workspace.baseImageNameResolved) {
                 req.setBaseImageNameResolved(workspace.baseImageNameResolved);
             }
@@ -2078,8 +2086,16 @@ export class WorkspaceStarter {
         region?: WorkspaceRegion,
         organizationId?: string,
     ) {
+        // Resolve feature flag with user context
+        const useRetryClient = await getExperimentsClientForBackend().getValueAsync(
+            "imagebuilder_retry_resolve",
+            false,
+            { user },
+        );
+
         const req = new ResolveBaseImageRequest();
         req.setRef(imageRef);
+        req.setUseRetryClient(useRetryClient);
         const allowAll = new BuildRegistryAuthTotal();
         allowAll.setAllowAll(true);
         const auth = new BuildRegistryAuth();
