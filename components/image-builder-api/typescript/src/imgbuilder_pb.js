@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2025 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -1054,7 +1054,8 @@ proto.builder.ResolveBaseImageRequest.prototype.toObject = function(opt_includeI
 proto.builder.ResolveBaseImageRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     ref: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    auth: (f = msg.getAuth()) && proto.builder.BuildRegistryAuth.toObject(includeInstance, f)
+    auth: (f = msg.getAuth()) && proto.builder.BuildRegistryAuth.toObject(includeInstance, f),
+    useRetryClient: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
   };
 
   if (includeInstance) {
@@ -1100,6 +1101,10 @@ proto.builder.ResolveBaseImageRequest.deserializeBinaryFromReader = function(msg
       reader.readMessage(value,proto.builder.BuildRegistryAuth.deserializeBinaryFromReader);
       msg.setAuth(value);
       break;
+    case 3:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setUseRetryClient(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1142,6 +1147,13 @@ proto.builder.ResolveBaseImageRequest.serializeBinaryToWriter = function(message
       2,
       f,
       proto.builder.BuildRegistryAuth.serializeBinaryToWriter
+    );
+  }
+  f = message.getUseRetryClient();
+  if (f) {
+    writer.writeBool(
+      3,
+      f
     );
   }
 };
@@ -1199,6 +1211,24 @@ proto.builder.ResolveBaseImageRequest.prototype.clearAuth = function() {
  */
 proto.builder.ResolveBaseImageRequest.prototype.hasAuth = function() {
   return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * optional bool use_retry_client = 3;
+ * @return {boolean}
+ */
+proto.builder.ResolveBaseImageRequest.prototype.getUseRetryClient = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.builder.ResolveBaseImageRequest} returns this
+ */
+proto.builder.ResolveBaseImageRequest.prototype.setUseRetryClient = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
 
@@ -1365,7 +1395,8 @@ proto.builder.ResolveWorkspaceImageRequest.prototype.toObject = function(opt_inc
 proto.builder.ResolveWorkspaceImageRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     source: (f = msg.getSource()) && proto.builder.BuildSource.toObject(includeInstance, f),
-    auth: (f = msg.getAuth()) && proto.builder.BuildRegistryAuth.toObject(includeInstance, f)
+    auth: (f = msg.getAuth()) && proto.builder.BuildRegistryAuth.toObject(includeInstance, f),
+    useRetryClient: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
   };
 
   if (includeInstance) {
@@ -1412,6 +1443,10 @@ proto.builder.ResolveWorkspaceImageRequest.deserializeBinaryFromReader = functio
       reader.readMessage(value,proto.builder.BuildRegistryAuth.deserializeBinaryFromReader);
       msg.setAuth(value);
       break;
+    case 3:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setUseRetryClient(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1455,6 +1490,13 @@ proto.builder.ResolveWorkspaceImageRequest.serializeBinaryToWriter = function(me
       2,
       f,
       proto.builder.BuildRegistryAuth.serializeBinaryToWriter
+    );
+  }
+  f = message.getUseRetryClient();
+  if (f) {
+    writer.writeBool(
+      3,
+      f
     );
   }
 };
@@ -1531,6 +1573,24 @@ proto.builder.ResolveWorkspaceImageRequest.prototype.clearAuth = function() {
  */
 proto.builder.ResolveWorkspaceImageRequest.prototype.hasAuth = function() {
   return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * optional bool use_retry_client = 3;
+ * @return {boolean}
+ */
+proto.builder.ResolveWorkspaceImageRequest.prototype.getUseRetryClient = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.builder.ResolveWorkspaceImageRequest} returns this
+ */
+proto.builder.ResolveWorkspaceImageRequest.prototype.setUseRetryClient = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
 
@@ -1761,7 +1821,8 @@ proto.builder.BuildRequest.toObject = function(includeInstance, msg) {
     forceRebuild: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
     triggeredBy: jspb.Message.getFieldWithDefault(msg, 4, ""),
     supervisorRef: jspb.Message.getFieldWithDefault(msg, 5, ""),
-    baseImageNameResolved: jspb.Message.getFieldWithDefault(msg, 6, "")
+    baseImageNameResolved: jspb.Message.getFieldWithDefault(msg, 6, ""),
+    useRetryClient: jspb.Message.getBooleanFieldWithDefault(msg, 7, false)
   };
 
   if (includeInstance) {
@@ -1823,6 +1884,10 @@ proto.builder.BuildRequest.deserializeBinaryFromReader = function(msg, reader) {
     case 6:
       var value = /** @type {string} */ (reader.readString());
       msg.setBaseImageNameResolved(value);
+      break;
+    case 7:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setUseRetryClient(value);
       break;
     default:
       reader.skipField();
@@ -1894,6 +1959,13 @@ proto.builder.BuildRequest.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       6,
+      f
+    );
+  }
+  f = message.getUseRetryClient();
+  if (f) {
+    writer.writeBool(
+      7,
       f
     );
   }
@@ -2043,6 +2115,24 @@ proto.builder.BuildRequest.prototype.getBaseImageNameResolved = function() {
  */
 proto.builder.BuildRequest.prototype.setBaseImageNameResolved = function(value) {
   return jspb.Message.setProto3StringField(this, 6, value);
+};
+
+
+/**
+ * optional bool use_retry_client = 7;
+ * @return {boolean}
+ */
+proto.builder.BuildRequest.prototype.getUseRetryClient = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 7, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.builder.BuildRequest} returns this
+ */
+proto.builder.BuildRequest.prototype.setUseRetryClient = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 7, value);
 };
 
 

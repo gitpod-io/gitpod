@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2025 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -111,6 +111,8 @@ export class ResolveBaseImageRequest extends jspb.Message {
     clearAuth(): void;
     getAuth(): BuildRegistryAuth | undefined;
     setAuth(value?: BuildRegistryAuth): ResolveBaseImageRequest;
+    getUseRetryClient(): boolean;
+    setUseRetryClient(value: boolean): ResolveBaseImageRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ResolveBaseImageRequest.AsObject;
@@ -126,6 +128,7 @@ export namespace ResolveBaseImageRequest {
     export type AsObject = {
         ref: string,
         auth?: BuildRegistryAuth.AsObject,
+        useRetryClient: boolean,
     }
 }
 
@@ -160,6 +163,8 @@ export class ResolveWorkspaceImageRequest extends jspb.Message {
     clearAuth(): void;
     getAuth(): BuildRegistryAuth | undefined;
     setAuth(value?: BuildRegistryAuth): ResolveWorkspaceImageRequest;
+    getUseRetryClient(): boolean;
+    setUseRetryClient(value: boolean): ResolveWorkspaceImageRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ResolveWorkspaceImageRequest.AsObject;
@@ -175,6 +180,7 @@ export namespace ResolveWorkspaceImageRequest {
     export type AsObject = {
         source?: BuildSource.AsObject,
         auth?: BuildRegistryAuth.AsObject,
+        useRetryClient: boolean,
     }
 }
 
@@ -223,6 +229,8 @@ export class BuildRequest extends jspb.Message {
     setSupervisorRef(value: string): BuildRequest;
     getBaseImageNameResolved(): string;
     setBaseImageNameResolved(value: string): BuildRequest;
+    getUseRetryClient(): boolean;
+    setUseRetryClient(value: boolean): BuildRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): BuildRequest.AsObject;
@@ -242,6 +250,7 @@ export namespace BuildRequest {
         triggeredBy: string,
         supervisorRef: string,
         baseImageNameResolved: string,
+        useRetryClient: boolean,
     }
 }
 
