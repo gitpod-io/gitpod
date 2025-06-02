@@ -133,7 +133,13 @@ function doScrub(obj: any, depth: number, nested: boolean): any {
         const result: any = {};
         for (const [key, value] of Object.entries(obj as object)) {
             if (typeof value === "string") {
-                result[key] = scrubber.scrubKeyValue(key, value);
+                // First apply field-based scrubbing, then pattern-based scrubbing
+                let scrubbedValue = scrubber.scrubKeyValue(key, value);
+                // If no field-based scrubbing was applied, apply pattern-based scrubbing
+                if (scrubbedValue === value) {
+                    scrubbedValue = scrubber.scrubValue(value);
+                }
+                result[key] = scrubbedValue;
             } else {
                 result[key] = doScrub(value, depth + 1, nested);
             }
