@@ -10,7 +10,6 @@ import (
 	"os"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -21,12 +20,6 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 )
-
-func newBool(b bool) *atomic.Bool {
-	result := atomic.Bool{}
-	result.Store(b)
-	return &result
-}
 
 var (
 	skipCommand = "echo \"skip\""
@@ -223,7 +216,7 @@ func TestTaskManager(t *testing.T) {
 			}
 
 			var (
-				terminalService = terminal.NewMuxTerminalService(terminal.NewMux(), newBool(true))
+				terminalService = terminal.NewMuxTerminalService(terminal.NewMux())
 				contentState    = NewInMemoryContentState("")
 				reporter        = testHeadlessTaskProgressReporter{}
 				taskManager     = newTasksManager(&Config{
