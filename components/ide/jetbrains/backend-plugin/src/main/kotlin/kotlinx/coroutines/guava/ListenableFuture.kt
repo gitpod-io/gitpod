@@ -159,7 +159,6 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
         cancel(false)
     }
     // Return hides the CompletableDeferred. This should prevent casting.
-    @OptIn(InternalForInheritanceCoroutinesApi::class)
     return object : Deferred<T> by deferred {}
 }
 

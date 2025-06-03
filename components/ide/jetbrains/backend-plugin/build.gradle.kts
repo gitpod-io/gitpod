@@ -177,8 +177,8 @@ tasks {
 
 tasks.register("runPluginVerifier") {
     if (properties("platformType") == "RD") {
-        intellijPlatform.verifyPlugin.ides.ide(IntelliJPlatformType.Rider, properties("pluginVerifierIdeVersions"))
+        intellijPlatform.pluginVerification.ides.ide(IntelliJPlatformType.Rider, properties("pluginVerifierIdeVersions"))
     } else {
-        intellijPlatform.verifyPlugin.ides.ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("pluginVerifierIdeVersions"))
+        intellijPlatform.pluginVerification.ides.ide(IntelliJPlatformType.IntellijIdeaUltimate, properties("pluginVerifierIdeVersions"))
     }
 }
