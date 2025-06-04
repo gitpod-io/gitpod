@@ -50,6 +50,9 @@
                      description="Disable the forced update of Maven projects when IDE opens."
                      restartRequired="true"/>
 
+        <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodPortForwardingService"
+                            serviceImplementation="io.gitpod.jetbrains.remote.optional.GitpodRiderPortForwardingService"
+                            client="controller" preload="true" />
 
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService"
                             serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodIgnoredPortsForNotificationServiceImpl"

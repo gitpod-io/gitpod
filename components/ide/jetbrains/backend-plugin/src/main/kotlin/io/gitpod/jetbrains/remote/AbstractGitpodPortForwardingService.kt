@@ -13,7 +13,6 @@ import com.intellij.util.application
 import com.jetbrains.rd.platform.codeWithMe.portForwarding.*
 import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
-import fleet.util.async.throttleLatest
 import io.gitpod.supervisor.api.Status
 import io.gitpod.supervisor.api.Status.PortsStatus
 import io.gitpod.supervisor.api.StatusServiceGrpc
@@ -41,10 +40,10 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
     private val portStatusFlow = MutableSharedFlow<Status.PortsStatusResponse>()
 
     init {
-        // Start collecting port status updates with throttling
+        // Start collecting port status updates
         runJob(lifetime) {
             portStatusFlow
-                .throttleLatest(1000) // Throttle to 1 second
+                .let { flow -> applyThrottling(flow) }
                 .collect { response ->
                     withContext(Dispatchers.IO) {
                         syncPortsListWithClient(response)
@@ -55,6 +54,10 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
         start()
     }
 
+    protected abstract fun runJob(lifetime: Lifetime, block: suspend CoroutineScope.() -> Unit): Job;
+
+    protected abstract suspend fun <T> applyThrottling(flow: kotlinx.coroutines.flow.Flow<T>): kotlinx.coroutines.flow.Flow<T>
+
     private fun start() {
         if (application.isHeadlessEnvironment) return
 
@@ -64,8 +67,6 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
 
         observePortsListWhileProjectIsOpen()
     }
-
-    protected abstract fun runJob(lifetime: Lifetime, block: suspend CoroutineScope.() -> Unit): Job;
 
     private fun observePortsListWhileProjectIsOpen() = runJob(lifetime) {
         while (isActive) {
