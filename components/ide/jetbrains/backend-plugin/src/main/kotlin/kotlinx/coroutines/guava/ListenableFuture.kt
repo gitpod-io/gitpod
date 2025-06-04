@@ -5,8 +5,7 @@
 package kotlinx.coroutines.guava
 
 import com.google.common.util.concurrent.*
-import com.google.common.util.concurrent.internal.InternalFutureFailureAccess
-import com.google.common.util.concurrent.internal.InternalFutures
+import com.google.common.util.concurrent.internal.*
 import kotlinx.coroutines.*
 import java.util.concurrent.*
 import java.util.concurrent.CancellationException
@@ -138,10 +137,10 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
     // Finally, if this isn't done yet, attach a Listener that will complete the Deferred.
     val deferred = CompletableDeferred<T>()
     Futures.addCallback(this, object : FutureCallback<T> {
-        override fun onSuccess(result: T?) {
+        override fun onSuccess(result: T) {
             // Here we work with flexible types, so we unchecked cast to trick the type system
             @Suppress("UNCHECKED_CAST")
-            runCatching { deferred.complete(result as T) }
+            runCatching { deferred.complete(result) }
                 .onFailure { handleCoroutineException(EmptyCoroutineContext, it) }
         }
 
@@ -225,7 +224,7 @@ public fun <T> Deferred<T>.asListenableFuture(): ListenableFuture<T> {
  *
  * This suspend function is cancellable.
  *
- * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
+ * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
  * stops waiting for the future and immediately resumes with [CancellationException][kotlinx.coroutines.CancellationException].
  *
  * This method is intended to be used with one-shot Futures, so on coroutine cancellation, the Future is cancelled as well.
@@ -247,8 +246,7 @@ public suspend fun <T> ListenableFuture<T>.await(): T {
     return suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
         addListener(
             ToContinuation(this, cont),
-            MoreExecutors.directExecutor()
-        )
+            MoreExecutors.directExecutor())
         cont.invokeOnCancellation {
             cancel(false)
         }
@@ -265,7 +263,7 @@ public suspend fun <T> ListenableFuture<T>.await(): T {
 private class ToContinuation<T>(
     val futureToObserve: ListenableFuture<T>,
     val continuation: CancellableContinuation<T>
-) : Runnable {
+): Runnable {
     override fun run() {
         if (futureToObserve.isCancelled) {
             continuation.cancel()
@@ -346,7 +344,7 @@ private class ListenableFutureCoroutine<T>(
  *     could probably be compressed into one subclass of [AbstractFuture] to save an allocation, at the
  *     cost of the implementation's readability.
  */
-private class JobListenableFuture<T>(private val jobToCancel: Job) : ListenableFuture<T> {
+private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFuture<T> {
     /**
      * Serves as a state machine for [Future] cancellation.
      *
@@ -356,7 +354,7 @@ private class JobListenableFuture<T>(private val jobToCancel: Job) : ListenableF
      *
      * To preserve Coroutine's [CancellationException], this future points to either `T` or [Cancelled].
      */
-    private val auxFuture = SettableFuture.create<Any>()
+    private val auxFuture = SettableFuture.create<Any?>()
 
     /**
      * `true` if [auxFuture.get][ListenableFuture.get] throws [ExecutionException].
@@ -441,7 +439,7 @@ private class JobListenableFuture<T>(private val jobToCancel: Job) : ListenableF
     }
 
     /** See [get()]. */
-    private fun getInternal(result: Any): T = if (result is Cancelled) {
+    private fun getInternal(result: Any?): T = if (result is Cancelled) {
         throw CancellationException().initCause(result.exception)
     } else {
         // We know that `auxFuture` can contain either `T` or `Cancelled`.

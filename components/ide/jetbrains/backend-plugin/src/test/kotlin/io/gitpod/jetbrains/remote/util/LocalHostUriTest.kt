@@ -4,12 +4,15 @@
 
 package io.gitpod.jetbrains.remote.util
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import io.gitpod.jetbrains.remote.utils.LocalHostUri
 import io.gitpod.jetbrains.remote.utils.LocalHostUri.LocalHostUriMetadata
 import java.net.URI
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
-class LocalHostUriTest : BasePlatformTestCase() {
+internal class LocalHostUriTest {
+    @Test
     fun testExtractLocalHostUriMetaDataForPortMapping() {
         val urlToMetadataMap = mapOf(
             "https://localhost:80" to object: LocalHostUriMetadata {
