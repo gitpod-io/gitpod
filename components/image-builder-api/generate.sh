@@ -19,8 +19,6 @@ install_dependencies
 go_protoc "$COMPONENTS_DIR"
 typescript_protoc "$COMPONENTS_DIR"
 
-go generate typescript/util/generate-ws-ready.go
-
 # cd go
 pushd go
 

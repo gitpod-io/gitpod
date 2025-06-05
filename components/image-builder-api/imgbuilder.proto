@@ -44,6 +44,7 @@ message BuildSourceDockerfile {
 message ResolveBaseImageRequest {
     string ref = 1;
     BuildRegistryAuth auth = 2;
+    bool use_retry_client = 3;
 }
 
 message ResolveBaseImageResponse {
@@ -53,6 +54,7 @@ message ResolveBaseImageResponse {
 message ResolveWorkspaceImageRequest {
     BuildSource source = 1;
     BuildRegistryAuth auth = 2;
+    bool use_retry_client = 3;
 }
 
 message ResolveWorkspaceImageResponse {
@@ -68,6 +70,7 @@ message BuildRequest {
     string triggered_by = 4;
     string supervisor_ref = 5;
     string base_image_name_resolved = 6;
+    bool use_retry_client = 7;
 }
 
 message BuildRegistryAuth {

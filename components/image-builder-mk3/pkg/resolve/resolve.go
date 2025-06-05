@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -62,14 +63,24 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 
 	var r remotes.Resolver
 	if sr.ResolverFactory == nil {
-		r = dockerremote.NewResolver(dockerremote.ResolverOptions{
-			Authorizer: dockerremote.NewDockerAuthorizer(dockerremote.WithAuthCreds(func(host string) (username, password string, err error) {
+		registryOpts := []dockerremote.RegistryOpt{
+			dockerremote.WithAuthorizer(dockerremote.NewDockerAuthorizer(dockerremote.WithAuthCreds(func(host string) (username, password string, err error) {
 				if options.Auth == nil {
 					return
 				}
 
 				return options.Auth.Username, options.Auth.Password, nil
-			})),
+			}))),
+		}
+
+		if options.Client != nil {
+			registryOpts = append(registryOpts, dockerremote.WithClient(options.Client))
+		}
+
+		r = dockerremote.NewResolver(dockerremote.ResolverOptions{
+			Hosts: dockerremote.ConfigureDefaultRegistries(
+				registryOpts...,
+			),
 		})
 	} else {
 		r = sr.ResolverFactory()
@@ -152,7 +163,8 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 }
 
 type opts struct {
-	Auth *auth.Authentication
+	Auth   *auth.Authentication
+	Client *http.Client
 }
 
 // DockerRefResolverOption configures reference resolution
@@ -166,6 +178,16 @@ func WithAuthentication(auth *auth.Authentication) DockerRefResolverOption {
 
 	return func(o *opts) {
 		o.Auth = auth
+	}
+}
+
+// WithHttpClient sets the HTTP client to use for making requests to the Docker registry.
+func WithHttpClient(client *http.Client) DockerRefResolverOption {
+	return func(o *opts) {
+		if client == nil {
+			log.Debug("WithHttpClient - client was nil")
+		}
+		o.Client = client
 	}
 }
 
