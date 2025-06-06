@@ -38,6 +38,7 @@ project(":") {
         if (properties("platformType") == "RD") {
             print("Rider: exclude unnecessary files")
             sourceSets["main"].kotlin.exclude("**/GitpodForceUpdateMavenProjectsActivity.kt")
+            sourceSets["main"].kotlin.exclude("**/GitpodPortForwardingServiceImpl.kt")
             sourceSets["main"].kotlin.exclude("**/maven.xml")
         }
     }
