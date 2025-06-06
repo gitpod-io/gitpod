@@ -18,11 +18,13 @@ Building a comprehensive knowledge base of the Gitpod codebase and architecture 
 - Documented 33 service components and 11 API components
 - Enhanced API component documentation with code generation information
 - Implemented server readiness probe with database, SpiceDB, and Redis connectivity checks
+- **Improved `registry-facade` resilience by implementing a comprehensive retry mechanism for blob retrieval, addressing transient network errors.**
 
 ## Next Steps
 
-1. **Component Interactions**: Understand inter-component communication
-2. **Development Environment**: Configure local development setup
+1. **Monitor `registry-facade`:** Observe the component's behavior with the new retry logic to ensure it correctly handles the previously identified network issues.
+2. **Component Interactions**: Understand inter-component communication
+3. **Development Environment**: Configure local development setup
 3. **Build System**: Gain experience with in-tree and Leeway builds
 4. **Component Builds**: Practice building different component types
 5. **Initial Tasks**: Identify specific improvement areas

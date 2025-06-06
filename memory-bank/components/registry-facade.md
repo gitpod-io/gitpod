@@ -33,6 +33,12 @@ The component acts as an "image layer smuggler," inserting layers into container
 - `cmd/run.go`: Implements the main registry service
 - `cmd/setup.go`: Handles service setup and configuration
 - `pkg/registry/`: Core registry implementation
+- `blob.go`: Handles blob retrieval from various sources (local store, IPFS, upstream registries). Contains a resilient retry mechanism to handle transient network errors during both connection and data transfer phases.
+
+## Key Implementation Details
+
+### Blob Retrieval Retry Logic
+The `retrieveFromSource` function in `pkg/registry/blob.go` implements an exponential backoff retry mechanism that wraps the entire blob retrieval process. This ensures that transient network errors, such as `TLS handshake timeout` or `connection reset`, that occur during either the initial connection (`GetBlob`) or the data streaming (`io.CopyBuffer`) are retried. This makes the service more resilient to intermittent network issues when fetching blobs from upstream sources like S3.
 
 ## Dependencies
 
