@@ -7,15 +7,18 @@ package registry
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/containerd/containerd/remotes"
@@ -30,6 +33,9 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/opencontainers/go-digest"
 	redis "github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	rfapi "github.com/gitpod-io/gitpod/registry-facade/api"
 )
@@ -249,4 +255,140 @@ func (rw *failFirstResponseWriter) Write(buf []byte) (int, error) {
 
 func (rw *failFirstResponseWriter) WriteHeader(code int) {
 	rw.code = code
+}
+
+// mockBlobSource allows faking BlobSource behavior for tests.
+type mockBlobSource struct {
+	// How many times GetBlob should fail before succeeding.
+	failCount int
+	// The error to return on failure.
+	failError error
+
+	// Internal counter for calls.
+	callCount int
+	// The data to return on success.
+	successData string
+
+	// Whether to use a reader that fails mid-stream on the first call.
+	failReaderOnFirstCall bool
+	// The number of bytes to read successfully before the reader fails.
+	failAfterBytes int
+}
+
+func (m *mockBlobSource) Name() string { return "mock" }
+func (m *mockBlobSource) HasBlob(ctx context.Context, details *rfapi.ImageSpec, dgst digest.Digest) bool {
+	return true
+}
+
+func (m *mockBlobSource) GetBlob(ctx context.Context, details *rfapi.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
+	m.callCount++
+	if m.callCount <= m.failCount {
+		return false, "", "", nil, m.failError
+	}
+
+	if m.failReaderOnFirstCall && m.callCount == 1 {
+		return false, "application/octet-stream", "", io.NopCloser(&failingReader{
+			reader:         strings.NewReader(m.successData),
+			failAfterBytes: m.failAfterBytes,
+			failError:      m.failError,
+		}), nil
+	}
+
+	return false, "application/octet-stream", "", io.NopCloser(strings.NewReader(m.successData)), nil
+}
+
+// failingReader is a reader that fails after a certain point.
+type failingReader struct {
+	reader         io.Reader
+	failAfterBytes int
+	failError      error
+	bytesRead      int
+}
+
+func (fr *failingReader) Read(p []byte) (n int, err error) {
+	if fr.bytesRead >= fr.failAfterBytes {
+		return 0, fr.failError
+	}
+	n, err = fr.reader.Read(p)
+	if err != nil {
+		return n, err
+	}
+	fr.bytesRead += n
+	if fr.bytesRead >= fr.failAfterBytes {
+		// Return the error, but also the bytes read in this call.
+		return n, fr.failError
+	}
+	return n, nil
+}
+
+func TestRetrieveFromSource_RetryOnGetBlob(t *testing.T) {
+	// Arrange
+	mockSource := &mockBlobSource{
+		failCount:   2,
+		failError:   errors.New("transient network error"),
+		successData: "hello world",
+	}
+
+	bh := &blobHandler{
+		Digest: "sha256:dummy",
+		Spec:   &rfapi.ImageSpec{},
+	}
+
+	// Use short backoff for testing
+	originalBackoff := retrievalBackoffParams
+	retrievalBackoffParams = wait.Backoff{
+		Duration: 1 * time.Millisecond,
+		Steps:    3,
+	}
+	defer func() { retrievalBackoffParams = originalBackoff }()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/v2/...", nil)
+
+	// Act
+	handled, dontCache, err := bh.retrieveFromSource(context.Background(), mockSource, w, r)
+
+	// Assert
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.False(t, dontCache)
+	assert.Equal(t, "hello world", w.Body.String())
+	assert.Equal(t, 3, mockSource.callCount, "Expected GetBlob to be called 3 times (2 failures + 1 success)")
+}
+
+func TestRetrieveFromSource_RetryOnCopy(t *testing.T) {
+	// Arrange
+	mockSource := &mockBlobSource{
+		failCount:             0, // GetBlob succeeds immediately
+		failReaderOnFirstCall: true,
+		failAfterBytes:        5,
+		failError:             syscall.EPIPE,
+		successData:           "hello world",
+	}
+
+	bh := &blobHandler{
+		Digest: "sha256:dummy",
+		Spec:   &rfapi.ImageSpec{},
+	}
+
+	// Use short backoff for testing
+	originalBackoff := retrievalBackoffParams
+	retrievalBackoffParams = wait.Backoff{
+		Duration: 1 * time.Millisecond,
+		Steps:    3,
+	}
+	defer func() { retrievalBackoffParams = originalBackoff }()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/v2/...", nil)
+
+	// Act
+	handled, dontCache, err := bh.retrieveFromSource(context.Background(), mockSource, w, r)
+
+	// Assert
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.False(t, dontCache)
+	assert.Equal(t, "hello world", w.Body.String())
+	assert.Equal(t, 2, mockSource.callCount, "Expected GetBlob to be called twice (1st succeeds, copy fails, 2nd succeeds)")
 }

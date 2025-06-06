@@ -34,11 +34,13 @@ import (
 	"github.com/gitpod-io/gitpod/registry-facade/api"
 )
 
-var backoffParams = wait.Backoff{
-	Duration: 100 * time.Millisecond,
-	Factor:   1.5,
+// retrievalBackoffParams defines the backoff parameters for blob retrieval.
+// Aiming at ~10 seconds total time for retries
+var retrievalBackoffParams = wait.Backoff{
+	Duration: 1 * time.Second,
+	Factor:   1.2,
 	Jitter:   0.2,
-	Steps:    4,
+	Steps:    5,
 }
 
 func (reg *Registry) handleBlob(ctx context.Context, r *http.Request) http.Handler {
@@ -213,35 +215,49 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 func (bh *blobHandler) retrieveFromSource(ctx context.Context, src BlobSource, w http.ResponseWriter, r *http.Request) (handled, dontCache bool, err error) {
 	log.Debugf("retrieving blob %s from %s", bh.Digest, src.Name())
-	dontCache, mediaType, url, rc, err := src.GetBlob(ctx, bh.Spec, bh.Digest)
-	if err != nil {
-		return false, true, xerrors.Errorf("cannnot fetch the blob from source %s: %v", src.Name(), err)
-	}
-	if rc != nil {
-		defer rc.Close()
-	}
-
-	if url != "" {
-		http.Redirect(w, r, url, http.StatusPermanentRedirect)
-		return true, true, nil
-	}
-
-	w.Header().Set("Content-Type", mediaType)
-
-	bp := bufPool.Get().(*[]byte)
-	defer bufPool.Put(bp)
 
 	var n int64
 	t0 := time.Now()
-	err = wait.ExponentialBackoffWithContext(ctx, backoffParams, func(ctx context.Context) (done bool, err error) {
-		n, err = io.CopyBuffer(w, rc, *bp)
+	var body bytes.Buffer
+	var finalMediaType string
+
+	// The entire operation is now inside the backoff loop
+	err = wait.ExponentialBackoffWithContext(ctx, retrievalBackoffParams, func(ctx context.Context) (done bool, err error) {
+		// 1. GetBlob is now INSIDE the retry loop
+		var url string
+		var rc io.ReadCloser
+		dontCache, finalMediaType, url, rc, err = src.GetBlob(ctx, bh.Spec, bh.Digest)
+		if err != nil {
+			log.WithField("blobSource", src.Name()).WithError(err).Warn("error fetching blob from source, retrying...")
+			return false, nil
+		}
+		if rc != nil {
+			defer rc.Close()
+		}
+
+		if url != "" {
+			http.Redirect(w, r, url, http.StatusPermanentRedirect)
+			dontCache = true
+			return true, nil
+		}
+
+		body.Reset()
+		bp := bufPool.Get().(*[]byte)
+		defer bufPool.Put(bp)
+
+		// 2. CopyBuffer is also inside the retry loop
+		n, err = io.CopyBuffer(&body, rc, *bp)
 		if err == nil {
 			return true, nil
 		}
+
+		// Check for retryable errors during copy
 		if errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) {
-			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Warn("retry get blob because of error")
+			// TODO(gpl): current error seem to be captured by this - but does it make sense to widen this condition?
+			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Warn("retry get blob because of streaming error")
 			return false, nil
 		}
+
 		return true, err
 	})
 
@@ -251,6 +267,9 @@ func (bh *blobHandler) retrieveFromSource(ctx context.Context, src BlobSource, w
 		}
 		return false, true, err
 	}
+
+	w.Header().Set("Content-Type", finalMediaType)
+	w.Write(body.Bytes())
 
 	if bh.Metrics != nil {
 		bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "true").Inc()

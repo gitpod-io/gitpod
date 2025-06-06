@@ -68,6 +68,12 @@ No specific blockers identified yet.
 
 ## Recent Progress
 
+### 6/6/2025
+- Investigated `registry-facade` 500 errors (CLC-195).
+- Analyzed logs and identified TLS handshake timeouts as a root cause.
+- Implemented a more resilient retry mechanism in `pkg/registry/blob.go` to handle transient network errors during blob retrieval.
+- Updated `registry-facade` component documentation.
+
 ### 3/17/2025
 - Implemented server readiness probe with database, SpiceDB, and Redis checks
 - Created PRD document for the implementation
