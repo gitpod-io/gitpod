@@ -23,7 +23,8 @@ export type Event =
     | "ide_configuration_changed"
     | "status_rendered"
     | "error_rendered"
-    | "video_clicked";
+    | "video_clicked"
+    | "waitlist_joined";
 type InternalEvent = Event | "path_changed" | "dashboard_clicked";
 
 export type EventProperties =
@@ -38,7 +39,8 @@ export type EventProperties =
     | TrackWorkspaceClassChanged
     | TrackStatusRendered
     | TrackErrorRendered
-    | TrackVideoClicked;
+    | TrackVideoClicked
+    | TrackWaitlistJoined;
 type InternalEventProperties = EventProperties | TrackDashboardClick | TrackPathChanged;
 
 export interface TrackErrorRendered {
@@ -125,6 +127,11 @@ interface TrackPathChanged {
     path: string;
 }
 
+export interface TrackWaitlistJoined {
+    email: string;
+    feature: string;
+}
+
 interface Traits {
     unsubscribed_onboarding?: boolean;
     unsubscribed_changelog?: boolean;
@@ -148,6 +155,7 @@ export function trackEvent(event: "ide_configuration_changed", properties: Track
 export function trackEvent(event: "status_rendered", properties: TrackStatusRendered): void;
 export function trackEvent(event: "error_rendered", properties: TrackErrorRendered): void;
 export function trackEvent(event: "video_clicked", properties: TrackVideoClicked): void;
+export function trackEvent(event: "waitlist_joined", properties: TrackWaitlistJoined): void;
 export function trackEvent(event: Event, properties: EventProperties): void {
     trackEventInternal(event, properties);
 }
