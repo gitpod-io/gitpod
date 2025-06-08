@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import { trackEvent } from "../Analytics";
 import { useCurrentUser } from "../user-context";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
+import { useToast } from "../components/toasts/Toasts";
 import onaWordmark from "../images/ona-wordmark.svg";
 
 const onaBanner = {
@@ -23,6 +24,7 @@ export const OnaBanner: React.FC = () => {
     const [showOnaBanner, setShowOnaBanner] = useState(true);
     const [onaClicked, setOnaClicked] = useState(false);
     const user = useCurrentUser();
+    const { toast } = useToast();
 
     useEffect(() => {
         const storedOnaData = localStorage.getItem("ona-banner-data");
@@ -46,6 +48,14 @@ export const OnaBanner: React.FC = () => {
 
             setOnaClicked(true);
             localStorage.setItem("ona-banner-data", JSON.stringify({ dismissed: false, clicked: true }));
+
+            // Show success toast
+            toast(
+                <div>
+                    <div className="font-medium">You're on the waitlist</div>
+                    <div className="text-sm opacity-80">We'll reach out to you soon.</div>
+                </div>,
+            );
         } else {
             // "Learn more" click - open link
             window.open(onaBanner.link, "_blank", "noopener,noreferrer");
