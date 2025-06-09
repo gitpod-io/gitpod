@@ -118,7 +118,7 @@ func TestBlobFor(t *testing.T) {
 				refDescriptor: provideDescriptor,
 			},
 			Expectation: Expectation{
-				Error: "cannot fetch manifest: " + hashManifest + " not found",
+				Error: "failed to fetch manifest: " + hashManifest + " not found",
 			},
 		},
 		{
