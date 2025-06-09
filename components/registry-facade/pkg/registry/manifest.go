@@ -318,7 +318,10 @@ func DownloadConfig(ctx context.Context, fetch FetcherFunc, ref string, desc oci
 			rc, err = fetcher.Fetch(ctx, desc)
 			if err != nil {
 				log.WithError(err).Warn("cannot fetch config")
-				return false, nil // retry
+				if retryableError(err) {
+					return false, nil // retry
+				}
+				return false, err
 			}
 			defer rc.Close()
 		}
@@ -467,7 +470,10 @@ func DownloadManifest(ctx context.Context, fetch FetcherFunc, desc ociv1.Descrip
 			rc, err = fetcher.Fetch(ctx, desc)
 			if err != nil {
 				log.WithError(err).Warn("cannot fetch manifest")
-				return false, nil // retry
+				if retryableError(err) {
+					return false, nil // retry
+				}
+				return false, err
 			}
 			mediaType = desc.MediaType
 		}
@@ -521,7 +527,10 @@ func DownloadManifest(ctx context.Context, fetch FetcherFunc, desc ociv1.Descrip
 			rc, err = fetcher.Fetch(ctx, md)
 			if err != nil {
 				log.WithError(err).Warn("cannot download config")
-				return false, nil // retry
+				if retryableError(err) {
+					return false, nil // retry
+				}
+				return false, err
 			}
 			rdesc = &md
 			inpt, err = io.ReadAll(rc)
@@ -586,4 +595,20 @@ func (mh *manifestHandler) putManifest(w http.ResponseWriter, r *http.Request) {
 
 func (mh *manifestHandler) deleteManifest(w http.ResponseWriter, r *http.Request) {
 	respondWithError(w, distv2.ErrorCodeManifestUnknown)
+}
+
+func retryableError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, errdefs.ErrNotFound) || errors.Is(err, errdefs.ErrInvalidArgument) {
+		return false
+	}
+	if strings.Contains(err.Error(), "not found") ||
+		strings.Contains(err.Error(), "invalid argument") ||
+		strings.Contains(err.Error(), "not implemented") ||
+		strings.Contains(err.Error(), "unsupported media type") {
+		return false
+	}
+	return true
 }
