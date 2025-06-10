@@ -21,6 +21,7 @@
 
 📄 [Read Cloud Development Environment white paper](https://www.gitpod.io/whitepaper/cde)
 
+
 <div align="center" style="flex-direction: row;">
   <a href="https://www.gitpod.io#gh-light-mode-only">
     <img src="https://github.com/gitpod-io/gitpod/assets/55068936/84beb5da-fa5b-4966-a454-8f5b2607a8ed">
