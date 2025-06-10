@@ -320,7 +320,7 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh |
     && bash -c ". $HOME/.nvm/nvm.sh \
     && nvm install v${NODE_VERSION} \
     && nvm alias default v${NODE_VERSION} \
-    && npm install -g typescript yarn pnpm node-gyp"
+    && npm install -g typescript yarn pnpm node-gyp @anthropic-ai/claude-code"
 
 ENV PATH=$PATH:/root/.aws-iam:/root/.terraform:/workspace/bin
 
