@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-gitpod-dev:latest
 
-ENV TRIGGER_REBUILD 42
+ENV TRIGGER_REBUILD 43
 
 USER root
 
