@@ -12,6 +12,8 @@ function replaceImage(image) {
 const imagesBuildFromMain = [
     "jb-backend-plugin:commit-2d67254d5aa110bc2c76cd807b85b272e3d54d97-latest",
     "jb-backend-plugin:commit-4c69ad0670cc4cfbf43910e1db700ad90acd5ac6",
+    "jb-backend-plugin:commit-8cdc2a1a45c66ac9e003a97af8c57fad42d923f6-rider",
+    "jb-backend-plugin:commit-8cdc2a1a45c66ac9e003a97af8c57fad42d923f6-rider-latest",
 ];
 
 // TODO(hw): remove me
@@ -39,6 +41,11 @@ for (let ide in json.ideOptions.options) {
 
     // TODO(hw): remove me
     if (["intellij"].includes(ide)) {
+        json.ideOptions.options[ide].pluginImage = replaceImage2(json.ideOptions.options[ide].pluginImage);
+        json.ideOptions.options[ide].imageLayers = json.ideOptions.options[ide].imageLayers.map(replaceImage2);
+    }
+
+    if (["rider"].includes(ide)) {
         json.ideOptions.options[ide].pluginImage = replaceImage2(json.ideOptions.options[ide].pluginImage);
         json.ideOptions.options[ide].imageLayers = json.ideOptions.options[ide].imageLayers.map(replaceImage2);
     }
