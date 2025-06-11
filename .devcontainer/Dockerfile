@@ -293,7 +293,7 @@ RUN mkdir -p ~/.terraform \
     && printf "terraform -install-autocomplete 2> /dev/null\n" >>~/.bashrc
 
 ## Java
-ENV JAVA_VERSION=11.0.23.fx-zulu
+ENV JAVA_VERSION=11.0.27.fx-zulu
 RUN curl -fsSL "https://get.sdkman.io" | bash \
     && bash -c ". /root/.sdkman/bin/sdkman-init.sh \
     && sed -i 's/sdkman_selfupdate_enable=true/sdkman_selfupdate_enable=false/g' /root/.sdkman/etc/config \
@@ -301,7 +301,7 @@ RUN curl -fsSL "https://get.sdkman.io" | bash \
     && sdk install java ${JAVA_VERSION} \
     && sdk default java ${JAVA_VERSION} \
     && sdk install gradle \
-    && sdk install maven \
+    && sdk install maven 3.9.10 \
     && sdk flush archives \
     && sdk flush temp \
     && mkdir /root/.m2 \
@@ -320,7 +320,7 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh |
     && bash -c ". $HOME/.nvm/nvm.sh \
     && nvm install v${NODE_VERSION} \
     && nvm alias default v${NODE_VERSION} \
-    && npm install -g typescript yarn pnpm node-gyp"
+    && npm install -g typescript yarn pnpm node-gyp @anthropic-ai/claude-code"
 
 ENV PATH=$PATH:/root/.aws-iam:/root/.terraform:/workspace/bin
 

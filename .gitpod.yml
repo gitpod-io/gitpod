@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.32852
+image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:kylos101-add-claude-code-gha.33073
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
@@ -80,6 +80,13 @@ tasks:
     init: |
       ./components/gitpod-protocol/go/scripts/generate-config.sh
       leeway exec --filter-type go -v -- go mod verify
+  - name: claude code
+    command: |
+      if [[ -z "${CLAUDE_JSON}" ]]; then
+        echo "Skipping setup for Claude Code. Setup a CLAUDE_JSON variable to reuse Claude Code in workspaces."
+      else
+        echo $CLAUDE_JSON > ~/.claude.json
+      fi
 vscode:
   extensions:
     - EditorConfig.EditorConfig

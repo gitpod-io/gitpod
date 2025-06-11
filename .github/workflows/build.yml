@@ -118,7 +118,7 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.32852
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:kylos101-add-claude-code-gha.33073
     steps:
       - uses: actions/checkout@v4
       - name: Setup Environment
@@ -188,7 +188,7 @@ jobs:
         ports:
           - 6379:6379
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.32852
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:kylos101-add-claude-code-gha.33073
       env:
         DB_HOST: "mysql"
         DB_PORT: "23306"
@@ -521,7 +521,7 @@ jobs:
       - create-runner
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.32852
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:kylos101-add-claude-code-gha.33073
     if: needs.configuration.outputs.with_integration_tests != '' && needs.configuration.outputs.is_scheduled_run != 'true'
     concurrency:
       group: ${{ needs.configuration.outputs.preview_name }}-integration-test

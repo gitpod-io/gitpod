@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-gitpod-dev:latest
 
-ENV TRIGGER_REBUILD 42
+ENV TRIGGER_REBUILD 43
 
 USER root
 
@@ -127,7 +127,7 @@ USER gitpod
 ARG GITPOD_NODE_VERSION=22.15.1
 RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
-    && npm install -g typescript yarn"
+    && npm install -g typescript yarn @anthropic-ai/claude-code"
 ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 
 ## Register leeway autocompletion in bashrc
