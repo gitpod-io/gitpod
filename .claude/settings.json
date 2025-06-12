@@ -1,0 +1,25 @@
+{
+    "permissions": {
+      "allow": [
+        "Read(**)",
+        "Edit(**)",
+        "Bash(ls:*)",
+        "Bash(grep:*)",
+        "Bash(rg:*)",
+        "Bash(find:*)",
+        "Bash(go:*)",
+        "Bash(git status:*)",
+        "Bash(git diff:*)",
+        "Bash(git add:*)",
+        "Bash(git commit:*)",
+        "Bash(git pull:*)",
+        "Bash(git log:*)",
+        "Bash(npm test:*)",
+        "Bash(npm run test:*)",
+        "Bash(npm run vitest:*)",
+        "Bash(npx vitest:*)",
+        "WebFetch(domain:www.gitpod.io)"
+      ],
+      "deny": []
+    }
+  }
