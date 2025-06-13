@@ -75,10 +75,12 @@ func GenerateIDEConfigmap(ctx *common.RenderContext) (*ide_config.IDEConfig, err
 		CodeHelperImage:                ctx.ImageName(ctx.Config.Repository, ide.CodeHelperIDEImage, ctx.VersionManifest.Components.Workspace.CodeHelperImage.Version),
 		CodeWebExtensionImage:          ctx.ImageName(ctx.Config.Repository, ide.CodeWebExtensionImage, ctx.VersionManifest.Components.Workspace.CodeWebExtensionImage.Version),
 
-		JetBrainsPluginImage:            ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginImage.Version),
-		JetBrainsPluginLatestImage:      ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage.Version),
-		JetBrainsPluginRiderImage:       ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginRiderImage.Version),
-		JetBrainsPluginLatestRiderImage: ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestRiderImage.Version),
+		JetBrainsPluginImage:       ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginImage.Version),
+		JetBrainsPluginLatestImage: ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage.Version),
+
+		// Pin Rider's backend-plugin version as we don't plan to upgrade Rider yet
+		JetBrainsPluginRiderImage:       ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-8cdc2a1a45c66ac9e003a97af8c57fad42d923f6-rider"),
+		JetBrainsPluginLatestRiderImage: ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, "commit-8cdc2a1a45c66ac9e003a97af8c57fad42d923f6-rider-latest"),
 		JetBrainsLauncherImage:          ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsLauncherImage.Version),
 		ResolvedJBImageLatest: JBImages{
 			IntelliJ:  resolveLatestImage(ide.IntelliJDesktopIDEImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.IntelliJLatestImage),

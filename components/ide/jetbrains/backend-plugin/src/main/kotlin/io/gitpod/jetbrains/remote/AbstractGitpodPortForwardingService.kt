@@ -20,9 +20,12 @@ import io.grpc.stub.ClientCallStreamObserver
 import io.grpc.stub.ClientResponseObserver
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.apache.http.client.utils.URIBuilder
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Suppress("UnstableApiUsage")
 abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService {
@@ -34,8 +37,26 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
     private val perClientPortForwardingManager = service<PerClientPortForwardingManager>()
     private val ignoredPortsForNotificationService = service<GitpodIgnoredPortsForNotificationService>()
     private val lifetime = Lifetime.Eternal.createNested()
+    private val portStatusFlow = MutableSharedFlow<Status.PortsStatusResponse>()
 
-    init { start() }
+    init {
+        // Start collecting port status updates
+        runJob(lifetime) {
+            portStatusFlow
+                .let { flow -> applyThrottling(flow) }
+                .collect { response ->
+                    withContext(Dispatchers.IO) {
+                        syncPortsListWithClient(response)
+                    }
+                }
+        }
+
+        start()
+    }
+
+    protected abstract fun runJob(lifetime: Lifetime, block: suspend CoroutineScope.() -> Unit): Job;
+
+    protected abstract suspend fun <T> applyThrottling(flow: kotlinx.coroutines.flow.Flow<T>): kotlinx.coroutines.flow.Flow<T>
 
     private fun start() {
         if (application.isHeadlessEnvironment) return
@@ -46,8 +67,6 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
 
         observePortsListWhileProjectIsOpen()
     }
-
-    protected abstract fun runJob(lifetime: Lifetime, block: suspend CoroutineScope.() -> Unit): Job;
 
     private fun observePortsListWhileProjectIsOpen() = runJob(lifetime) {
         while (isActive) {
@@ -86,7 +105,11 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
             }
 
             override fun onNext(response: Status.PortsStatusResponse) {
-                application.invokeLater { syncPortsListWithClient(response) }
+                application.invokeLater {
+                    runJob(lifetime) {
+                        portStatusFlow.emit(response)
+                    }
+                }
             }
 
             override fun onCompleted() {
