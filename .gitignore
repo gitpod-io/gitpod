@@ -61,3 +61,6 @@ components/server/*.log
 
 # Local redis dump files
 dump.rdb
+
+# Claude settings
+.claude/settings.local.json
