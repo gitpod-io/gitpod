@@ -43,7 +43,7 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:kylos101-add-claude-code-gha.33073
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:gpl-1425-int-test-gha.33103
     outputs:
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
@@ -131,7 +131,7 @@ jobs:
     needs: [configuration, infrastructure, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:kylos101-add-claude-code-gha.33073
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:gpl-1425-int-test-gha.33103
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
