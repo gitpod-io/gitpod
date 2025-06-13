@@ -195,8 +195,9 @@ RUN sudo install-packages shellcheck \
     && sudo python3 -m pip install pre-commit
 
 # gh (Github CLI) binary:
-RUN cd /usr/bin && curl -fsSL https://github.com/cli/cli/releases/download/v2.35.0/gh_2.35.0_linux_amd64.tar.gz \
-    | sudo tar xzv --strip-components=2 gh_2.35.0_linux_amd64/bin/gh
+ARG GH_VERSION="2.74.1"
+RUN cd /usr/bin && curl -fsSL https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz \
+    | sudo tar xzv --strip-components=2 gh_${GH_VERSION}_linux_amd64/bin/gh
 
 # Install observability-related binaries
 ARG PROM_VERSION="2.36.0"
