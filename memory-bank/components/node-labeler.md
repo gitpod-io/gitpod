@@ -77,12 +77,12 @@ The Node-Labeler component integrates with:
 
 ## Usage Patterns
 
-### Node Label Management
-The component adds the following labels to nodes:
-- `gitpod.io/registry-facade_ready_ns_<namespace>`: Indicates registry-facade is ready
-- `gitpod.io/ws-daemon_ready_ns_<namespace>`: Indicates ws-daemon is ready
+### Node Taint Management
+The component manages node taints to control workspace scheduling:
+- `gitpod.io/registry-facade-not-ready`: Added when registry-facade is not ready
+- `gitpod.io/ws-daemon-not-ready`: Added when ws-daemon is not ready
 
-These labels are used by the workspace scheduler to ensure workspaces are only scheduled on nodes with the required services.
+These taints prevent workspace pods from being scheduled on nodes where required services are not available.
 
 ### Cluster-Autoscaler Annotation Management
 The component adds or removes the following annotation:

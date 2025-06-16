@@ -44,9 +44,6 @@ import (
 )
 
 const (
-	registryFacadeLabel = "gitpod.io/registry-facade_ready_ns_%v"
-	wsdaemonLabel       = "gitpod.io/ws-daemon_ready_ns_%v"
-
 	registryFacade = "registry-facade"
 	wsDaemon       = "ws-daemon"
 
@@ -351,10 +348,6 @@ func (r *NodeReconciler) reconcileAll(ctx context.Context) error {
 			continue
 		}
 
-		err := updateNodeLabel(node.Name, r.Client)
-		if err != nil {
-			log.WithError(err).WithField("node", node.Name).Error("failed to initialize labels on node")
-		}
 		r.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Name: node.Name}})
 	}
 
@@ -377,10 +370,6 @@ func (r *NodeReconciler) Reconcile(ctx context.Context, req reconcile.Request) (
 	})
 	if err != nil {
 		return reconcile.Result{}, fmt.Errorf("cannot list pods: %w", err)
-	}
-	err = updateNodeLabel(node.Name, r.Client)
-	if err != nil {
-		log.WithError(err).WithField("node", node.Name).Error("failed to initialize labels on node")
 	}
 	isWsdaemonTaintExists := isNodeTaintExists(wsDaemonTaintKey, node)
 	isRegistryFacadeTaintExists := isNodeTaintExists(registryFacadeTaintKey, node)
@@ -734,46 +723,4 @@ func isWorkspaceNode(node corev1.Node) bool {
 	_, isRegularWorkspaceNode := node.Labels[workspacesRegularLabel]
 	_, isHeadlessWorkspaceNode := node.Labels[workspacesHeadlessLabel]
 	return isRegularWorkspaceNode || isHeadlessWorkspaceNode
-}
-
-func updateNodeLabel(nodeName string, client client.Client) error {
-	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		var node corev1.Node
-		err := client.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
-		if err != nil {
-			return err
-		}
-
-		registryFacadeLabelForNamespace := fmt.Sprintf(registryFacadeLabel, namespace)
-		wsDaemonLabelForNamespace := fmt.Sprintf(wsdaemonLabel, namespace)
-
-		needUpdate := false
-
-		if node.Labels == nil {
-			node.Labels = make(map[string]string)
-		}
-
-		if v := node.Labels[registryFacadeLabelForNamespace]; v != "true" {
-			needUpdate = true
-		}
-		if v := node.Labels[wsDaemonLabelForNamespace]; v != "true" {
-			needUpdate = true
-		}
-
-		if !needUpdate {
-			return nil
-		}
-		node.Labels[registryFacadeLabelForNamespace] = "true"
-		node.Labels[wsDaemonLabelForNamespace] = "true"
-
-		err = client.Update(ctx, &node)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
 }
