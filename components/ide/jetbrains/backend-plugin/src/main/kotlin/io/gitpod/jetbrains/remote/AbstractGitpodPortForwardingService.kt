@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.remoteDev.util.onTerminationOrNow
 import com.intellij.ui.RowIcon
+import com.intellij.util.Alarm
 import com.intellij.util.application
 import com.jetbrains.rd.platform.codeWithMe.portForwarding.*
 import com.jetbrains.rd.util.URI
@@ -34,6 +35,11 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
     private val perClientPortForwardingManager = service<PerClientPortForwardingManager>()
     private val ignoredPortsForNotificationService = service<GitpodIgnoredPortsForNotificationService>()
     private val lifetime = Lifetime.Eternal.createNested()
+
+    // Throttling mechanism to prevent rapid successive port updates using IntelliJ Alarm
+    private var pendingUpdate: Status.PortsStatusResponse? = null
+    private val updateAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
+    private val updateThrottleMs = 100 // 100ms throttle
 
     init { start() }
 
@@ -86,7 +92,7 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
             }
 
             override fun onNext(response: Status.PortsStatusResponse) {
-                application.invokeLater { syncPortsListWithClient(response) }
+                application.invokeLater { throttledSyncPortsListWithClient(response) }
             }
 
             override fun onCompleted() {
@@ -101,6 +107,20 @@ abstract class AbstractGitpodPortForwardingService : GitpodPortForwardingService
         statusServiceStub.portsStatus(portsStatusRequest, portsStatusResponseObserver)
 
         return completableFuture
+    }
+
+    private fun throttledSyncPortsListWithClient(response: Status.PortsStatusResponse) {
+        // Store the latest update (overwrites any pending update)
+        pendingUpdate = response
+
+        // Cancel any existing scheduled update and schedule a new one
+        if (!updateAlarm.isEmpty) {
+            updateAlarm.cancelAllRequests()
+        }
+        updateAlarm.addRequest({
+            pendingUpdate?.let { syncPortsListWithClient(it) }
+            pendingUpdate = null
+        }, updateThrottleMs)
     }
 
     private fun isLocalPortForwardingDisabled(): Boolean {

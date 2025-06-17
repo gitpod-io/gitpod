@@ -84,7 +84,7 @@ packages:
       - JB_QUALIFIER=stable
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
       # TODO(hw): remove me after java 21 is default version in dev image
-      - SDKMAN_DIR=/home/gitpod/.sdkman
+      - SDKMAN_DIR=/root/.sdkman
     config:
       commands:
         - - "bash"
@@ -116,7 +116,7 @@ packages:
       - JB_QUALIFIER=latest
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
       # TODO(hw): remove me after java 21 is default version in dev image
-      - SDKMAN_DIR=/home/gitpod/.sdkman
+      - SDKMAN_DIR=/root/.sdkman
     config:
       commands:
         - - "bash"
@@ -180,7 +180,7 @@ packages:
       - JB_QUALIFIER=latest
       - NO_VERIFY_JB_PLUGIN=${noVerifyJBPlugin}
       # TODO(hw): remove after `2024.2.*` is stable
-      - SDKMAN_DIR=/home/gitpod/.sdkman
+      - SDKMAN_DIR=/root/.sdkman
     config:
       commands:
         - ["rm", "-rf", "src/main/kotlin/io/gitpod/jetbrains/remote/GitpodMetricControlProvider.kt"]
