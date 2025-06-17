@@ -20,6 +20,7 @@ import { useOrgBillingMode } from "./data/billing-mode/org-billing-mode-query";
 import { Organization } from "@gitpod/public-api/lib/gitpod/v1/organization_pb";
 import { MaintenanceModeBanner } from "./org-admin/MaintenanceModeBanner";
 import { MaintenanceNotificationBanner } from "./org-admin/MaintenanceNotificationBanner";
+import onaWordmark from "./images/ona-wordmark.svg";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
 const PRIVACY_POLICY_LAST_UPDATED = "2025-05-16";
@@ -97,12 +98,7 @@ const GITPOD_FLEX_INTRODUCTION = (updateUser: (user: Partial<UserProtocol>) => P
         message: (
             <span className="text-md">
                 <b>Introducing Gitpod Flex:</b> self-host for free in 3 min or run locally using Gitpod Desktop |{" "}
-                <a
-                    className="text-kumquat-ripe font-bold"
-                    href="https://app.gitpod.io"
-                    target="_blank"
-                    rel="noreferrer"
-                >
+                <a className="text-kumquat-ripe" href="https://app.gitpod.io" target="_blank" rel="noreferrer">
                     Try now
                 </a>
             </span>
@@ -138,12 +134,12 @@ const GITPOD_CLASSIC_SUNSET = {
     type: "info" as AlertType,
     preventDismiss: true, // This makes it so users can't dismiss the notification
     message: (
-        <span className="text-md">
-            <b>Gitpod Classic is sunsetting fall 2025.</b>{" "}
-            <a className="text-kumquat-base font-bold" href="https://app.gitpod.io" target="_blank" rel="noreferrer">
-                Try the new Gitpod
-            </a>{" "}
-            now (hosted compute coming soon)
+        <span className="text-md text-white font-semibold items-center justify-center">
+            Meet <img src={onaWordmark} alt="Ona" className="inline align-middle w-12 mb-0.5" draggable="false" /> | the
+            privacy-first software engineering agent |{" "}
+            <a href="https://ona.com/" target="_blank" rel="noreferrer" className="underline hover:no-underline">
+                Get early access
+            </a>
         </span>
     ),
 } as Notification;
@@ -228,7 +224,11 @@ export function AppNotifications() {
                         }
                     }}
                     showIcon={true}
-                    className="flex rounded mb-2 w-full"
+                    className={`flex rounded mb-2 w-full ${
+                        topNotification.id === "gitpod-classic-sunset"
+                            ? "bg-[linear-gradient(to_left,#1F1329_0%,#333A75_20%,#556CA8_40%,#90A898_60%,#E2B15C_80%,#E2B15C_97%,#BEA462_100%)]"
+                            : ""
+                    }`}
                 >
                     <span>{topNotification.message}</span>
                 </Alert>
