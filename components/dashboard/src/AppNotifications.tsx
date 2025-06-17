@@ -134,8 +134,8 @@ const GITPOD_CLASSIC_SUNSET = {
     type: "info" as AlertType,
     preventDismiss: true, // This makes it so users can't dismiss the notification
     message: (
-        <span className="text-md text-white font-semibold">
-            Meet <img src={onaWordmark} alt="Ona" className="inline items-center h-4 w-auto" draggable="false" /> | the
+        <span className="text-md text-white font-semibold items-center justify-center">
+            Meet <img src={onaWordmark} alt="Ona" className="inline align-middle w-12 mb-0.5" draggable="false" /> | the
             privacy-first software engineering agent |{" "}
             <a href="https://ona.com/" target="_blank" rel="noreferrer" className="underline hover:no-underline">
                 Get early access
