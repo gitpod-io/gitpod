@@ -331,7 +331,7 @@ const LoginContent = ({
 
             {/* Gitpod Classic sunset notice - only show for non-enterprise */}
             {!enterprise && (
-                <div className="mt-6 text-center text-sm bg-[#FDF1E7] dark:bg-[#23211e] p-2 rounded-lg">
+                <div className="mt-6 text-center text-sm">
                     <p className="text-pk-content-primary">
                         Gitpod classic is sunsetting fall 2025.{" "}
                         <a
@@ -342,7 +342,7 @@ const LoginContent = ({
                         >
                             Try the new Gitpod
                         </a>{" "}
-                        now (hosted compute coming soon)
+                        now (hosted compute & SWE agents coming soon)
                     </p>
                 </div>
             )}
@@ -372,7 +372,7 @@ const RightProductDescriptionPanel = () => {
     };
 
     return (
-        <div className="w-full lg:w-1/3 flex flex-col justify-center px-4 lg:px-4 md:min-h-screen">
+        <div className="w-full lg:w-1/3 flex flex-col justify-center px-4 lg:px-4 md:min-h-screen my-auto">
             <div className="rounded-lg flex flex-col gap-6 text-white h-full py-4 lg:py-6 max-w-lg mx-auto w-full">
                 <div className="relative bg-white/10 backdrop-blur-sm rounded-lg pt-4 px-4 -mt-2">
                     <div className="flex justify-center pt-4 mb-4">
@@ -404,7 +404,7 @@ const RightProductDescriptionPanel = () => {
                         </p>
                     </div>
 
-                    <div className="mt-auto pt-4">
+                    <div className="mt-4">
                         {!isSubmitted ? (
                             <form onSubmit={handleEmailSubmit} className="space-y-3">
                                 <div className="flex gap-2">
