@@ -17,6 +17,7 @@ import { SSOLoginForm } from "./login/SSOLoginForm";
 import { useAuthProviderDescriptions } from "./data/auth-providers/auth-provider-descriptions-query";
 import { SetupPending } from "./login/SetupPending";
 import { useNeedsSetup } from "./dedicated-setup/use-needs-setup";
+import { useInstallationConfiguration } from "./data/installation/installation-config-query";
 import { AuthProviderDescription } from "@gitpod/public-api/lib/gitpod/v1/authprovider_pb";
 import { Button, ButtonProps } from "@podkit/buttons/Button";
 import { cn } from "@podkit/lib/cn";
@@ -67,7 +68,8 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     const [hostFromContext, setHostFromContext] = useState<string | undefined>();
     const [repoPathname, setRepoPathname] = useState<string | undefined>();
 
-    const enterprise = !!authProviders.data && authProviders.data.length === 0;
+    const { data: installationConfig } = useInstallationConfiguration();
+    const enterprise = !!installationConfig?.isDedicatedInstallation;
 
     useEffect(() => {
         try {
@@ -221,7 +223,8 @@ const LoginContent = ({
     const authProviders = useAuthProviderDescriptions();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
-    const enterprise = !!authProviders.data && authProviders.data.length === 0;
+    const { data: installationConfig } = useInstallationConfiguration();
+    const enterprise = !!installationConfig?.isDedicatedInstallation;
 
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
@@ -368,10 +371,6 @@ const RightProductDescriptionPanel = () => {
         );
     };
 
-    const handleLearnMore = () => {
-        window.open("https://ona.com/", "_blank", "noopener,noreferrer");
-    };
-
     return (
         <div className="w-full lg:w-1/3 flex flex-col justify-center px-4 lg:px-4 md:min-h-screen">
             <div className="rounded-lg flex flex-col gap-6 text-white h-full py-4 lg:py-6 max-w-lg mx-auto w-full">
@@ -438,13 +437,15 @@ const RightProductDescriptionPanel = () => {
                                 </p>
                             </form>
                         ) : (
-                            <button
-                                onClick={handleLearnMore}
+                            <a
+                                href="https://ona.com/"
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="w-full bg-white/20 backdrop-blur-sm text-white font-medium py-2.5 px-4 rounded-lg hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center justify-center gap-2 text-sm"
                             >
                                 Learn more
                                 <span className="font-bold">→</span>
-                            </button>
+                            </a>
                         )}
                     </div>
                 </div>
