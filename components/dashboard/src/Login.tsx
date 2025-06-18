@@ -98,7 +98,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     return (
         <div
             id="login-container"
-            className={cn("z-50 flex flex-col-reverse lg:flex-row w-full min-h-screen")}
+            className="z-50 flex flex-col-reverse lg:flex-row w-full min-h-screen"
             style={
                 !enterprise
                     ? {
