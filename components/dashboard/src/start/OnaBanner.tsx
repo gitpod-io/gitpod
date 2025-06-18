@@ -87,7 +87,7 @@ export const OnaBanner: React.FC<OnaBannerProps> = ({ compact = false }) => {
                 </button>
 
                 {/* Compact layout */}
-                <div classNameo="flex items-center gap-2 text-sm font-normal">
+                <div className="flex items-center gap-2 text-sm font-normal">
                     {onaBanner.type}
                     <img src={onaWordmark} alt="ONA" className="w-12" draggable="false" />
                 </div>
