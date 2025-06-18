@@ -26,8 +26,6 @@ import { useIsDataOps } from "./data/featureflag-query";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { isGitpodIo } from "./utils";
 import { trackEvent } from "./Analytics";
-import { useCurrentUser } from "./user-context";
-import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { useToast } from "./components/toasts/Toasts";
 import onaWordmark from "./images/ona-wordmark.svg";
 import onaApplication from "./images/ona-application.webp";
@@ -352,15 +350,13 @@ const LoginContent = ({
 const RightProductDescriptionPanel = () => {
     const [email, setEmail] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
-    const user = useCurrentUser();
     const { toast } = useToast();
 
     const handleEmailSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!email.trim()) return;
 
-        const userEmail = user ? getPrimaryEmail(user) || email : email;
-        trackEvent("waitlist_joined", { email: userEmail, feature: "Ona" });
+        trackEvent("waitlist_joined", { email: email, feature: "Ona" });
 
         setIsSubmitted(true);
 
