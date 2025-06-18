@@ -158,7 +158,7 @@ const PAYGLoginWrapper: FC<LoginWrapperProps> = ({ providerFromContext, repoPath
             <div
                 id="login-section"
                 // for some reason, min-h-dvh does not work, so we need tailwind's arbitrary values
-                className="w-full min-h-[100dvh] lg:w-2/3 flex flex-col justify-center items-center p-2"
+                className="w-full min-h-[100dvh] lg:w-full flex flex-col justify-center items-center p-2"
             >
                 <div
                     id="login-section-column"
@@ -372,7 +372,7 @@ const RightProductDescriptionPanel = () => {
     };
 
     return (
-        <div className="w-full lg:w-1/3 flex flex-col justify-center px-4 lg:px-4 md:min-h-screen my-auto">
+        <div className="w-full lg:max-w-lg 2xl:max-w-[600px] flex flex-col justify-center px-4 lg:px-4 md:min-h-screen my-auto">
             <div className="rounded-lg flex flex-col gap-6 text-white h-full py-4 lg:py-6 max-w-lg mx-auto w-full">
                 <div className="relative bg-white/10 backdrop-blur-sm rounded-lg pt-4 px-4 -mt-2">
                     <div className="flex justify-center pt-4 mb-4">
