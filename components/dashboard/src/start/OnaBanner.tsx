@@ -91,7 +91,7 @@ export const OnaBanner: React.FC<OnaBannerProps> = ({ compact = false }) => {
                     <img src={onaWordmark} alt="ONA" className="w-12" draggable="false" />
                 </div>
 
-                <p className="text-white !text-lg font-bold leading-tight">
+                <p className="text-white !text-lg font-bold leading-tight text-left">
                     The privacy-first software engineering agent
                 </p>
 
