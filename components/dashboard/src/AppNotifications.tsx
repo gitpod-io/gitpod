@@ -132,7 +132,6 @@ const INVALID_BILLING_ADDRESS = (stripePortalUrl: string | undefined) => {
 const GITPOD_CLASSIC_SUNSET = {
     id: "gitpod-classic-sunset",
     type: "info" as AlertType,
-    preventDismiss: true, // This makes it so users can't dismiss the notification
     message: (
         <span className="text-md text-white font-semibold items-center justify-center">
             Meet <img src={onaWordmark} alt="Ona" className="inline align-middle w-12 mb-0.5" draggable="false" /> | the
@@ -213,7 +212,7 @@ export function AppNotifications() {
             {topNotification && (
                 <Alert
                     type={topNotification.type}
-                    closable={topNotification.id !== "gitpod-classic-sunset"} // Only show close button if it's not the sunset notification
+                    closable={true}
                     onClose={() => {
                         if (!topNotification.preventDismiss) {
                             dismissNotification();

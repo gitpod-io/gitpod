@@ -10,7 +10,6 @@ import { useCurrentUser } from "../user-context";
 import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { useToast } from "../components/toasts/Toasts";
 import onaWordmark from "../images/ona-wordmark.svg";
-import onaApplication from "../images/ona-application.webp";
 
 const onaBanner = {
     type: "Introducing",
@@ -121,7 +120,7 @@ export const OnaBanner: React.FC<OnaBannerProps> = ({ compact = false }) => {
 
     return (
         <div
-            className="relative rounded-lg flex flex-col lg:flex-row gap-4 lg:gap-6 text-white max-w-5xl mx-auto p-4 lg:p-6 my-4"
+            className="relative rounded-lg flex flex-col lg:flex-row gap-6 text-white max-w-5xl mx-auto p-4 lg:p-4 mt-6 mb-2"
             style={{
                 background:
                     "linear-gradient(340deg, #1F1329 0%, #333A75 20%, #556CA8 40%, #90A898 60%, #E2B15C 80%, #BEA462 100%)",
@@ -130,58 +129,36 @@ export const OnaBanner: React.FC<OnaBannerProps> = ({ compact = false }) => {
             {/* Close button */}
             <button
                 onClick={handleDismiss}
-                className="absolute top-4 right-4 text-white/70 hover:text-white w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                className="absolute top-2 right-2 text-white/70 hover:text-white w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors z-10"
                 aria-label="Dismiss banner"
             >
                 ✕
             </button>
 
             {/* Left section - ONA branding and image */}
-            <div className="flex-1 max-w-full lg:max-w-[330px] order-2 lg:order-1">
-                <div className="relative bg-white/10 backdrop-blur-sm rounded-lg pt-4 px-4 lg:px-6 lg:pt-6 ">
+            <div className="flex-1 max-w-full lg:max-w-[330px] order-1">
+                <div className="relative bg-white/10 backdrop-blur-sm rounded-lg h-full flex items-center justify-center px-4 lg:px-6 py-4 lg:py-6">
                     {/* ONA Logo prominently displayed */}
-                    <div className="flex justify-center -mb-4 lg:-mb-6">
-                        <img src={onaWordmark} alt="ONA" className="w-20 lg:w-24" draggable="false" />
-                    </div>
-
-                    {/* Application screenshot */}
-                    <div className="relative overflow-hidden">
-                        <img
-                            src={onaApplication}
-                            alt="Ona application preview"
-                            className="w-full translate-y-16 rounded-lg shadow-lg"
-                            draggable="false"
-                        />
+                    <div className="flex justify-center">
+                        <img src={onaWordmark} alt="ONA" className="w-28 lg:w-36" draggable="false" />
                     </div>
                 </div>
             </div>
 
             {/* Right section - Text content and CTA */}
-            <div className="flex-1 max-w-[500px] lg:max-w-[550px] order-1 lg:order-2 lg:ml-8 text-left">
-                <div className="max-lg:mt-2 space-y-3 lg:space-y-4">
+            <div className="flex-1 max-w-[500px] lg:max-w-[550px] order-2 text-left">
+                <div className="max-lg:mt-2 max-w-sm space-y-3 lg:space-y-4">
                     {/* Main title */}
-                    <h2 className="text-white text-lg sm:text-xl font-bold leading-tight">
+                    <h2 className="text-white text-lg sm:text-lg font-bold">
                         The privacy-first software engineering agent
                     </h2>
 
-                    {/* Description */}
-                    <div className="space-y-2 lg:space-y-3">
-                        <p className="text-[#FFFFFF99] text-base leading-relaxed">
-                            Delegate software tasks to Ona. It writes code, runs tests, and opens a pull request. Or
-                            jump in to inspect output or pair program in your IDE.
-                        </p>
-                        <p className="text-[#FFFFFF99] text-base leading-relaxed">
-                            Ona runs inside your infrastructure (VPC), with full audit trails, zero data exposure, and
-                            support for any LLM.
-                        </p>
-                    </div>
-
                     {/* CTA Button */}
-                    <div className="pt-2 mb-4">
+                    <div className="mt-2 mb-4">
                         {!onaClicked ? (
                             <button
                                 onClick={handleOnaBannerClick}
-                                className="inline-flex items-center justify-center gap-2 bg-[#fdfdfd] text-[#12100C] px-4 lg:px-6 py-2 rounded-[14px] text-sm transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-md hover:bg-[#F5F4F3] font-medium"
+                                className="inline-flex items-center justify-center gap-2 bg-[#fdfdfd] text-[#12100C] px-3 py-1.5 rounded-[8px] text-xs transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-md hover:bg-[#F5F4F3] font-medium"
                             >
                                 <span>{onaBanner.ctaText}</span>
                                 <span className="font-bold">→</span>
@@ -191,7 +168,7 @@ export const OnaBanner: React.FC<OnaBannerProps> = ({ compact = false }) => {
                                 href={onaBanner.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center gap-2 bg-[#fdfdfd] text-[#12100C] px-4 lg:px-6 py-2 rounded-[14px] text-sm transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-md hover:bg-[#F5F4F3] font-medium"
+                                className="inline-flex items-center justify-center gap-2 bg-[#fdfdfd] text-[#12100C] px-3 py-1.5 rounded-[8px] text-xs transition-all duration-200 shadow-sm hover:shadow-md focus:shadow-md hover:bg-[#F5F4F3] font-medium"
                             >
                                 <span>{onaBanner.learnMoreText}</span>
                                 <span className="font-bold">→</span>
