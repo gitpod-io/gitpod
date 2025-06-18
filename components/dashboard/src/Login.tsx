@@ -438,7 +438,7 @@ const RightProductDescriptionPanel = () => {
                             </form>
                         ) : (
                             <a
-                                href="https://ona.com/"
+                                href="https://www.gitpod.io/solutions/ai"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-full bg-white/20 backdrop-blur-sm text-white font-medium py-2.5 px-4 rounded-lg hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center justify-center gap-2 text-sm"
