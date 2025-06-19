@@ -17,7 +17,7 @@ const onaBanner = {
     subtitle: "The privacy-first software engineering agent.",
     ctaText: "Get early access",
     learnMoreText: "Learn more",
-    link: "https://ona.com/",
+    link: "https://www.gitpod.io/solutions/ai",
 };
 
 export const OnaBanner: React.FC = () => {

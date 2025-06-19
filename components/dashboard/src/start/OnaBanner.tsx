@@ -91,14 +91,14 @@ export const OnaBanner: React.FC<OnaBannerProps> = ({ compact = false }) => {
                     <img src={onaWordmark} alt="ONA" className="w-12" draggable="false" />
                 </div>
 
-                <p className="text-white !text-lg font-bold leading-tight text-left">
+                <p className="text-white text-base font-semibold leading-tight text-left">
                     The privacy-first software engineering agent
                 </p>
 
                 {!onaClicked ? (
                     <button
                         onClick={handleOnaBannerClick}
-                        className="bg-white/20 backdrop-blur-sm text-white font-medium py-1.5 px-4 rounded-full hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center gap-2 text-sm w-fit"
+                        className="bg-white/20 backdrop-blur-sm text-white font-medium py-1 px-3 rounded-full hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center gap-2 text-sm w-fit"
                     >
                         {onaBanner.ctaText}
                         <span className="font-bold">→</span>
@@ -108,7 +108,7 @@ export const OnaBanner: React.FC<OnaBannerProps> = ({ compact = false }) => {
                         href={onaBanner.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-white/20 backdrop-blur-sm text-white font-medium py-1.5 px-4 rounded-full hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center gap-2 text-sm w-fit"
+                        className="bg-white/20 backdrop-blur-sm text-white font-medium py-1 px-3 rounded-full hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center gap-2 text-sm w-fit"
                     >
                         {onaBanner.learnMoreText}
                         <span className="font-bold">→</span>

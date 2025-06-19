@@ -389,16 +389,16 @@ const RightProductDescriptionPanel = () => {
                 </div>
 
                 <div className="flex flex-col gap-4 flex-1">
-                    <h2 className="text-white text-2xl font-bold leading-tight text-center max-w-sm mx-auto">
+                    <h2 className="text-white text-xl font-bold leading-tight text-center max-w-sm mx-auto">
                         Meet Ona - the privacy-first software engineering agent.
                     </h2>
 
                     <div className="space-y-3 mt-4">
-                        <p className="text-white/70 text-xl">
+                        <p className="text-white/70 text-base">
                             Delegate software tasks to Ona. It writes code, runs tests, and opens a pull request. Or
                             jump in to inspect output or pair program in your IDE.
                         </p>
-                        <p className="text-white/70 text-xl mt-2">
+                        <p className="text-white/70 text-base mt-2">
                             Ona runs inside your infrastructure (VPC), with full audit trails, zero data exposure, and
                             support for any LLM.
                         </p>

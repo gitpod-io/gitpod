@@ -103,7 +103,9 @@ export const OnaRightPanel = () => {
                             </form>
                         ) : (
                             <button
-                                onClick={() => window.open("https://ona.com/", "_blank", "noopener,noreferrer")}
+                                onClick={() =>
+                                    window.open("https://www.gitpod.io/solutions/ai", "_blank", "noopener,noreferrer")
+                                }
                                 className="w-full bg-white/20 backdrop-blur-sm text-white font-medium py-2.5 px-4 rounded-lg hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center justify-center gap-2 text-sm"
                             >
                                 Learn more

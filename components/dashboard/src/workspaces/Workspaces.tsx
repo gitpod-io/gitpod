@@ -34,7 +34,7 @@ import { useUserLoader } from "../hooks/use-user-loader";
 import { ReactComponent as GitpodStrokedSVG } from "../icons/gitpod-stroked.svg";
 import { VideoSection } from "../onboarding/VideoSection";
 import { OrganizationJoinModal } from "../teams/onboarding/OrganizationJoinModal";
-import { BlogBanners } from "./BlogBanners";
+// import { BlogBanners } from "./BlogBanners";
 import { EmptyWorkspacesContent } from "./EmptyWorkspacesContent";
 import PersonalizedContent from "./PersonalizedContent";
 import { VideoCarousel } from "./VideoCarousel";
@@ -504,7 +504,8 @@ const WorkspacesPage: FunctionComponent = () => {
                                         </div>
                                     </div>
                                     <PersonalizedContent />
-                                    <BlogBanners />
+                                    {/* Uncomment the following, if you need side banners in future */}
+                                    {/* <BlogBanners /> */}
                                 </div>
                             )}
                         </div>
