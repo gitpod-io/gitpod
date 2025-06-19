@@ -37,24 +37,29 @@ flowchart TD
    - Recent changes
    - Next steps
    - Active decisions and considerations
+   - Important patterns and preferences
+   - Learnings and project insights
 
 4. `systemPatterns.md`
    - System architecture
    - Key technical decisions
    - Design patterns in use
    - Component relationships
+   - Critical implementation paths
 
 5. `techContext.md`
    - Technologies used
    - Development setup
    - Technical constraints
    - Dependencies
+   - Tool usage patterns
 
 6. `progress.md`
    - What works
    - What's left to build
    - Current status
    - Known issues
+   - Evolution of project decisions
 
 ### Per-component documentation
 The `memory-bank/components` directory contains detailed documentation about each component in this project. With regards to maintaining and updating it, treat it just like any other part of the memory-bank.
@@ -88,8 +93,7 @@ flowchart TD
 flowchart TD
     Start[Start] --> Context[Check Memory Bank]
     Context --> Update[Update Documentation]
-    Update --> Rules[Update .clinerules/learning-journal.md if needed]
-    Rules --> Execute[Execute Task]
+    Update --> Execute[Execute Task]
     Execute --> Document[Document Changes]
 ```
 
@@ -109,7 +113,7 @@ flowchart TD
         P1[Review ALL Files]
         P2[Document Current State]
         P3[Clarify Next Steps]
-        P4[Update .clinerules/learning-journal.md]
+        P4[Document Insights & Patterns]
 
         P1 --> P2 --> P3 --> P4
     end
@@ -134,39 +138,5 @@ When compressing memory bank files:
 3. Keep only the most relevant and recent information in short-term memory
 4. Distill important insights into long-term memory
 5. Delete outdated or redundant information
-
-## Project Intelligence (.clinerules/learning-journal.md)
-
-The .clinerules/learning-journal.md file is my learning journal for each project. It captures important patterns, preferences, and project intelligence that help me work more effectively. As I work with you and the project, I'll discover and document key insights that aren't obvious from the code alone.
-
-```mermaid
-flowchart TD
-    Start{Discover New Pattern}
-
-    subgraph Learn [Learning Process]
-        D1[Identify Pattern]
-        D2[Validate with User]
-        D3[Document in .clinerules/learning-journal.md]
-    end
-
-    subgraph Apply [Usage]
-        A1[Read .clinerules/learning-journal.md]
-        A2[Apply Learned Patterns]
-        A3[Improve Future Work]
-    end
-
-    Start --> Learn
-    Learn --> Apply
-```
-
-### What to Capture
-- Critical implementation paths
-- User preferences and workflow
-- Project-specific patterns
-- Known challenges
-- Evolution of project decisions
-- Tool usage patterns
-
-The format is flexible - focus on capturing valuable insights that help me work more effectively with you and the project. Think of in .clinerules/learning-journal.md as a living document that grows smarter as we work together.
 
 REMEMBER: After every memory reset, I begin completely fresh. The Memory Bank is my only link to previous work. It must be maintained with precision and clarity, as my effectiveness depends entirely on its accuracy.
