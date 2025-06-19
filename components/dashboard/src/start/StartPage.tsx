@@ -15,6 +15,8 @@ import { useWorkspaceDefaultImageQuery } from "../data/workspaces/default-worksp
 import { GetWorkspaceDefaultImageResponse_Source } from "@gitpod/public-api/lib/gitpod/v1/workspace_pb";
 import { ProductLogo } from "../components/ProductLogo";
 import { useIsDataOps } from "../data/featureflag-query";
+import { isGitpodIo } from "../utils";
+import { OnaBanner } from "./OnaBanner";
 
 export enum StartPhase {
     Checking = 0,
@@ -100,7 +102,14 @@ export function StartPage(props: StartPageProps) {
     const isDataOps = useIsDataOps();
 
     return (
-        <div className="w-screen h-screen align-middle">
+        <div className="w-screen h-screen align-middle relative">
+            {/* OnaBanner positioned on the side when workspace is running */}
+            {isGitpodIo() && (
+                <div className="fixed bottom-4 right-4 z-1 max-w-sm">
+                    <OnaBanner compact={true} />
+                </div>
+            )}
+
             <div className="flex flex-col mx-auto items-center text-center h-screen">
                 <div className="h-1/3"></div>
                 <ProductLogo
