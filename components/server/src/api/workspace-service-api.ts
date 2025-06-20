@@ -147,17 +147,33 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
             const { ownerId } = workspace;
             if (ownerId) {
                 if (!ownerMeta.has(ownerId)) {
-                    const user = await runWithSubjectId(SYSTEM_USER, async () =>
-                        this.userService.findUserById(SYSTEM_USER_ID, ownerId),
-                    );
-                    ownerMeta.set(
-                        ownerId,
-                        new WorkspaceSession_Owner({
-                            id: ownerId,
-                            name: user.fullName,
-                            avatarUrl: user.avatarUrl,
-                        }),
-                    );
+                    try {
+                        const user = await runWithSubjectId(SYSTEM_USER, async () =>
+                            this.userService.findUserById(SYSTEM_USER_ID, ownerId),
+                        );
+                        ownerMeta.set(
+                            ownerId,
+                            new WorkspaceSession_Owner({
+                                id: ownerId,
+                                name: user.fullName,
+                                avatarUrl: user.avatarUrl,
+                            }),
+                        );
+                    } catch (error) {
+                        if (error.data?.userDeleted) {
+                            // Handle deleted user gracefully
+                            ownerMeta.set(
+                                ownerId,
+                                new WorkspaceSession_Owner({
+                                    id: ownerId,
+                                    name: "Deleted User",
+                                    avatarUrl: "",
+                                }),
+                            );
+                        } else {
+                            throw error; // Re-throw other errors
+                        }
+                    }
                 }
             }
         }
