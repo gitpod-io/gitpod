@@ -10,7 +10,7 @@ defaultArgs:
   codeCommit: ade9f0c5cec78abbfa97396c6961a436f91ab00e
   codeVersion: 1.100.2
   codeQuality: stable
-  codeWebExtensionCommit: b6d2f2b10ad44d6e5a93eea522b65496be686aae
+  codeWebExtensionCommit: e843a78dfd6705144b5631c5c149b82f0045f161
   xtermCommit: d547d4ff4590b66c3ea24342fc62e3afcf6b77bc
   noVerifyJBPlugin: false
   intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2025.1.1.1.tar.gz"
