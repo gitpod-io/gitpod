@@ -1,7 +1,7 @@
 # Copyright (c) 2024 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
-FROM gitpod/openvscode-server-linux-build-agent:alpine-x64 as dependencies_builder
+FROM gitpod/openvscode-server-linux-build-agent:ubuntu-x64 as dependencies_builder
 
 ENV TRIGGER_REBUILD 1
 
