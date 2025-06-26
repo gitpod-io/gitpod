@@ -293,7 +293,7 @@ RUN mkdir -p ~/.terraform \
     && printf "terraform -install-autocomplete 2> /dev/null\n" >>~/.bashrc
 
 ## Java
-ENV JAVA_VERSION=11.0.27.fx-zulu
+ENV JAVA_VERSION=21.0.3.fx-zulu
 RUN curl -fsSL "https://get.sdkman.io" | bash \
     && bash -c ". /root/.sdkman/bin/sdkman-init.sh \
     && sed -i 's/sdkman_selfupdate_enable=true/sdkman_selfupdate_enable=false/g' /root/.sdkman/etc/config \

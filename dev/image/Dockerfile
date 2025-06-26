@@ -123,6 +123,17 @@ RUN install-packages netcat
 
 USER gitpod
 
+# Set up SDKMAN for gitpod user and ensure Java 21.0.3.fx-zulu is available
+RUN curl -s "https://get.sdkman.io" | bash \
+    && bash -c "source /home/gitpod/.sdkman/bin/sdkman-init.sh \
+    && sdk install java 21.0.3.fx-zulu \
+    && sdk default java 21.0.3.fx-zulu \
+    && sdk use java 21.0.3.fx-zulu"
+
+# Set Java environment variables for gitpod user
+ENV JAVA_HOME=/home/gitpod/.sdkman/candidates/java/current
+ENV PATH=$JAVA_HOME/bin:$PATH
+
 # Fix node version we develop against
 ARG GITPOD_NODE_VERSION=22.15.1
 RUN bash -c ". .nvm/nvm.sh \
@@ -132,6 +143,9 @@ ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 
 ## Register leeway autocompletion in bashrc
 RUN bash -c "echo . \<\(leeway bash-completion\) >> ~/.bashrc"
+
+## Register SDKMAN initialization in bashrc
+RUN bash -c "echo 'source \"\$HOME/.sdkman/bin/sdkman-init.sh\"' >> ~/.bashrc"
 
 ### Google Cloud ###
 # not installed via repository as then 'docker-credential-gcr' is not available

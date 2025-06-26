@@ -149,11 +149,19 @@ packages:
       - JB_QUALIFIER=stable-rider
       # Force skip plugin verification for Rider
       - NO_VERIFY_JB_PLUGIN=true
+      - SDKMAN_DIR=/home/gitpod/.sdkman
     config:
       commands:
-        - ["rm", "-rf", "src/main/kotlin/io/gitpod/jetbrains/remote/GitpodMetricControlProvider.kt"]
-        - ["mv", "build.gradle-stable.kts", "build.gradle.kts"]
-        - ["./build.sh", "${__git_commit}"]
+        - - "bash"
+          - "-c"
+          - >
+            >
+            echo java=11.0.27.fx-zulu > .sdkmanrc
+            && source "$SDKMAN_DIR/bin/sdkman-init.sh"
+            && sdk env install
+            && rm -rf src/main/kotlin/io/gitpod/jetbrains/remote/GitpodMetricControlProvider.kt
+            && mv build.gradle-stable.kts build.gradle.kts
+            && ./build.sh ${__git_commit}
   - name: plugin-latest-rider
     type: generic
     argdeps:
