@@ -476,7 +476,12 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         const sessions = (await workspaceInstanceRepo
             .createQueryBuilder("wsi")
             .leftJoinAndMapOne("wsi.workspace", DBWorkspace, "ws", "ws.id = wsi.workspaceId")
-            .leftJoinAndMapOne("wsi.metrics", DBWorkspaceInstanceMetrics, "wsim", "wsim.instanceId = wsi.id")
+            .leftJoinAndMapOne(
+                "wsi.metrics",
+                DBWorkspaceInstanceMetrics,
+                "wsim",
+                "wsim.instanceId COLLATE utf8mb4_general_ci = wsi.id COLLATE utf8mb4_general_ci",
+            )
             .where("ws.organizationId = :organizationId", { organizationId })
             .andWhere("wsi.creationTime >= :periodStart", { periodStart: periodStart.toISOString() })
             .andWhere("wsi.creationTime <= :periodEnd", { periodEnd: periodEnd.toISOString() })
