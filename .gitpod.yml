@@ -58,6 +58,7 @@ tasks:
       exit 0
   - name: Java
     command: |
+      java --version
       if [ -z "$RUN_GRADLE_TASK" ]; then
         read -r -p "Press enter to continue Java gradle task"
       fi
