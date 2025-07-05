@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:b72df108f3388c82b0638bcfbad1511d85c60593e67fb8f8a968255f7e0588df as dl
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:1c6a85817d3a8787e094aae474e978d4ecdf634fd65e77ab28ffae513e35cca1 as dl
 WORKDIR /dl
 RUN apk add --no-cache curl file \
   && curl -OsSL https://github.com/opencontainers/runc/releases/download/v1.2.6/runc.amd64 \
