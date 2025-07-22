@@ -1,41 +1,121 @@
 {
-    "name": "gitpod",
-    "build": {
-        "context": "..",
-        "dockerfile": "./Dockerfile"
+  "name": "gitpod",
+  "build": {
+    "context": "..",
+    "dockerfile": "./Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "workspaceFolder": "/workspace/gitpod",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/gitpod,type=bind",
+  "mounts": [
+    "source=/usr/local/gitpod/config/,target=/usr/local/gitpod/config/,type=bind"
+  ],
+  "remoteEnv": {
+    "GIT_EDITOR": "code --wait",
+    "KUBE_EDITOR": "code --wait"
+  },
+  "forwardPorts": [
+    1337,
+    3000,
+    3001,
+    3306,
+    4000,
+    5900,
+    6080,
+    7777,
+    9229,
+    9999,
+    13001,
+    13444,
+    8022
+  ],
+  "portsAttributes": {
+    "13001": {
+      "label": "Port 13001",
+      "onAutoForward": "ignore",
+      "elevateIfNeeded": true
     },
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/gitpod,type=bind",
-    "workspaceFolder": "/workspace/gitpod/",
-    "postCreateCommand": "dev/install-dependencies.sh",
-    "mounts": [
-        "source=/usr/local/gitpod/config/,target=/usr/local/gitpod/config/,type=bind"
-    ],
-    "remoteEnv": {
-        "GIT_EDITOR": "code --wait",
-        "KUBE_EDITOR": "code --wait"
+    "1337": {
+      "label": "Port 1337",
+      "onAutoForward": "openPreview",
+      "elevateIfNeeded": true
     },
-    "features": {
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {
-            "installDockerComposeSwitch": false
-        }
+    "13444": {
+      "label": "Port 13444",
+      "elevateIfNeeded": true
     },
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "EditorConfig.EditorConfig",
-                "golang.go",
-                "hashicorp.terraform",
-                "ms-azuretools.vscode-docker",
-                "ms-kubernetes-tools.vscode-kubernetes-tools",
-                "stkb.rewrap",
-                "zxh404.vscode-proto3",
-                "matthewpi.caddyfile-support",
-                "timonwong.shellcheck",
-                "fwcd.kotlin",
-                "dbaeumer.vscode-eslint",
-                "esbenp.prettier-vscode",
-                "hbenl.vscode-mocha-test-adapter"
-            ]
-        }
+    "3000": {
+      "label": "Port 3000",
+      "onAutoForward": "ignore",
+      "elevateIfNeeded": true
+    },
+    "3001": {
+      "label": "Port 3001",
+      "onAutoForward": "ignore",
+      "elevateIfNeeded": true
+    },
+    "3306": {
+      "label": "Port 3306",
+      "onAutoForward": "ignore",
+      "elevateIfNeeded": true
+    },
+    "4000": {
+      "label": "Port 4000",
+      "onAutoForward": "ignore",
+      "elevateIfNeeded": true
+    },
+    "5900": {
+      "label": "Port 5900",
+      "onAutoForward": "ignore",
+      "elevateIfNeeded": true
+    },
+    "6080": {
+      "label": "Port 6080",
+      "onAutoForward": "ignore",
+      "elevateIfNeeded": true
+    },
+    "7777": {
+      "label": "Port 7777",
+      "onAutoForward": "ignore",
+      "elevateIfNeeded": true
+    },
+    "8022": {
+      "label": "Port 8022",
+      "onAutoForward": "ignore",
+      "elevateIfNeeded": true
+    },
+    "9229": {
+      "label": "Port 9229",
+      "onAutoForward": "ignore",
+      "elevateIfNeeded": true
+    },
+    "9999": {
+      "label": "Port 9999",
+      "onAutoForward": "ignore",
+      "elevateIfNeeded": true
     }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "EditorConfig.EditorConfig",
+        "golang.go",
+        "hashicorp.terraform",
+        "ms-azuretools.vscode-docker",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "stkb.rewrap",
+        "zxh404.vscode-proto3",
+        "matthewpi.caddyfile-support",
+        "heptio.jsonnet",
+        "timonwong.shellcheck",
+        "fwcd.kotlin",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "akosyakov.gitpod-monitor",
+        "hbenl.vscode-mocha-test-adapter"
+      ]
+    }
+  }
 }

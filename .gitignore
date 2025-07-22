@@ -64,3 +64,6 @@ dump.rdb
 
 # Claude settings
 .claude/settings.local.json
+
+# Gitpod mcp-config.json
+.gitpod/mcp-config.json
