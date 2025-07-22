@@ -27,6 +27,7 @@ The `memory-bank/components/` directory contains detailed documentation for each
 2. **Component-specific work** - Refer to the relevant component documentation in `memory-bank/components/`
 3. **Architecture decisions** - Check `memory-bank/systemPatterns.md` for established patterns and conventions
 4. **Current focus** - Review `memory-bank/activeContext.md` for ongoing work and priorities
+5. **Git workflow** - **CRITICAL**: Always use feature branches with proper naming convention (see `memory-bank/systemPatterns.md` for branch naming rules)
 
 ## Key Characteristics
 

@@ -112,6 +112,27 @@ Gitpod follows a microservices architecture designed to be **Scalable**, **Resil
 
 ## Development Workflows
 
+### Git Branch Management
+
+#### Feature Branch Naming Convention
+**CRITICAL**: Always use feature branches from main for all work. Never work directly on main.
+
+**Naming Pattern**: `[initials]/[[issue-id]-][topic-shorthand]`
+
+**Rules**:
+- **Maximum 24 characters total**
+- **Initials**: Extract from `git config user.name` (first letter of each word)
+- **Issue ID**: Numeric part only (e.g., "1592" from "CLC-1592")
+- **Topic**: 2-3 words separated by dashes, describing the work
+- **IMPORTANT**: Always run `git config user.name` first - never assume initials
+
+**Workflow**:
+1. Run `git config user.name` to get actual name
+2. Extract initials from the output
+3. Create feature branch: `git checkout -b [initials]/[topic]`
+4. Push work to feature branch
+5. Create PR against main
+
 ### PRD Workflow
 1. **Requirements Gathering** (Plan): Understand problem, explore components
 2. **PRD Creation** (Plan): Create document with standardized sections
