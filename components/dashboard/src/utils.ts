@@ -227,7 +227,9 @@ export function parseUrl(url: string): URL | null {
 
 export function isTrustedUrlOrPath(urlOrPath: string) {
     const url = parseUrl(urlOrPath);
-    const isTrusted = url ? window.location.hostname === url.hostname : urlOrPath.startsWith("/");
+    const isTrusted = url
+        ? window.location.hostname === url.hostname && url.protocol === "https:"
+        : urlOrPath.startsWith("/");
     if (!isTrusted) {
         console.warn("Untrusted URL", urlOrPath);
     }

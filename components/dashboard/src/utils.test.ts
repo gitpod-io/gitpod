@@ -45,6 +45,12 @@ test("urlHash and isTrustedUrlOrPath", () => {
         { location: "/", trusted: true },
         // eslint-disable-next-line no-script-url
         { location: "javascript:alert(1)", trusted: false },
+        // XSS bypass attempt with javascript: protocol and matching hostname
+        // eslint-disable-next-line no-script-url
+        { location: "javascript://example.org/%250aalert(1)", trusted: false },
+        // Other protocol attempts
+        { location: "data:text/html,<script>alert(1)</script>", trusted: false },
+        { location: "vbscript:alert(1)", trusted: false },
     ];
     isTrustedUrlOrPathCases.forEach(({ location, trusted }) => {
         expect(isTrustedUrlOrPath(location)).toBe(trusted);
