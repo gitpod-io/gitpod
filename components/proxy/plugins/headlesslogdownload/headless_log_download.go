@@ -25,7 +25,8 @@ func init() {
 	httpcaddyfile.RegisterHandlerDirective(headlessLogDownloadModule, parseCaddyfile)
 }
 
-// HeadlessLogDownload implements an HTTP handler that extracts gitpod headers
+// HeadlessLogDownload implements an HTTP handler that proxies headless log downloads
+// with security headers to prevent XSS attacks from malicious branch names in logs.
 type HeadlessLogDownload struct {
 	Service string `json:"service,omitempty"`
 }
@@ -93,6 +94,9 @@ func (m HeadlessLogDownload) ServeHTTP(w http.ResponseWriter, r *http.Request, n
 		return caddyhttp.Error(http.StatusInternalServerError, fmt.Errorf("unexpected error downloading prebuild log"))
 	}
 
+	setSecurityHeaders(w)
+	copyResponseHeaders(w, resp)
+
 	brw := newNoBufferResponseWriter(w)
 	_, err = io.Copy(brw, resp.Body)
 	if err != nil {
@@ -101,6 +105,38 @@ func (m HeadlessLogDownload) ServeHTTP(w http.ResponseWriter, r *http.Request, n
 	}
 
 	return next.ServeHTTP(w, r)
+}
+
+func setSecurityHeaders(w http.ResponseWriter) {
+	headers := w.Header()
+	headers.Set("Content-Type", "text/plain; charset=utf-8")
+	headers.Set("X-Content-Type-Options", "nosniff")
+	headers.Set("X-Frame-Options", "DENY")
+	headers.Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'")
+	headers.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+	headers.Set("Cache-Control", "no-cache, no-store, must-revalidate")
+}
+
+// copyResponseHeaders copies safe headers from upstream response, excluding potentially dangerous ones
+func copyResponseHeaders(w http.ResponseWriter, resp *http.Response) {
+	// List of safe headers to copy from upstream
+	safeHeaders := []string{
+		"Content-Length",
+		"Content-Encoding",
+		"Content-Disposition",
+		"Last-Modified",
+		"ETag",
+	}
+
+	destHeaders := w.Header()
+	for _, header := range safeHeaders {
+		if value := resp.Header.Get(header); value != "" {
+			destHeaders.Set(header, value)
+		}
+	}
+
+	// Note: We intentionally do NOT copy Content-Type from upstream
+	// because we want to enforce text/plain for security
 }
 
 // UnmarshalCaddyfile implements Caddyfile.Unmarshaler.
@@ -171,4 +207,12 @@ func (n *noBufferWriter) Write(p []byte) (written int, err error) {
 	}
 
 	return
+}
+
+func (n *noBufferWriter) Header() http.Header {
+	return n.w.Header()
+}
+
+func (n *noBufferWriter) WriteHeader(statusCode int) {
+	n.w.WriteHeader(statusCode)
 }
