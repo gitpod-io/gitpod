@@ -1,0 +1,50 @@
+tasks:
+    installLocalAppCli:
+        command: |
+            leeway run components/local-app:install-cli
+            leeway run components/local-app:cli-completion
+            exit 0
+        name: 'Install `gitpod` CLI'
+        triggeredBy:
+            - postDevcontainerStart
+    configurePreview:
+        command: INSTALL_CONTEXT=true leeway run dev/preview:configure-workspace
+        dependsOn:
+            - installPreviewctl
+        name: 'Preview environment configuration'
+        triggeredBy:
+            - postDevcontainerStart
+    buildJava:
+        command: |
+            leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
+            leeway exec --package components/ide/jetbrains/backend-plugin:plugin-latest --package components/ide/jetbrains/gateway-plugin:publish-latest --parallel -- ./gradlew buildPlugin
+        name: 'Java: build with Gradle'
+    installPreviewctl:
+        command: leeway run dev/preview/previewctl:install
+        name: 'Preview environment configuration: init'
+    installInstallerDependencies:
+        command: |
+            (cd install/installer && make deps)
+            exit 0
+        name: 'Installer dependencies'
+        triggeredBy:
+            - postDevcontainerStart
+    buildTypescript:
+        command: yarn --network-timeout 100000 && yarn build
+        name: 'TypeScript: install and build'
+        triggeredBy:
+            - postDevcontainerStart
+    setupPreCommit:
+        command: |
+            pre-commit install --install-hooks
+            exit 0
+        name: 'Install pre-commit hooks'
+        triggeredBy:
+            - postDevcontainerStart
+    initGo:
+        command: |
+            ./components/gitpod-protocol/go/scripts/generate-config.sh
+            leeway exec --filter-type go -v -- go mod verify
+        name: 'Go: init'
+        triggeredBy:
+            - postDevcontainerStart
