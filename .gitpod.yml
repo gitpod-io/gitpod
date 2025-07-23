@@ -47,6 +47,10 @@ tasks:
       leeway run components/local-app:install-cli
       leeway run components/local-app:cli-completion
       exit 0
+  - name: Setup GitHub CLI Auth
+    init: |
+      bash /workspace/gitpod/dev/setup-github-auth.sh
+      exit 0
   # This task takes care of configuring your workspace so it can manage and interact
   # with preview environments.
   - name: Preview environment configuration
