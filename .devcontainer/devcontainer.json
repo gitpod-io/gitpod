@@ -12,6 +12,7 @@
   "mounts": [
     "source=/usr/local/gitpod/config/,target=/usr/local/gitpod/config/,type=bind"
   ],
+  "onCreateCommand": "bash /workspace/gitpod/dev/setup-github-auth.sh",
   "remoteEnv": {
     "GIT_EDITOR": "code --wait",
     "KUBE_EDITOR": "code --wait"
