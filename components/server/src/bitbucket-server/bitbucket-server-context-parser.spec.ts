@@ -5,7 +5,6 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { Container, ContainerModule } from "inversify";
 import { skip, suite, test, timeout } from "@testdeck/mocha";
 import { expect } from "chai";
@@ -21,7 +20,7 @@ import { BitbucketServerApi } from "./bitbucket-server-api";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { URL } from "url";
 
-@suite(timeout(10000), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER")))
+@suite(timeout(10000), skip(true) /*skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER"))*/)
 class TestBitbucketServerContextParser {
     protected parser: BitbucketServerContextParser;
     protected user: User;

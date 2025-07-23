@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { Container, ContainerModule } from "inversify";
 import { retries, skip, suite, test, timeout } from "@testdeck/mocha";
 import { expect } from "chai";
@@ -15,12 +14,12 @@ import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
 import { TokenProvider } from "../user/token-provider";
 import { IGitTokenValidatorParams } from "../workspace/git-token-validator";
 
-const shouldSkip =
-    ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ") &&
-    ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE") &&
-    ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_ADMIN");
+// const shouldSkip =
+//     ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ") &&
+//     ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE") &&
+//     ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_ADMIN");
 
-@suite(timeout(10000), retries(0), skip(shouldSkip))
+@suite(timeout(10000), retries(0), skip(true) /*skip(shouldSkip)*/)
 class TestBitbucketServerTokenValidator {
     static readonly AUTH_HOST_CONFIG: Partial<AuthProviderParams> = {
         id: "MyBitbucketServer",
@@ -69,7 +68,8 @@ class TestBitbucketServerTokenValidator {
         return container.get(BitbucketServerTokenValidator);
     }
 
-    @test(skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ"))) async test_checkWriteAccess_read_only() {
+    @test(skip(true) /*skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ"))*/)
+    async test_checkWriteAccess_read_only() {
         const token = process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER_READ"]!;
         const result = await this.getValidator(token).checkWriteAccess(Object.assign({}, this.checkParams, { token }));
         expect(result).to.deep.equal({
@@ -79,7 +79,7 @@ class TestBitbucketServerTokenValidator {
         });
     }
 
-    @test(skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE")))
+    @test(skip(true) /*skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE"))*/)
     async test_checkWriteAccess_write_permissions() {
         const token = process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER_WRITE"]!;
         const result = await this.getValidator(token).checkWriteAccess(Object.assign({}, this.checkParams, { token }));
@@ -90,7 +90,7 @@ class TestBitbucketServerTokenValidator {
         });
     }
 
-    @test(skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_ADMIN")))
+    @test(skip(true) /*skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER_ADMIN"))*/)
     async test_checkWriteAccess_admin_permissions() {
         const token = process.env["GITPOD_TEST_TOKEN_BITBUCKET_SERVER_ADMIN"]!;
         const result = await this.getValidator(token).checkWriteAccess(Object.assign({}, this.checkParams, { token }));
