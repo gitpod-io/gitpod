@@ -24,6 +24,8 @@ import {
 } from "../auth/errors";
 import { Config } from "../config";
 import { getRequestingClientInfo } from "../express-util";
+import { getFeatureFlagEnforceAuthorizeStateValidation } from "../util/featureflags";
+import { validateAuthorizeReturnToUrl } from "./authenticator";
 import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
 import { AuthProviderService } from "./auth-provider-service";
@@ -302,6 +304,21 @@ export abstract class GenericAuthProvider implements AuthProvider {
             return;
         }
 
+        // Validate returnTo URL if feature flag is enabled
+        if (authFlow.returnTo) {
+            // Check feature flag - use existing user if logged in, otherwise default to false for new users
+            const userId = request.user?.id;
+            const enforceValidation = await getFeatureFlagEnforceAuthorizeStateValidation(userId || "");
+            if (enforceValidation) {
+                const valid = validateAuthorizeReturnToUrl(authFlow.returnTo, this.config, this);
+                if (!valid) {
+                    log.info(cxt, `(${strategyName}) Bad request: invalid returnTo URL.`, { clientInfo });
+                    response.redirect(this.getSorryUrl(`Bad request: invalid returnTo URL.`));
+                    return;
+                }
+            }
+        }
+
         if (!this.loginCompletionHandler.isBaseDomain(request)) {
             // For auth requests that are not targetting the base domain, we redirect to the base domain, so they come with our cookie.
             log.info(`(${strategyName}) Auth request on subdomain, redirecting to base domain`, { clientInfo });
@@ -321,7 +338,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 return;
             }
         }
-
         // assert additional infomation is attached to current session
         if (!authFlow) {
             // The auth flow state info is missing in the session: count as client error

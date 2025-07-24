@@ -19,6 +19,7 @@ import { AuthFlow, AuthProvider } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
 import { getReturnToParamWithSafeBaseDomain } from "../express-util";
+import { getFeatureFlagEnforceAuthorizeStateValidation } from "../util/featureflags";
 
 @injectable()
 export class Authenticator {
@@ -240,12 +241,15 @@ export class Authenticator {
             return;
         }
 
-        // Validate returnTo URL
-        const valid = validateAuthorizeReturnToUrl(returnTo, this.config, authProvider);
-        if (!valid) {
-            log.info(`Bad request: invalid returnTo URL.`, { "authorize-flow": true });
-            res.redirect(this.getSorryUrl(`Bad request: invalid returnTo URL.`));
-            return;
+        // Validate returnTo URL if feature flag is enabled
+        const enforceValidation = await getFeatureFlagEnforceAuthorizeStateValidation(user.id);
+        if (enforceValidation) {
+            const valid = validateAuthorizeReturnToUrl(returnTo, this.config, authProvider);
+            if (!valid) {
+                log.info(`Bad request: invalid returnTo URL.`, { "authorize-flow": true });
+                res.redirect(this.getSorryUrl(`Bad request: invalid returnTo URL.`));
+                return;
+            }
         }
 
         // For non-verified org auth provider, ensure user is an owner of the org
