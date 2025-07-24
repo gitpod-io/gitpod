@@ -18,6 +18,7 @@ import { UserService } from "../user/user-service";
 import { AuthFlow, AuthProvider } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
+import { getReturnToParamWithSafeBaseDomain } from "../express-util";
 
 @injectable()
 export class Authenticator {
@@ -239,6 +240,14 @@ export class Authenticator {
             return;
         }
 
+        // Validate returnTo URL
+        const valid = validateAuthorizeReturnToUrl(returnTo, this.config, authProvider);
+        if (!valid) {
+            log.info(`Bad request: invalid returnTo URL.`, { "authorize-flow": true });
+            res.redirect(this.getSorryUrl(`Bad request: invalid returnTo URL.`));
+            return;
+        }
+
         // For non-verified org auth provider, ensure user is an owner of the org
         if (!authProvider.info.verified && authProvider.info.organizationId) {
             const member = await this.teamDb.findTeamMembership(user.id, authProvider.info.organizationId);
@@ -321,4 +330,36 @@ export class Authenticator {
     private getSorryUrl(message: string) {
         return this.config.hostUrl.asSorry(message).toString();
     }
+}
+
+// Whether the passed URL is a valid returnTo URL for OAuth authorization
+export function validateAuthorizeReturnToUrl(returnTo: string, config: Config, authProvider: AuthProvider): boolean {
+    function isApiPath(url: string): boolean {
+        try {
+            const parsedUrl = new URL(url);
+
+            // Check if hostname starts with "api."
+            if (parsedUrl.hostname.toLowerCase().startsWith("api.")) {
+                return true;
+            }
+
+            // Check if path starts with "/api"
+            if (parsedUrl.pathname.toLowerCase().startsWith("/api")) {
+                return true;
+            }
+
+            return false;
+        } catch {
+            // If URL parsing fails, consider it invalid
+            return true;
+        }
+    }
+
+    // Reject URLs that point to API endpoints
+    if (isApiPath(returnTo)) {
+        return false;
+    }
+
+    const validUrl = getReturnToParamWithSafeBaseDomain(returnTo, config.hostUrl.url);
+    return validUrl !== undefined;
 }
