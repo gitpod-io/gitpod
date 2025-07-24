@@ -11,3 +11,9 @@ export async function getFeatureFlagEnableExperimentalJBTB(userId: string): Prom
         user: { id: userId },
     });
 }
+
+export async function getFeatureFlagEnableContextEnvVarValidation(userId: string): Promise<boolean> {
+    return getExperimentsClientForBackend().getValueAsync("context_env_var_validation", false, {
+        user: { id: userId },
+    });
+}
