@@ -294,6 +294,7 @@ RUN mkdir -p ~/.terraform \
 
 ## Java
 ENV JAVA_VERSION=11.0.27.fx-zulu
+# Install SDKMAN as root first (working approach), then create gitpod user and symlink
 RUN curl -fsSL "https://get.sdkman.io" | bash \
     && bash -c ". /root/.sdkman/bin/sdkman-init.sh \
     && sed -i 's/sdkman_selfupdate_enable=true/sdkman_selfupdate_enable=false/g' /root/.sdkman/etc/config \
@@ -308,6 +309,17 @@ RUN curl -fsSL "https://get.sdkman.io" | bash \
     && printf '<settings>\n  <localRepository>/workspace/m2-repository/</localRepository>\n</settings>\n' > /root/.m2/settings.xml \
     && echo 'export SDKMAN_DIR=\"/root/.sdkman\"' >> /root/.bashrc.d/99-java \
     && echo '[[ -s \"/root/.sdkman/bin/sdkman-init.sh\" ]] && source \"/root/.sdkman/bin/sdkman-init.sh\"' >> /root/.bashrc.d/99-java"
+
+# Create gitpod user and set up symlinks for SDKMAN compatibility with BUILD.yaml files
+RUN useradd -m -s /bin/bash gitpod && \
+    usermod -aG sudo gitpod && \
+    echo 'gitpod ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
+    mkdir -p /home/gitpod/.bashrc.d && \
+    ln -sf /root/.sdkman /home/gitpod/.sdkman && \
+    ln -sf /root/.m2 /home/gitpod/.m2 && \
+    echo 'export SDKMAN_DIR="/home/gitpod/.sdkman"' >> /home/gitpod/.bashrc.d/99-java && \
+    echo '[[ -s "/home/gitpod/.sdkman/bin/sdkman-init.sh" ]] && source "/home/gitpod/.sdkman/bin/sdkman-init.sh"' >> /home/gitpod/.bashrc.d/99-java
+
 # above, we are adding the sdkman init to .bashrc (executing sdkman-init.sh does that), because one is executed on interactive shells, the other for non-interactive shells (e.g. plugin-host)
 ENV GRADLE_USER_HOME=/workspace/.gradle/
 
