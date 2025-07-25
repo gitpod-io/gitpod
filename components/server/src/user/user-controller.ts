@@ -17,7 +17,7 @@ import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
 import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import { SessionHandler } from "../session-handler";
 import { URL } from "url";
-import { getRequestingClientInfo } from "../express-util";
+import { getRequestingClientInfo, getReturnToParamWithSafeBaseDomain } from "../express-util";
 import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
@@ -615,20 +615,12 @@ export class UserController {
     protected getSafeReturnToParam(req: express.Request) {
         // @ts-ignore Type 'ParsedQs' is not assignable
         const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
-        if (!returnToURL) {
-            log.debug("Empty redirect URL");
-            return;
-        }
 
-        if (
-            this.urlStartsWith(returnToURL, this.config.hostUrl.toString()) ||
-            this.urlStartsWith(returnToURL, "https://www.gitpod.io")
-        ) {
-            return returnToURL;
+        const result = getReturnToParamWithSafeBaseDomain(returnToURL, this.config.hostUrl.url);
+        if (!!returnToURL && !result) {
+            log.debug("The redirect URL does not match", { query: new TrustedValue(req.query).value });
         }
-
-        log.debug("The redirect URL does not match", { query: new TrustedValue(req.query).value });
-        return;
+        return result;
     }
 
     private createGitpodServer(user: User, resourceGuard: ResourceAccessGuard) {

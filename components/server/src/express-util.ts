@@ -159,3 +159,26 @@ export function toClientHeaderFields(expressReq: express.Request): ClientHeaderF
         clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
     };
 }
+
+export function getReturnToParamWithSafeBaseDomain(
+    returnToURL: string | undefined,
+    configuredBaseDomain: URL,
+): string | undefined {
+    function urlStartsWith(url: string, prefixUrl: string): boolean {
+        prefixUrl += prefixUrl.endsWith("/") ? "" : "/";
+        return url.toLowerCase().startsWith(prefixUrl.toLowerCase());
+    }
+
+    if (!returnToURL) {
+        return undefined;
+    }
+
+    if (
+        urlStartsWith(returnToURL, configuredBaseDomain.toString()) ||
+        urlStartsWith(returnToURL, "https://www.gitpod.io")
+    ) {
+        return returnToURL;
+    }
+
+    return;
+}

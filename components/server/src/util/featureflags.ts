@@ -17,3 +17,9 @@ export async function getFeatureFlagEnableContextEnvVarValidation(userId: string
         user: { id: userId },
     });
 }
+
+export async function getFeatureFlagEnforceAuthorizeStateValidation(userId: string): Promise<boolean> {
+    return getExperimentsClientForBackend().getValueAsync("enforce_authorize_state_validation", false, {
+        user: { id: userId },
+    });
+}
