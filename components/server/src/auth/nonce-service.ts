@@ -30,8 +30,9 @@ export class NonceService {
         res.cookie(NONCE_COOKIE_NAME, nonce, {
             httpOnly: true,
             secure: this.config.auth.session.cookie.secure,
-            sameSite: "strict", // Strict for CSRF protection
+            sameSite: "lax",
             maxAge: 5 * 60 * 1000, // 5 minutes (same as JWT state expiry)
+            path: "/",
         });
     }
 
@@ -49,8 +50,8 @@ export class NonceService {
         res.clearCookie(NONCE_COOKIE_NAME, {
             httpOnly: true,
             secure: this.config.auth.session.cookie.secure,
-            sameSite: "strict",
-            path: "/auth",
+            sameSite: "lax",
+            path: "/",
         });
     }
 
