@@ -14,12 +14,12 @@ describe("API Subdomain Redirect Logic", () => {
 
     describe("isApiSubdomainOfConfiguredHost", () => {
         it("should detect api subdomain of configured host", () => {
-            const configuredHost = "pd-nonce.preview.gitpod-dev.com";
+            const configuredHost = "gitpod.io";
             const testCases = [
-                { hostname: "api.pd-nonce.preview.gitpod-dev.com", expected: true },
-                { hostname: "api.gitpod.io", expected: false }, // Different configured host
-                { hostname: "pd-nonce.preview.gitpod-dev.com", expected: false }, // Main domain
-                { hostname: "workspace-123.pd-nonce.preview.gitpod-dev.com", expected: false }, // Other subdomain
+                { hostname: "api.gitpod.io", expected: true },
+                { hostname: "api.preview.gitpod-dev.com", expected: false }, // Different configured host
+                { hostname: "gitpod.io", expected: false }, // Main domain
+                { hostname: "workspace-123.gitpod.io", expected: false }, // Other subdomain
                 { hostname: "api.evil.com", expected: false }, // Different domain
             ];
 
@@ -39,7 +39,7 @@ describe("API Subdomain Redirect Logic", () => {
         });
 
         it("should handle preview environment correctly", () => {
-            const configuredHost = "pd-nonce.preview.gitpod-dev.com";
+            const configuredHost = "preview.gitpod-dev.com";
             const apiSubdomain = `api.${configuredHost}`;
 
             const result = isApiSubdomainOfConfiguredHost(apiSubdomain, configuredHost);
@@ -52,20 +52,20 @@ describe("API Subdomain Redirect Logic", () => {
             const scenarios = [
                 {
                     name: "GitHub OAuth Callback on API Subdomain",
-                    hostname: "api.pd-nonce.preview.gitpod-dev.com",
-                    configuredHost: "pd-nonce.preview.gitpod-dev.com",
+                    hostname: "api.gitpod.io",
+                    configuredHost: "gitpod.io",
                     shouldRedirect: true,
                 },
                 {
                     name: "Regular Login on Main Domain",
-                    hostname: "pd-nonce.preview.gitpod-dev.com",
-                    configuredHost: "pd-nonce.preview.gitpod-dev.com",
+                    hostname: "gitpod.io",
+                    configuredHost: "gitpod.io",
                     shouldRedirect: false,
                 },
                 {
                     name: "Workspace Port (Should Not Redirect)",
-                    hostname: "3000-pd-nonce.preview.gitpod-dev.com",
-                    configuredHost: "pd-nonce.preview.gitpod-dev.com",
+                    hostname: "3000-gitpod.io",
+                    configuredHost: "gitpod.io",
                     shouldRedirect: false,
                 },
             ];

@@ -32,7 +32,6 @@ export class NonceService {
             secure: this.config.auth.session.cookie.secure,
             sameSite: "strict", // Strict for CSRF protection
             maxAge: 5 * 60 * 1000, // 5 minutes (same as JWT state expiry)
-            path: "/auth", // Limit to auth paths only
         });
     }
 
