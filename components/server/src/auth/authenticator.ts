@@ -90,7 +90,7 @@ export class Authenticator {
                     });
                     const baseUrl = this.config.hostUrl.with({
                         pathname: req.path,
-                        search: new URL(req.url).search,
+                        search: new URL(req.url, this.config.hostUrl.url).search,
                     });
                     res.redirect(baseUrl.toString());
                     return;
