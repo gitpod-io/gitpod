@@ -81,6 +81,21 @@ export class Authenticator {
                     throw new Error("Auth flow state is missing 'host' attribute.");
                 }
 
+                // Handle GitHub OAuth edge case: redirect from api.* subdomain to base domain
+                // This allows nonce validation to work since cookies are accessible on base domain
+                if (this.isApiSubdomainOfConfiguredHost(req.hostname)) {
+                    log.info(`OAuth callback on api subdomain, redirecting to base domain for nonce validation`, {
+                        hostname: req.hostname,
+                        configuredHost: this.config.hostUrl.url.hostname,
+                    });
+                    const baseUrl = this.config.hostUrl.with({
+                        pathname: req.path,
+                        search: new URL(req.url).search,
+                    });
+                    res.redirect(baseUrl.toString());
+                    return;
+                }
+
                 // Validate nonce for CSRF protection
                 const stateNonce = flowState.nonce;
                 const cookieNonce = this.nonceService.getNonceFromCookie(req);
@@ -153,6 +168,15 @@ export class Authenticator {
         }
 
         return state;
+    }
+
+    /**
+     * Checks if the current hostname is api.{configured-domain}.
+     * This handles the GitHub OAuth edge case where callbacks may come to api.* subdomain.
+     */
+    private isApiSubdomainOfConfiguredHost(hostname: string): boolean {
+        const configuredHost = this.config.hostUrl.url.hostname;
+        return hostname === `api.${configuredHost}`;
     }
 
     protected async getAuthProviderForHost(host: string): Promise<AuthProvider | undefined> {
