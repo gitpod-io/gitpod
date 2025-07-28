@@ -45,6 +45,7 @@ import { HostContainerMapping } from "./auth/host-container-mapping";
 import { HostContextProvider, HostContextProviderFactory } from "./auth/host-context-provider";
 import { HostContextProviderImpl } from "./auth/host-context-provider-impl";
 import { AuthJWT, SignInJWT } from "./auth/jwt";
+import { NonceService } from "./auth/nonce-service";
 import { LoginCompletionHandler } from "./auth/login-completion-handler";
 import { VerificationService } from "./auth/verification-service";
 import { InstallationService } from "./auth/installation-service";
@@ -366,6 +367,7 @@ export const productionContainerModule = new ContainerModule(
 
         bind(AuthJWT).toSelf().inSingletonScope();
         bind(SignInJWT).toSelf().inSingletonScope();
+        bind(NonceService).toSelf().inSingletonScope();
 
         bind(PrebuildManager).toSelf().inSingletonScope();
         bind(LazyPrebuildManager).toFactory((ctx) => {

@@ -18,6 +18,7 @@ import { UserService } from "../user/user-service";
 import { AuthFlow, AuthProvider } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
+import { NonceService } from "./nonce-service";
 
 @injectable()
 export class Authenticator {
@@ -30,6 +31,7 @@ export class Authenticator {
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(UserAuthentication) protected readonly userAuthentication: UserAuthentication;
     @inject(SignInJWT) protected readonly signInJWT: SignInJWT;
+    @inject(NonceService) protected readonly nonceService: NonceService;
 
     @postConstruct()
     protected setup() {
@@ -77,6 +79,35 @@ export class Authenticator {
                 if (!host) {
                     throw new Error("Auth flow state is missing 'host' attribute.");
                 }
+
+                // Validate nonce for CSRF protection
+                const stateNonce = flowState.nonce;
+                const cookieNonce = this.nonceService.getNonceFromCookie(req);
+
+                if (!this.nonceService.validateNonce(stateNonce, cookieNonce)) {
+                    log.error(`CSRF protection: Nonce validation failed`, {
+                        url: req.url,
+                        hasStateNonce: !!stateNonce,
+                        hasCookieNonce: !!cookieNonce,
+                    });
+                    res.status(403).send("CSRF protection: Invalid or missing nonce");
+                    return;
+                }
+
+                // Validate origin for additional CSRF protection
+                if (!this.nonceService.validateOrigin(req)) {
+                    log.error(`CSRF protection: Origin validation failed`, {
+                        url: req.url,
+                        origin: req.get("Origin"),
+                        referer: req.get("Referer"),
+                    });
+                    res.status(403).send("CSRF protection: Invalid request origin");
+                    return;
+                }
+
+                // Clear the nonce cookie after successful validation
+                this.nonceService.clearNonceCookie(res);
+
                 const hostContext = this.hostContextProvider.get(host);
                 if (!hostContext) {
                     throw new Error("No host context found.");
@@ -89,6 +120,8 @@ export class Authenticator {
                 await hostContext.authProvider.callback(req, res, next);
             } catch (error) {
                 log.error(`Failed to handle callback.`, error, { url: req.url });
+                // Clear nonce cookie on error as well
+                this.nonceService.clearNonceCookie(res);
             }
         } else {
             // Otherwise proceed with other handlers
@@ -170,9 +203,16 @@ export class Authenticator {
             return;
         }
 
+        // Generate nonce for CSRF protection
+        const nonce = this.nonceService.generateNonce();
+
+        // Set nonce cookie
+        this.nonceService.setNonceCookie(res, nonce);
+
         const state = await this.signInJWT.sign({
             host,
             returnTo,
+            nonce,
         });
 
         // authenticate user
@@ -297,7 +337,14 @@ export class Authenticator {
         }
         // authorize Gitpod
         log.info(`(doAuthorize) wanted scopes (${override ? "overriding" : "merging"}): ${wantedScopes.join(",")}`);
-        const state = await this.signInJWT.sign({ host, returnTo, overrideScopes: override });
+
+        // Generate nonce for CSRF protection
+        const nonce = this.nonceService.generateNonce();
+
+        // Set nonce cookie
+        this.nonceService.setNonceCookie(res, nonce);
+
+        const state = await this.signInJWT.sign({ host, returnTo, overrideScopes: override, nonce });
         authProvider.authorize(req, res, next, this.deriveAuthState(state), wantedScopes);
     }
     private mergeScopes(a: string[], b: string[]) {

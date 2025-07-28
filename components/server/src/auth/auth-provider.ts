@@ -97,6 +97,7 @@ export interface AuthFlow {
     readonly host: string;
     readonly returnTo: string;
     readonly overrideScopes?: boolean;
+    readonly nonce?: string;
 }
 export namespace AuthFlow {
     export function is(obj: any): obj is AuthFlow {
