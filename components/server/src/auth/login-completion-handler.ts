@@ -18,6 +18,7 @@ import { trackLogin } from "../analytics";
 import { SessionHandler } from "../session-handler";
 import { AuthJWT } from "./jwt";
 import { OneTimeSecretServer } from "../one-time-secret-server";
+import { ensureUrlHasFragment } from "./fragment-utils";
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -58,6 +59,10 @@ export class LoginCompletionHandler {
 
         // Update session info
         let returnTo = returnToUrl || this.config.hostUrl.asDashboard().toString();
+
+        // Ensure returnTo URL has a fragment to prevent OAuth token inheritance attacks
+        returnTo = ensureUrlHasFragment(returnTo);
+
         if (elevateScopes) {
             const elevateScopesUrl = this.config.hostUrl
                 .withApi({

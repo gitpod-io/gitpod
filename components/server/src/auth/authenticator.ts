@@ -19,6 +19,7 @@ import { AuthFlow, AuthProvider } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
 import { NonceService } from "./nonce-service";
+import { ensureUrlHasFragment } from "./fragment-utils";
 
 @injectable()
 export class Authenticator {
@@ -171,6 +172,9 @@ export class Authenticator {
         // returnTo defaults to workspaces url
         const workspaceUrl = this.config.hostUrl.asDashboard().toString();
         returnTo = returnTo || workspaceUrl;
+
+        // Ensure returnTo URL has a fragment to prevent OAuth token inheritance attacks
+        returnTo = ensureUrlHasFragment(returnTo);
         const host: string = req.query.host?.toString() || "";
         const authProvider = host && (await this.getAuthProviderForHost(host));
         if (!host || !authProvider) {
@@ -268,16 +272,20 @@ export class Authenticator {
             );
             return;
         }
-        const returnTo: string | undefined = req.query.returnTo?.toString();
+        const returnToParam: string | undefined = req.query.returnTo?.toString();
         const host: string | undefined = req.query.host?.toString();
         const scopes: string = req.query.scopes?.toString() || "";
         const override = req.query.override === "true";
         const authProvider = host && (await this.getAuthProviderForHost(host));
-        if (!returnTo || !host || !authProvider) {
+
+        if (!returnToParam || !host || !authProvider) {
             log.info(`Bad request: missing parameters.`, { "authorize-flow": true });
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
+
+        // Ensure returnTo URL has a fragment to prevent OAuth token inheritance attacks
+        const returnTo = ensureUrlHasFragment(returnToParam);
 
         // For non-verified org auth provider, ensure user is an owner of the org
         if (!authProvider.info.verified && authProvider.info.organizationId) {
