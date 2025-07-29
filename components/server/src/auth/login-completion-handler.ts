@@ -6,7 +6,6 @@
 
 import { inject, injectable } from "inversify";
 import express from "express";
-import * as crypto from "crypto";
 import { User } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
@@ -17,7 +16,6 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
 import { SessionHandler } from "../session-handler";
 import { AuthJWT } from "./jwt";
-import { OneTimeSecretServer } from "../one-time-secret-server";
 import { ensureUrlHasFragment } from "./fragment-utils";
 
 /**
@@ -31,7 +29,6 @@ export class LoginCompletionHandler {
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(AuthJWT) protected readonly authJWT: AuthJWT;
     @inject(SessionHandler) protected readonly session: SessionHandler;
-    @inject(OneTimeSecretServer) private readonly otsServer: OneTimeSecretServer;
 
     async complete(
         request: express.Request,
