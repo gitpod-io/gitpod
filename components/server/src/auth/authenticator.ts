@@ -117,7 +117,7 @@ export class Authenticator {
                         origin: req.get("Origin"),
                         referer: req.get("Referer"),
                     });
-                    res.status(403).send("CSRF protection: Invalid request origin");
+                    res.status(403).send("Invalid request");
                     return;
                 }
 
