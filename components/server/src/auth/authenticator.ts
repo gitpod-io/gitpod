@@ -106,7 +106,7 @@ export class Authenticator {
                         hasStateNonce: !!stateNonce,
                         hasCookieNonce: !!cookieNonce,
                     });
-                    res.status(403).send("CSRF protection: Invalid or missing nonce");
+                    res.status(403).send("Authentication failed");
                     return;
                 }
 
