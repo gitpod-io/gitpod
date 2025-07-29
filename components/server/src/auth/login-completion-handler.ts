@@ -58,10 +58,10 @@ export class LoginCompletionHandler {
         }
 
         // Update session info
-        let returnTo = returnToUrl || this.config.hostUrl.asDashboard().toString();
+        const returnToParam = returnToUrl || this.config.hostUrl.asDashboard().toString();
 
         // Ensure returnTo URL has a fragment to prevent OAuth token inheritance attacks
-        returnTo = ensureUrlHasFragment(returnTo);
+        let returnTo = ensureUrlHasFragment(returnToParam);
 
         if (elevateScopes) {
             const elevateScopesUrl = this.config.hostUrl

@@ -189,16 +189,16 @@ export class Authenticator {
             log.info(`User is already authenticated. Continue.`, { "login-flow": true });
             return next();
         }
-        let returnTo: string | undefined = req.query.returnTo?.toString();
-        if (returnTo) {
-            log.info(`Stored returnTo URL: ${returnTo}`, { "login-flow": true });
+        let returnToParam: string | undefined = req.query.returnTo?.toString();
+        if (returnToParam) {
+            log.info(`Stored returnTo URL: ${returnToParam}`, { "login-flow": true });
         }
         // returnTo defaults to workspaces url
         const workspaceUrl = this.config.hostUrl.asDashboard().toString();
-        returnTo = returnTo || workspaceUrl;
-
+        returnToParam = returnToParam || workspaceUrl;
         // Ensure returnTo URL has a fragment to prevent OAuth token inheritance attacks
-        returnTo = ensureUrlHasFragment(returnTo);
+        const returnTo = ensureUrlHasFragment(returnToParam);
+
         const host: string = req.query.host?.toString() || "";
         const authProvider = host && (await this.getAuthProviderForHost(host));
         if (!host || !authProvider) {
@@ -233,8 +233,6 @@ export class Authenticator {
 
         // Generate nonce for CSRF protection
         const nonce = this.nonceService.generateNonce();
-
-        // Set nonce cookie
         this.nonceService.setNonceCookie(res, nonce);
 
         const state = await this.signInJWT.sign({
@@ -372,8 +370,6 @@ export class Authenticator {
 
         // Generate nonce for CSRF protection
         const nonce = this.nonceService.generateNonce();
-
-        // Set nonce cookie
         this.nonceService.setNonceCookie(res, nonce);
 
         const state = await this.signInJWT.sign({ host, returnTo, overrideScopes: override, nonce });
