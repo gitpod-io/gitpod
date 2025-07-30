@@ -487,6 +487,6 @@ export class Authenticator {
         return [];
     }
     private getSorryUrl(message: string) {
-        return this.config.hostUrl.asSorry(message).toString();
+        return ensureUrlHasFragment(this.config.hostUrl.asSorry(message).toString());
     }
 }
