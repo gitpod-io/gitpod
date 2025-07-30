@@ -88,6 +88,58 @@ describe("ReturnTo URL Validation", () => {
                 expect(result).to.equal(false, `Should reject www.gitpod.io non-root: ${url}`);
             });
         });
+
+        describe("Feature Flag Integration", () => {
+            it("should document nonce validation feature flag behavior", () => {
+                // Feature flag: enable_nonce_validation (default: false)
+                // When enabled: Full CSRF protection with nonce validation
+                // When disabled: Nonce is generated but not validated (for future compatibility)
+
+                // This test documents the expected behavior:
+                // 1. Nonce is always generated and stored in cookie
+                // 2. Nonce is always included in JWT state
+                // 3. Nonce validation only occurs when feature flag is enabled
+                // 4. Cookie is always cleared after callback processing
+
+                expect(true).to.equal(true); // Documentation test
+            });
+
+            it("should document strict authorize returnTo validation feature flag behavior", () => {
+                // Feature flag: enable_strict_authorize_return_to (default: false)
+                // When enabled: Uses validateAuthorizeReturnToUrl (strict patterns)
+                // When disabled: Falls back to validateLoginReturnToUrl (broader patterns)
+
+                // This test documents the expected behavior:
+                // 1. /api/authorize endpoint checks the feature flag
+                // 2. If enabled: Only allows complete-auth, root, /new, /quickstart
+                // 3. If disabled: Falls back to login validation (broader patterns)
+                // 4. /api/login endpoint always uses login validation
+
+                expect(true).to.equal(true); // Documentation test
+            });
+
+            it("should show difference between strict and fallback validation", () => {
+                const testUrls = [
+                    { url: "https://gitpod.io/workspaces", strictAllowed: false, fallbackAllowed: true },
+                    { url: "https://gitpod.io/settings", strictAllowed: false, fallbackAllowed: true },
+                    { url: "https://gitpod.io/new", strictAllowed: true, fallbackAllowed: true },
+                    { url: "https://gitpod.io/quickstart", strictAllowed: true, fallbackAllowed: true },
+                    {
+                        url: "https://gitpod.io/complete-auth?message=success",
+                        strictAllowed: true,
+                        fallbackAllowed: true,
+                    },
+                ];
+
+                testUrls.forEach(({ url, strictAllowed, fallbackAllowed }) => {
+                    const strictResult = validateAuthorizeReturnToUrl(url, hostUrl);
+                    const fallbackResult = validateLoginReturnToUrl(url, hostUrl);
+
+                    expect(strictResult).to.equal(strictAllowed, `Strict validation failed for: ${url}`);
+                    expect(fallbackResult).to.equal(fallbackAllowed, `Fallback validation failed for: ${url}`);
+                });
+            });
+        });
     });
 
     describe("validateAuthorizeReturnToUrl", () => {

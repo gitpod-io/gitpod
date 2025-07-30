@@ -17,3 +17,19 @@ export async function getFeatureFlagEnableContextEnvVarValidation(userId: string
         user: { id: userId },
     });
 }
+
+/**
+ * Feature flag for enabling nonce validation in OAuth flows.
+ * Default: false (disabled)
+ */
+export async function getFeatureFlagEnableNonceValidation(): Promise<boolean> {
+    return getExperimentsClientForBackend().getValueAsync("enable_nonce_validation", false, {});
+}
+
+/**
+ * Feature flag for enabling strict returnTo validation for /api/authorize endpoint.
+ * Default: false (disabled, falls back to login validation)
+ */
+export async function getFeatureFlagEnableStrictAuthorizeReturnTo(): Promise<boolean> {
+    return getExperimentsClientForBackend().getValueAsync("enable_strict_authorize_return_to", false, {});
+}

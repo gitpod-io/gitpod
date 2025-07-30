@@ -21,6 +21,7 @@ import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
 import { NonceService } from "./nonce-service";
 import { ensureUrlHasFragment } from "./fragment-utils";
+import { getFeatureFlagEnableNonceValidation, getFeatureFlagEnableStrictAuthorizeReturnTo } from "../util/featureflags";
 
 /**
  * Common validation logic for returnTo URLs.
@@ -173,32 +174,35 @@ export class Authenticator {
                     return;
                 }
 
-                // Validate nonce for CSRF protection
-                const stateNonce = flowState.nonce;
-                const cookieNonce = this.nonceService.getNonceFromCookie(req);
+                // Validate nonce for CSRF protection (if feature flag is enabled)
+                const isNonceValidationEnabled = await getFeatureFlagEnableNonceValidation();
+                if (isNonceValidationEnabled) {
+                    const stateNonce = flowState.nonce;
+                    const cookieNonce = this.nonceService.getNonceFromCookie(req);
 
-                if (!this.nonceService.validateNonce(stateNonce, cookieNonce)) {
-                    log.error(`CSRF protection: Nonce validation failed`, {
-                        url: req.url,
-                        hasStateNonce: !!stateNonce,
-                        hasCookieNonce: !!cookieNonce,
-                    });
-                    res.status(403).send("Authentication failed");
-                    return;
+                    if (!this.nonceService.validateNonce(stateNonce, cookieNonce)) {
+                        log.error(`CSRF protection: Nonce validation failed`, {
+                            url: req.url,
+                            hasStateNonce: !!stateNonce,
+                            hasCookieNonce: !!cookieNonce,
+                        });
+                        res.status(403).send("Authentication failed");
+                        return;
+                    }
+
+                    // Validate origin for additional CSRF protection
+                    if (!this.nonceService.validateOrigin(req)) {
+                        log.error(`CSRF protection: Origin validation failed`, {
+                            url: req.url,
+                            origin: req.get("Origin"),
+                            referer: req.get("Referer"),
+                        });
+                        res.status(403).send("Invalid request");
+                        return;
+                    }
                 }
 
-                // Validate origin for additional CSRF protection
-                if (!this.nonceService.validateOrigin(req)) {
-                    log.error(`CSRF protection: Origin validation failed`, {
-                        url: req.url,
-                        origin: req.get("Origin"),
-                        referer: req.get("Referer"),
-                    });
-                    res.status(403).send("Invalid request");
-                    return;
-                }
-
-                // Clear the nonce cookie after successful validation
+                // Always clear the nonce cookie
                 this.nonceService.clearNonceCookie(res);
 
                 const hostContext = this.hostContextProvider.get(host);
@@ -213,7 +217,7 @@ export class Authenticator {
                 await hostContext.authProvider.callback(req, res, next);
             } catch (error) {
                 log.error(`Failed to handle callback.`, error, { url: req.url });
-                // Clear nonce cookie on error as well
+                // Always clear nonce cookie on error
                 this.nonceService.clearNonceCookie(res);
             }
         } else {
@@ -315,7 +319,7 @@ export class Authenticator {
             return;
         }
 
-        // Generate nonce for CSRF protection
+        // Always generate nonce for CSRF protection (validation controlled by feature flag)
         const nonce = this.nonceService.generateNonce();
         this.nonceService.setNonceCookie(res, nonce);
 
@@ -391,8 +395,17 @@ export class Authenticator {
         }
 
         // Validate returnTo URL against allowlist for authorize API
-        if (!validateAuthorizeReturnToUrl(returnToParam, this.config.hostUrl)) {
-            log.warn(`Invalid returnTo URL rejected for authorize: ${returnToParam}`, { "authorize-flow": true });
+        const isStrictAuthorizeValidationEnabled = await getFeatureFlagEnableStrictAuthorizeReturnTo();
+        const isValidReturnTo = isStrictAuthorizeValidationEnabled
+            ? validateAuthorizeReturnToUrl(returnToParam, this.config.hostUrl)
+            : validateLoginReturnToUrl(returnToParam, this.config.hostUrl);
+
+        if (!isValidReturnTo) {
+            const validationType = isStrictAuthorizeValidationEnabled ? "strict authorize" : "login fallback";
+            log.warn(`Invalid returnTo URL rejected for authorize (${validationType}): ${returnToParam}`, {
+                "authorize-flow": true,
+                strictValidation: isStrictAuthorizeValidationEnabled,
+            });
             res.redirect(this.getSorryUrl(`Invalid return URL.`));
             return;
         }
@@ -459,7 +472,7 @@ export class Authenticator {
         // authorize Gitpod
         log.info(`(doAuthorize) wanted scopes (${override ? "overriding" : "merging"}): ${wantedScopes.join(",")}`);
 
-        // Generate nonce for CSRF protection
+        // Always generate nonce for CSRF protection (validation controlled by feature flag)
         const nonce = this.nonceService.generateNonce();
         this.nonceService.setNonceCookie(res, nonce);
 
