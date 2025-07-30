@@ -79,9 +79,9 @@ export class NonceService {
     }
 
     /**
-     * Validates that the request origin is from a trusted domain
+     * Validates that the request origin is from the expected SCM provider domain
      */
-    validateOrigin(req: express.Request): boolean {
+    validateOrigin(req: express.Request, expectedHost: string): boolean {
         const origin = req.get("Origin");
         const referer = req.get("Referer");
 
@@ -95,10 +95,11 @@ export class NonceService {
 
         try {
             const sourceUrl = new URL(requestSource);
-            const configUrl = new URL(this.config.hostUrl.url.toString());
 
-            // Validate that the request comes from the same origin as our configured host
-            return sourceUrl.origin === configUrl.origin;
+            // Validate that the request comes from the expected SCM provider host
+            // expectedHost could be "github.com", "gitlab.com", etc.
+            const expectedOrigin = `https://${expectedHost}`;
+            return sourceUrl.origin === expectedOrigin;
         } catch (error) {
             // Invalid URL format
             return false;
