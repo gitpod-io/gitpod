@@ -8,6 +8,7 @@ import { URL } from "url";
 import express from "express";
 import * as crypto from "crypto";
 import { IncomingHttpHeaders } from "http";
+import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
@@ -158,4 +159,80 @@ export function toClientHeaderFields(expressReq: express.Request): ClientHeaderF
         dnt: takeFirst(expressReq.headers.dnt),
         clientRegion: takeFirst(expressReq.headers["x-glb-client-region"]),
     };
+}
+
+/**
+ * Common validation logic for returnTo URLs.
+ * @param returnTo The URL to validate
+ * @param hostUrl The host URL configuration
+ * @param allowedPatterns Array of regex patterns that are allowed for the pathname
+ * @returns true if the URL is valid, false otherwise
+ */
+export function validateReturnToUrlWithPatterns(
+    returnTo: string,
+    hostUrl: GitpodHostUrl,
+    allowedPatterns: RegExp[],
+): boolean {
+    try {
+        const url = new URL(returnTo);
+        const baseUrl = hostUrl.url;
+
+        // Must be same origin OR www.gitpod.io exception
+        const isSameOrigin = url.origin === baseUrl.origin;
+        const isGitpodWebsite = url.protocol === "https:" && url.hostname === "www.gitpod.io";
+
+        if (!isSameOrigin && !isGitpodWebsite) {
+            return false;
+        }
+
+        // For www.gitpod.io, only allow root path
+        if (isGitpodWebsite) {
+            return url.pathname === "/";
+        }
+
+        // Check if pathname matches any allowed pattern
+        const isAllowedPath = allowedPatterns.some((pattern) => pattern.test(url.pathname));
+        if (!isAllowedPath) {
+            return false;
+        }
+
+        // For complete-auth, require ONLY message parameter (used by OAuth flows)
+        if (url.pathname === "/complete-auth") {
+            const searchParams = new URLSearchParams(url.search);
+            const paramKeys = Array.from(searchParams.keys());
+            return paramKeys.length === 1 && paramKeys[0] === "message" && searchParams.has("message");
+        }
+
+        return true;
+    } catch (error) {
+        // Invalid URL
+        return false;
+    }
+}
+
+/**
+ * Validates returnTo URLs for login API endpoints.
+ * Login API allows broader navigation after authentication.
+ */
+export function validateLoginReturnToUrl(returnTo: string, hostUrl: GitpodHostUrl): boolean {
+    // We have already verified the domain above, and we do not restrict the redirect location for loginReturnToUrl.
+    return validateReturnToUrlWithPatterns(returnTo, hostUrl, []);
+}
+
+/**
+ * Validates returnTo URLs for authorize API endpoints.
+ * Authorize API allows complete-auth callbacks and dashboard pages for scope elevation.
+ */
+export function validateAuthorizeReturnToUrl(returnTo: string, hostUrl: GitpodHostUrl): boolean {
+    const allowedPatterns = [
+        // 1. complete-auth callback for OAuth popup windows
+        /^\/complete-auth$/,
+
+        // 2. Dashboard pages (for scope elevation flows)
+        /^\/$/, // Root
+        /^\/new\/?$/, // Create workspace page
+        /^\/quickstart\/?$/, // Quickstart page
+    ];
+
+    return validateReturnToUrlWithPatterns(returnTo, hostUrl, allowedPatterns);
 }

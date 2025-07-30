@@ -6,7 +6,7 @@
 
 import { expect } from "chai";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import { validateLoginReturnToUrl, validateAuthorizeReturnToUrl } from "./authenticator";
+import { validateLoginReturnToUrl, validateAuthorizeReturnToUrl } from "../express-util";
 
 describe("ReturnTo URL Validation", () => {
     const hostUrl = new GitpodHostUrl("https://gitpod.io");
