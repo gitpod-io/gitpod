@@ -92,8 +92,8 @@ export function validateAuthorizeReturnToUrl(returnTo: string, hostUrl: GitpodHo
 
         // 2. Dashboard pages (for scope elevation flows)
         /^\/$/, // Root
-        /^\/new$/, // Create workspace page
-        /^\/quickstart$/, // Quickstart page
+        /^\/new\/?$/, // Create workspace page
+        /^\/quickstart\/?$/, // Quickstart page
     ];
 
     return validateReturnToUrlWithPatterns(returnTo, hostUrl, allowedPatterns);
