@@ -77,32 +77,4 @@ export class NonceService {
 
         return crypto.timingSafeEqual(stateBuffer, cookieBuffer);
     }
-
-    /**
-     * Validates that the request origin is from the expected SCM provider domain
-     */
-    validateOrigin(req: express.Request, expectedHost: string): boolean {
-        const origin = req.get("Origin");
-        const referer = req.get("Referer");
-
-        // For OAuth callbacks, we expect either Origin or Referer header
-        const requestSource = origin || referer;
-
-        if (!requestSource) {
-            // No origin/referer header - this could be a direct navigation or CSRF attack
-            return false;
-        }
-
-        try {
-            const sourceUrl = new URL(requestSource);
-
-            // Validate that the request comes from the expected SCM provider host
-            // expectedHost could be "github.com", "gitlab.com", etc.
-            const expectedOrigin = `https://${expectedHost}`;
-            return sourceUrl.origin === expectedOrigin;
-        } catch (error) {
-            // Invalid URL format
-            return false;
-        }
-    }
 }

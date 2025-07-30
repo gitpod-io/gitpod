@@ -189,18 +189,6 @@ export class Authenticator {
                         res.status(403).send("Authentication failed");
                         return;
                     }
-
-                    // Validate origin for additional CSRF protection
-                    if (!this.nonceService.validateOrigin(req, host)) {
-                        log.error(`CSRF protection: Origin validation failed`, {
-                            url: req.url,
-                            origin: req.get("Origin"),
-                            referer: req.get("Referer"),
-                            expectedHost: host,
-                        });
-                        res.status(403).send("Invalid request");
-                        return;
-                    }
                 }
 
                 // Always clear the nonce cookie
