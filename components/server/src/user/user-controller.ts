@@ -9,7 +9,7 @@ import { inject, injectable } from "inversify";
 import { OneTimeSecretDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib/user-db";
 import express from "express";
-import { Authenticator } from "../auth/authenticator";
+import { Authenticator, validateAuthorizeReturnToUrl, validateLoginReturnToUrl } from "../auth/authenticator";
 import { Config } from "../config";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AuthorizationService } from "./authorization-service";
@@ -235,7 +235,7 @@ export class UserController {
                 res.sendStatus(403);
                 return;
             }
-            this.ensureSafeReturnToParam(req);
+            this.ensureSafeReturnToParamForAuthorize(req);
             this.authenticator.authorize(req, res, next).catch((err) => log.error("authenticator.authorize", err));
         });
         router.get("/deauthorize", (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -247,7 +247,7 @@ export class UserController {
                 res.sendStatus(403);
                 return;
             }
-            this.ensureSafeReturnToParam(req);
+            this.ensureSafeReturnToParamForAuthorize(req);
             this.authenticator.deauthorize(req, res, next).catch((err) => log.error("authenticator.deauthorize", err));
         });
         router.get("/logout", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -607,9 +607,25 @@ export class UserController {
         req.query.returnTo = this.getSafeReturnToParam(req);
     }
 
-    protected urlStartsWith(url: string, prefixUrl: string): boolean {
-        prefixUrl += prefixUrl.endsWith("/") ? "" : "/";
-        return url.toLowerCase().startsWith(prefixUrl.toLowerCase());
+    protected ensureSafeReturnToParamForAuthorize(req: express.Request) {
+        req.query.returnTo = this.getSafeReturnToParamForAuthorize(req);
+    }
+
+    protected getSafeReturnToParamForAuthorize(req: express.Request) {
+        // @ts-ignore Type 'ParsedQs' is not assignable
+        const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
+        if (!returnToURL) {
+            log.debug("Empty redirect URL");
+            return;
+        }
+
+        // Use strict validation against allowlist of legitimate patterns for login flows
+        if (validateAuthorizeReturnToUrl(returnToURL, this.config.hostUrl)) {
+            return returnToURL;
+        }
+
+        log.debug("The redirect URL does not match allowlist", { query: new TrustedValue(req.query).value });
+        return;
     }
 
     protected getSafeReturnToParam(req: express.Request) {
@@ -620,14 +636,12 @@ export class UserController {
             return;
         }
 
-        if (
-            this.urlStartsWith(returnToURL, this.config.hostUrl.toString()) ||
-            this.urlStartsWith(returnToURL, "https://www.gitpod.io")
-        ) {
+        // Use strict validation against allowlist of legitimate patterns for login flows
+        if (validateLoginReturnToUrl(returnToURL, this.config.hostUrl)) {
             return returnToURL;
         }
 
-        log.debug("The redirect URL does not match", { query: new TrustedValue(req.query).value });
+        log.debug("The redirect URL does not match allowlist", { query: new TrustedValue(req.query).value });
         return;
     }
 

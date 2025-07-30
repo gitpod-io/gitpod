@@ -7,6 +7,7 @@
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import express from "express";
 import { inject, injectable, postConstruct } from "inversify";
 import passport from "passport";
@@ -20,6 +21,82 @@ import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
 import { NonceService } from "./nonce-service";
 import { ensureUrlHasFragment } from "./fragment-utils";
+
+/**
+ * Common validation logic for returnTo URLs.
+ * @param returnTo The URL to validate
+ * @param hostUrl The host URL configuration
+ * @param allowedPatterns Array of regex patterns that are allowed for the pathname
+ * @returns true if the URL is valid, false otherwise
+ */
+function validateReturnToUrlWithPatterns(returnTo: string, hostUrl: GitpodHostUrl, allowedPatterns: RegExp[]): boolean {
+    try {
+        const url = new URL(returnTo);
+        const baseUrl = hostUrl.url;
+
+        // Must be same origin OR www.gitpod.io exception
+        const isSameOrigin = url.origin === baseUrl.origin;
+        const isGitpodWebsite = url.protocol === "https:" && url.hostname === "www.gitpod.io";
+
+        if (!isSameOrigin && !isGitpodWebsite) {
+            return false;
+        }
+
+        // For www.gitpod.io, only allow root path
+        if (isGitpodWebsite) {
+            return url.pathname === "/";
+        }
+
+        // Check if pathname matches any allowed pattern
+        const isAllowedPath = allowedPatterns.some((pattern) => pattern.test(url.pathname));
+        if (!isAllowedPath) {
+            return false;
+        }
+
+        // For complete-auth, require ONLY message parameter (used by OAuth flows)
+        if (url.pathname === "/complete-auth") {
+            const searchParams = new URLSearchParams(url.search);
+            const paramKeys = Array.from(searchParams.keys());
+            return paramKeys.length === 1 && paramKeys[0] === "message" && searchParams.has("message");
+        }
+
+        return true;
+    } catch (error) {
+        // Invalid URL
+        return false;
+    }
+}
+
+/**
+ * Validates returnTo URLs for login API endpoints.
+ * Login API allows broader navigation after authentication.
+ */
+export function validateLoginReturnToUrl(returnTo: string, hostUrl: GitpodHostUrl): boolean {
+    const allowedPatterns = [
+        // We have already verified the domain above, and we do not restrict the redirect location for loginReturnToUrl.
+        /^\/.*$/,
+    ];
+
+    return validateReturnToUrlWithPatterns(returnTo, hostUrl, allowedPatterns);
+}
+
+/**
+ * Validates returnTo URLs for authorize API endpoints.
+ * Authorize API allows complete-auth callbacks and dashboard pages for scope elevation.
+ */
+export function validateAuthorizeReturnToUrl(returnTo: string, hostUrl: GitpodHostUrl): boolean {
+    const allowedPatterns = [
+        // 1. complete-auth callback for OAuth popup windows
+        /^\/complete-auth$/,
+
+        // 2. Dashboard pages (for scope elevation flows)
+        /^\/$/, // Root
+        /^\/new$/, // Create workspace page
+        /^\/quickstart$/, // Quickstart page
+    ];
+
+    return validateReturnToUrlWithPatterns(returnTo, hostUrl, allowedPatterns);
+}
 
 @injectable()
 export class Authenticator {
@@ -192,6 +269,13 @@ export class Authenticator {
         let returnToParam: string | undefined = req.query.returnTo?.toString();
         if (returnToParam) {
             log.info(`Stored returnTo URL: ${returnToParam}`, { "login-flow": true });
+
+            // Validate returnTo URL against allowlist for login API
+            if (!validateLoginReturnToUrl(returnToParam, this.config.hostUrl)) {
+                log.warn(`Invalid returnTo URL rejected for login: ${returnToParam}`, { "login-flow": true });
+                res.redirect(this.getSorryUrl(`Invalid return URL.`));
+                return;
+            }
         }
         // returnTo defaults to workspaces url
         const workspaceUrl = this.config.hostUrl.asDashboard().toString();
@@ -303,6 +387,13 @@ export class Authenticator {
         if (!returnToParam || !host || !authProvider) {
             log.info(`Bad request: missing parameters.`, { "authorize-flow": true });
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
+            return;
+        }
+
+        // Validate returnTo URL against allowlist for authorize API
+        if (!validateAuthorizeReturnToUrl(returnToParam, this.config.hostUrl)) {
+            log.warn(`Invalid returnTo URL rejected for authorize: ${returnToParam}`, { "authorize-flow": true });
+            res.redirect(this.getSorryUrl(`Invalid return URL.`));
             return;
         }
 
