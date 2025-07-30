@@ -191,10 +191,12 @@ export function validateReturnToUrlWithPatterns(
             return url.pathname === "/";
         }
 
-        // Check if pathname matches any allowed pattern
-        const isAllowedPath = allowedPatterns.some((pattern) => pattern.test(url.pathname));
-        if (!isAllowedPath) {
-            return false;
+        if (allowedPatterns && allowedPatterns.length != 0) {
+            // Check if pathname matches any allowed pattern
+            const isAllowedPath = allowedPatterns.some((pattern) => pattern.test(url.pathname));
+            if (!isAllowedPath) {
+                return false;
+            }
         }
 
         // For complete-auth, require ONLY message parameter (used by OAuth flows)
