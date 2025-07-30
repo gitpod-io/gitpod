@@ -9,6 +9,7 @@ import express from "express";
 import * as crypto from "crypto";
 import { IncomingHttpHeaders } from "http";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
+import { ensureUrlHasFragment } from "./auth/fragment-utils";
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
@@ -235,4 +236,25 @@ export function validateAuthorizeReturnToUrl(returnTo: string, hostUrl: GitpodHo
     ];
 
     return validateReturnToUrlWithPatterns(returnTo, hostUrl, allowedPatterns);
+}
+
+/**
+ * Safe redirect wrapper that automatically ensures URLs have fragments to prevent
+ * OAuth token inheritance attacks.
+ *
+ * When OAuth providers redirect with tokens in URL fragments, browsers inherit
+ * fragments from the current page if the target URL doesn't have one. This wrapper
+ * automatically applies fragment protection to all redirects.
+ *
+ * @param res Express response object
+ * @param url URL to redirect to
+ * @param status Optional HTTP status code (default: 302)
+ */
+export function safeRedirect(res: express.Response, url: string, status?: number): void {
+    const protectedUrl = ensureUrlHasFragment(url);
+    if (status) {
+        res.redirect(status, protectedUrl);
+    } else {
+        res.redirect(protectedUrl);
+    }
 }

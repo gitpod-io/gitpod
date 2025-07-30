@@ -17,7 +17,12 @@ import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
 import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import { SessionHandler } from "../session-handler";
 import { URL } from "url";
-import { getRequestingClientInfo, validateAuthorizeReturnToUrl, validateLoginReturnToUrl } from "../express-util";
+import {
+    getRequestingClientInfo,
+    validateAuthorizeReturnToUrl,
+    validateLoginReturnToUrl,
+    safeRedirect,
+} from "../express-util";
 import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
@@ -66,7 +71,7 @@ export class UserController {
                 log.info("(Auth) User is already authenticated.", { "login-flow": true });
                 // redirect immediately
                 const redirectTo = this.getSafeReturnToParam(req) || this.config.hostUrl.asDashboard().toString();
-                res.redirect(redirectTo);
+                safeRedirect(res, redirectTo);
                 return;
             }
             const clientInfo = getRequestingClientInfo(req);
@@ -85,7 +90,7 @@ export class UserController {
                 const search = returnTo ? `returnTo=${returnTo}` : "";
                 const loginPageUrl = this.config.hostUrl.asLogin().with({ search }).toString();
                 log.info(`Redirecting to login ${loginPageUrl}`);
-                res.redirect(loginPageUrl);
+                safeRedirect(res, loginPageUrl);
                 return;
             }
 
@@ -185,12 +190,12 @@ export class UserController {
                 // Redirect the admin-user to the Org Settings page.
                 // The dashboard is expected to render the Onboading flow instead of the regular view,
                 // but if the browser is reloaded after completion of the flow, it should be fine to see the settings.
-                res.redirect("/settings", 307);
+                safeRedirect(res, "/settings", 307);
             } catch (e) {
                 log.error("Failed to sign-in as admin with OTS Token", e);
 
                 // Always redirect to an expired token page if there's an error
-                res.redirect("/error/expired-ots", 307);
+                safeRedirect(res, "/error/expired-ots", 307);
                 return;
             }
         });
@@ -218,7 +223,7 @@ export class UserController {
                 const returnTo = this.getSafeReturnToParam(req);
                 if (returnTo) {
                     log.info(`Redirecting after OTS login ${returnTo}`);
-                    res.redirect(returnTo);
+                    safeRedirect(res, returnTo);
                     return;
                 }
 
@@ -282,7 +287,7 @@ export class UserController {
 
             // then redirect
             log.info(logContext, "(Logout) Redirecting...", { redirectToUrl, ...logPayload });
-            res.redirect(redirectToUrl);
+            safeRedirect(res, redirectToUrl);
         });
 
         router.get("/auth/jwt-cookie", this.sessionHandler.jwtSessionConvertor());
@@ -504,7 +509,7 @@ export class UserController {
                     otsExpirationTime.setMinutes(otsExpirationTime.getMinutes() + 2);
                     const ots = await this.otsServer.serve({}, token, otsExpirationTime);
 
-                    res.redirect(`http://${rt}/?ots=${encodeURI(ots.url)}`);
+                    safeRedirect(res, `http://${rt}/?ots=${encodeURI(ots.url)}`);
                 },
             );
         }

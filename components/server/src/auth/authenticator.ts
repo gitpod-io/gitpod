@@ -19,9 +19,8 @@ import { AuthFlow, AuthProvider } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
 import { NonceService } from "./nonce-service";
-import { ensureUrlHasFragment } from "./fragment-utils";
 import { getFeatureFlagEnableNonceValidation, getFeatureFlagEnableStrictAuthorizeReturnTo } from "../util/featureflags";
-import { validateLoginReturnToUrl, validateAuthorizeReturnToUrl } from "../express-util";
+import { validateLoginReturnToUrl, validateAuthorizeReturnToUrl, safeRedirect } from "../express-util";
 
 @injectable()
 export class Authenticator {
@@ -94,7 +93,7 @@ export class Authenticator {
                         pathname: req.path,
                         search: new URL(req.url, this.config.hostUrl.url).search,
                     });
-                    res.redirect(baseUrl.toString());
+                    safeRedirect(res, baseUrl.toString());
                     return;
                 }
 
@@ -190,21 +189,20 @@ export class Authenticator {
             // Validate returnTo URL against allowlist for login API
             if (!validateLoginReturnToUrl(returnToParam, this.config.hostUrl)) {
                 log.warn(`Invalid returnTo URL rejected for login: ${returnToParam}`, { "login-flow": true });
-                res.redirect(this.getSorryUrl(`Invalid return URL.`));
+                safeRedirect(res, this.getSorryUrl(`Invalid return URL.`));
                 return;
             }
         }
         // returnTo defaults to workspaces url
         const workspaceUrl = this.config.hostUrl.asDashboard().toString();
         returnToParam = returnToParam || workspaceUrl;
-        // Ensure returnTo URL has a fragment to prevent OAuth token inheritance attacks
-        const returnTo = ensureUrlHasFragment(returnToParam);
+        const returnTo = returnToParam;
 
         const host: string = req.query.host?.toString() || "";
         const authProvider = host && (await this.getAuthProviderForHost(host));
         if (!host || !authProvider) {
             log.info(`Bad request: missing parameters.`, { "login-flow": true });
-            res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
+            safeRedirect(res, this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
         // Logins with organizational Git Auth is not permitted
@@ -213,12 +211,12 @@ export class Authenticator {
                 "authorize-flow": true,
                 ap: authProvider.info,
             });
-            res.redirect(this.getSorryUrl(`Login with "${host}" is not permitted.`));
+            safeRedirect(res, this.getSorryUrl(`Login with "${host}" is not permitted.`));
             return;
         }
         if (this.config.disableDynamicAuthProviderLogin && !authProvider.params.builtin) {
             log.info(`Auth Provider is not allowed.`, { ap: authProvider.info });
-            res.redirect(this.getSorryUrl(`Login with ${authProvider.params.host} is not allowed.`));
+            safeRedirect(res, this.getSorryUrl(`Login with ${authProvider.params.host} is not allowed.`));
             return;
         }
 
@@ -228,7 +226,7 @@ export class Authenticator {
                 "login-flow": true,
                 ap: authProvider.info,
             });
-            res.redirect(this.getSorryUrl(`Login with "${host}" is not permitted.`));
+            safeRedirect(res, this.getSorryUrl(`Login with "${host}" is not permitted.`));
             return;
         }
 
@@ -250,7 +248,7 @@ export class Authenticator {
         const user = req.user;
         if (!req.isAuthenticated() || !User.is(user)) {
             log.info(`User is not authenticated.`);
-            res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
+            safeRedirect(res, this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
         const returnTo: string = req.query.returnTo?.toString() || this.config.hostUrl.asDashboard().toString();
@@ -260,20 +258,21 @@ export class Authenticator {
 
         if (!host || !authProvider) {
             log.warn(`Bad request: missing parameters.`);
-            res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
+            safeRedirect(res, this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
 
         try {
             await this.userAuthentication.deauthorize(user, authProvider.authProviderId);
-            res.redirect(returnTo);
+            safeRedirect(res, returnTo);
         } catch (error) {
             next(error);
             log.error(`Failed to disconnect a provider.`, error, {
                 host,
                 userId: user.id,
             });
-            res.redirect(
+            safeRedirect(
+                res,
                 this.getSorryUrl(
                     `Failed to disconnect a provider: ${error && error.message ? error.message : "unknown reason"}`,
                 ),
@@ -285,12 +284,13 @@ export class Authenticator {
         const user = req.user;
         if (!req.isAuthenticated() || !User.is(user)) {
             log.info(`User is not authenticated.`, { "authorize-flow": true });
-            res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
+            safeRedirect(res, this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
         if (user.id === BUILTIN_INSTLLATION_ADMIN_USER_ID) {
             log.info(`Authorization is not permitted for admin user.`);
-            res.redirect(
+            safeRedirect(
+                res,
                 this.getSorryUrl(`Authorization is not permitted for admin user. Please login with a user account.`),
             );
             return;
@@ -303,7 +303,7 @@ export class Authenticator {
 
         if (!returnToParam || !host || !authProvider) {
             log.info(`Bad request: missing parameters.`, { "authorize-flow": true });
-            res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
+            safeRedirect(res, this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
 
@@ -319,12 +319,11 @@ export class Authenticator {
                 "authorize-flow": true,
                 strictValidation: isStrictAuthorizeValidationEnabled,
             });
-            res.redirect(this.getSorryUrl(`Invalid return URL.`));
+            safeRedirect(res, this.getSorryUrl(`Invalid return URL.`));
             return;
         }
 
-        // Ensure returnTo URL has a fragment to prevent OAuth token inheritance attacks
-        const returnTo = ensureUrlHasFragment(returnToParam);
+        const returnTo = returnToParam;
 
         // For non-verified org auth provider, ensure user is an owner of the org
         if (!authProvider.info.verified && authProvider.info.organizationId) {
@@ -334,7 +333,7 @@ export class Authenticator {
                     "authorize-flow": true,
                     ap: authProvider.info,
                 });
-                res.redirect(this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
+                safeRedirect(res, this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
                 return;
             }
         }
@@ -345,7 +344,7 @@ export class Authenticator {
                 "authorize-flow": true,
                 ap: authProvider.info,
             });
-            res.redirect(this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
+            safeRedirect(res, this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
             return;
         }
 
@@ -357,7 +356,7 @@ export class Authenticator {
                     "authorize-flow": true,
                     ap: authProvider.info,
                 });
-                res.redirect(this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
+                safeRedirect(res, this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
                 return;
             }
         }
@@ -411,6 +410,6 @@ export class Authenticator {
         return [];
     }
     private getSorryUrl(message: string) {
-        return ensureUrlHasFragment(this.config.hostUrl.asSorry(message).toString());
+        return this.config.hostUrl.asSorry(message).toString();
     }
 }
