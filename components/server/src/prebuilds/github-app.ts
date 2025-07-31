@@ -21,7 +21,7 @@ import {
 } from "@gitpod/gitpod-db/lib";
 import express from "express";
 import { log, LogContext, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { safeRedirect } from "../express-util";
+import { safeFragmentRedirect } from "../express-util";
 import {
     WorkspaceConfig,
     User,
@@ -112,7 +112,7 @@ export class GithubApp {
             options
                 .getRouter("/pbs")
                 .get("/*", (req: express.Request, res: express.Response, next: express.NextFunction) => {
-                    safeRedirect(res, this.getBadgeImageURL(), 301);
+                    safeFragmentRedirect(res, this.getBadgeImageURL(), 301);
                 });
 
         app.on("installation.created", (ctx: Context<"installation.created">) => {
@@ -191,7 +191,7 @@ export class GithubApp {
                         const slug = data.data.slug;
 
                         const state = req.query.state;
-                        safeRedirect(res, `https://github.com/apps/${slug}/installations/new?state=${state}`);
+                        safeFragmentRedirect(res, `https://github.com/apps/${slug}/installations/new?state=${state}`);
                     } catch (error) {
                         console.error(error, { error });
                         res.status(500).send("GitHub App is not configured.");
@@ -214,12 +214,12 @@ export class GithubApp {
                                 "message=payload:" + Buffer.from(JSON.stringify(payload), "utf-8").toString("base64"),
                         })
                         .toString();
-                    safeRedirect(res, url);
+                    safeFragmentRedirect(res, url);
                 } else {
                     const url = this.config.hostUrl
                         .with({ pathname: "install-github-app", search: `installation_id=${installationId}` })
                         .toString();
-                    safeRedirect(res, url);
+                    safeFragmentRedirect(res, url);
                 }
             });
     }

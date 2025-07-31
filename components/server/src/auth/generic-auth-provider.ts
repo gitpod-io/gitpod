@@ -23,7 +23,7 @@ import {
     UnconfirmedUserException,
 } from "../auth/errors";
 import { Config } from "../config";
-import { getRequestingClientInfo, safeRedirect } from "../express-util";
+import { getRequestingClientInfo, safeFragmentRedirect } from "../express-util";
 import { TokenProvider } from "../user/token-provider";
 import { UserAuthentication } from "../user/user-authentication";
 import { AuthProviderService } from "./auth-provider-service";
@@ -287,7 +287,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
         const state = request.query.state;
         if (!state) {
             log.error(cxt, `(${strategyName}) No state present on callback request.`, { clientInfo });
-            safeRedirect(
+            safeFragmentRedirect(
                 response,
                 this.getSorryUrl(`No state was present on the authentication callback. Please try again.`),
             );
@@ -299,7 +299,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
             log.error(`(${strategyName}) Auth flow state is missing.`);
 
             reportLoginCompleted("failed", "git");
-            safeRedirect(response, this.getSorryUrl(`Auth flow state is missing.`));
+            safeFragmentRedirect(response, this.getSorryUrl(`Auth flow state is missing.`));
             return;
         }
 
@@ -310,7 +310,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     `(${strategyName}) User is already logged in. No auth info provided. Redirecting to dashboard.`,
                     { clientInfo },
                 );
-                safeRedirect(response, this.config.hostUrl.asDashboard().toString());
+                safeFragmentRedirect(response, this.config.hostUrl.asDashboard().toString());
                 return;
             }
         }
@@ -321,7 +321,10 @@ export abstract class GenericAuthProvider implements AuthProvider {
             reportLoginCompleted("failed_client", "git");
 
             log.error(cxt, `(${strategyName}) No session found during auth callback.`, { clientInfo });
-            safeRedirect(response, this.getSorryUrl(`Please allow Cookies in your browser and try to log in again.`));
+            safeFragmentRedirect(
+                response,
+                this.getSorryUrl(`Please allow Cookies in your browser and try to log in again.`),
+            );
             return;
         }
 
@@ -329,7 +332,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
             reportLoginCompleted("failed", "git");
 
             log.error(cxt, `(${strategyName}) Host does not match.`, { clientInfo });
-            safeRedirect(response, this.getSorryUrl(`Host does not match.`));
+            safeFragmentRedirect(response, this.getSorryUrl(`Host does not match.`));
             return;
         }
 
@@ -360,7 +363,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 authenticate(request, response, next);
             });
         } catch (error) {
-            safeRedirect(response, this.getSorryUrl(`OAuth2 error. (${error})`));
+            safeFragmentRedirect(response, this.getSorryUrl(`OAuth2 error. (${error})`));
             return;
         }
         const [err, userOrIdentity, flowContext] = result;
@@ -472,7 +475,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     );
 
                     const { returnTo } = authFlow;
-                    safeRedirect(response, returnTo);
+                    safeFragmentRedirect(response, returnTo);
                     return;
                 } else {
                     // Complete login into an existing account
@@ -537,7 +540,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 search: "message=error:" + Buffer.from(JSON.stringify(error), "utf-8").toString("base64"),
             })
             .toString();
-        safeRedirect(response, url);
+        safeFragmentRedirect(response, url);
     }
 
     /**

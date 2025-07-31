@@ -15,7 +15,7 @@ import {
     WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { safeRedirect } from "../express-util";
+import { safeFragmentRedirect } from "../express-util";
 import {
     CompositeResourceAccessGuard,
     OwnerResourceGuard,
@@ -253,7 +253,7 @@ export class HeadlessLogController {
                             );
                         });
                         if (redirect) {
-                            safeRedirect(res, redirect.taskUrl, 302);
+                            safeFragmentRedirect(res, redirect.taskUrl, 302);
                             return;
                         }
 

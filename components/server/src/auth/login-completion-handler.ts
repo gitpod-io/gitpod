@@ -16,7 +16,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
 import { SessionHandler } from "../session-handler";
 import { AuthJWT } from "./jwt";
-import { safeRedirect } from "../express-util";
+import { safeFragmentRedirect } from "../express-util";
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -50,7 +50,10 @@ export class LoginCompletionHandler {
         } catch (err) {
             reportLoginCompleted("failed", "git");
             log.error(logContext, `Failed to login user. Redirecting to /sorry on login.`, err);
-            safeRedirect(response, this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
+            safeFragmentRedirect(
+                response,
+                this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString(),
+            );
             return;
         }
 
@@ -89,7 +92,7 @@ export class LoginCompletionHandler {
 
         log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`);
         reportLoginCompleted("succeeded", "git");
-        safeRedirect(response, returnTo);
+        safeFragmentRedirect(response, returnTo);
     }
 
     public async updateAuthProviderAsVerified(hostname: string, user: User) {

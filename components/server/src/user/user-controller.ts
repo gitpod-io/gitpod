@@ -21,7 +21,8 @@ import {
     getRequestingClientInfo,
     validateAuthorizeReturnToUrl,
     validateLoginReturnToUrl,
-    safeRedirect,
+    safeFragmentRedirect,
+    getSafeReturnToParam,
 } from "../express-util";
 import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
@@ -42,7 +43,6 @@ import { UserService } from "./user-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
-import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -70,8 +70,8 @@ export class UserController {
             if (req.isAuthenticated()) {
                 log.info("(Auth) User is already authenticated.", { "login-flow": true });
                 // redirect immediately
-                const redirectTo = this.getSafeReturnToParam(req) || this.config.hostUrl.asDashboard().toString();
-                safeRedirect(res, redirectTo);
+                const redirectTo = this.ensureSafeReturnToParam(req) || this.config.hostUrl.asDashboard().toString();
+                safeFragmentRedirect(res, redirectTo);
                 return;
             }
             const clientInfo = getRequestingClientInfo(req);
@@ -86,11 +86,11 @@ export class UserController {
             // If there is no known auth host, we need to ask the user
             const redirectToLoginPage = !req.query.host;
             if (redirectToLoginPage) {
-                const returnTo = this.getSafeReturnToParam(req);
+                const returnTo = this.ensureSafeReturnToParam(req);
                 const search = returnTo ? `returnTo=${returnTo}` : "";
                 const loginPageUrl = this.config.hostUrl.asLogin().with({ search }).toString();
                 log.info(`Redirecting to login ${loginPageUrl}`);
-                safeRedirect(res, loginPageUrl);
+                safeFragmentRedirect(res, loginPageUrl);
                 return;
             }
 
@@ -190,12 +190,12 @@ export class UserController {
                 // Redirect the admin-user to the Org Settings page.
                 // The dashboard is expected to render the Onboading flow instead of the regular view,
                 // but if the browser is reloaded after completion of the flow, it should be fine to see the settings.
-                safeRedirect(res, "/settings", 307);
+                safeFragmentRedirect(res, "/settings", 307);
             } catch (e) {
                 log.error("Failed to sign-in as admin with OTS Token", e);
 
                 // Always redirect to an expired token page if there's an error
-                safeRedirect(res, "/error/expired-ots", 307);
+                safeFragmentRedirect(res, "/error/expired-ots", 307);
                 return;
             }
         });
@@ -220,10 +220,10 @@ export class UserController {
                 reportJWTCookieIssued();
 
                 // If returnTo was passed and it's safe, redirect to it
-                const returnTo = this.getSafeReturnToParam(req);
+                const returnTo = this.ensureSafeReturnToParam(req);
                 if (returnTo) {
                     log.info(`Redirecting after OTS login ${returnTo}`);
-                    safeRedirect(res, returnTo);
+                    safeFragmentRedirect(res, returnTo);
                     return;
                 }
 
@@ -276,7 +276,7 @@ export class UserController {
                 });
             }
 
-            const redirectToUrl = this.getSafeReturnToParam(req) || this.config.hostUrl.toString();
+            const redirectToUrl = this.ensureSafeReturnToParam(req) || this.config.hostUrl.toString();
 
             if (req.isAuthenticated()) {
                 req.logout();
@@ -287,7 +287,7 @@ export class UserController {
 
             // then redirect
             log.info(logContext, "(Logout) Redirecting...", { redirectToUrl, ...logPayload });
-            safeRedirect(res, redirectToUrl);
+            safeFragmentRedirect(res, redirectToUrl);
         });
 
         router.get("/auth/jwt-cookie", this.sessionHandler.jwtSessionConvertor());
@@ -509,7 +509,7 @@ export class UserController {
                     otsExpirationTime.setMinutes(otsExpirationTime.getMinutes() + 2);
                     const ots = await this.otsServer.serve({}, token, otsExpirationTime);
 
-                    safeRedirect(res, `http://${rt}/?ots=${encodeURI(ots.url)}`);
+                    safeFragmentRedirect(res, `http://${rt}/?ots=${encodeURI(ots.url)}`);
                 },
             );
         }
@@ -566,7 +566,7 @@ export class UserController {
     }
 
     protected async augmentLoginRequest(req: express.Request) {
-        const returnToURL = this.getSafeReturnToParam(req);
+        const returnToURL = this.ensureSafeReturnToParam(req);
         if (req.query.host) {
             // This login request points already to an auth host
             return;
@@ -608,46 +608,16 @@ export class UserController {
         }
     }
 
-    protected ensureSafeReturnToParam(req: express.Request) {
-        req.query.returnTo = this.getSafeReturnToParam(req);
+    protected ensureSafeReturnToParam(req: express.Request): string | undefined {
+        const returnTo = getSafeReturnToParam(req, (url) => validateLoginReturnToUrl(url, this.config.hostUrl));
+        req.query.returnTo = returnTo;
+        return returnTo;
     }
 
-    protected ensureSafeReturnToParamForAuthorize(req: express.Request) {
-        req.query.returnTo = this.getSafeReturnToParamForAuthorize(req);
-    }
-
-    protected getSafeReturnToParamForAuthorize(req: express.Request) {
-        // @ts-ignore Type 'ParsedQs' is not assignable
-        const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
-        if (!returnToURL) {
-            log.debug("Empty redirect URL");
-            return;
-        }
-
-        // Use strict validation against allowlist of legitimate patterns for login flows
-        if (validateAuthorizeReturnToUrl(returnToURL, this.config.hostUrl)) {
-            return returnToURL;
-        }
-
-        log.debug("The redirect URL does not match allowlist", { query: new TrustedValue(req.query).value });
-        return;
-    }
-
-    protected getSafeReturnToParam(req: express.Request) {
-        // @ts-ignore Type 'ParsedQs' is not assignable
-        const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
-        if (!returnToURL) {
-            log.debug("Empty redirect URL");
-            return;
-        }
-
-        // Use strict validation against allowlist of legitimate patterns for login flows
-        if (validateLoginReturnToUrl(returnToURL, this.config.hostUrl)) {
-            return returnToURL;
-        }
-
-        log.debug("The redirect URL does not match allowlist", { query: new TrustedValue(req.query).value });
-        return;
+    protected ensureSafeReturnToParamForAuthorize(req: express.Request): string | undefined {
+        const returnTo = getSafeReturnToParam(req, (url) => validateAuthorizeReturnToUrl(url, this.config.hostUrl));
+        req.query.returnTo = returnTo;
+        return returnTo;
     }
 
     private createGitpodServer(user: User, resourceGuard: ResourceAccessGuard) {

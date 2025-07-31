@@ -10,6 +10,8 @@ import * as crypto from "crypto";
 import { IncomingHttpHeaders } from "http";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { ensureUrlHasFragment } from "./auth/fragment-utils";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
@@ -169,14 +171,14 @@ export function toClientHeaderFields(expressReq: express.Request): ClientHeaderF
  * @param allowedPatterns Array of regex patterns that are allowed for the pathname
  * @returns true if the URL is valid, false otherwise
  */
-export function validateReturnToUrlWithPatterns(
+function validateReturnToUrlWithPatterns(
     returnTo: string,
-    hostUrl: GitpodHostUrl,
-    allowedPatterns: RegExp[],
+    allowedBaseUrl: GitpodHostUrl,
+    allowedPatterns?: RegExp[],
 ): boolean {
     try {
         const url = new URL(returnTo);
-        const baseUrl = hostUrl.url;
+        const baseUrl = allowedBaseUrl.url;
 
         // Must be same origin OR www.gitpod.io exception
         const isSameOrigin = url.origin === baseUrl.origin;
@@ -191,7 +193,7 @@ export function validateReturnToUrlWithPatterns(
             return url.pathname === "/";
         }
 
-        if (allowedPatterns && allowedPatterns.length != 0) {
+        if (allowedPatterns !== undefined) {
             // Check if pathname matches any allowed pattern
             const isAllowedPath = allowedPatterns.some((pattern) => pattern.test(url.pathname));
             if (!isAllowedPath) {
@@ -218,8 +220,8 @@ export function validateReturnToUrlWithPatterns(
  * Login API allows broader navigation after authentication.
  */
 export function validateLoginReturnToUrl(returnTo: string, hostUrl: GitpodHostUrl): boolean {
-    // We have already verified the domain above, and we do not restrict the redirect location for loginReturnToUrl.
-    return validateReturnToUrlWithPatterns(returnTo, hostUrl, []);
+    // We just verify the domain
+    return validateReturnToUrlWithPatterns(returnTo, hostUrl, undefined);
 }
 
 /**
@@ -240,6 +242,21 @@ export function validateAuthorizeReturnToUrl(returnTo: string, hostUrl: GitpodHo
     return validateReturnToUrlWithPatterns(returnTo, hostUrl, allowedPatterns);
 }
 
+export function getSafeReturnToParam(req: express.Request, validator: (url: string) => boolean): string | undefined {
+    // @ts-ignore Type 'ParsedQs' is not assignable
+    const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
+    if (!returnToURL) {
+        return;
+    }
+
+    if (!validator(returnToURL)) {
+        log.debug("The redirect URL does not match allowed patterns", { query: new TrustedValue(req.query).value });
+        return;
+    }
+
+    return returnToURL;
+}
+
 /**
  * Safe redirect wrapper that automatically ensures URLs have fragments to prevent
  * OAuth token inheritance attacks.
@@ -252,7 +269,7 @@ export function validateAuthorizeReturnToUrl(returnTo: string, hostUrl: GitpodHo
  * @param url URL to redirect to
  * @param status Optional HTTP status code (default: 302)
  */
-export function safeRedirect(res: express.Response, url: string, status?: number): void {
+export function safeFragmentRedirect(res: express.Response, url: string, status?: number): void {
     const protectedUrl = ensureUrlHasFragment(url);
     if (status) {
         res.redirect(status, protectedUrl);
