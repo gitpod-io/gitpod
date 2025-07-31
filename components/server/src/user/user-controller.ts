@@ -43,6 +43,7 @@ import { UserService } from "./user-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { getFeatureFlagEnableStrictAuthorizeReturnTo } from "../util/featureflags";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -240,8 +241,16 @@ export class UserController {
                 res.sendStatus(403);
                 return;
             }
-            this.ensureSafeReturnToParamForAuthorize(req);
-            this.authenticator.authorize(req, res, next).catch((err) => log.error("authenticator.authorize", err));
+            this.ensureSafeReturnToParam(req);
+            this.ensureSafeReturnToParamForAuthorize(req)
+                .then(() => {
+                    this.authenticator
+                        .authorize(req, res, next)
+                        .catch((err) => log.error("authenticator.authorize", err));
+                })
+                .catch((err) => {
+                    log.error("authenticator.authorize", err);
+                });
         });
         router.get("/deauthorize", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (!User.is(req.user)) {
@@ -252,8 +261,16 @@ export class UserController {
                 res.sendStatus(403);
                 return;
             }
-            this.ensureSafeReturnToParamForAuthorize(req);
-            this.authenticator.deauthorize(req, res, next).catch((err) => log.error("authenticator.deauthorize", err));
+            this.ensureSafeReturnToParam(req);
+            this.ensureSafeReturnToParamForAuthorize(req)
+                .then(() => {
+                    this.authenticator
+                        .deauthorize(req, res, next)
+                        .catch((err) => log.error("authenticator.deauthorize", err));
+                })
+                .catch((err) => {
+                    log.error("authenticator.deauthorize", err);
+                });
         });
         router.get("/logout", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             const logContext = LogContext.from({ user: req.user, request: req });
@@ -614,8 +631,20 @@ export class UserController {
         return returnTo;
     }
 
-    protected ensureSafeReturnToParamForAuthorize(req: express.Request): string | undefined {
-        const returnTo = getSafeReturnToParam(req, (url) => validateAuthorizeReturnToUrl(url, this.config.hostUrl));
+    // TODO(gpl): Once we drop the feature flag, turn into the same form as above method.
+    protected async ensureSafeReturnToParamForAuthorize(req: express.Request): Promise<string | undefined> {
+        let returnTo = getSafeReturnToParam(req);
+        if (returnTo) {
+            const isStrictAuthorizeValidationEnabled = await getFeatureFlagEnableStrictAuthorizeReturnTo();
+            if (isStrictAuthorizeValidationEnabled) {
+                // Validate returnTo URL against allowlist for authorize API
+                if (!validateAuthorizeReturnToUrl(returnTo, this.config.hostUrl)) {
+                    log.warn(`Invalid returnTo URL rejected for authorize: ${returnTo}`, { "login-flow": true });
+                    returnTo = undefined;
+                }
+            }
+        }
+
         req.query.returnTo = returnTo;
         return returnTo;
     }

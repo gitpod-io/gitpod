@@ -185,14 +185,11 @@ export class Authenticator {
         let returnToParam: string | undefined = req.query.returnTo?.toString();
         if (returnToParam) {
             log.info(`Stored returnTo URL: ${returnToParam}`, { "login-flow": true });
-            const isStrictAuthorizeValidationEnabled = await getFeatureFlagEnableStrictAuthorizeReturnTo();
-            if (isStrictAuthorizeValidationEnabled) {
-                // Validate returnTo URL against allowlist for login API
-                if (!validateLoginReturnToUrl(returnToParam, this.config.hostUrl)) {
-                    log.warn(`Invalid returnTo URL rejected for login: ${returnToParam}`, { "login-flow": true });
-                    safeFragmentRedirect(res, this.getSorryUrl(`Invalid return URL.`));
-                    return;
-                }
+            // Validate returnTo URL against allowlist for login API
+            if (!validateLoginReturnToUrl(returnToParam, this.config.hostUrl)) {
+                log.warn(`Invalid returnTo URL rejected for login: ${returnToParam}`, { "login-flow": true });
+                safeFragmentRedirect(res, this.getSorryUrl(`Invalid return URL.`));
+                return;
             }
         }
         // returnTo defaults to workspaces url

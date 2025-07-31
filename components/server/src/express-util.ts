@@ -242,14 +242,14 @@ export function validateAuthorizeReturnToUrl(returnTo: string, hostUrl: GitpodHo
     return validateReturnToUrlWithPatterns(returnTo, hostUrl, allowedPatterns);
 }
 
-export function getSafeReturnToParam(req: express.Request, validator: (url: string) => boolean): string | undefined {
+export function getSafeReturnToParam(req: express.Request, validator?: (url: string) => boolean): string | undefined {
     // @ts-ignore Type 'ParsedQs' is not assignable
     const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
     if (!returnToURL) {
         return;
     }
 
-    if (!validator(returnToURL)) {
+    if (validator && !validator(returnToURL)) {
         log.debug("The redirect URL does not match allowed patterns", { query: new TrustedValue(req.query).value });
         return;
     }
