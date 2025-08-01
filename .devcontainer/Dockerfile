@@ -58,6 +58,9 @@ RUN yes | unminimize \
     pigz \
     ### MySQL client ###
     mysql-client \
+    ### Network tools ###
+    netcat-openbsd \
+    redis-tools \
     ### Cypress deps
     libgtk2.0-0 \
     libgtk-3-0 \
