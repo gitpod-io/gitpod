@@ -6,7 +6,6 @@
 
 import { inject, injectable } from "inversify";
 import express from "express";
-import * as crypto from "crypto";
 import { User } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
@@ -17,7 +16,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
 import { SessionHandler } from "../session-handler";
 import { AuthJWT } from "./jwt";
-import { OneTimeSecretServer } from "../one-time-secret-server";
+import { safeFragmentRedirect } from "../express-util";
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -30,7 +29,6 @@ export class LoginCompletionHandler {
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(AuthJWT) protected readonly authJWT: AuthJWT;
     @inject(SessionHandler) protected readonly session: SessionHandler;
-    @inject(OneTimeSecretServer) private readonly otsServer: OneTimeSecretServer;
 
     async complete(
         request: express.Request,
@@ -52,12 +50,17 @@ export class LoginCompletionHandler {
         } catch (err) {
             reportLoginCompleted("failed", "git");
             log.error(logContext, `Failed to login user. Redirecting to /sorry on login.`, err);
-            response.redirect(this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
+            safeFragmentRedirect(
+                response,
+                this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString(),
+            );
             return;
         }
 
         // Update session info
-        let returnTo = returnToUrl || this.config.hostUrl.asDashboard().toString();
+        const returnToParam = returnToUrl || this.config.hostUrl.asDashboard().toString();
+        let returnTo = returnToParam;
+
         if (elevateScopes) {
             const elevateScopesUrl = this.config.hostUrl
                 .withApi({
@@ -81,25 +84,6 @@ export class LoginCompletionHandler {
             );
         }
 
-        if (!this.isBaseDomain(request)) {
-            // (GitHub edge case) If we got redirected here onto a sub-domain (e.g. api.gitpod.io), we need to redirect to the base domain in order to Set-Cookie properly.
-            const secret = crypto
-                .createHash("sha256")
-                .update(user.id + this.config.session.secret)
-                .digest("hex");
-            const expirationDate = new Date(Date.now() + 1000 * 60); // 1 minutes
-            const token = await this.otsServer.serveToken({}, secret, expirationDate);
-
-            reportLoginCompleted("succeeded_via_ots", "git");
-            log.info(
-                logContext,
-                `User will be logged in via OTS on the base domain. (Indirect) redirect to: ${returnTo}`,
-            );
-            const baseDomainRedirect = this.config.hostUrl.asLoginWithOTS(user.id, token.token, returnTo).toString();
-            response.redirect(baseDomainRedirect);
-            return;
-        }
-
         // (default case) If we got redirected here onto the base domain of the Gitpod installation, we can just issue the cookie right away.
         const cookie = await this.session.createJWTSessionCookie(user.id);
         response.cookie(cookie.name, cookie.value, cookie.opts);
@@ -108,11 +92,7 @@ export class LoginCompletionHandler {
 
         log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`);
         reportLoginCompleted("succeeded", "git");
-        response.redirect(returnTo);
-    }
-
-    public isBaseDomain(req: express.Request): boolean {
-        return req.hostname === this.config.hostUrl.url.hostname;
+        safeFragmentRedirect(response, returnTo);
     }
 
     public async updateAuthProviderAsVerified(hostname: string, user: User) {

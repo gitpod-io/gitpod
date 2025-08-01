@@ -14,6 +14,7 @@ import express from "express";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { Config } from "../config";
+import { safeFragmentRedirect } from "../express-util";
 import { clientRepository, createAuthorizationServer } from "./oauth-authorization-server";
 import { inMemoryDatabase, toolboxClient } from "./db";
 import { getFeatureFlagEnableExperimentalJBTB } from "../util/featureflags";
@@ -28,7 +29,7 @@ export class OAuthController {
         if (!req.isAuthenticated() || !User.is(req.user)) {
             const returnToPath = encodeURIComponent(`/api${req.originalUrl}`);
             const redirectTo = `${this.config.hostUrl}login?returnToPath=${returnToPath}`;
-            res.redirect(redirectTo);
+            safeFragmentRedirect(res, redirectTo);
             return null;
         }
         const user = req.user as User;
@@ -88,7 +89,7 @@ export class OAuthController {
 
             const redirectUri = new URL(req.query.redirect_uri);
             redirectUri.searchParams.append("approved", "no");
-            res.redirect(redirectUri.toString());
+            safeFragmentRedirect(res, redirectUri.toString());
             return false;
         } else if (wasApproved == "yes") {
             const additionalData = (user.additionalData = user.additionalData || {});
@@ -104,7 +105,7 @@ export class OAuthController {
                 if (client) {
                     const returnToPath = encodeURIComponent(`/api${req.originalUrl}`);
                     const redirectTo = `${this.config.hostUrl}oauth-approval?clientID=${client.id}&clientName=${client.name}&returnToPath=${returnToPath}`;
-                    res.redirect(redirectTo);
+                    safeFragmentRedirect(res, redirectTo);
                     return false;
                 } else {
                     log.error(`/oauth/authorize unknown client id: "${clientID}"`);

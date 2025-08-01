@@ -18,6 +18,9 @@ import { UserService } from "../user/user-service";
 import { AuthFlow, AuthProvider } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
+import { NonceService } from "./nonce-service";
+import { getFeatureFlagEnableNonceValidation, getFeatureFlagEnableStrictAuthorizeReturnTo } from "../util/featureflags";
+import { validateLoginReturnToUrl, validateAuthorizeReturnToUrl, safeFragmentRedirect } from "../express-util";
 
 @injectable()
 export class Authenticator {
@@ -30,6 +33,7 @@ export class Authenticator {
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(UserAuthentication) protected readonly userAuthentication: UserAuthentication;
     @inject(SignInJWT) protected readonly signInJWT: SignInJWT;
+    @inject(NonceService) protected readonly nonceService: NonceService;
 
     @postConstruct()
     protected setup() {
@@ -77,6 +81,42 @@ export class Authenticator {
                 if (!host) {
                     throw new Error("Auth flow state is missing 'host' attribute.");
                 }
+
+                // Handle GitHub OAuth edge case: redirect from api.* subdomain to base domain
+                // This allows nonce validation to work since cookies are accessible on base domain
+                if (this.isApiSubdomainOfConfiguredHost(req.hostname)) {
+                    log.info(`OAuth callback on api subdomain, redirecting to base domain for nonce validation`, {
+                        hostname: req.hostname,
+                        configuredHost: this.config.hostUrl.url.hostname,
+                    });
+                    const baseUrl = this.config.hostUrl.with({
+                        pathname: req.path,
+                        search: new URL(req.url, this.config.hostUrl.url).search,
+                    });
+                    safeFragmentRedirect(res, baseUrl.toString());
+                    return;
+                }
+
+                // Validate nonce for CSRF protection (if feature flag is enabled)
+                const isNonceValidationEnabled = await getFeatureFlagEnableNonceValidation();
+                if (isNonceValidationEnabled) {
+                    const stateNonce = flowState.nonce;
+                    const cookieNonce = this.nonceService.getNonceFromCookie(req);
+
+                    if (!this.nonceService.validateNonce(stateNonce, cookieNonce)) {
+                        log.error(`CSRF protection: Nonce validation failed`, {
+                            url: req.url,
+                            hasStateNonce: !!stateNonce,
+                            hasCookieNonce: !!cookieNonce,
+                        });
+                        res.status(403).send("Authentication failed");
+                        return;
+                    }
+                }
+
+                // Always clear the nonce cookie
+                this.nonceService.clearNonceCookie(res);
+
                 const hostContext = this.hostContextProvider.get(host);
                 if (!hostContext) {
                     throw new Error("No host context found.");
@@ -89,6 +129,8 @@ export class Authenticator {
                 await hostContext.authProvider.callback(req, res, next);
             } catch (error) {
                 log.error(`Failed to handle callback.`, error, { url: req.url });
+                // Always clear nonce cookie on error
+                this.nonceService.clearNonceCookie(res);
             }
         } else {
             // Otherwise proceed with other handlers
@@ -121,6 +163,15 @@ export class Authenticator {
         return state;
     }
 
+    /**
+     * Checks if the current hostname is api.{configured-domain}.
+     * This handles the GitHub OAuth edge case where callbacks may come to api.* subdomain.
+     */
+    private isApiSubdomainOfConfiguredHost(hostname: string): boolean {
+        const configuredHost = this.config.hostUrl.url.hostname;
+        return hostname === `api.${configuredHost}`;
+    }
+
     protected async getAuthProviderForHost(host: string): Promise<AuthProvider | undefined> {
         const hostContext = this.hostContextProvider.get(host);
         return hostContext && hostContext.authProvider;
@@ -131,18 +182,26 @@ export class Authenticator {
             log.info(`User is already authenticated. Continue.`, { "login-flow": true });
             return next();
         }
-        let returnTo: string | undefined = req.query.returnTo?.toString();
-        if (returnTo) {
-            log.info(`Stored returnTo URL: ${returnTo}`, { "login-flow": true });
+        let returnToParam: string | undefined = req.query.returnTo?.toString();
+        if (returnToParam) {
+            log.info(`Stored returnTo URL: ${returnToParam}`, { "login-flow": true });
+            // Validate returnTo URL against allowlist for login API
+            if (!validateLoginReturnToUrl(returnToParam, this.config.hostUrl)) {
+                log.warn(`Invalid returnTo URL rejected for login: ${returnToParam}`, { "login-flow": true });
+                safeFragmentRedirect(res, this.getSorryUrl(`Invalid return URL.`));
+                return;
+            }
         }
         // returnTo defaults to workspaces url
         const workspaceUrl = this.config.hostUrl.asDashboard().toString();
-        returnTo = returnTo || workspaceUrl;
+        returnToParam = returnToParam || workspaceUrl;
+        const returnTo = returnToParam;
+
         const host: string = req.query.host?.toString() || "";
         const authProvider = host && (await this.getAuthProviderForHost(host));
         if (!host || !authProvider) {
             log.info(`Bad request: missing parameters.`, { "login-flow": true });
-            res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
+            safeFragmentRedirect(res, this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
         // Logins with organizational Git Auth is not permitted
@@ -151,12 +210,12 @@ export class Authenticator {
                 "authorize-flow": true,
                 ap: authProvider.info,
             });
-            res.redirect(this.getSorryUrl(`Login with "${host}" is not permitted.`));
+            safeFragmentRedirect(res, this.getSorryUrl(`Login with "${host}" is not permitted.`));
             return;
         }
         if (this.config.disableDynamicAuthProviderLogin && !authProvider.params.builtin) {
             log.info(`Auth Provider is not allowed.`, { ap: authProvider.info });
-            res.redirect(this.getSorryUrl(`Login with ${authProvider.params.host} is not allowed.`));
+            safeFragmentRedirect(res, this.getSorryUrl(`Login with ${authProvider.params.host} is not allowed.`));
             return;
         }
 
@@ -166,13 +225,18 @@ export class Authenticator {
                 "login-flow": true,
                 ap: authProvider.info,
             });
-            res.redirect(this.getSorryUrl(`Login with "${host}" is not permitted.`));
+            safeFragmentRedirect(res, this.getSorryUrl(`Login with "${host}" is not permitted.`));
             return;
         }
+
+        // Always generate nonce for CSRF protection (validation controlled by feature flag)
+        const nonce = this.nonceService.generateNonce();
+        this.nonceService.setNonceCookie(res, nonce);
 
         const state = await this.signInJWT.sign({
             host,
             returnTo,
+            nonce,
         });
 
         // authenticate user
@@ -183,7 +247,7 @@ export class Authenticator {
         const user = req.user;
         if (!req.isAuthenticated() || !User.is(user)) {
             log.info(`User is not authenticated.`);
-            res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
+            safeFragmentRedirect(res, this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
         const returnTo: string = req.query.returnTo?.toString() || this.config.hostUrl.asDashboard().toString();
@@ -193,20 +257,21 @@ export class Authenticator {
 
         if (!host || !authProvider) {
             log.warn(`Bad request: missing parameters.`);
-            res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
+            safeFragmentRedirect(res, this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
 
         try {
             await this.userAuthentication.deauthorize(user, authProvider.authProviderId);
-            res.redirect(returnTo);
+            safeFragmentRedirect(res, returnTo);
         } catch (error) {
             next(error);
             log.error(`Failed to disconnect a provider.`, error, {
                 host,
                 userId: user.id,
             });
-            res.redirect(
+            safeFragmentRedirect(
+                res,
                 this.getSorryUrl(
                     `Failed to disconnect a provider: ${error && error.message ? error.message : "unknown reason"}`,
                 ),
@@ -218,26 +283,44 @@ export class Authenticator {
         const user = req.user;
         if (!req.isAuthenticated() || !User.is(user)) {
             log.info(`User is not authenticated.`, { "authorize-flow": true });
-            res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
+            safeFragmentRedirect(res, this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
         if (user.id === BUILTIN_INSTLLATION_ADMIN_USER_ID) {
             log.info(`Authorization is not permitted for admin user.`);
-            res.redirect(
+            safeFragmentRedirect(
+                res,
                 this.getSorryUrl(`Authorization is not permitted for admin user. Please login with a user account.`),
             );
             return;
         }
-        const returnTo: string | undefined = req.query.returnTo?.toString();
+        const returnToParam: string | undefined = req.query.returnTo?.toString();
         const host: string | undefined = req.query.host?.toString();
         const scopes: string = req.query.scopes?.toString() || "";
         const override = req.query.override === "true";
         const authProvider = host && (await this.getAuthProviderForHost(host));
-        if (!returnTo || !host || !authProvider) {
+
+        if (!returnToParam || !host || !authProvider) {
             log.info(`Bad request: missing parameters.`, { "authorize-flow": true });
-            res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
+            safeFragmentRedirect(res, this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
+
+        // Validate returnTo URL against allowlist for authorize API
+        const isStrictAuthorizeValidationEnabled = await getFeatureFlagEnableStrictAuthorizeReturnTo();
+        if (isStrictAuthorizeValidationEnabled) {
+            const isValidReturnTo = validateAuthorizeReturnToUrl(returnToParam, this.config.hostUrl);
+            if (!isValidReturnTo) {
+                log.warn(`Invalid returnTo URL rejected for authorize`, {
+                    "authorize-flow": true,
+                    returnToParam,
+                });
+                safeFragmentRedirect(res, this.getSorryUrl(`Invalid return URL.`));
+                return;
+            }
+        }
+
+        const returnTo = returnToParam;
 
         // For non-verified org auth provider, ensure user is an owner of the org
         if (!authProvider.info.verified && authProvider.info.organizationId) {
@@ -247,7 +330,7 @@ export class Authenticator {
                     "authorize-flow": true,
                     ap: authProvider.info,
                 });
-                res.redirect(this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
+                safeFragmentRedirect(res, this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
                 return;
             }
         }
@@ -258,7 +341,7 @@ export class Authenticator {
                 "authorize-flow": true,
                 ap: authProvider.info,
             });
-            res.redirect(this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
+            safeFragmentRedirect(res, this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
             return;
         }
 
@@ -270,7 +353,7 @@ export class Authenticator {
                     "authorize-flow": true,
                     ap: authProvider.info,
                 });
-                res.redirect(this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
+                safeFragmentRedirect(res, this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
                 return;
             }
         }
@@ -297,7 +380,12 @@ export class Authenticator {
         }
         // authorize Gitpod
         log.info(`(doAuthorize) wanted scopes (${override ? "overriding" : "merging"}): ${wantedScopes.join(",")}`);
-        const state = await this.signInJWT.sign({ host, returnTo, overrideScopes: override });
+
+        // Always generate nonce for CSRF protection (validation controlled by feature flag)
+        const nonce = this.nonceService.generateNonce();
+        this.nonceService.setNonceCookie(res, nonce);
+
+        const state = await this.signInJWT.sign({ host, returnTo, overrideScopes: override, nonce });
         authProvider.authorize(req, res, next, this.deriveAuthState(state), wantedScopes);
     }
     private mergeScopes(a: string[], b: string[]) {

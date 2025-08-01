@@ -117,6 +117,7 @@ The Server integrates with:
 - Implements proper error handling and logging
 - Uses HTTPS for secure communication
 - Manages sensitive data securely
+- Uses `safeFragmentRedirect()` for all HTTP redirects to prevent OAuth token inheritance attacks
 
 ## Common Usage Patterns
 

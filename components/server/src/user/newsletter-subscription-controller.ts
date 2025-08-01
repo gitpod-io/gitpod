@@ -8,6 +8,7 @@ import express from "express";
 import { inject, injectable } from "inversify";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { safeFragmentRedirect } from "../express-util";
 
 @injectable()
 export class NewsletterSubscriptionController {
@@ -72,7 +73,7 @@ export class NewsletterSubscriptionController {
                             [newsletterProperties[newsletterType].property]: true,
                         },
                     });
-                    res.redirect(successPageUrl);
+                    safeFragmentRedirect(res, successPageUrl);
                 } else {
                     this.analytics.identify({
                         userId: email,
@@ -80,7 +81,7 @@ export class NewsletterSubscriptionController {
                             [newsletterProperties[newsletterType].property]: true,
                         },
                     });
-                    res.redirect(successPageUrl);
+                    safeFragmentRedirect(res, successPageUrl);
                 }
             } catch (error) {
                 res.send({
