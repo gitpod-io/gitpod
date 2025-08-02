@@ -292,16 +292,18 @@ func printVar(name string, value string, export bool) {
 func parseArgs(args []string, pattern string) ([]*serverapi.UserEnvVarValue, error) {
 	vars := make([]*serverapi.UserEnvVarValue, len(args))
 	for i, arg := range args {
-		kv := strings.SplitN(arg, "=", 1)
-		if len(kv) != 1 || kv[0] == "" {
+		if arg == "" {
 			return nil, GpError{Err: xerrors.Errorf("empty string (correct format is key=value)"), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
 
-		if !strings.Contains(kv[0], "=") {
+		if !strings.Contains(arg, "=") {
 			return nil, GpError{Err: xerrors.Errorf("%s has no equal character (correct format is %s=some_value)", arg, arg), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
 
-		parts := strings.SplitN(kv[0], "=", 2)
+		parts := strings.SplitN(arg, "=", 2)
+		if len(parts) != 2 {
+			return nil, GpError{Err: xerrors.Errorf("invalid format: %s (correct format is key=value)", arg), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
+		}
 
 		key := strings.TrimSpace(parts[0])
 		if key == "" {
