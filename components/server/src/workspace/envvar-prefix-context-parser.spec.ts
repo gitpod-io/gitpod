@@ -12,7 +12,6 @@ import * as chai from "chai";
 import { EnvvarPrefixParser, EnvvarSanitization } from "./envvar-prefix-context-parser";
 import { WithEnvvarsContext, User } from "@gitpod/gitpod-protocol";
 import { Config } from "../config";
-import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 const expect = chai.expect;
 
 @suite
