@@ -9,7 +9,6 @@ import { User, WorkspaceContext, WithEnvvarsContext } from "@gitpod/gitpod-proto
 import { injectable } from "inversify";
 import { EnvVarWithValue } from "@gitpod/gitpod-protocol/lib/protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { getFeatureFlagEnableContextEnvVarValidation } from "../util/featureflags";
 
 @injectable()
 export class EnvvarPrefixParser implements IPrefixContextParser {
@@ -24,24 +23,21 @@ export class EnvvarPrefixParser implements IPrefixContextParser {
             return context;
         }
 
-        const envVarValidationEnabled = await getFeatureFlagEnableContextEnvVarValidation(user.id);
         const envvars: EnvVarWithValue[] = [];
         for (const [k, v] of result.envVarMap.entries()) {
             const decodedValue = decodeURIComponent(v);
 
-            // Skip validation if feature flag is disabled
-            if (envVarValidationEnabled) {
-                const validation = EnvvarSanitization.validateContextEnvVar(k, decodedValue);
-                if (!validation.valid) {
-                    log.warn({ userId: user.id }, "Blocked environment variable via context URL", {
-                        reason: validation.reason,
-                        error: validation.error,
-                        reasonDescription: validation.reason
-                            ? EnvvarSanitization.getBlockReasonDescription(validation.reason)
-                            : undefined,
-                    });
-                    continue;
-                }
+            // Always validate environment variables for security
+            const validation = EnvvarSanitization.validateContextEnvVar(k, decodedValue);
+            if (!validation.valid) {
+                log.warn({ userId: user.id }, "Blocked environment variable via context URL", {
+                    reason: validation.reason,
+                    error: validation.error,
+                    reasonDescription: validation.reason
+                        ? EnvvarSanitization.getBlockReasonDescription(validation.reason)
+                        : undefined,
+                });
+                continue;
             }
 
             envvars.push({ name: k, value: decodeURIComponent(v) });

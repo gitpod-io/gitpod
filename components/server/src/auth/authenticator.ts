@@ -19,7 +19,6 @@ import { AuthFlow, AuthProvider } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { SignInJWT } from "./jwt";
 import { NonceService } from "./nonce-service";
-import { getFeatureFlagEnableNonceValidation, getFeatureFlagEnableStrictAuthorizeReturnTo } from "../util/featureflags";
 import { validateLoginReturnToUrl, validateAuthorizeReturnToUrl, safeFragmentRedirect } from "../express-util";
 
 @injectable()
@@ -97,21 +96,18 @@ export class Authenticator {
                     return;
                 }
 
-                // Validate nonce for CSRF protection (if feature flag is enabled)
-                const isNonceValidationEnabled = await getFeatureFlagEnableNonceValidation();
-                if (isNonceValidationEnabled) {
-                    const stateNonce = flowState.nonce;
-                    const cookieNonce = this.nonceService.getNonceFromCookie(req);
+                // Always validate nonce for CSRF protection
+                const stateNonce = flowState.nonce;
+                const cookieNonce = this.nonceService.getNonceFromCookie(req);
 
-                    if (!this.nonceService.validateNonce(stateNonce, cookieNonce)) {
-                        log.error(`CSRF protection: Nonce validation failed`, {
-                            url: req.url,
-                            hasStateNonce: !!stateNonce,
-                            hasCookieNonce: !!cookieNonce,
-                        });
-                        res.status(403).send("Authentication failed");
-                        return;
-                    }
+                if (!this.nonceService.validateNonce(stateNonce, cookieNonce)) {
+                    log.error(`CSRF protection: Nonce validation failed`, {
+                        url: req.url,
+                        hasStateNonce: !!stateNonce,
+                        hasCookieNonce: !!cookieNonce,
+                    });
+                    res.status(403).send("Authentication failed");
+                    return;
                 }
 
                 // Always clear the nonce cookie
@@ -306,18 +302,15 @@ export class Authenticator {
             return;
         }
 
-        // Validate returnTo URL against allowlist for authorize API
-        const isStrictAuthorizeValidationEnabled = await getFeatureFlagEnableStrictAuthorizeReturnTo();
-        if (isStrictAuthorizeValidationEnabled) {
-            const isValidReturnTo = validateAuthorizeReturnToUrl(returnToParam, this.config.hostUrl);
-            if (!isValidReturnTo) {
-                log.warn(`Invalid returnTo URL rejected for authorize`, {
-                    "authorize-flow": true,
-                    returnToParam,
-                });
-                safeFragmentRedirect(res, this.getSorryUrl(`Invalid return URL.`));
-                return;
-            }
+        // Always validate returnTo URL against allowlist for authorize API
+        const isValidReturnTo = validateAuthorizeReturnToUrl(returnToParam, this.config.hostUrl);
+        if (!isValidReturnTo) {
+            log.warn(`Invalid returnTo URL rejected for authorize`, {
+                "authorize-flow": true,
+                returnToParam,
+            });
+            safeFragmentRedirect(res, this.getSorryUrl(`Invalid return URL.`));
+            return;
         }
 
         const returnTo = returnToParam;
