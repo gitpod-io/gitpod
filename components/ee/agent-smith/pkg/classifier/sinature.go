@@ -282,7 +282,11 @@ func (s *Signature) matchAny(in *SignatureReadCache) (bool, error) {
 		pos += int64(n)
 
 		// TODO: deal with buffer edges (i.e. pattern wrapping around the buffer edge)
-		if bytes.Contains(sub, s.Pattern) {
+		match, matchErr := s.matches(sub)
+		if matchErr != nil {
+			return false, matchErr
+		}
+		if match {
 			return true, nil
 		}
 

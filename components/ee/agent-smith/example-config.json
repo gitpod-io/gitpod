@@ -10,8 +10,53 @@
                     "kind": "elf",
                     "pattern": "YWdlbnRTbWl0aFRlc3RUYXJnZXQ=",
                     "regexp": false
+                },
+                {
+                    "name": "mining_pool_config",
+                    "domain": "filesystem",
+                    "pattern": "c3RyYXR1bSt0Y3A6Ly8=",
+                    "regexp": false,
+                    "filenames": ["*.conf", "mining.conf", "config.json"]
+                },
+                {
+                    "name": "crypto_wallet_file",
+                    "domain": "filesystem",
+                    "pattern": "d2FsbGV0",
+                    "regexp": false,
+                    "filenames": ["wallet.dat", "*.wallet"]
+                },
+                {
+                    "name": "reverse_shell_script",
+                    "domain": "filesystem",
+                    "pattern": "bmMgLWUgL2Jpbi9zaA==",
+                    "regexp": false,
+                    "filenames": ["*.sh", "*.py", "shell.*"]
+                }
+            ]
+        },
+        "audit": {
+            "signatures": [
+                {
+                    "name": "suspicious_env_file",
+                    "domain": "filesystem",
+                    "pattern": "QVBJX0tFWT0=",
+                    "regexp": false,
+                    "filenames": [".env", "*.env", ".environment"]
+                },
+                {
+                    "name": "ssh_private_key",
+                    "domain": "filesystem",
+                    "pattern": "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t",
+                    "regexp": false,
+                    "filenames": ["id_rsa", "id_dsa", "id_ecdsa", "*.pem"]
                 }
             ]
         }
+    },
+    "filesystemScanning": {
+        "enabled": true,
+        "scanInterval": "5m",
+        "maxFileSize": 1024,
+        "workingArea": "/mnt/workingarea-mk2"
     }
 }

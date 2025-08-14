@@ -6,6 +6,7 @@ package agentsmith
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -42,6 +43,13 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if ctx.Config.Components != nil && ctx.Config.Components.AgentSmith != nil {
 		ascfg.Config = *ctx.Config.Components.AgentSmith
 		ascfg.Config.KubernetesNamespace = ctx.Namespace
+
+		// Set working area path if filesystem scanning is enabled
+		if ascfg.Config.FilesystemScanning != nil && ascfg.Config.FilesystemScanning.Enabled {
+			ascfg.Config.FilesystemScanning.Enabled = true
+			ascfg.Config.FilesystemScanning.WorkingArea = ContainerWorkingAreaMk2
+			ascfg.Config.FilesystemScanning.ScanInterval = config.Duration{Duration: 5 * time.Minute}
+		}
 	}
 
 	fc, err := common.ToJSONString(ascfg)

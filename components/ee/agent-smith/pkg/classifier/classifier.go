@@ -48,6 +48,14 @@ type ProcessClassifier interface {
 	Matches(executable string, cmdline []string) (*Classification, error)
 }
 
+// FileClassifier matches filesystem files against signatures
+type FileClassifier interface {
+	prometheus.Collector
+
+	MatchesFile(filePath string) (*Classification, error)
+	GetFileSignatures() []*Signature
+}
+
 func NewCommandlineClassifier(name string, level Level, allowList []string, blockList []string) (*CommandlineClassifier, error) {
 	al := make([]*regexp.Regexp, 0, len(allowList))
 	for _, a := range allowList {
@@ -152,6 +160,24 @@ func NewSignatureMatchClassifier(name string, defaultLevel Level, sig []*Signatu
 				"classifier_name": name,
 			},
 		}),
+		filesystemHitTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: "gitpod_agent_smith",
+			Subsystem: "classifier_signature",
+			Name:      "filesystem_hit_total",
+			Help:      "total count of filesystem signature hits",
+			ConstLabels: prometheus.Labels{
+				"classifier_name": name,
+			},
+		}),
+		filesystemMissTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "gitpod_agent_smith",
+			Subsystem: "classifier_signature",
+			Name:      "filesystem_miss_total",
+			Help:      "total count of filesystem signature misses",
+			ConstLabels: prometheus.Labels{
+				"classifier_name": name,
+			},
+		}, []string{"reason"}),
 	}
 }
 
@@ -168,11 +194,14 @@ type SignatureMatchClassifier struct {
 	Signatures   []*Signature
 	DefaultLevel Level
 
-	processMissTotal  *prometheus.CounterVec
-	signatureHitTotal prometheus.Counter
+	processMissTotal    *prometheus.CounterVec
+	signatureHitTotal   prometheus.Counter
+	filesystemHitTotal  prometheus.Counter
+	filesystemMissTotal *prometheus.CounterVec
 }
 
 var _ ProcessClassifier = &SignatureMatchClassifier{}
+var _ FileClassifier = &SignatureMatchClassifier{}
 
 var sigNoMatch = &Classification{Level: LevelNoMatch, Classifier: ClassifierSignature}
 
@@ -223,6 +252,70 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 	return sigNoMatch, nil
 }
 
+// MatchesFile checks if a filesystem file matches any filesystem signatures
+func (sigcl *SignatureMatchClassifier) MatchesFile(filePath string) (c *Classification, err error) {
+	filesystemSignatures := make([]*Signature, 0)
+	for _, sig := range sigcl.Signatures {
+		if sig.Domain == DomainFileSystem {
+			filesystemSignatures = append(filesystemSignatures, sig)
+		}
+	}
+
+	if len(filesystemSignatures) == 0 {
+		return sigNoMatch, nil
+	}
+
+	// Skip filename matching - the filesystem detector already filtered files
+	// based on signature filename patterns, so any file that reaches here
+	// should be checked for content matching against all filesystem signatures
+	matchingSignatures := filesystemSignatures
+
+	// Open file for signature matching
+	r, err := os.Open(filePath)
+	if err != nil {
+		var reason string
+		if errors.Is(err, fs.ErrNotExist) {
+			reason = processMissNotFound
+		} else if errors.Is(err, os.ErrPermission) {
+			reason = processMissPermissionDenied
+		} else {
+			reason = processMissOther
+		}
+		sigcl.filesystemMissTotal.WithLabelValues(reason).Inc()
+		log.WithFields(logrus.Fields{
+			"filePath": filePath,
+			"reason":   reason,
+		}).WithError(err).Debug("filesystem signature classification miss")
+		return sigNoMatch, nil
+	}
+	defer r.Close()
+
+	var serr error
+
+	src := SignatureReadCache{
+		Reader: r,
+	}
+	for _, sig := range matchingSignatures {
+		match, err := sig.Matches(&src)
+		if match {
+			sigcl.filesystemHitTotal.Inc()
+			return &Classification{
+				Level:      sigcl.DefaultLevel,
+				Classifier: ClassifierSignature,
+				Message:    fmt.Sprintf("filesystem signature matches %s", sig.Name),
+			}, nil
+		}
+		if err != nil {
+			serr = err
+		}
+	}
+	if serr != nil {
+		return nil, serr
+	}
+
+	return sigNoMatch, nil
+}
+
 type SignatureReadCache struct {
 	Reader  io.ReaderAt
 	header  []byte
@@ -233,11 +326,26 @@ type SignatureReadCache struct {
 func (sigcl *SignatureMatchClassifier) Describe(d chan<- *prometheus.Desc) {
 	sigcl.processMissTotal.Describe(d)
 	sigcl.signatureHitTotal.Describe(d)
+	sigcl.filesystemHitTotal.Describe(d)
+	sigcl.filesystemMissTotal.Describe(d)
 }
 
 func (sigcl *SignatureMatchClassifier) Collect(m chan<- prometheus.Metric) {
 	sigcl.processMissTotal.Collect(m)
 	sigcl.signatureHitTotal.Collect(m)
+	sigcl.filesystemHitTotal.Collect(m)
+	sigcl.filesystemMissTotal.Collect(m)
+}
+
+// GetFileSignatures returns signatures that are configured for filesystem domain
+func (sigcl *SignatureMatchClassifier) GetFileSignatures() []*Signature {
+	var filesystemSignatures []*Signature
+	for _, sig := range sigcl.Signatures {
+		if sig.Domain == DomainFileSystem {
+			filesystemSignatures = append(filesystemSignatures, sig)
+		}
+	}
+	return filesystemSignatures
 }
 
 // CompositeClassifier combines multiple classifiers into one. The first match wins.
@@ -398,6 +506,14 @@ func (cl *CountingMetricsClassifier) Matches(executable string, cmdline []string
 	return cl.D.Matches(executable, cmdline)
 }
 
+func (cl *CountingMetricsClassifier) MatchesFile(filePath string) (*Classification, error) {
+	cl.callCount.Inc()
+	if fsc, ok := cl.D.(FileClassifier); ok {
+		return fsc.MatchesFile(filePath)
+	}
+	return sigNoMatch, nil
+}
+
 func (cl *CountingMetricsClassifier) Describe(d chan<- *prometheus.Desc) {
 	cl.callCount.Describe(d)
 	cl.D.Describe(d)
@@ -406,4 +522,100 @@ func (cl *CountingMetricsClassifier) Describe(d chan<- *prometheus.Desc) {
 func (cl *CountingMetricsClassifier) Collect(m chan<- prometheus.Metric) {
 	cl.callCount.Collect(m)
 	cl.D.Collect(m)
+}
+
+func (cl *CountingMetricsClassifier) GetFileSignatures() []*Signature {
+	if fsc, ok := cl.D.(FileClassifier); ok {
+		return fsc.GetFileSignatures()
+	}
+	return nil
+}
+
+func (cl GradedClassifier) MatchesFile(filePath string) (*Classification, error) {
+	order := []Level{LevelVery, LevelBarely, LevelAudit}
+
+	var (
+		c   *Classification
+		err error
+	)
+	for _, level := range order {
+		classifier, exists := cl[level]
+		if !exists {
+			continue
+		}
+
+		if fsc, ok := classifier.(FileClassifier); ok {
+			c, err = fsc.MatchesFile(filePath)
+			if err != nil {
+				return nil, err
+			}
+			if c.Level != LevelNoMatch {
+				break
+			}
+		}
+	}
+
+	if c == nil || c.Level == LevelNoMatch {
+		return sigNoMatch, nil
+	}
+
+	res := *c
+	res.Classifier = ClassifierGraded + "." + res.Classifier
+	return &res, nil
+}
+
+func (cl GradedClassifier) GetFileSignatures() []*Signature {
+	var allSignatures []*Signature
+
+	for _, classifier := range cl {
+		if fsc, ok := classifier.(FileClassifier); ok {
+			signatures := fsc.GetFileSignatures()
+			allSignatures = append(allSignatures, signatures...)
+		}
+	}
+
+	return allSignatures
+}
+
+func (cl CompositeClassifier) MatchesFile(filePath string) (*Classification, error) {
+	var (
+		c   *Classification
+		err error
+	)
+	for _, classifier := range cl {
+		if fsc, ok := classifier.(FileClassifier); ok {
+			c, err = fsc.MatchesFile(filePath)
+			if err != nil {
+				return nil, err
+			}
+			if c.Level != LevelNoMatch {
+				break
+			}
+		}
+	}
+
+	if c == nil || len(cl) == 0 {
+		// empty composite classifier
+		return sigNoMatch, nil
+	}
+	if c.Level == LevelNoMatch {
+		return sigNoMatch, nil
+	}
+
+	res := *c
+	res.Classifier = ClassifierComposite + "." + res.Classifier
+	return &res, nil
+}
+
+func (cl CompositeClassifier) GetFileSignatures() []*Signature {
+	var allSignatures []*Signature
+
+	for _, classifier := range cl {
+		if fsc, ok := classifier.(FileClassifier); ok {
+			signatures := fsc.GetFileSignatures()
+			allSignatures = append(allSignatures, signatures...)
+		}
+	}
+
+	return allSignatures
 }

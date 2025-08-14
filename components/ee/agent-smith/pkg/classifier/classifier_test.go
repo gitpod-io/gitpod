@@ -91,3 +91,38 @@ func TestCommandlineClassifier(t *testing.T) {
 		})
 	}
 }
+
+func TestCountingMetricsClassifierFilesystemInterface(t *testing.T) {
+	// Create a signature classifier with filesystem signatures
+	signatures := []*classifier.Signature{
+		{
+			Name:     "test-filesystem",
+			Domain:   classifier.DomainFileSystem,
+			Pattern:  []byte("malware"),
+			Filename: []string{"malware.exe"},
+		},
+	}
+
+	sigClassifier := classifier.NewSignatureMatchClassifier("test", classifier.LevelAudit, signatures)
+	countingClassifier := classifier.NewCountingMetricsClassifier("counting", sigClassifier)
+
+	// Test that CountingMetricsClassifier implements FileClassifier
+	var fsc classifier.FileClassifier = countingClassifier
+
+	// Test filesystem file matching (file doesn't exist, should return no match without error)
+	result, err := fsc.MatchesFile("/nonexistent/path/malware.exe")
+	if err != nil {
+		t.Fatalf("MatchesFile failed: %v", err)
+	}
+
+	// Should return no match since file doesn't exist, but no error
+	if result.Level != classifier.LevelNoMatch {
+		t.Errorf("Expected LevelNoMatch for nonexistent file, got %v", result.Level)
+	}
+
+	// Test that the interface delegation works by checking that it doesn't panic
+	// and returns a valid Classification
+	if result == nil {
+		t.Error("Expected non-nil Classification result")
+	}
+}

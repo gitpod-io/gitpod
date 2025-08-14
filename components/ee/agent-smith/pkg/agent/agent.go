@@ -51,8 +51,10 @@ type Smith struct {
 	timeElapsedHandler    func(t time.Time) time.Duration
 	notifiedInfringements *lru.Cache
 
-	detector   detector.ProcessDetector
-	classifier classifier.ProcessClassifier
+	detector       detector.ProcessDetector
+	classifier     classifier.ProcessClassifier
+	fileDetector   detector.FileDetector
+	FileClassifier classifier.FileClassifier
 }
 
 // NewAgentSmith creates a new agent smith
@@ -135,6 +137,30 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 		return nil, err
 	}
 
+	// Initialize filesystem detection if enabled
+	var filesystemDetec detector.FileDetector
+	var filesystemClass classifier.FileClassifier
+	if cfg.FilesystemScanning != nil && cfg.FilesystemScanning.Enabled {
+		// Create filesystem detector config
+		fsConfig := detector.FilesystemScanningConfig{
+			Enabled:      cfg.FilesystemScanning.Enabled,
+			ScanInterval: cfg.FilesystemScanning.ScanInterval.Duration,
+			MaxFileSize:  cfg.FilesystemScanning.MaxFileSize,
+			WorkingArea:  cfg.FilesystemScanning.WorkingArea,
+		}
+
+		// Check if the main classifier supports filesystem detection
+		if fsc, ok := class.(classifier.FileClassifier); ok {
+			filesystemClass = fsc
+			filesystemDetec, err = detector.NewfileDetector(fsConfig, filesystemClass)
+			if err != nil {
+				log.WithError(err).Warn("failed to create filesystem detector")
+			}
+		} else {
+			log.Warn("classifier does not support filesystem detection, filesystem scanning disabled")
+		}
+	}
+
 	m := newAgentMetrics()
 	res := &Smith{
 		EnforcementRules: map[string]config.EnforcementRules{
@@ -150,8 +176,10 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 
 		wsman: wsman,
 
-		detector:   detec,
-		classifier: class,
+		detector:       detec,
+		classifier:     class,
+		fileDetector:   filesystemDetec,
+		FileClassifier: filesystemClass,
 
 		notifiedInfringements: lru.New(notificationCacheSize),
 		metrics:               m,
@@ -227,6 +255,12 @@ type classifiedProcess struct {
 	Err error
 }
 
+type classifiedFilesystemFile struct {
+	F   detector.File
+	C   *classifier.Classification
+	Err error
+}
+
 // Start gets a stream of Infringements from Run and executes a callback on them to apply a Penalty
 func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace, []config.PenaltyKind)) {
 	ps, err := agent.detector.DiscoverProcesses(ctx)
@@ -234,10 +268,21 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 		log.WithError(err).Fatal("cannot start process detector")
 	}
 
+	// Start filesystem detection if enabled
+	var fs <-chan detector.File
+	if agent.fileDetector != nil {
+		fs, err = agent.fileDetector.DiscoverFiles(ctx)
+		if err != nil {
+			log.WithError(err).Warn("cannot start filesystem detector")
+		}
+	}
+
 	var (
 		wg  sync.WaitGroup
 		cli = make(chan detector.Process, 500)
 		clo = make(chan classifiedProcess, 50)
+		fli = make(chan detector.File, 100)
+		flo = make(chan classifiedFilesystemFile, 25)
 	)
 	agent.metrics.RegisterClassificationQueues(cli, clo)
 
@@ -268,6 +313,27 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 		}()
 	}
 
+	// Filesystem classification workers (fewer than process workers)
+	if agent.FileClassifier != nil {
+		for i := 0; i < 5; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for file := range fli {
+					log.Infof("Classifying filesystem file: %s", file.Path)
+					class, err := agent.FileClassifier.MatchesFile(file.Path)
+					// Early out for no matches
+					if err == nil && class.Level == classifier.LevelNoMatch {
+						log.Infof("File classification: no match - %s", file.Path)
+						continue
+					}
+					log.Infof("File classification result: %s (level: %s, err: %v)", file.Path, class.Level, err)
+					flo <- classifiedFilesystemFile{F: file, C: class, Err: err}
+				}
+			}()
+		}
+	}
+
 	defer log.Info("agent smith main loop ended")
 
 	// We want to fill the classifier in a Go routine seaparete from using the classification
@@ -287,6 +353,15 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 				default:
 					// we're overfilling the classifier worker
 					agent.metrics.classificationBackpressureInDrop.Inc()
+				}
+			case file, ok := <-fs:
+				if !ok {
+					continue
+				}
+				select {
+				case fli <- file:
+				default:
+					// filesystem queue full, skip this file
 				}
 			}
 		}
@@ -316,6 +391,33 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 						Kind:        config.GradeKind(config.InfringementExec, common.Severity(cl.Level)),
 						Description: fmt.Sprintf("%s: %s", cl.Classifier, cl.Message),
 						CommandLine: proc.CommandLine,
+					},
+				},
+			})
+		case fileClass := <-flo:
+			log.Infof("Received classified file from flo channel")
+			file, cl, err := fileClass.F, fileClass.C, fileClass.Err
+			if err != nil {
+				log.WithError(err).WithFields(log.OWI(file.Workspace.OwnerID, file.Workspace.WorkspaceID, file.Workspace.InstanceID)).WithField("path", file.Path).Error("cannot classify filesystem file")
+				continue
+			}
+			if cl == nil || cl.Level == classifier.LevelNoMatch {
+				log.Warn("filesystem signature not detected", "path", file.Path, "workspace", file.Workspace.WorkspaceID)
+				continue
+			}
+
+			log.Info("filesystem signature detected", "path", file.Path, "workspace", file.Workspace.WorkspaceID, "severity", cl.Level, "message", cl.Message)
+			_, _ = agent.Penalize(InfringingWorkspace{
+				SupervisorPID: file.Workspace.PID,
+				Owner:         file.Workspace.OwnerID,
+				InstanceID:    file.Workspace.InstanceID,
+				WorkspaceID:   file.Workspace.WorkspaceID,
+				GitRemoteURL:  []string{file.Workspace.GitURL},
+				Infringements: []Infringement{
+					{
+						Kind:        config.GradeKind(config.InfringementExec, common.Severity(cl.Level)), // Reuse exec for now
+						Description: fmt.Sprintf("filesystem signature: %s", cl.Message),
+						CommandLine: []string{file.Path}, // Use file path as "command"
 					},
 				},
 			})
@@ -420,10 +522,22 @@ func (agent *Smith) Describe(d chan<- *prometheus.Desc) {
 	agent.metrics.Describe(d)
 	agent.classifier.Describe(d)
 	agent.detector.Describe(d)
+	if agent.fileDetector != nil {
+		agent.fileDetector.Describe(d)
+	}
+	if agent.FileClassifier != nil {
+		agent.FileClassifier.Describe(d)
+	}
 }
 
 func (agent *Smith) Collect(m chan<- prometheus.Metric) {
 	agent.metrics.Collect(m)
 	agent.classifier.Collect(m)
 	agent.detector.Collect(m)
+	if agent.fileDetector != nil {
+		agent.fileDetector.Collect(m)
+	}
+	if agent.FileClassifier != nil {
+		agent.FileClassifier.Collect(m)
+	}
 }
