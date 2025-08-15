@@ -5,7 +5,6 @@
 package classifier
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,7 +12,7 @@ import (
 
 func TestSignatureMatchClassifier_MatchesFile(t *testing.T) {
 	// Create temporary directory for test files
-	tempDir, err := ioutil.TempDir("", "agent-smith-test")
+	tempDir, err := os.MkdirTemp("", "agent-smith-test")
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
@@ -30,7 +29,7 @@ func TestSignatureMatchClassifier_MatchesFile(t *testing.T) {
 
 	for filename, content := range testFiles {
 		filePath := filepath.Join(tempDir, filename)
-		if err := ioutil.WriteFile(filePath, content, 0644); err != nil {
+		if err := os.WriteFile(filePath, content, 0644); err != nil {
 			t.Fatalf("failed to create test file %s: %v", filename, err)
 		}
 	}
@@ -251,14 +250,14 @@ func TestSignatureMatchClassifier_ContentMatching(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a temporary file for testing
-			tempDir, err := ioutil.TempDir("", "agent-smith-content-test")
+			tempDir, err := os.MkdirTemp("", "agent-smith-content-test")
 			if err != nil {
 				t.Fatalf("failed to create temp dir: %v", err)
 			}
 			defer os.RemoveAll(tempDir)
 
 			filePath := filepath.Join(tempDir, tt.filename)
-			if err := ioutil.WriteFile(filePath, []byte(tt.content), 0644); err != nil {
+			if err := os.WriteFile(filePath, []byte(tt.content), 0644); err != nil {
 				t.Fatalf("failed to create test file: %v", err)
 			}
 
