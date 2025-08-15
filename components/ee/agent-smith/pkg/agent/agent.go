@@ -401,12 +401,11 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 				log.WithError(err).WithFields(log.OWI(file.Workspace.OwnerID, file.Workspace.WorkspaceID, file.Workspace.InstanceID)).WithField("path", file.Path).Error("cannot classify filesystem file")
 				continue
 			}
-			if cl == nil || cl.Level == classifier.LevelNoMatch {
-				log.Warn("filesystem signature not detected", "path", file.Path, "workspace", file.Workspace.WorkspaceID)
-				continue
-			}
 
-			log.Info("filesystem signature detected", "path", file.Path, "workspace", file.Workspace.WorkspaceID, "severity", cl.Level, "message", cl.Message)
+			log.WithField("path", file.Path).WithField("severity", cl.Level).WithField("message", cl.Message).
+				WithFields(log.OWI(file.Workspace.OwnerID, file.Workspace.WorkspaceID, file.Workspace.InstanceID)).
+				Info("filesystem signature detected")
+
 			_, _ = agent.Penalize(InfringingWorkspace{
 				SupervisorPID: file.Workspace.PID,
 				Owner:         file.Workspace.OwnerID,
