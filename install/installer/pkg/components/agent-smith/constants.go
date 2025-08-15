@@ -6,4 +6,8 @@ package agentsmith
 
 const (
 	Component = "agent-smith"
+
+	// Working area paths - must match ws-daemon constants
+	HostWorkingAreaMk2      = "/var/gitpod/workspaces-mk2"
+	ContainerWorkingAreaMk2 = "/mnt/workingarea-mk2"
 )

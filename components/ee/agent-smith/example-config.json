@@ -13,5 +13,11 @@
                 }
             ]
         }
+    },
+    "filesystemScanning": {
+        "enabled": true,
+        "scanInterval": "5m",
+        "maxFileSize": 1024,
+        "workingArea": "/mnt/workingarea-mk2"
     }
 }

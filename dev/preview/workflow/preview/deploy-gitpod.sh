@@ -464,6 +464,14 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.bucketSi
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.gcpProfilerEnabled "true"
 
+#
+# Enable agent-smith filesystem scanning
+# (uncomment if needed, we don't use agent-smith by default in previews)
+# yq w -i "${INSTALLER_CONFIG_PATH}" experimental.agentsmith.filesystemScanning.enabled "true"
+# yq w -i "${INSTALLER_CONFIG_PATH}" experimental.agentsmith.filesystemScanning.scanInterval "5m"
+# yq w -i "${INSTALLER_CONFIG_PATH}" experimental.agentsmith.filesystemScanning.maxFileSize "1024"
+# yq w -i "${INSTALLER_CONFIG_PATH}" experimental.agentsmith.filesystemScanning.workingArea "/mnt/workingarea-mk2"
+
 log_success "Generated config at $INSTALLER_CONFIG_PATH"
 
 # ========

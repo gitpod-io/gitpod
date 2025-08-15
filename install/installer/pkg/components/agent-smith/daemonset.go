@@ -24,6 +24,61 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	if err != nil {
 		return nil, err
 	}
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      "config",
+			MountPath: "/config",
+		},
+		{
+			Name:      "wsman-tls-certs",
+			MountPath: "/wsman-certs",
+			ReadOnly:  true,
+		},
+		common.CAVolumeMount(),
+	}
+
+	filesystemScanningEnabled := ctx.Config.Components != nil &&
+		ctx.Config.Components.AgentSmith != nil &&
+		ctx.Config.Components.AgentSmith.FilesystemScanning != nil &&
+		ctx.Config.Components.AgentSmith.FilesystemScanning.Enabled
+
+	if filesystemScanningEnabled {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "working-area",
+			MountPath: ContainerWorkingAreaMk2,
+			ReadOnly:  true,
+		})
+	}
+
+	volumes := []corev1.Volume{
+		{
+			Name: "config",
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+			}},
+		},
+		{
+			Name: "wsman-tls-certs",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: wsmanagermk2.TLSSecretNameClient,
+				},
+			},
+		},
+		common.CAVolume(),
+	}
+
+	if filesystemScanningEnabled {
+		volumes = append(volumes, corev1.Volume{
+			Name: "working-area",
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
+					Path: HostWorkingAreaMk2,
+					Type: func() *corev1.HostPathType { t := corev1.HostPathDirectory; return &t }(),
+				},
+			},
+		})
+	}
 
 	return []runtime.Object{&appsv1.DaemonSet{
 		TypeMeta: common.TypeMetaDaemonset,
@@ -64,18 +119,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								"memory": resource.MustParse("32Mi"),
 							},
 						}),
-						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "config",
-								MountPath: "/config",
-							},
-							{
-								Name:      "wsman-tls-certs",
-								MountPath: "/wsman-certs",
-								ReadOnly:  true,
-							},
-							common.CAVolumeMount(),
-						},
+						VolumeMounts: volumeMounts,
 						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
 							common.WorkspaceTracingEnv(ctx, Component),
@@ -88,23 +132,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 						*common.KubeRBACProxyContainer(ctx),
 					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "config",
-							VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
-								LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-							}},
-						},
-						{
-							Name: "wsman-tls-certs",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: wsmanagermk2.TLSSecretNameClient,
-								},
-							},
-						},
-						common.CAVolume(),
-					},
+					Volumes: volumes,
 					Tolerations: []corev1.Toleration{
 						{
 							Effect:   corev1.TaintEffectNoSchedule,
