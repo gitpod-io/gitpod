@@ -54,7 +54,7 @@ type Smith struct {
 	detector       detector.ProcessDetector
 	classifier     classifier.ProcessClassifier
 	fileDetector   detector.FileDetector
-	FileClassifier classifier.FileClassifier
+	fileClassifier classifier.FileClassifier
 }
 
 // NewAgentSmith creates a new agent smith
@@ -181,7 +181,7 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 		detector:       detec,
 		classifier:     class,
 		fileDetector:   filesystemDetec,
-		FileClassifier: filesystemClass,
+		fileClassifier: filesystemClass,
 
 		notifiedInfringements: lru.New(notificationCacheSize),
 		metrics:               m,
@@ -316,14 +316,14 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 	}
 
 	// Filesystem classification workers (fewer than process workers)
-	if agent.FileClassifier != nil {
+	if agent.fileClassifier != nil {
 		for i := 0; i < 5; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
 				for file := range fli {
 					log.Infof("Classifying filesystem file: %s", file.Path)
-					class, err := agent.FileClassifier.MatchesFile(file.Path)
+					class, err := agent.fileClassifier.MatchesFile(file.Path)
 					// Early out for no matches
 					if err == nil && class.Level == classifier.LevelNoMatch {
 						log.Infof("File classification: no match - %s", file.Path)
@@ -523,22 +523,10 @@ func (agent *Smith) Describe(d chan<- *prometheus.Desc) {
 	agent.metrics.Describe(d)
 	agent.classifier.Describe(d)
 	agent.detector.Describe(d)
-	if agent.fileDetector != nil {
-		agent.fileDetector.Describe(d)
-	}
-	if agent.FileClassifier != nil {
-		agent.FileClassifier.Describe(d)
-	}
 }
 
 func (agent *Smith) Collect(m chan<- prometheus.Metric) {
 	agent.metrics.Collect(m)
 	agent.classifier.Collect(m)
 	agent.detector.Collect(m)
-	if agent.fileDetector != nil {
-		agent.fileDetector.Collect(m)
-	}
-	if agent.FileClassifier != nil {
-		agent.FileClassifier.Collect(m)
-	}
 }

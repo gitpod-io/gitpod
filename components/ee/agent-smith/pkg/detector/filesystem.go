@@ -21,8 +21,6 @@ import (
 
 // FileDetector discovers suspicious files on the node
 type FileDetector interface {
-	prometheus.Collector
-
 	// DiscoverFiles based on a relative path match given the classifier's signatures
 	DiscoverFiles(ctx context.Context) (<-chan File, error)
 }

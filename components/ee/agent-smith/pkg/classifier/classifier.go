@@ -50,8 +50,6 @@ type ProcessClassifier interface {
 
 // FileClassifier matches filesystem files against signatures
 type FileClassifier interface {
-	prometheus.Collector
-
 	MatchesFile(filePath string) (*Classification, error)
 	GetFileSignatures() []*Signature
 }
