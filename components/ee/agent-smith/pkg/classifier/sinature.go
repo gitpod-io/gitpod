@@ -313,6 +313,12 @@ func (s *Signature) matchTextFile(in *SignatureReadCache) (bool, error) {
 	pos := s.Slice.Start
 	for {
 		n, err := in.Reader.ReadAt(buffer, pos)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return false, xerrors.Errorf("cannot read stream: %w", err)
+		}
 		sub := buffer[0:n]
 		pos += int64(n)
 
@@ -322,13 +328,6 @@ func (s *Signature) matchTextFile(in *SignatureReadCache) (bool, error) {
 		}
 		if match {
 			return true, nil
-		}
-
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return false, xerrors.Errorf("cannot read stream: %w", err)
 		}
 		if s.Slice.End > 0 && pos >= s.Slice.End {
 			break
