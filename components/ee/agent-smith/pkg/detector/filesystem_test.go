@@ -108,10 +108,10 @@ func TestFileDetector_DisabledConfig(t *testing.T) {
 	mockClassifier := &mockFileClassifier{}
 	_, err := NewfileDetector(config, mockClassifier)
 	if err == nil {
-		t.Error("expected error when filesystem scanning is disabled, got nil")
+		t.Error("expected error when file scanning is disabled, got nil")
 	}
 
-	expectedError := "filesystem scanning is disabled"
+	expectedError := "file scanning is disabled"
 	if err.Error() != expectedError {
 		t.Errorf("expected error %q, got %q", expectedError, err.Error())
 	}
