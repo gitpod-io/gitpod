@@ -16,7 +16,6 @@ import (
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // FileDetector discovers suspicious files on the node
@@ -39,21 +38,15 @@ type fileDetector struct {
 	mu sync.RWMutex
 	fs chan File
 
-	config       FilesystemScanningConfig
+	config       FileScanningConfig
 	classifier   classifier.FileClassifier
 	lastScanTime time.Time
-
-	// Metrics
-	filesScannedTotal   prometheus.Counter
-	filesFoundTotal     prometheus.Counter
-	scanDurationSeconds prometheus.Histogram
-	droppedFilesTotal   prometheus.Counter
 
 	startOnce sync.Once
 }
 
-// FilesystemScanningConfig holds configuration for filesystem scanning
-type FilesystemScanningConfig struct {
+// FileScanningConfig holds configuration for file scanning
+type FileScanningConfig struct {
 	Enabled      bool
 	ScanInterval time.Duration
 	MaxFileSize  int64
@@ -62,10 +55,10 @@ type FilesystemScanningConfig struct {
 
 var _ FileDetector = &fileDetector{}
 
-// NewfileDetector creates a new filesystem detector
-func NewfileDetector(config FilesystemScanningConfig, fsClassifier classifier.FileClassifier) (*fileDetector, error) {
+// NewfileDetector creates a new file detector
+func NewfileDetector(config FileScanningConfig, fsClassifier classifier.FileClassifier) (*fileDetector, error) {
 	if !config.Enabled {
-		return nil, fmt.Errorf("filesystem scanning is disabled")
+		return nil, fmt.Errorf("file scanning is disabled")
 	}
 
 	// Set defaults
@@ -83,45 +76,7 @@ func NewfileDetector(config FilesystemScanningConfig, fsClassifier classifier.Fi
 		config:       config,
 		classifier:   fsClassifier,
 		lastScanTime: time.Time{}, // Zero time means never scanned
-		filesScannedTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "gitpod",
-			Subsystem: "agent_smith_filesystem_detector",
-			Name:      "files_scanned_total",
-			Help:      "total number of files scanned for signatures",
-		}),
-		filesFoundTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "gitpod",
-			Subsystem: "agent_smith_filesystem_detector",
-			Name:      "files_found_total",
-			Help:      "total number of files found for signature matching",
-		}),
-		scanDurationSeconds: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Namespace: "gitpod",
-			Subsystem: "agent_smith_filesystem_detector",
-			Name:      "scan_duration_seconds",
-			Help:      "time taken to scan workspace filesystems",
-		}),
-		droppedFilesTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "gitpod",
-			Subsystem: "agent_smith_filesystem_detector",
-			Name:      "dropped_files_total",
-			Help:      "total number of files dropped due to backpressure",
-		}),
 	}, nil
-}
-
-func (det *fileDetector) Describe(d chan<- *prometheus.Desc) {
-	det.filesScannedTotal.Describe(d)
-	det.filesFoundTotal.Describe(d)
-	det.scanDurationSeconds.Describe(d)
-	det.droppedFilesTotal.Describe(d)
-}
-
-func (det *fileDetector) Collect(m chan<- prometheus.Metric) {
-	det.filesScannedTotal.Collect(m)
-	det.filesFoundTotal.Collect(m)
-	det.scanDurationSeconds.Collect(m)
-	det.droppedFilesTotal.Collect(m)
 }
 
 func (det *fileDetector) start(ctx context.Context) {
@@ -159,11 +114,6 @@ func (det *fileDetector) start(ctx context.Context) {
 }
 
 func (det *fileDetector) scanWorkspaces(files chan<- File) {
-	start := time.Now()
-	defer func() {
-		det.scanDurationSeconds.Observe(time.Since(start).Seconds())
-	}()
-
 	// Get filesystem signatures to know what files to look for
 	filesystemSignatures := det.GetFileSignatures()
 	if len(filesystemSignatures) == 0 {
@@ -263,9 +213,6 @@ func (det *fileDetector) scanWorkspaceDirectory(wsDir WorkspaceDirectory, signat
 					continue
 				}
 
-				det.filesScannedTotal.Inc()
-				det.filesFoundTotal.Inc()
-
 				file := File{
 					Path:      filePath,
 					Workspace: workspace,
@@ -280,7 +227,6 @@ func (det *fileDetector) scanWorkspaceDirectory(wsDir WorkspaceDirectory, signat
 				case files <- file:
 					log.Infof("File sent to channel: %s", filePath)
 				default:
-					det.droppedFilesTotal.Inc()
 					log.Warnf("File dropped (channel full): %s", filePath)
 				}
 			}

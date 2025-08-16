@@ -31,16 +31,16 @@ func (m *mockFileClassifier) Collect(m2 chan<- prometheus.Metric) {}
 func TestFileDetector_Config_Defaults(t *testing.T) {
 	tests := []struct {
 		name           string
-		inputConfig    FilesystemScanningConfig
-		expectedConfig FilesystemScanningConfig
+		inputConfig    FileScanningConfig
+		expectedConfig FileScanningConfig
 	}{
 		{
 			name: "all defaults",
-			inputConfig: FilesystemScanningConfig{
+			inputConfig: FileScanningConfig{
 				Enabled:     true,
 				WorkingArea: "/tmp/test-workspaces",
 			},
-			expectedConfig: FilesystemScanningConfig{
+			expectedConfig: FileScanningConfig{
 				Enabled:      true,
 				ScanInterval: 5 * time.Minute,
 				MaxFileSize:  1024,
@@ -49,13 +49,13 @@ func TestFileDetector_Config_Defaults(t *testing.T) {
 		},
 		{
 			name: "partial config",
-			inputConfig: FilesystemScanningConfig{
+			inputConfig: FileScanningConfig{
 				Enabled:      true,
 				ScanInterval: 10 * time.Minute,
 				MaxFileSize:  2048,
 				WorkingArea:  "/tmp/test-workspaces",
 			},
-			expectedConfig: FilesystemScanningConfig{
+			expectedConfig: FileScanningConfig{
 				Enabled:      true,
 				ScanInterval: 10 * time.Minute,
 				MaxFileSize:  2048,
@@ -64,13 +64,13 @@ func TestFileDetector_Config_Defaults(t *testing.T) {
 		},
 		{
 			name: "all custom values",
-			inputConfig: FilesystemScanningConfig{
+			inputConfig: FileScanningConfig{
 				Enabled:      true,
 				ScanInterval: 2 * time.Minute,
 				MaxFileSize:  512,
 				WorkingArea:  "/tmp/test-workspaces",
 			},
-			expectedConfig: FilesystemScanningConfig{
+			expectedConfig: FileScanningConfig{
 				Enabled:      true,
 				ScanInterval: 2 * time.Minute,
 				MaxFileSize:  512,
@@ -101,7 +101,7 @@ func TestFileDetector_Config_Defaults(t *testing.T) {
 }
 
 func TestFileDetector_DisabledConfig(t *testing.T) {
-	config := FilesystemScanningConfig{
+	config := FileScanningConfig{
 		Enabled: false,
 	}
 
@@ -159,7 +159,7 @@ func TestDiscoverWorkspaceDirectories(t *testing.T) {
 	}
 
 	// Create detector with temp working area
-	config := FilesystemScanningConfig{
+	config := FileScanningConfig{
 		Enabled:     true,
 		WorkingArea: tempDir,
 	}
@@ -235,7 +235,7 @@ func TestFindMatchingFiles(t *testing.T) {
 	}
 
 	// Create detector
-	config := FilesystemScanningConfig{
+	config := FileScanningConfig{
 		Enabled:     true,
 		WorkingArea: "/tmp", // Not used in this test
 	}
@@ -325,7 +325,7 @@ func TestFileDetector_GetFileSignatures(t *testing.T) {
 		},
 	}
 
-	config := FilesystemScanningConfig{
+	config := FileScanningConfig{
 		Enabled:     true,
 		WorkingArea: "/tmp",
 	}

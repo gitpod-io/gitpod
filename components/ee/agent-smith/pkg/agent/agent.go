@@ -142,7 +142,7 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 	var filesystemClass classifier.FileClassifier
 	if cfg.FilesystemScanning != nil && cfg.FilesystemScanning.Enabled {
 		// Create filesystem detector config
-		fsConfig := detector.FilesystemScanningConfig{
+		fsConfig := detector.FileScanningConfig{
 			Enabled:      cfg.FilesystemScanning.Enabled,
 			ScanInterval: cfg.FilesystemScanning.ScanInterval.Duration,
 			MaxFileSize:  cfg.FilesystemScanning.MaxFileSize,
@@ -257,7 +257,7 @@ type classifiedProcess struct {
 	Err error
 }
 
-type classifiedFilesystemFile struct {
+type classifiedFile struct {
 	F   detector.File
 	C   *classifier.Classification
 	Err error
@@ -284,7 +284,7 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 		cli = make(chan detector.Process, 500)
 		clo = make(chan classifiedProcess, 50)
 		fli = make(chan detector.File, 100)
-		flo = make(chan classifiedFilesystemFile, 25)
+		flo = make(chan classifiedFile, 25)
 	)
 	agent.metrics.RegisterClassificationQueues(cli, clo)
 
@@ -322,15 +322,13 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 			go func() {
 				defer wg.Done()
 				for file := range fli {
-					log.Infof("Classifying filesystem file: %s", file.Path)
 					class, err := agent.fileClassifier.MatchesFile(file.Path)
-					// Early out for no matches
 					if err == nil && class.Level == classifier.LevelNoMatch {
 						log.Infof("File classification: no match - %s", file.Path)
 						continue
 					}
 					log.Infof("File classification result: %s (level: %s, err: %v)", file.Path, class.Level, err)
-					flo <- classifiedFilesystemFile{F: file, C: class, Err: err}
+					flo <- classifiedFile{F: file, C: class, Err: err}
 				}
 			}()
 		}
