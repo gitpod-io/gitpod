@@ -261,6 +261,42 @@ func (b *Blocklists) Classifier() (res classifier.ProcessClassifier, err error) 
 	return gres, nil
 }
 
+// FileClassifier creates a classifier specifically for filesystem scanning
+// This extracts only filesystem signatures from all blocklist levels and creates
+// a clean classifier without any CountingMetricsClassifier wrapper
+func (b *Blocklists) FileClassifier() (classifier.FileClassifier, error) {
+	if b == nil {
+		// Return a classifier with no signatures - will match nothing
+		return classifier.NewSignatureMatchClassifier("filesystem-empty", classifier.LevelAudit, nil), nil
+	}
+
+	// Collect all filesystem signatures from all levels
+	var allFilesystemSignatures []*classifier.Signature
+
+	for _, bl := range b.Levels() {
+		if bl == nil || bl.Signatures == nil {
+			continue
+		}
+
+		for _, sig := range bl.Signatures {
+			if sig.Domain == classifier.DomainFileSystem {
+				fsSig := &classifier.Signature{
+					Name:     sig.Name,
+					Domain:   sig.Domain,
+					Pattern:  sig.Pattern,
+					Filename: sig.Filename,
+					Regexp:   sig.Regexp,
+				}
+				allFilesystemSignatures = append(allFilesystemSignatures, fsSig)
+			}
+		}
+	}
+
+	// Create a single SignatureMatchClassifier with all filesystem signatures
+	// Use LevelAudit as default - individual signatures can still have their own severity
+	return classifier.NewSignatureMatchClassifier("filesystem", classifier.LevelAudit, allFilesystemSignatures), nil
+}
+
 func (b *Blocklists) Levels() map[common.Severity]*PerLevelBlocklist {
 	res := make(map[common.Severity]*PerLevelBlocklist)
 	if b.Barely != nil {

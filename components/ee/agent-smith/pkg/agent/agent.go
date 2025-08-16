@@ -149,15 +149,17 @@ func NewAgentSmith(cfg config.Config) (*Smith, error) {
 			WorkingArea:  cfg.FilesystemScanning.WorkingArea,
 		}
 
-		// Check if the main classifier supports filesystem detection
-		if fsc, ok := class.(classifier.FileClassifier); ok {
-			filesystemClass = fsc
+		// Create independent filesystem classifier (no dependency on process classifier)
+		filesystemClass, err = cfg.Blocklists.FileClassifier()
+		if err != nil {
+			log.WithError(err).Error("failed to create filesystem classifier")
+		} else {
 			filesystemDetec, err = detector.NewfileDetector(fsConfig, filesystemClass)
 			if err != nil {
-				log.WithError(err).Warn("failed to create filesystem detector")
+				log.WithError(err).Error("failed to create filesystem detector")
+			} else {
+				log.Info("Filesystem detector created successfully with independent classifier")
 			}
-		} else {
-			log.Warn("classifier does not support filesystem detection, filesystem scanning disabled")
 		}
 	}
 
