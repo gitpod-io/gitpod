@@ -160,24 +160,6 @@ func NewSignatureMatchClassifier(name string, defaultLevel Level, sig []*Signatu
 				"classifier_name": name,
 			},
 		}),
-		filesystemHitTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "gitpod_agent_smith",
-			Subsystem: "classifier_signature",
-			Name:      "filesystem_hit_total",
-			Help:      "total count of filesystem signature hits",
-			ConstLabels: prometheus.Labels{
-				"classifier_name": name,
-			},
-		}),
-		filesystemMissTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "gitpod_agent_smith",
-			Subsystem: "classifier_signature",
-			Name:      "filesystem_miss_total",
-			Help:      "total count of filesystem signature misses",
-			ConstLabels: prometheus.Labels{
-				"classifier_name": name,
-			},
-		}, []string{"reason"}),
 	}
 }
 
@@ -194,10 +176,8 @@ type SignatureMatchClassifier struct {
 	Signatures   []*Signature
 	DefaultLevel Level
 
-	processMissTotal    *prometheus.CounterVec
-	signatureHitTotal   prometheus.Counter
-	filesystemHitTotal  prometheus.Counter
-	filesystemMissTotal *prometheus.CounterVec
+	processMissTotal  *prometheus.CounterVec
+	signatureHitTotal prometheus.Counter
 }
 
 var _ ProcessClassifier = &SignatureMatchClassifier{}
@@ -276,7 +256,6 @@ func (sigcl *SignatureMatchClassifier) MatchesFile(filePath string) (c *Classifi
 		} else {
 			reason = processMissOther
 		}
-		sigcl.filesystemMissTotal.WithLabelValues(reason).Inc()
 		log.WithFields(logrus.Fields{
 			"filePath": filePath,
 			"reason":   reason,
@@ -293,7 +272,6 @@ func (sigcl *SignatureMatchClassifier) MatchesFile(filePath string) (c *Classifi
 	for _, sig := range matchingSignatures {
 		match, err := sig.Matches(&src)
 		if match {
-			sigcl.filesystemHitTotal.Inc()
 			return &Classification{
 				Level:      sigcl.DefaultLevel,
 				Classifier: ClassifierSignature,
@@ -321,15 +299,11 @@ type SignatureReadCache struct {
 func (sigcl *SignatureMatchClassifier) Describe(d chan<- *prometheus.Desc) {
 	sigcl.processMissTotal.Describe(d)
 	sigcl.signatureHitTotal.Describe(d)
-	sigcl.filesystemHitTotal.Describe(d)
-	sigcl.filesystemMissTotal.Describe(d)
 }
 
 func (sigcl *SignatureMatchClassifier) Collect(m chan<- prometheus.Metric) {
 	sigcl.processMissTotal.Collect(m)
 	sigcl.signatureHitTotal.Collect(m)
-	sigcl.filesystemHitTotal.Collect(m)
-	sigcl.filesystemMissTotal.Collect(m)
 }
 
 // GetFileSignatures returns signatures that are configured for filesystem domain
