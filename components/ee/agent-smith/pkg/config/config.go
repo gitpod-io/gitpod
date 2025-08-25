@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
 
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/classifier"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/common"
@@ -171,9 +172,10 @@ type Config struct {
 
 	Blocklists *Blocklists `json:"blocklists,omitempty"`
 
-	Enforcement       Enforcement        `json:"enforcement,omitempty"`
-	ExcessiveCPUCheck *ExcessiveCPUCheck `json:"excessiveCPUCheck,omitempty"`
-	Kubernetes        Kubernetes         `json:"kubernetes"`
+	Enforcement        Enforcement         `json:"enforcement,omitempty"`
+	ExcessiveCPUCheck  *ExcessiveCPUCheck  `json:"excessiveCPUCheck,omitempty"`
+	Kubernetes         Kubernetes          `json:"kubernetes"`
+	FilesystemScanning *FilesystemScanning `json:"filesystemScanning,omitempty"`
 
 	ProbePath string `json:"probePath,omitempty"`
 }
@@ -187,6 +189,40 @@ type TLS struct {
 type WorkspaceManagerConfig struct {
 	Address string `json:"address"`
 	TLS     TLS    `json:"tls,omitempty"`
+}
+
+// FilesystemScanning configures filesystem signature scanning
+type FilesystemScanning struct {
+	Enabled      bool     `json:"enabled"`
+	ScanInterval Duration `json:"scanInterval"`
+	MaxFileSize  int64    `json:"maxFileSize"`
+	WorkingArea  string   `json:"workingArea"`
+}
+
+// Duration wraps time.Duration to provide JSON marshaling/unmarshaling
+type Duration struct {
+	time.Duration
+}
+
+// UnmarshalJSON implements json.Unmarshaler interface
+func (d *Duration) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	duration, err := time.ParseDuration(s)
+	if err != nil {
+		return err
+	}
+
+	d.Duration = duration
+	return nil
+}
+
+// MarshalJSON implements json.Marshaler interface
+func (d Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.Duration.String())
 }
 
 // Slackwebhooks holds slack notification configuration for different levels of penalty severity
@@ -223,6 +259,42 @@ func (b *Blocklists) Classifier() (res classifier.ProcessClassifier, err error) 
 		}
 	}
 	return gres, nil
+}
+
+// FileClassifier creates a classifier specifically for filesystem scanning
+// This extracts only filesystem signatures from all blocklist levels and creates
+// a clean classifier without any CountingMetricsClassifier wrapper
+func (b *Blocklists) FileClassifier() (classifier.FileClassifier, error) {
+	if b == nil {
+		// Return a classifier with no signatures - will match nothing
+		return classifier.NewSignatureMatchClassifier("filesystem-empty", classifier.LevelAudit, nil), nil
+	}
+
+	// Collect all filesystem signatures from all levels
+	var allFilesystemSignatures []*classifier.Signature
+
+	for _, bl := range b.Levels() {
+		if bl == nil || bl.Signatures == nil {
+			continue
+		}
+
+		for _, sig := range bl.Signatures {
+			if sig.Domain == classifier.DomainFileSystem {
+				fsSig := &classifier.Signature{
+					Name:     sig.Name,
+					Domain:   sig.Domain,
+					Pattern:  sig.Pattern,
+					Filename: sig.Filename,
+					Regexp:   sig.Regexp,
+				}
+				allFilesystemSignatures = append(allFilesystemSignatures, fsSig)
+			}
+		}
+	}
+
+	// Create a single SignatureMatchClassifier with all filesystem signatures
+	// Use LevelAudit as default - individual signatures can still have their own severity
+	return classifier.NewSignatureMatchClassifier("filesystem", classifier.LevelAudit, allFilesystemSignatures), nil
 }
 
 func (b *Blocklists) Levels() map[common.Severity]*PerLevelBlocklist {

@@ -48,6 +48,12 @@ type ProcessClassifier interface {
 	Matches(executable string, cmdline []string) (*Classification, error)
 }
 
+// FileClassifier matches filesystem files against signatures
+type FileClassifier interface {
+	MatchesFile(filePath string) (*Classification, error)
+	GetFileSignatures() []*Signature
+}
+
 func NewCommandlineClassifier(name string, level Level, allowList []string, blockList []string) (*CommandlineClassifier, error) {
 	al := make([]*regexp.Regexp, 0, len(allowList))
 	for _, a := range allowList {
@@ -173,6 +179,7 @@ type SignatureMatchClassifier struct {
 }
 
 var _ ProcessClassifier = &SignatureMatchClassifier{}
+var _ FileClassifier = &SignatureMatchClassifier{}
 
 var sigNoMatch = &Classification{Level: LevelNoMatch, Classifier: ClassifierSignature}
 
@@ -223,6 +230,63 @@ func (sigcl *SignatureMatchClassifier) Matches(executable string, cmdline []stri
 	return sigNoMatch, nil
 }
 
+// MatchesFile checks if a filesystem file matches any filesystem signatures
+func (sigcl *SignatureMatchClassifier) MatchesFile(filePath string) (c *Classification, err error) {
+	filesystemSignatures := sigcl.GetFileSignatures()
+
+	if len(filesystemSignatures) == 0 {
+		return sigNoMatch, nil
+	}
+
+	// Skip filename matching - the filesystem detector already filtered files
+	// based on signature filename patterns, so any file that reaches here
+	// should be checked for content matching against all filesystem signatures
+	matchingSignatures := filesystemSignatures
+
+	// Open file for signature matching
+	r, err := os.Open(filePath)
+	if err != nil {
+		var reason string
+		if errors.Is(err, fs.ErrNotExist) {
+			reason = processMissNotFound
+		} else if errors.Is(err, os.ErrPermission) {
+			reason = processMissPermissionDenied
+		} else {
+			reason = processMissOther
+		}
+		log.WithFields(logrus.Fields{
+			"filePath": filePath,
+			"reason":   reason,
+		}).WithError(err).Debug("filesystem signature classification miss")
+		return sigNoMatch, nil
+	}
+	defer r.Close()
+
+	var serr error
+
+	src := SignatureReadCache{
+		Reader: r,
+	}
+	for _, sig := range matchingSignatures {
+		match, err := sig.Matches(&src)
+		if match {
+			return &Classification{
+				Level:      sigcl.DefaultLevel,
+				Classifier: ClassifierSignature,
+				Message:    fmt.Sprintf("filesystem signature matches %s", sig.Name),
+			}, nil
+		}
+		if err != nil {
+			serr = err
+		}
+	}
+	if serr != nil {
+		return nil, serr
+	}
+
+	return sigNoMatch, nil
+}
+
 type SignatureReadCache struct {
 	Reader  io.ReaderAt
 	header  []byte
@@ -238,6 +302,17 @@ func (sigcl *SignatureMatchClassifier) Describe(d chan<- *prometheus.Desc) {
 func (sigcl *SignatureMatchClassifier) Collect(m chan<- prometheus.Metric) {
 	sigcl.processMissTotal.Collect(m)
 	sigcl.signatureHitTotal.Collect(m)
+}
+
+// GetFileSignatures returns signatures that are configured for filesystem domain
+func (sigcl *SignatureMatchClassifier) GetFileSignatures() []*Signature {
+	var filesystemSignatures []*Signature
+	for _, sig := range sigcl.Signatures {
+		if sig.Domain == DomainFileSystem {
+			filesystemSignatures = append(filesystemSignatures, sig)
+		}
+	}
+	return filesystemSignatures
 }
 
 // CompositeClassifier combines multiple classifiers into one. The first match wins.

@@ -43,7 +43,9 @@ type Signature struct {
 	// Name is a description of the signature
 	Name string `json:"name,omitempty"`
 
-	// Domain describe where to look for the file to search for the signature (default: "filesystem")
+	// Domain describe where to look for the file to search for the signature
+	// "process" is dominant
+	// if domain is empty, we set "filesystem"
 	Domain Domain `json:"domain,omitempty"`
 
 	// The kind of file this signature can apply to
@@ -147,6 +149,11 @@ func (s *Signature) Matches(in *SignatureReadCache) (bool, error) {
 		if !matches {
 			return false, nil
 		}
+	}
+
+	// necessary to do a string match for text files
+	if s.Domain == DomainFileSystem {
+		return s.matchTextFile(in)
 	}
 
 	// match the specific kind
@@ -283,6 +290,37 @@ func (s *Signature) matchAny(in *SignatureReadCache) (bool, error) {
 
 		// TODO: deal with buffer edges (i.e. pattern wrapping around the buffer edge)
 		if bytes.Contains(sub, s.Pattern) {
+			return true, nil
+		}
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return false, xerrors.Errorf("cannot read stream: %w", err)
+		}
+		if s.Slice.End > 0 && pos >= s.Slice.End {
+			break
+		}
+	}
+
+	return false, nil
+}
+
+// matchAny matches a signature against a text file
+func (s *Signature) matchTextFile(in *SignatureReadCache) (bool, error) {
+	buffer := make([]byte, 8096)
+	pos := s.Slice.Start
+	for {
+		n, err := in.Reader.ReadAt(buffer, pos)
+		sub := buffer[0:n]
+		pos += int64(n)
+
+		match, matchErr := s.matches(sub)
+		if matchErr != nil {
+			return false, matchErr
+		}
+		if match {
 			return true, nil
 		}
 
