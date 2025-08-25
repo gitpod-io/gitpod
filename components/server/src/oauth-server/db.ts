@@ -166,6 +166,7 @@ const vscodeInsiders = createVSCodeClient("vscode-insiders", "VS Code Insiders")
 
 const vscodium = createVSCodeClient("vscodium", "VSCodium");
 const cursor = createVSCodeClient("cursor", "Cursor");
+const kiro = createVSCodeClient("kiro", "Kiro");
 
 export const inMemoryDatabase: InMemory = {
     clients: {
@@ -178,6 +179,7 @@ export const inMemoryDatabase: InMemory = {
         [cursor.id]: cursor,
         [desktopClient.id]: desktopClient,
         [toolbox.id]: toolbox,
+        [kiro.id]: kiro,
     },
     tokens: {},
     scopes: {},
