@@ -58,6 +58,7 @@
         "exit": true
     },
     "dependencies": {
+        "@arcjet/duration": "^1.0.0-beta.10",
         "@bufbuild/protobuf": "^1.3.3",
         "@connectrpc/connect": "1.1.2",
         "@types/react": "17.0.32",

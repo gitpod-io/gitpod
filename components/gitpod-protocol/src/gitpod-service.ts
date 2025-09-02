@@ -4,6 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { parse as parseDuration } from "@arcjet/duration";
 import {
     User,
     WorkspaceInfo,
@@ -356,21 +357,32 @@ export type WorkspaceTimeoutDuration = string;
 export namespace WorkspaceTimeoutDuration {
     export function validate(duration: string): WorkspaceTimeoutDuration {
         duration = duration.toLowerCase();
-        const unit = duration.slice(-1);
-        if (!["m", "h"].includes(unit)) {
-            throw new Error(`Invalid timeout unit: ${unit}`);
+
+        try {
+            // Use @arcjet/duration library which is a TypeScript port of Go's ParseDuration
+            // This ensures exact compatibility with Go's duration parsing
+            const seconds = parseDuration(duration);
+
+            // Validate the parsed duration is within limits
+            const maxSeconds = WORKSPACE_MAXIMUM_TIMEOUT_HOURS * 60 * 60;
+            if (seconds > maxSeconds) {
+                throw new Error("Workspace inactivity timeout cannot exceed 24h");
+            }
+
+            if (seconds <= 0) {
+                throw new Error(`Invalid timeout value: ${duration}. Timeout must be greater than 0`);
+            }
+
+            // Return the original duration string - Go's time.ParseDuration will handle it correctly
+            return duration;
+        } catch (error) {
+            // If it's our validation error, re-throw it
+            if (error.message.includes("cannot exceed 24h") || error.message.includes("must be greater than 0")) {
+                throw error;
+            }
+            // Otherwise, it's a parsing error from the library
+            throw new Error(`Invalid timeout format: ${duration}. Use Go duration format (e.g., "30m", "1h30m", "2h")`);
         }
-        const value = parseInt(duration.slice(0, -1), 10);
-        if (isNaN(value) || value <= 0) {
-            throw new Error(`Invalid timeout value: ${duration}`);
-        }
-        if (
-            (unit === "h" && value > WORKSPACE_MAXIMUM_TIMEOUT_HOURS) ||
-            (unit === "m" && value > WORKSPACE_MAXIMUM_TIMEOUT_HOURS * 60)
-        ) {
-            throw new Error("Workspace inactivity timeout cannot exceed 24h");
-        }
-        return value + unit;
     }
 }
 
