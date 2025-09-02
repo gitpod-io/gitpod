@@ -14,10 +14,10 @@ import onaWordmark from "../images/ona-wordmark.svg";
 const onaBanner = {
     type: "Introducing",
     title: "ONA",
-    subtitle: "The privacy-first software engineering agent.",
+    subtitle: "Parallel SWE agents in the cloud, sandboxed or high-autonomy.",
     ctaText: "Get early access",
     learnMoreText: "Learn more",
-    link: "https://www.gitpod.io/solutions/ai",
+    link: "https://ona.com/stories/gitpod-classic-payg-sunset",
 };
 
 interface OnaBannerProps {
@@ -92,28 +92,18 @@ export const OnaBanner: React.FC<OnaBannerProps> = ({ compact = false }) => {
                 </div>
 
                 <p className="text-white text-base font-semibold leading-tight text-left">
-                    The privacy-first software engineering agent
+                    Parallel SWE agents in the cloud, sandboxed or high-autonomy.
                 </p>
 
-                {!onaClicked ? (
-                    <button
-                        onClick={handleOnaBannerClick}
-                        className="bg-white/20 backdrop-blur-sm text-white font-medium py-1 px-3 rounded-full hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center gap-2 text-sm w-fit"
-                    >
-                        {onaBanner.ctaText}
-                        <span className="font-bold">→</span>
-                    </button>
-                ) : (
-                    <a
-                        href={onaBanner.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-white/20 backdrop-blur-sm text-white font-medium py-1 px-3 rounded-full hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center gap-2 text-sm w-fit"
-                    >
-                        {onaBanner.learnMoreText}
-                        <span className="font-bold">→</span>
-                    </a>
-                )}
+                <a
+                    href={onaBanner.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-white/20 backdrop-blur-sm text-white font-medium py-1 px-3 rounded-full hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center gap-2 text-sm w-fit"
+                >
+                    {onaBanner.learnMoreText}
+                    <span className="font-bold">→</span>
+                </a>
             </div>
         );
     }
