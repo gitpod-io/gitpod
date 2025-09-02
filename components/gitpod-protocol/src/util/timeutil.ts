@@ -117,5 +117,9 @@ export function goDurationToHumanReadable(goDuration: string): string {
 }
 
 export function parseGoDurationToMs(goDuration: string): number {
-    return parseDuration(goDuration);
+    const result = parseDuration(goDuration);
+    if (result === null || result === undefined) {
+        throw new Error(`Invalid Go duration format: ${goDuration}`);
+    }
+    return result;
 }

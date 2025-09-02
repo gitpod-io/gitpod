@@ -29,7 +29,7 @@ describe("WorkspaceTimeoutDuration", () => {
         it("should handle complex Go duration formats", () => {
             expect(WorkspaceTimeoutDuration.validate("1h30m45s")).to.equal("1h30m45s");
             expect(WorkspaceTimeoutDuration.validate("1m30s")).to.equal("1m30s");
-            // Note: @arcjet/duration doesn't support decimal durations like "1.5h"
+            // Note: parse-duration doesn't support decimal durations like "1.5h"
         });
 
         it("should handle edge cases within limits", () => {

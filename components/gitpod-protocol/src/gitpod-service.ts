@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { parse as parseDuration } from "@arcjet/duration";
+import parse from "parse-duration";
 import {
     User,
     WorkspaceInfo,
@@ -359,17 +359,27 @@ export namespace WorkspaceTimeoutDuration {
         duration = duration.toLowerCase();
 
         try {
-            // Use @arcjet/duration library which is a TypeScript port of Go's ParseDuration
-            // This ensures exact compatibility with Go's duration parsing
-            const seconds = parseDuration(duration);
+            // Ensure the duration contains proper units (h, m, s, ms, us, ns)
+            // This prevents bare numbers like "1" from being accepted
+            if (!/[a-z]/.test(duration)) {
+                throw new Error("Invalid duration format");
+            }
+
+            // Use parse-duration library which supports Go duration format perfectly
+            // This handles mixed-unit durations like "1h30m", "2h15m", etc.
+            const milliseconds = parse(duration);
+
+            if (milliseconds === undefined || milliseconds === null) {
+                throw new Error("Invalid duration format");
+            }
 
             // Validate the parsed duration is within limits
-            const maxSeconds = WORKSPACE_MAXIMUM_TIMEOUT_HOURS * 60 * 60;
-            if (seconds > maxSeconds) {
+            const maxMs = WORKSPACE_MAXIMUM_TIMEOUT_HOURS * 60 * 60 * 1000;
+            if (milliseconds > maxMs) {
                 throw new Error("Workspace inactivity timeout cannot exceed 24h");
             }
 
-            if (seconds <= 0) {
+            if (milliseconds <= 0) {
                 throw new Error(`Invalid timeout value: ${duration}. Timeout must be greater than 0`);
             }
 
