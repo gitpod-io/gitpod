@@ -117,5 +117,14 @@ export function goDurationToHumanReadable(goDuration: string): string {
 }
 
 export function parseGoDurationToMs(goDuration: string): number {
-    return parseDuration(goDuration);
+    // Handle empty or whitespace-only strings as 0 duration
+    if (!goDuration || goDuration.trim() === "") {
+        return 0;
+    }
+
+    const result = parseDuration(goDuration);
+    if (result === null || result === undefined) {
+        throw new Error(`Invalid Go duration format: ${goDuration}`);
+    }
+    return result;
 }

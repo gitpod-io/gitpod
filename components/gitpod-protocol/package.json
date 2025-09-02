@@ -74,7 +74,7 @@
         "js-yaml": "^3.10.0",
         "nice-grpc-common": "^2.0.0",
         "opentracing": "^0.14.5",
-        "parse-duration": "^1.0.3",
+        "parse-duration": "^1.1.2",
         "prom-client": "^14.2.0",
         "random-number-csprng": "^1.0.2",
         "react": "17.0.2",
