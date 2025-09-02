@@ -142,25 +142,20 @@ const GITPOD_CLASSIC_SUNSET = (
         type: "info" as AlertType,
         message: (
             <span className="text-md text-white font-semibold items-center justify-center">
-                Meet <img src={onaWordmark} alt="Ona" className="inline align-middle w-12 mb-0.5" draggable="false" /> |
-                the privacy-first software engineering agent |{" "}
-                {!onaClicked ? (
-                    <button
-                        onClick={handleOnaBannerClick}
-                        className="underline hover:no-underline cursor-pointer bg-transparent border-none text-white font-semibold"
-                    >
-                        Get early access
-                    </button>
-                ) : (
-                    <a
-                        href="https://www.gitpod.io/solutions/ai"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline hover:no-underline"
-                    >
-                        Learn more
-                    </a>
-                )}
+                <img src={onaWordmark} alt="Ona" className="inline align-middle w-12 mb-0.5" draggable="false" /> |
+                parallel SWE agents in the cloud, sandboxed or high-autonomy.{" "}
+                <a href="https://app.ona.com" target="_blank" rel="noreferrer" className="underline hover:no-underline">
+                    Start for free
+                </a>{" "}
+                and get $100 credits. Gitpod Classic sunsets Oct 15 |{" "}
+                <a
+                    href="https://ona.com/stories/gitpod-classic-payg-sunset"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline hover:no-underline"
+                >
+                    Learn more
+                </a>
             </span>
         ),
     } as Notification;
