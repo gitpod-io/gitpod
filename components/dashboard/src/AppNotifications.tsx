@@ -25,7 +25,7 @@ import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import onaWordmark from "./images/ona-wordmark.svg";
 
 const KEY_APP_DISMISSED_NOTIFICATIONS = "gitpod-app-notifications-dismissed";
-const PRIVACY_POLICY_LAST_UPDATED = "2025-07-21";
+const PRIVACY_POLICY_LAST_UPDATED = "2025-09-01";
 
 interface Notification {
     id: string;
