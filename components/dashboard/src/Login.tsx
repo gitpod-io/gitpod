@@ -390,7 +390,7 @@ const RightProductDescriptionPanel = () => {
 
                 <div className="flex flex-col gap-4 flex-1">
                     <h2 className="text-white text-xl font-bold leading-tight text-center max-w-sm mx-auto">
-                        Ona - | parallel SWE agents in the cloud, sandboxed for high-autonomy.{" "}
+                        Ona - parallel SWE agents in the cloud, sandboxed for high-autonomy.{" "}
                         <a
                             href="https://app.ona.com"
                             target="_blank"
