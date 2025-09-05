@@ -333,16 +333,16 @@ const LoginContent = ({
             {!enterprise && (
                 <div className="mt-6 text-center text-sm">
                     <p className="text-pk-content-primary">
-                        Gitpod classic is sunsetting fall 2025.{" "}
+                        Gitpod Classic sunsets Oct 15.{" "}
                         <a
                             href="https://app.gitpod.io"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="gp-link hover:text-gray-600"
                         >
-                            Try the new Gitpod
+                            Start here for free
                         </a>{" "}
-                        now (hosted compute & SWE agents coming soon)
+                        and get $100 credits.
                     </p>
                 </div>
             )}
@@ -390,7 +390,7 @@ const RightProductDescriptionPanel = () => {
 
                 <div className="flex flex-col gap-4 flex-1">
                     <h2 className="text-white text-xl font-bold leading-tight text-center max-w-sm mx-auto">
-                        Ona - | parallel SWE agents in the cloud, sandboxed or high-autonomy.{" "}
+                        Ona - parallel SWE agents in the cloud, sandboxed for high-autonomy.{" "}
                         <a
                             href="https://app.ona.com"
                             target="_blank"
