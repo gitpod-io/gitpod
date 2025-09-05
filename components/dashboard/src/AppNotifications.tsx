@@ -143,7 +143,7 @@ const GITPOD_CLASSIC_SUNSET = (
         message: (
             <span className="text-md text-white font-semibold items-center justify-center">
                 <img src={onaWordmark} alt="Ona" className="inline align-middle w-12 mb-0.5" draggable="false" /> |
-                parallel SWE agents in the cloud, sandboxed or high-autonomy.{" "}
+                parallel SWE agents in the cloud, sandboxed for high-autonomy.{" "}
                 <a href="https://app.ona.com" target="_blank" rel="noreferrer" className="underline hover:no-underline">
                     Start for free
                 </a>{" "}

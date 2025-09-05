@@ -14,7 +14,7 @@ import onaWordmark from "../images/ona-wordmark.svg";
 const onaBanner = {
     type: "Introducing",
     title: "ONA",
-    subtitle: "Parallel SWE agents in the cloud, sandboxed or high-autonomy.",
+    subtitle: "Parallel SWE agents in the cloud, sandboxed for high-autonomy.",
     ctaText: "Get early access",
     learnMoreText: "Learn more",
     link: "https://ona.com/stories/gitpod-classic-payg-sunset",
@@ -92,7 +92,7 @@ export const OnaBanner: React.FC<OnaBannerProps> = ({ compact = false }) => {
                 </div>
 
                 <p className="text-white text-base font-semibold leading-tight text-left">
-                    Parallel SWE agents in the cloud, sandboxed or high-autonomy.
+                    Parallel SWE agents in the cloud, sandboxed for high-autonomy.
                 </p>
 
                 <a
