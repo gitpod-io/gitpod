@@ -321,8 +321,9 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                                     <span>
                                         All you loved in Gitpod Classic and more: Parallel coding agents with full VS
                                         Code in browser. Each runs in its own sandbox, fire off many at once and handoff
-                                        to web or desktop IDE, even start on mobile. Gitpod Classic sunsets Oct 15 -
-                                        migrate in September and get $100 Core credits.
+                                        to web or desktop IDE, even start on mobile. <br />
+                                        <br /> Gitpod Classic sunsets Oct 15 - migrate in September and get $100 Core
+                                        credits.
                                     </span>
                                 </div>
                             </div>
