@@ -65,6 +65,13 @@ The Dashboard provides interfaces for:
    - IDE preferences
    - Feature preview settings
 
+4. **Redirection Logic**:
+   - Redirects non-signed-in Gitpod Classic PAYG users from `gitpod.io/#` to `app.ona.com/#`
+   - Only triggers when a hash fragment is present (`hash !== ""`)
+   - Preserves hash fragments during the redirect
+   - Only applies to the root path (`/`) on gitpod.io domains
+   - Does NOT redirect users visiting `gitpod.io/` without hash fragments
+
 ## Development Workflow
 
 The Dashboard supports several development workflows:
