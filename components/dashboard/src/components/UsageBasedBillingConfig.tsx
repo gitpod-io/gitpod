@@ -94,20 +94,6 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
         refreshSubscriptionDetails(attributionId);
     }, [attributionId, refreshSubscriptionDetails]);
 
-    const handleAddPaymentMethod = useCallback(async () => {
-        if (!attributionId) {
-            return;
-        }
-
-        try {
-            createPaymentIntent.mutateAsync(attributionId);
-            setShowAddPaymentMethodModal(true);
-        } catch (e) {
-            console.error(e);
-            toast(e.message || "Oh no, there was a problem with our payment service.");
-        }
-    }, [attributionId, createPaymentIntent, toast]);
-
     // Handle stripe setup-intent or payment-intent redirect flow
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -318,13 +304,27 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                             </div>
                         </div>
                         <div className="flex flex-col p-4 rounded-b-xl bg-pk-surface-secondary border-t border-gray-200 dark:border-gray-700">
-                            <div className="uppercase text-sm text-pk-content-tertiary">Upgrade Plan</div>
                             <div className="mt-1 text-xl font-semibold flex-grow text-pk-content-primary">
-                                Pay-as-you-go
+                                Gitpod is now Ona (
+                                <a
+                                    href="https://ona.com/stories/gitpod-is-now-ona"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="!underline hover:!no-underline !gp-link"
+                                >
+                                    learn more
+                                </a>
+                                )
                             </div>
                             <div className="mt-4 flex space-x-1 text-pk-content-tertiary">
                                 <div className="flex flex-col">
-                                    <span>{priceInformation}</span>
+                                    <span>
+                                        All you loved in Gitpod Classic and more: Parallel coding agents with full VS
+                                        Code in browser. Each runs in its own sandbox, fire off many at once and handoff
+                                        to web or desktop IDE, even start on mobile. <br />
+                                        <br /> Gitpod Classic sunsets Oct 15 - migrate in September and get $100 in
+                                        credits.
+                                    </span>
                                 </div>
                             </div>
                             <div className="flex justify-end mt-6 space-x-2">
@@ -335,9 +335,10 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                                         </Button>
                                     </a>
                                 )}
-                                <LoadingButton loading={createPaymentIntent.isLoading} onClick={handleAddPaymentMethod}>
-                                    Upgrade Plan
-                                </LoadingButton>
+
+                                <a href="https://app.ona.com" target="_blank" rel="noreferrer">
+                                    <Button variant="default">Try Ona ↗</Button>
+                                </a>
                             </div>
                         </div>
                     </>
