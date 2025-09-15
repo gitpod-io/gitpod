@@ -73,10 +73,15 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
             return <QuickStart />;
         }
 
-        // Before we show a Login screen, check to see if we need to redirect to www site
-        // Redirects if it's the root, no user, and no gp cookie present (has logged in recently)
-        if (isGitpodIo() && window.location.pathname === "/" && window.location.hash === "") {
-            // If there's no gp cookie, bounce to www site
+        // Before we show a Login screen, check to see if we need to redirect
+        if (isGitpodIo() && window.location.pathname === "/") {
+            // If there's a hash fragment, redirect to app.ona.com preserving the hash
+            if (window.location.hash !== "") {
+                const hashFragment = window.location.hash;
+                window.location.href = `https://app.ona.com/${hashFragment}`;
+                return <div></div>;
+            }
+            // If there's no hash and no gp cookie, bounce to www site
             if (!hasLoggedInBefore()) {
                 window.location.href = `https://www.gitpod.io`;
                 return <div></div>;

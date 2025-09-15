@@ -19,7 +19,7 @@ Building a comprehensive knowledge base of the Gitpod codebase and architecture 
 - Enhanced API component documentation with code generation information
 - Implemented server readiness probe with database, SpiceDB, and Redis connectivity checks
 - **Improved `registry-facade` resilience by implementing a comprehensive retry mechanism for blob retrieval, addressing transient network errors.**
-- **Implemented redirect for non-signed-in Gitpod Classic PAYG users from `gitpod.io/#` (with hash fragments) to `app.ona.com/#`, preserving hash fragments. Only applies to users with hash fragments, not all gitpod.io visitors.**
+- **Implemented redirect for non-signed-in Gitpod Classic PAYG users from `gitpod.io/#` to `app.ona.com/#`. Added redirect logic to both `QueryErrorBoundary.tsx` (primary path for authentication errors) and kept it in `App.tsx` (secondary path for defense in depth). This provides comprehensive coverage across different execution paths.**
 
 ## Next Steps
 
