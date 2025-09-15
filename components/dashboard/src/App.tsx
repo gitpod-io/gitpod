@@ -66,6 +66,7 @@ const App: FC = () => {
     }
 
     // Redirect non-signed-in Gitpod Classic PAYG users from gitpod.io/# to app.ona.com/#
+    // This provides redundancy with QueryErrorBoundary for better coverage
     const hash = getURLHash();
     if (!user && isGitpodIo() && location.pathname === "/" && hash !== "") {
         // Preserve the hash fragment when redirecting
