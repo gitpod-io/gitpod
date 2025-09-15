@@ -18,6 +18,7 @@ import { LinkedInCallback } from "react-linkedin-login-oauth2";
 import { useQueryParams } from "./hooks/use-query-params";
 import { useTheme } from "./theme-context";
 import QuickStart from "./components/QuickStart";
+import { isGitpodIo, getURLHash } from "./utils";
 
 export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl﹢"}O`;
 
@@ -62,6 +63,15 @@ const App: FC = () => {
 
     if (loading) {
         return <AppLoading />;
+    }
+
+    // Redirect non-signed-in Gitpod Classic PAYG users from gitpod.io/# to app.ona.com/#
+    const hash = getURLHash();
+    if (!user && isGitpodIo() && location.pathname === "/" && hash !== "") {
+        // Preserve the hash fragment when redirecting
+        const hashFragment = window.location.hash;
+        window.location.href = `https://app.ona.com/${hashFragment}`;
+        return <AppLoading />; // Show loading while redirecting
     }
 
     // Technically this should get handled in the QueryErrorBoundary, but having it here doesn't hurt
