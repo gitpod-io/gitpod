@@ -26,8 +26,6 @@ import { ProductLogo } from "./components/ProductLogo";
 import { useIsDataOps } from "./data/featureflag-query";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { isGitpodIo } from "./utils";
-import { trackEvent } from "./Analytics";
-import { useToast } from "./components/toasts/Toasts";
 import onaWordmark from "./images/ona-wordmark.svg";
 import onaApplication from "./images/ona-application.webp";
 
@@ -351,26 +349,6 @@ const LoginContent = ({
 };
 
 const RightProductDescriptionPanel = () => {
-    const [email, setEmail] = useState("");
-    const [isSubmitted, setIsSubmitted] = useState(false);
-    const { toast } = useToast();
-
-    const handleEmailSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!email.trim()) return;
-
-        trackEvent("waitlist_joined", { email: email, feature: "Ona" });
-
-        setIsSubmitted(true);
-
-        toast(
-            <div>
-                <div className="font-medium">You're on the waitlist</div>
-                <div className="text-sm opacity-80">We'll reach out to you soon.</div>
-            </div>,
-        );
-    };
-
     return (
         <div className="w-full lg:max-w-lg 2xl:max-w-[600px] flex flex-col justify-center px-4 lg:px-4 md:min-h-screen my-auto">
             <div className="rounded-lg flex flex-col gap-6 text-white h-full py-4 lg:py-6 max-w-lg mx-auto w-full">
@@ -389,8 +367,9 @@ const RightProductDescriptionPanel = () => {
                 </div>
 
                 <div className="flex flex-col gap-4 flex-1">
-                    <h2 className="text-white text-xl font-bold leading-tight text-center max-w-sm mx-auto">
-                        Ona - parallel SWE agents in the cloud, sandboxed for high-autonomy.{" "}
+                    <h2 className="text-white text-xl font-bold leading-tight text-start max-w-md mx-auto">
+                        Ona - parallel SWE agents in the cloud, sandboxed for high-autonomy. <br />
+                        <br />{" "}
                         <a
                             href="https://app.ona.com"
                             target="_blank"
@@ -399,7 +378,9 @@ const RightProductDescriptionPanel = () => {
                         >
                             Start for free
                         </a>{" "}
-                        and get $100 credits. Gitpod Classic sunsets Oct 15 |{" "}
+                        and get $100 credits. <br />
+                        <br />
+                        Gitpod Classic sunsets Oct 15 |{" "}
                         <a
                             href="https://ona.com/stories/gitpod-classic-payg-sunset"
                             target="_blank"
@@ -422,48 +403,14 @@ const RightProductDescriptionPanel = () => {
                     </div>
 
                     <div className="mt-4">
-                        {!isSubmitted ? (
-                            <form onSubmit={handleEmailSubmit} className="space-y-3">
-                                <div className="flex gap-2">
-                                    <input
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="Enter your work email"
-                                        className="flex-1 px-4 py-2.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30 text-sm"
-                                        required
-                                    />
-                                    <button
-                                        type="submit"
-                                        className="bg-white text-gray-900 font-medium py-2.5 px-4 rounded-lg hover:bg-gray-100 transition-colors text-sm inline-flex items-center justify-center gap-2"
-                                    >
-                                        Request access
-                                        <span className="font-bold">→</span>
-                                    </button>
-                                </div>
-                                <p className="text-xs text-white/70">
-                                    By submitting this, you agree to our{" "}
-                                    <a
-                                        href="https://www.gitpod.io/privacy/"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="underline hover:text-white"
-                                    >
-                                        privacy policy
-                                    </a>
-                                </p>
-                            </form>
-                        ) : (
-                            <a
-                                href="https://www.gitpod.io/solutions/ai"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full bg-white/20 backdrop-blur-sm text-white font-medium py-2.5 px-4 rounded-lg hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center justify-center gap-2 text-sm"
-                            >
-                                Learn more
-                                <span className="font-bold">→</span>
-                            </a>
-                        )}
+                        <a
+                            href="https://app.ona.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full bg-white/20 backdrop-blur-sm text-white font-medium py-2.5 px-4 rounded-lg hover:bg-white/30 transition-colors border border-white/20 inline-flex items-center justify-center gap-2 text-sm"
+                        >
+                            Try Ona <span className="font-bold">↗</span>
+                        </a>
                     </div>
                 </div>
             </div>
