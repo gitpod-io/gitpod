@@ -76,7 +76,7 @@ packages:
         # Check if a DB is present. If not: start one and wait until it's up
         # Note: In CI there is a DB running as sidecar; in workspaces we're starting it once.
         #       Re-use of the instance because of the init scripts (cmp. next step).
-        # (gpl): It would be nice to use bitnami/mysql here as we do in previews. However the container does not start in Gitpod workspaces due to some docker/kernel/namespace issue.
+        # (gpl): It would be nice to use bitnamilegacy/mysql here as we do in previews. However the container does not start in Gitpod workspaces due to some docker/kernel/namespace issue.
         - ["sh", "-c", "mysqladmin ping --wait=${DB_RETRIES:-1} -h $DB_HOST --port $DB_PORT -p$DB_PASSWORD -u$DB_USER --default-auth=mysql_native_password --silent || (docker container rm test-mysql; docker run --name test-mysql -d -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD -e MYSQL_TCP_PORT=$DB_PORT -p $DB_PORT:$DB_PORT mysql:8.0.33 --default-authentication-plugin=mysql_native_password; while ! mysqladmin ping -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u$DB_USER --default-auth=mysql_native_password --silent; do echo \"waiting for DB...\"; sleep 2; done)"]
         # Apply the DB initialization scripts (re-creates the "gitpod" DB if already there)
         - ["mkdir", "-p", "init-scripts"]
