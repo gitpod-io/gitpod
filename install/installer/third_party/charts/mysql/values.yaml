@@ -5,6 +5,7 @@
 mysql:
   fullnameOverride: mysql
   image:
+    registry: docker.io/bitnamilegacy
     tag: "overwritten"
   primary:
     extraEnvVars:

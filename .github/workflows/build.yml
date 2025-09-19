@@ -175,10 +175,10 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     services:
       mysql:
-        image: bitnami/mysql:8.0.33-debian-11-r24
+        image: bitnamilegacy/mysql:8.0.33-debian-11-r24
         env:
           MYSQL_ROOT_PASSWORD: test
-          #MYSQL_TCP_PORT: 23306 bitnami/mysql does not honor this, but has it's own:
+          #MYSQL_TCP_PORT: 23306 bitnamilegacy/mysql does not honor this, but has it's own:
           MYSQL_PORT_NUMBER: 23306
           MYSQL_AUTHENTICATION_PLUGIN: mysql_native_password
         ports:
