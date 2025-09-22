@@ -89,31 +89,22 @@ describe("ReturnTo URL Validation", () => {
             });
         });
 
-        describe("Feature Flag Integration", () => {
-            it("should document nonce validation feature flag behavior", () => {
-                // Feature flag: enable_nonce_validation (default: false)
-                // When enabled: Full CSRF protection with nonce validation
-                // When disabled: Nonce is generated but not validated (for future compatibility)
-
-                // This test documents the expected behavior:
+        describe("Security Behavior", () => {
+            it("should document nonce validation behavior", () => {
+                // CSRF protection with nonce validation is always enabled
                 // 1. Nonce is always generated and stored in cookie
                 // 2. Nonce is always included in JWT state
-                // 3. Nonce validation only occurs when feature flag is enabled
+                // 3. Nonce validation always occurs for security
                 // 4. Cookie is always cleared after callback processing
 
                 expect(true).to.equal(true); // Documentation test
             });
 
-            it("should document strict authorize returnTo validation feature flag behavior", () => {
-                // Feature flag: enable_strict_authorize_return_to (default: false)
-                // When enabled: Uses validateAuthorizeReturnToUrl (strict patterns)
-                // When disabled: Falls back to validateLoginReturnToUrl (broader patterns)
-
-                // This test documents the expected behavior:
-                // 1. /api/authorize endpoint checks the feature flag
-                // 2. If enabled: Only allows complete-auth, root, /new, /quickstart
-                // 3. If disabled: Falls back to login validation (broader patterns)
-                // 4. /api/login endpoint always uses login validation
+            it("should document strict authorize returnTo validation behavior", () => {
+                // Strict returnTo validation is always enabled for /api/authorize
+                // 1. /api/authorize endpoint always uses validateAuthorizeReturnToUrl (strict patterns)
+                // 2. Only allows complete-auth, root, /new, /quickstart for security
+                // 3. /api/login endpoint always uses login validation (broader patterns)
 
                 expect(true).to.equal(true); // Documentation test
             });

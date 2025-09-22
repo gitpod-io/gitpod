@@ -43,7 +43,6 @@ import { UserService } from "./user-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
-import { getFeatureFlagEnableStrictAuthorizeReturnTo } from "../util/featureflags";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -631,17 +630,13 @@ export class UserController {
         return returnTo;
     }
 
-    // TODO(gpl): Once we drop the feature flag, turn into the same form as above method.
     protected async ensureSafeReturnToParamForAuthorize(req: express.Request): Promise<string | undefined> {
         let returnTo = getSafeReturnToParam(req);
         if (returnTo) {
-            const isStrictAuthorizeValidationEnabled = await getFeatureFlagEnableStrictAuthorizeReturnTo();
-            if (isStrictAuthorizeValidationEnabled) {
-                // Validate returnTo URL against allowlist for authorize API
-                if (!validateAuthorizeReturnToUrl(returnTo, this.config.hostUrl)) {
-                    log.warn(`Invalid returnTo URL rejected for authorize: ${returnTo}`, { "login-flow": true });
-                    returnTo = undefined;
-                }
+            // Always validate returnTo URL against allowlist for authorize API
+            if (!validateAuthorizeReturnToUrl(returnTo, this.config.hostUrl)) {
+                log.warn(`Invalid returnTo URL rejected for authorize: ${returnTo}`, { "login-flow": true });
+                returnTo = undefined;
             }
         }
 
