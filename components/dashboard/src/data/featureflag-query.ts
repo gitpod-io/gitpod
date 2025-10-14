@@ -26,6 +26,7 @@ const featureFlags = {
     enabled_configuration_prebuild_full_clone: false,
     enterprise_onboarding_enabled: false,
     commit_annotation_setting_enabled: false,
+    classic_payg_sunset_enabled: false,
 };
 
 type FeatureFlags = typeof featureFlags;

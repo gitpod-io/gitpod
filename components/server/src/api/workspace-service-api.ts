@@ -61,6 +61,7 @@ import { UserService } from "../user/user-service";
 import { ContextParser } from "../workspace/context-parser-service";
 import { isWorkspaceId } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
+import { isUserBlockedBySunset } from "../util/featureflags";
 
 @injectable()
 export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceInterface> {
@@ -69,6 +70,15 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
     @inject(ContextService) private readonly contextService: ContextService;
     @inject(UserService) private readonly userService: UserService;
     @inject(ContextParser) private contextParser: ContextParser;
+
+    private async checkClassicPaygSunset(user: import("@gitpod/gitpod-protocol").User): Promise<void> {
+        if (await isUserBlockedBySunset(user)) {
+            throw new ApplicationError(
+                ErrorCodes.PERMISSION_DENIED,
+                "Gitpod Classic PAYG has sunset. Please visit https://app.ona.com/login to continue.",
+            );
+        }
+    }
 
     async getWorkspace(req: GetWorkspaceRequest, _: HandlerContext): Promise<GetWorkspaceResponse> {
         if (!isWorkspaceId(req.workspaceId)) {
@@ -198,6 +208,9 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         }
         const contextUrl = req.source.value;
         const user = await this.userService.findUserById(ctxUserId(), ctxUserId());
+
+        // Check if user is blocked by Classic PAYG sunset
+        await this.checkClassicPaygSunset(user);
         const { context, project } = await this.contextService.parseContext(user, contextUrl.url, {
             projectId: req.metadata.configurationId,
             organizationId: req.metadata.organizationId,
@@ -244,6 +257,10 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
             ctxUserId(),
             req.workspaceId,
         );
+
+        // Check if user is blocked by Classic PAYG sunset
+        await this.checkClassicPaygSunset(user);
+
         if (instance && instance.status.phase !== "stopped") {
             const info = await this.workspaceService.getWorkspace(ctxUserId(), workspace.id);
             const response = new StartWorkspaceResponse();

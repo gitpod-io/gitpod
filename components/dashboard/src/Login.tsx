@@ -23,7 +23,7 @@ import { Button, ButtonProps } from "@podkit/buttons/Button";
 import { cn } from "@podkit/lib/cn";
 import { userClient } from "./service/public-api";
 import { ProductLogo } from "./components/ProductLogo";
-import { useIsDataOps } from "./data/featureflag-query";
+import { useIsDataOps, useFeatureFlag } from "./data/featureflag-query";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { isGitpodIo } from "./utils";
 import onaWordmark from "./images/ona-wordmark.svg";
@@ -217,6 +217,7 @@ const LoginContent = ({
     const { setUser } = useContext(UserContext);
     const isDataOps = useIsDataOps();
     const isGitpodIoUser = isGitpodIo();
+    const classicSunsetEnabled = useFeatureFlag("classic_payg_sunset_enabled");
 
     const authProviders = useAuthProviderDescriptions();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
@@ -294,6 +295,11 @@ const LoginContent = ({
                     </>
                 ) : !isGitpodIoUser ? (
                     <Heading1>Log in to Gitpod</Heading1>
+                ) : classicSunsetEnabled ? (
+                    <>
+                        <Heading1>Gitpod Classic has sunset</Heading1>
+                        <Subheading>Continue with Ona</Subheading>
+                    </>
                 ) : (
                     <>
                         <Heading1>Log in to Gitpod Classic</Heading1>
@@ -303,7 +309,17 @@ const LoginContent = ({
             </div>
 
             <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
-                {providerFromContext ? (
+                {classicSunsetEnabled && isGitpodIoUser ? (
+                    <LoginButton
+                        onClick={() => {
+                            window.location.href = "https://app.ona.com/login";
+                        }}
+                    >
+                        <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
+                            Login with Ona
+                        </span>
+                    </LoginButton>
+                ) : providerFromContext ? (
                     <LoginButton
                         key={"button" + providerFromContext.host}
                         onClick={() => openLogin(providerFromContext!.host)}
@@ -327,8 +343,8 @@ const LoginContent = ({
             </div>
             {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
 
-            {/* Gitpod Classic sunset notice - only show for non-enterprise */}
-            {!enterprise && (
+            {/* Gitpod Classic sunset notice - only show for non-enterprise and when NOT sunset */}
+            {!enterprise && !classicSunsetEnabled && (
                 <div className="mt-6 text-center text-sm">
                     <p className="text-pk-content-primary">
                         Gitpod Classic sunsets Oct 15.{" "}
