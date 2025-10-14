@@ -348,7 +348,7 @@ const LoginContent = ({
                             rel="noopener noreferrer"
                             className="gp-link hover:text-gray-600"
                         >
-                            Start here for free
+                            start for free
                         </a>{" "}
                         and get $100 credits.
                     </p>
