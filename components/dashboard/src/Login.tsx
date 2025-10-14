@@ -296,8 +296,8 @@ const LoginContent = ({
                     <Heading1>Log in to Gitpod</Heading1>
                 ) : (
                     <>
-                        <Heading1>Log in to Gitpod Classic</Heading1>
-                        <Subheading>Hosted by us</Subheading>
+                        <Heading1>Start building with Ona</Heading1>
+                        <Subheading>What do you want to get done today?</Subheading>
                     </>
                 )}
             </div>
@@ -331,9 +331,19 @@ const LoginContent = ({
             {!enterprise && (
                 <div className="mt-6 text-center text-sm">
                     <p className="text-pk-content-primary">
-                        Gitpod Classic sunsets Oct 15.{" "}
+                        Gitpod Classic has been sunset on Oct 15.{" "}
                         <a
-                            href="https://app.gitpod.io"
+                            href="https://ona.com/stories/gitpod-is-now-ona"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="gp-link hover:text-gray-600"
+                        >
+                            {" "}
+                            Gitpod is now Ona
+                        </a>
+                        ,{" "}
+                        <a
+                            href="https://app.ona.com"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="gp-link hover:text-gray-600"
@@ -378,9 +388,9 @@ const RightProductDescriptionPanel = () => {
                         >
                             Start for free
                         </a>{" "}
-                        and get $100 credits. <br />
+                        and get $100 in credits. <br />
                         <br />
-                        Gitpod Classic sunsets Oct 15 |{" "}
+                        Gitpod Classic has been sunset on Oct 15 |{" "}
                         <a
                             href="https://ona.com/stories/gitpod-classic-payg-sunset"
                             target="_blank"
@@ -395,10 +405,6 @@ const RightProductDescriptionPanel = () => {
                         <p className="text-white/70 text-base">
                             Delegate software tasks to Ona. It writes code, runs tests, and opens a pull request. Or
                             jump in to inspect output or pair program in your IDE.
-                        </p>
-                        <p className="text-white/70 text-base mt-2">
-                            Ona runs inside your infrastructure (VPC), with full audit trails, zero data exposure, and
-                            support for any LLM.
                         </p>
                     </div>
 
