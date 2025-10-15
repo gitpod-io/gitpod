@@ -303,7 +303,8 @@ const LoginContent = ({
                     </>
                 ) : showSunsetUI ? (
                     <>
-                        <Heading1>Gitpod Classic has sunset</Heading1>
+                        <Heading1>Start building with Ona</Heading1>
+                        <Subheading>What do you want to get done today?</Subheading>
                     </>
                 ) : !isGitpodIoUser ? (
                     <Heading1>Log in to Gitpod</Heading1>
