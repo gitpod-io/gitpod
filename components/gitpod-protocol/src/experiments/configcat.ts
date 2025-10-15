@@ -60,3 +60,8 @@ export function attributesToUser(attributes: Attributes): ConfigCatUser {
 
     return new ConfigCatUser(userId, email, "", custom);
 }
+
+export interface ClassicPaygSunsetConfig {
+    enabled: boolean;
+    exemptedOrganizations: string[];
+}

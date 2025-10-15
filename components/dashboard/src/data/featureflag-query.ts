@@ -9,6 +9,9 @@ import { useQuery } from "@tanstack/react-query";
 import { getExperimentsClient } from "../experiments/client";
 import { useCurrentUser } from "../user-context";
 import { useCurrentOrg } from "./organizations/orgs-query";
+import { ClassicPaygSunsetConfig } from "@gitpod/gitpod-protocol/lib/experiments/configcat";
+
+const defaultClassicPaygSunsetConfig: ClassicPaygSunsetConfig = { enabled: false, exemptedOrganizations: [] };
 
 const featureFlags = {
     oidcServiceEnabled: false,
@@ -26,9 +29,30 @@ const featureFlags = {
     enabled_configuration_prebuild_full_clone: false,
     enterprise_onboarding_enabled: false,
     commit_annotation_setting_enabled: false,
+    classic_payg_sunset_enabled: defaultClassicPaygSunsetConfig,
 };
 
 type FeatureFlags = typeof featureFlags;
+
+// Helper to parse JSON feature flags
+function parseFeatureFlagValue<T>(flagName: string, rawValue: any, defaultValue: T): T {
+    // Special handling for JSON-based feature flags
+    if (flagName === "classic_payg_sunset_enabled") {
+        try {
+            if (typeof rawValue === "string") {
+                return JSON.parse(rawValue) as T;
+            }
+            // If it's already an object, return as-is
+            if (typeof rawValue === "object" && rawValue !== null) {
+                return rawValue as T;
+            }
+        } catch (error) {
+            console.error(`Failed to parse feature flag ${flagName}:`, error);
+            return defaultValue;
+        }
+    }
+    return rawValue;
+}
 
 export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): FeatureFlags[K] | boolean => {
     const user = useCurrentUser();
@@ -37,7 +61,12 @@ export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): Fe
     const queryKey = ["featureFlag", featureFlag, user?.id || "", org?.id || ""];
 
     const query = useQuery(queryKey, async () => {
-        const flagValue = await getExperimentsClient().getValueAsync(featureFlag, featureFlags[featureFlag], {
+        const defaultValue = featureFlags[featureFlag];
+        // For JSON flags, send stringified default to ConfigCat
+        const configCatDefault =
+            featureFlag === "classic_payg_sunset_enabled" ? JSON.stringify(defaultValue) : defaultValue;
+
+        const rawValue = await getExperimentsClient().getValueAsync(featureFlag, configCatDefault, {
             user: user && {
                 id: user.id,
                 email: getPrimaryEmail(user),
@@ -46,7 +75,8 @@ export const useFeatureFlag = <K extends keyof FeatureFlags>(featureFlag: K): Fe
             teamName: org?.name,
             gitpodHost: window.location.host,
         });
-        return flagValue;
+
+        return parseFeatureFlagValue(featureFlag, rawValue, defaultValue);
     });
 
     return query.data !== undefined ? query.data : featureFlags[featureFlag];

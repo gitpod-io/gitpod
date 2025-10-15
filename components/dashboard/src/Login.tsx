@@ -23,7 +23,7 @@ import { Button, ButtonProps } from "@podkit/buttons/Button";
 import { cn } from "@podkit/lib/cn";
 import { userClient } from "./service/public-api";
 import { ProductLogo } from "./components/ProductLogo";
-import { useIsDataOps } from "./data/featureflag-query";
+import { useIsDataOps, useFeatureFlag } from "./data/featureflag-query";
 import { LoadingState } from "@podkit/loading/LoadingState";
 import { isGitpodIo } from "./utils";
 import onaWordmark from "./images/ona-wordmark.svg";
@@ -217,12 +217,21 @@ const LoginContent = ({
     const { setUser } = useContext(UserContext);
     const isDataOps = useIsDataOps();
     const isGitpodIoUser = isGitpodIo();
+    const classicSunsetConfig = useFeatureFlag("classic_payg_sunset_enabled");
 
     const authProviders = useAuthProviderDescriptions();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     const { data: installationConfig } = useInstallationConfiguration();
     const enterprise = !!installationConfig?.isDedicatedInstallation;
+
+    // Check if user wants to see all login options (for exempted orgs)
+    const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
+    const oldLogin = searchParams.get("oldLogin") === "true";
+
+    // Show sunset UI only if: sunset enabled, on gitpod.io, and user hasn't requested old login
+    const showSunsetUI =
+        (typeof classicSunsetConfig === "object" ? classicSunsetConfig.enabled : false) && isGitpodIoUser && !oldLogin;
 
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
@@ -292,18 +301,49 @@ const LoginContent = ({
                         <Heading2>Open a cloud development environment</Heading2>
                         <Subheading>for the repository {repoPathname?.slice(1)}</Subheading>
                     </>
+                ) : showSunsetUI ? (
+                    <>
+                        <Heading1>Start building with Ona</Heading1>
+                        <Subheading>What do you want to get done today?</Subheading>
+                    </>
                 ) : !isGitpodIoUser ? (
                     <Heading1>Log in to Gitpod</Heading1>
                 ) : (
                     <>
-                        <Heading1>Log in to Gitpod Classic</Heading1>
-                        <Subheading>Hosted by us</Subheading>
+                        <Heading1>Start building with Ona</Heading1>
+                        <Subheading>What do you want to get done today?</Subheading>
                     </>
                 )}
             </div>
 
             <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
-                {providerFromContext ? (
+                {showSunsetUI ? (
+                    <>
+                        <Button
+                            className="w-full"
+                            onClick={() => {
+                                window.location.href = "https://app.ona.com/login";
+                            }}
+                        >
+                            Continue with Ona
+                        </Button>
+                        <div className="mt-4 text-center text-sm">
+                            <p className="text-gray-500 dark:text-gray-400">
+                                Need to access your organization?{" "}
+                                <a
+                                    href={`${window.location.pathname}?oldLogin=true${
+                                        searchParams.get("returnToPath")
+                                            ? `&returnToPath=${encodeURIComponent(searchParams.get("returnToPath")!)}`
+                                            : ""
+                                    }`}
+                                    className="gp-link hover:text-gray-600"
+                                >
+                                    Show all login options
+                                </a>
+                            </p>
+                        </div>
+                    </>
+                ) : providerFromContext ? (
                     <LoginButton
                         key={"button" + providerFromContext.host}
                         onClick={() => openLogin(providerFromContext!.host)}
@@ -323,7 +363,7 @@ const LoginContent = ({
                         </LoginButton>
                     ))
                 )}
-                <SSOLoginForm onSuccess={authorizeSuccessful} />
+                {!showSunsetUI && <SSOLoginForm onSuccess={authorizeSuccessful} />}
             </div>
             {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
 
@@ -331,14 +371,24 @@ const LoginContent = ({
             {!enterprise && (
                 <div className="mt-6 text-center text-sm">
                     <p className="text-pk-content-primary">
-                        Gitpod Classic sunsets Oct 15.{" "}
+                        Gitpod Classic has been sunset on Oct 15.{" "}
                         <a
-                            href="https://app.gitpod.io"
+                            href="https://ona.com/stories/gitpod-is-now-ona"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="gp-link hover:text-gray-600"
                         >
-                            Start here for free
+                            {" "}
+                            Gitpod is now Ona
+                        </a>
+                        ,{" "}
+                        <a
+                            href="https://app.ona.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="gp-link hover:text-gray-600"
+                        >
+                            start for free
                         </a>{" "}
                         and get $100 credits.
                     </p>
@@ -378,9 +428,9 @@ const RightProductDescriptionPanel = () => {
                         >
                             Start for free
                         </a>{" "}
-                        and get $100 credits. <br />
+                        and get $100 in credits. <br />
                         <br />
-                        Gitpod Classic sunsets Oct 15 |{" "}
+                        Gitpod Classic has been sunset on Oct 15 |{" "}
                         <a
                             href="https://ona.com/stories/gitpod-classic-payg-sunset"
                             target="_blank"
@@ -395,10 +445,6 @@ const RightProductDescriptionPanel = () => {
                         <p className="text-white/70 text-base">
                             Delegate software tasks to Ona. It writes code, runs tests, and opens a pull request. Or
                             jump in to inspect output or pair program in your IDE.
-                        </p>
-                        <p className="text-white/70 text-base mt-2">
-                            Ona runs inside your infrastructure (VPC), with full audit trails, zero data exposure, and
-                            support for any LLM.
                         </p>
                     </div>
 

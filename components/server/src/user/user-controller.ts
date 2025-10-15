@@ -43,6 +43,7 @@ import { UserService } from "./user-service";
 import { WorkspaceService } from "../workspace/workspace-service";
 import { runWithSubjectId } from "../util/request-context";
 import { SubjectId } from "../auth/subject-id";
+import { isUserLoginBlockedBySunset } from "../util/featureflags";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -69,6 +70,19 @@ export class UserController {
         router.get("/login", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (req.isAuthenticated()) {
                 log.info("(Auth) User is already authenticated.", { "login-flow": true });
+
+                // Check if authenticated user is blocked by sunset
+                const user = req.user as User;
+                if (await isUserLoginBlockedBySunset(user, this.config.isDedicatedInstallation)) {
+                    log.info("(Auth) User blocked by Classic PAYG sunset", {
+                        userId: user.id,
+                        organizationId: user.organizationId,
+                        "login-flow": true,
+                    });
+                    res.redirect(302, "https://app.ona.com/login");
+                    return;
+                }
+
                 // redirect immediately
                 const redirectTo = this.ensureSafeReturnToParam(req) || this.config.hostUrl.asDashboard().toString();
                 safeFragmentRedirect(res, redirectTo);
