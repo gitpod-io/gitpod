@@ -304,7 +304,6 @@ const LoginContent = ({
                 ) : showSunsetUI ? (
                     <>
                         <Heading1>Gitpod Classic has sunset</Heading1>
-                        <Subheading>Continue with Ona</Subheading>
                     </>
                 ) : !isGitpodIoUser ? (
                     <Heading1>Log in to Gitpod</Heading1>
@@ -319,15 +318,14 @@ const LoginContent = ({
             <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
                 {showSunsetUI ? (
                     <>
-                        <LoginButton
+                        <Button
+                            className="w-full"
                             onClick={() => {
                                 window.location.href = "https://app.ona.com/login";
                             }}
                         >
-                            <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
-                                Continue with Ona
-                            </span>
-                        </LoginButton>
+                            Continue with Ona
+                        </Button>
                         <div className="mt-4 text-center text-sm">
                             <p className="text-gray-500 dark:text-gray-400">
                                 Need to access your organization?{" "}
