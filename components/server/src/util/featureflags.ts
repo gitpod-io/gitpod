@@ -15,11 +15,24 @@ export async function getFeatureFlagEnableExperimentalJBTB(userId: string): Prom
 }
 
 export async function getClassicPaygSunsetConfig(userId: string): Promise<ClassicPaygSunsetConfig> {
-    return getExperimentsClientForBackend().getValueAsync(
+    const defaultConfig: ClassicPaygSunsetConfig = { enabled: false, exemptedOrganizations: [] };
+    const rawValue = await getExperimentsClientForBackend().getValueAsync(
         "classic_payg_sunset_enabled",
-        { enabled: false, exemptedOrganizations: [] },
+        JSON.stringify(defaultConfig),
         { user: { id: userId } },
     );
+
+    // Parse JSON string from ConfigCat
+    try {
+        if (typeof rawValue === "string") {
+            return JSON.parse(rawValue) as ClassicPaygSunsetConfig;
+        }
+        // Fallback if somehow we get an object (shouldn't happen with ConfigCat text flags)
+        return rawValue as ClassicPaygSunsetConfig;
+    } catch (error) {
+        console.error("Failed to parse classic_payg_sunset_enabled feature flag:", error);
+        return defaultConfig;
+    }
 }
 
 export async function isWorkspaceStartBlockedBySunset(user: User, organizationId: string): Promise<boolean> {
