@@ -5,17 +5,13 @@
  */
 
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { ClassicPaygSunsetConfig } from "@gitpod/gitpod-protocol/lib/experiments/configcat";
 import { User } from "@gitpod/gitpod-protocol";
 
 export async function getFeatureFlagEnableExperimentalJBTB(userId: string): Promise<boolean> {
     return getExperimentsClientForBackend().getValueAsync("enable_experimental_jbtb", false, {
         user: { id: userId },
     });
-}
-
-export interface ClassicPaygSunsetConfig {
-    enabled: boolean;
-    exemptedOrganizations: string[];
 }
 
 export async function getClassicPaygSunsetConfig(userId: string): Promise<ClassicPaygSunsetConfig> {
@@ -26,7 +22,23 @@ export async function getClassicPaygSunsetConfig(userId: string): Promise<Classi
     );
 }
 
-export async function isUserBlockedBySunset(user: User): Promise<boolean> {
+export async function isWorkspaceStartBlockedBySunset(user: User, organizationId: string): Promise<boolean> {
+    const config = await getClassicPaygSunsetConfig(user.id);
+
+    if (!config.enabled) {
+        return false;
+    }
+
+    // If user has an org, check if it's exempted
+    if (organizationId) {
+        return !config.exemptedOrganizations.includes(organizationId);
+    }
+
+    // Installation-owned users (no organizationId) are blocked
+    return true;
+}
+
+export async function isUserLoginBlockedBySunset(user: User): Promise<boolean> {
     const config = await getClassicPaygSunsetConfig(user.id);
 
     if (!config.enabled) {
