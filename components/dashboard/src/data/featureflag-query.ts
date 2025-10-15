@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getExperimentsClient } from "../experiments/client";
 import { useCurrentUser } from "../user-context";
 import { useCurrentOrg } from "./organizations/orgs-query";
+import { ClassicPaygSunsetConfig } from "@gitpod/gitpod-protocol/lib/experiments/configcat";
 
 const featureFlags = {
     oidcServiceEnabled: false,
@@ -26,7 +27,7 @@ const featureFlags = {
     enabled_configuration_prebuild_full_clone: false,
     enterprise_onboarding_enabled: false,
     commit_annotation_setting_enabled: false,
-    classic_payg_sunset_enabled: false,
+    classic_payg_sunset_enabled: { enabled: false, exemptedOrganizations: [] } as ClassicPaygSunsetConfig,
 };
 
 type FeatureFlags = typeof featureFlags;

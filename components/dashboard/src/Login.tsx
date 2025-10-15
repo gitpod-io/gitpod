@@ -217,7 +217,7 @@ const LoginContent = ({
     const { setUser } = useContext(UserContext);
     const isDataOps = useIsDataOps();
     const isGitpodIoUser = isGitpodIo();
-    const classicSunsetEnabled = useFeatureFlag("classic_payg_sunset_enabled");
+    const classicSunsetConfig = useFeatureFlag("classic_payg_sunset_enabled");
 
     const authProviders = useAuthProviderDescriptions();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
@@ -230,7 +230,8 @@ const LoginContent = ({
     const oldLogin = searchParams.get("oldLogin") === "true";
 
     // Show sunset UI only if: sunset enabled, on gitpod.io, and user hasn't requested old login
-    const showSunsetUI = classicSunsetEnabled && isGitpodIoUser && !oldLogin;
+    const showSunsetUI =
+        (typeof classicSunsetConfig === "object" ? classicSunsetConfig.enabled : false) && isGitpodIoUser && !oldLogin;
 
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
