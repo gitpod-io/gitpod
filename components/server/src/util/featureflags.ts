@@ -35,7 +35,16 @@ export async function getClassicPaygSunsetConfig(userId: string): Promise<Classi
     }
 }
 
-export async function isWorkspaceStartBlockedBySunset(user: User, organizationId: string): Promise<boolean> {
+export async function isWorkspaceStartBlockedBySunset(
+    user: User,
+    organizationId: string,
+    isDedicatedInstallation: boolean,
+): Promise<boolean> {
+    // Dedicated installations are never blocked
+    if (isDedicatedInstallation) {
+        return false;
+    }
+
     const config = await getClassicPaygSunsetConfig(user.id);
 
     if (!config.enabled) {
@@ -51,7 +60,12 @@ export async function isWorkspaceStartBlockedBySunset(user: User, organizationId
     return true;
 }
 
-export async function isUserLoginBlockedBySunset(user: User): Promise<boolean> {
+export async function isUserLoginBlockedBySunset(user: User, isDedicatedInstallation: boolean): Promise<boolean> {
+    // Dedicated installations are never blocked
+    if (isDedicatedInstallation) {
+        return false;
+    }
+
     const config = await getClassicPaygSunsetConfig(user.id);
 
     if (!config.enabled) {

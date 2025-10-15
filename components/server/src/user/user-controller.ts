@@ -73,7 +73,7 @@ export class UserController {
 
                 // Check if authenticated user is blocked by sunset
                 const user = req.user as User;
-                if (await isUserLoginBlockedBySunset(user)) {
+                if (await isUserLoginBlockedBySunset(user, this.config.isDedicatedInstallation)) {
                     log.info("(Auth) User blocked by Classic PAYG sunset", {
                         userId: user.id,
                         organizationId: user.organizationId,

@@ -63,6 +63,7 @@ import { isWorkspaceId } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-
 import { SYSTEM_USER, SYSTEM_USER_ID } from "../authorization/authorizer";
 import { isWorkspaceStartBlockedBySunset } from "../util/featureflags";
 import { User } from "@gitpod/gitpod-protocol";
+import { Config } from "../config";
 
 @injectable()
 export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceInterface> {
@@ -71,9 +72,10 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
     @inject(ContextService) private readonly contextService: ContextService;
     @inject(UserService) private readonly userService: UserService;
     @inject(ContextParser) private contextParser: ContextParser;
+    @inject(Config) private readonly config: Config;
 
     private async checkClassicPaygSunset(user: User, organizationId: string): Promise<void> {
-        if (await isWorkspaceStartBlockedBySunset(user, organizationId)) {
+        if (await isWorkspaceStartBlockedBySunset(user, organizationId, this.config.isDedicatedInstallation)) {
             throw new ApplicationError(
                 ErrorCodes.PERMISSION_DENIED,
                 "Gitpod Classic PAYG has sunset. Please visit https://app.ona.com/login to continue.",
