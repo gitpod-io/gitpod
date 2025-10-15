@@ -225,6 +225,13 @@ const LoginContent = ({
     const { data: installationConfig } = useInstallationConfiguration();
     const enterprise = !!installationConfig?.isDedicatedInstallation;
 
+    // Check if user wants to see all login options (for exempted orgs)
+    const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
+    const oldLogin = searchParams.get("oldLogin") === "true";
+
+    // Show sunset UI only if: sunset enabled, on gitpod.io, and user hasn't requested old login
+    const showSunsetUI = classicSunsetEnabled && isGitpodIoUser && !oldLogin;
+
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
         const { user } = await userClient.getAuthenticatedUser({});
@@ -293,13 +300,13 @@ const LoginContent = ({
                         <Heading2>Open a cloud development environment</Heading2>
                         <Subheading>for the repository {repoPathname?.slice(1)}</Subheading>
                     </>
-                ) : !isGitpodIoUser ? (
-                    <Heading1>Log in to Gitpod</Heading1>
-                ) : classicSunsetEnabled ? (
+                ) : showSunsetUI ? (
                     <>
                         <Heading1>Gitpod Classic has sunset</Heading1>
                         <Subheading>Continue with Ona</Subheading>
                     </>
+                ) : !isGitpodIoUser ? (
+                    <Heading1>Log in to Gitpod</Heading1>
                 ) : (
                     <>
                         <Heading1>Log in to Gitpod Classic</Heading1>
@@ -309,16 +316,33 @@ const LoginContent = ({
             </div>
 
             <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
-                {classicSunsetEnabled && isGitpodIoUser ? (
-                    <LoginButton
-                        onClick={() => {
-                            window.location.href = "https://app.ona.com/login";
-                        }}
-                    >
-                        <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
-                            Login with Ona
-                        </span>
-                    </LoginButton>
+                {showSunsetUI ? (
+                    <>
+                        <LoginButton
+                            onClick={() => {
+                                window.location.href = "https://app.ona.com/login";
+                            }}
+                        >
+                            <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
+                                Continue with Ona
+                            </span>
+                        </LoginButton>
+                        <div className="mt-4 text-center text-sm">
+                            <p className="text-gray-500 dark:text-gray-400">
+                                Need to access your organization?{" "}
+                                <a
+                                    href={`${window.location.pathname}?oldLogin=true${
+                                        searchParams.get("returnToPath")
+                                            ? `&returnToPath=${encodeURIComponent(searchParams.get("returnToPath")!)}`
+                                            : ""
+                                    }`}
+                                    className="gp-link hover:text-gray-600"
+                                >
+                                    Show all login options
+                                </a>
+                            </p>
+                        </div>
+                    </>
                 ) : providerFromContext ? (
                     <LoginButton
                         key={"button" + providerFromContext.host}
@@ -339,12 +363,12 @@ const LoginContent = ({
                         </LoginButton>
                     ))
                 )}
-                <SSOLoginForm onSuccess={authorizeSuccessful} />
+                {!showSunsetUI && <SSOLoginForm onSuccess={authorizeSuccessful} />}
             </div>
             {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
 
-            {/* Gitpod Classic sunset notice - only show for non-enterprise and when NOT sunset */}
-            {!enterprise && !classicSunsetEnabled && (
+            {/* Gitpod Classic sunset notice - only show for non-enterprise */}
+            {!enterprise && (
                 <div className="mt-6 text-center text-sm">
                     <p className="text-pk-content-primary">
                         Gitpod Classic sunsets Oct 15.{" "}
