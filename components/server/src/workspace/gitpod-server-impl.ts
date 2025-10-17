@@ -139,6 +139,7 @@ import { getPrimaryEmail } from "@gitpod/public-api-common/lib/user-utils";
 import { AnalyticsController } from "../analytics-controller";
 import { ClientHeaderFields } from "../express-util";
 import { filter } from "../util/objects";
+import { isWorkspaceStartBlockedBySunset } from "../util/featureflags";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -581,6 +582,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const { workspace, latestInstance: instance } = await this.workspaceService.getWorkspace(user.id, workspaceId);
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
+        // Check if user is blocked by Classic PAYG sunset
+        if (
+            await isWorkspaceStartBlockedBySunset(user, workspace.organizationId, this.config.isDedicatedInstallation)
+        ) {
+            throw new ApplicationError(
+                ErrorCodes.PERMISSION_DENIED,
+                "Gitpod Classic PAYG has sunset. Please visit https://app.ona.com/login to continue.",
+            );
+        }
+
         // (gpl) We keep this check here for backwards compatibility, it should be superfluous in the future
         if (instance && instance.status.phase !== "stopped") {
             traceWI(ctx, { instanceId: instance.id });
@@ -849,6 +860,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const user = await this.checkAndBlockUser("createWorkspace", { options });
 
             logContext = { userId: user.id };
+
+            // Check if user is blocked by Classic PAYG sunset
+            if (
+                await isWorkspaceStartBlockedBySunset(user, options.organizationId, this.config.isDedicatedInstallation)
+            ) {
+                throw new ApplicationError(
+                    ErrorCodes.PERMISSION_DENIED,
+                    "Gitpod Classic PAYG has sunset. Please visit https://app.ona.com/login to continue.",
+                );
+            }
 
             normalizedContextUrl = this.contextParser.normalizeContextURL(contextUrl);
 
