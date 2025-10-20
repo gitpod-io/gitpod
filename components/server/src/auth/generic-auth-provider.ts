@@ -37,6 +37,7 @@ import { SignInJWT } from "./jwt";
 import { UserService } from "../user/user-service";
 import { reportLoginCompleted } from "../prometheus-metrics";
 import { TrustedValue } from "@gitpod/gitpod-protocol/lib/util/scrubbing";
+import { isUserSignupBlockedBySunset } from "../util/featureflags";
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
@@ -431,6 +432,13 @@ export abstract class GenericAuthProvider implements AuthProvider {
             };
 
             if (VerifyResult.WithIdentity.is(flowContext)) {
+                // Check if signup is blocked by Classic PAYG sunset
+                if (await isUserSignupBlockedBySunset("anonymous", this.config.isDedicatedInstallation)) {
+                    log.info(context, `(${strategyName}) Signup blocked by Classic PAYG sunset`, logPayload);
+                    response.redirect(302, "https://app.ona.com/login");
+                    return;
+                }
+
                 log.info(context, `(${strategyName}) Creating new user and completing login.`, logPayload);
                 // There is no current session, we need to create a new user because this
                 // identity does not yet exist.

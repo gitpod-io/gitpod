@@ -85,3 +85,19 @@ export async function isUserLoginBlockedBySunset(user: User, isDedicatedInstalla
     // Installation-owned users (no organizationId) are blocked
     return true;
 }
+
+export async function isUserSignupBlockedBySunset(userId: string, isDedicatedInstallation: boolean): Promise<boolean> {
+    // Dedicated installations are never blocked
+    if (isDedicatedInstallation) {
+        return false;
+    }
+
+    const config = await getClassicPaygSunsetConfig(userId);
+
+    if (!config.enabled) {
+        return false;
+    }
+
+    // New users don't have roles/permissions or organizations yet, so we block all signups
+    return true;
+}
