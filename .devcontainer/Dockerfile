@@ -211,6 +211,14 @@ RUN curl -fsSL https://uploader.codecov.io/latest/codecov-linux -o /usr/local/bi
 RUN cd /usr/bin && curl -fsSL https://github.com/cli/cli/releases/download/v2.35.0/gh_2.35.0_linux_${TARGETARCH}.tar.gz \
     | tar xzv --strip-components=2 gh_2.35.0_linux_${TARGETARCH}/bin/gh
 
+# Install SpiceDB
+RUN cd /tmp && \
+    git clone --depth 1 https://github.com/authzed/spicedb.git && \
+    cd spicedb && \
+    go build -o /usr/local/bin/spicedb ./cmd/spicedb && \
+    cd / && \
+    rm -rf /tmp/spicedb
+
 # Install observability-related binaries
 ARG PROM_VERSION="2.36.0"
 RUN curl -LO https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-${TARGETARCH}.tar.gz && \
