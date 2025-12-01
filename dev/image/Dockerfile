@@ -130,6 +130,15 @@ RUN bash -c ". .nvm/nvm.sh \
     && npm install -g typescript yarn @anthropic-ai/claude-code"
 ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 
+RUN sudo rm -f /usr/bin/npx /usr/local/bin/npx && \
+    echo '#!/bin/sh' | sudo tee /usr/local/bin/npx && \
+    echo 'echo "npx is disabled for security reasons. Use explicit package installation instead." >&2' | sudo tee -a /usr/local/bin/npx && \
+    echo 'exit 1' | sudo tee -a /usr/local/bin/npx && \
+    sudo chmod +x /usr/local/bin/npx
+
+RUN npm config set ignore-scripts true --location=user && \
+    echo 'ignore-scripts true' >> ~/.yarnrc
+
 ## Register leeway autocompletion in bashrc
 RUN bash -c "echo . \<\(leeway bash-completion\) >> ~/.bashrc"
 

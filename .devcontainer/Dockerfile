@@ -337,6 +337,15 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh |
     && nvm alias default v${NODE_VERSION} \
     && npm install -g typescript yarn pnpm node-gyp @anthropic-ai/claude-code"
 
+RUN rm -f /usr/bin/npx /usr/local/bin/npx && \
+    echo '#!/bin/sh' > /usr/local/bin/npx && \
+    echo 'echo "npx is disabled for security reasons. Use explicit package installation instead." >&2' >> /usr/local/bin/npx && \
+    echo 'exit 1' >> /usr/local/bin/npx && \
+    chmod +x /usr/local/bin/npx
+
+RUN npm config set ignore-scripts true --location=user && \
+    echo 'ignore-scripts true' >> /root/.yarnrc
+
 ENV PATH=$PATH:/root/.aws-iam:/root/.terraform:/workspace/bin
 
 ### Telepresence ###
