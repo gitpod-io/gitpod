@@ -155,7 +155,7 @@ func WriteMapping(hostPID uint64, gid bool, mapping []*api.WriteIDMappingRequest
 	return nil
 }
 
-// findHosPID translates an in-container PID to the root PID namespace.
+// findHostPID translates an in-container PID to the root PID namespace.
 func (m *Uidmapper) findHostPID(containerPID, inContainerPID uint64) (uint64, error) {
 	paths := []string{fmt.Sprint(containerPID)}
 	seen := make(map[string]struct{})

@@ -566,8 +566,8 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 	return err
 }
 
-// errorLogConflict logs the error if it's a conflict, instead of returning it as a reconciler error.
-// This is to reduce noise in our error logging, as conflicts are to be expected.
+// errorResultLogConflict logs the error if it's a conflict, instead of returning it as a reconciler
+// error. This is to reduce noise in our error logging, as conflicts are to be expected.
 // For conflicts, instead a result with `Requeue: true` is returned, which has the same requeuing
 // behaviour as returning an error.
 func errorResultLogConflict(log logr.Logger, err error) (ctrl.Result, error) {
