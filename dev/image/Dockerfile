@@ -126,8 +126,7 @@ USER gitpod
 # Fix node version we develop against
 ARG GITPOD_NODE_VERSION=22.17.0
 RUN bash -c ". .nvm/nvm.sh \
-    && nvm install $GITPOD_NODE_VERSION \
-    && npm install -g typescript yarn @anthropic-ai/claude-code"
+    && nvm install $GITPOD_NODE_VERSION"
 ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 
 # Install npm-tools with locked dependencies

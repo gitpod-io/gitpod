@@ -334,8 +334,7 @@ ENV HOME=/root
 RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash \
     && bash -c ". $HOME/.nvm/nvm.sh \
     && nvm install v${NODE_VERSION} \
-    && nvm alias default v${NODE_VERSION} \
-    && npm install -g typescript yarn pnpm node-gyp @anthropic-ai/claude-code"
+    && nvm alias default v${NODE_VERSION}"
 
 # Disable npm/yarn lifecycle scripts by default (security hardening)
 # To allow specific packages, use: npm rebuild <package> or yarn rebuild <package>
