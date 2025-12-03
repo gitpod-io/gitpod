@@ -1,0 +1,9 @@
+{
+  "name": "npm-tools",
+  "private": true,
+  "description": "CLI tools used across the monorepo",
+  "dependencies": {
+    "typescript": "^5.7.3",
+    "prettier": "^3.0.0"
+  }
+}

@@ -8,7 +8,7 @@
     "test": "mocha './**/*.spec.ts' --exclude './node_modules/**' --exit",
     "lint": "yarn eslint src/*.ts src/**/*.ts",
     "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
-    "build": "yarn lint && npx tsc",
+    "build": "yarn lint && tsc",
     "build:clean": "yarn clean && yarn build",
     "rebuild": "yarn build:clean",
     "build:watch": "watch 'yarn build' .",

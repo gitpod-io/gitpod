@@ -6,9 +6,9 @@
   "scripts": {
     "start": "node ./dist/main.js",
     "start-inspect": "node --inspect=0.0.0.0:9229 ./dist/main.js",
-    "generate": "leeway run components/spicedb:generate-ts > src/authorization/definitions.ts && npx prettier --write src/authorization/definitions.ts",
+    "generate": "leeway run components/spicedb:generate-ts > src/authorization/definitions.ts && prettier --write src/authorization/definitions.ts",
     "build:clean": "yarn clean && yarn lint && yarn build",
-    "build": "yarn generate && npx tsc",
+    "build": "yarn generate && tsc",
     "lint": "yarn eslint src/*.ts src/**/*.ts",
     "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
     "rebuild": "yarn build:clean",

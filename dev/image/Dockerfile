@@ -130,6 +130,15 @@ RUN bash -c ". .nvm/nvm.sh \
     && npm install -g typescript yarn @anthropic-ai/claude-code"
 ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 
+# Install npm-tools with locked dependencies
+COPY dev/npm-tools/package.json dev/npm-tools/package-lock.json /opt/npm-tools/
+RUN cd /opt/npm-tools && \
+    npm ci && \
+    for bin in /opt/npm-tools/node_modules/.bin/*; do \
+        sudo ln -sf "$bin" /usr/local/bin/$(basename "$bin"); \
+    done && \
+    rm -rf ~/.npm/_cacache
+
 ## Register leeway autocompletion in bashrc
 RUN bash -c "echo . \<\(leeway bash-completion\) >> ~/.bashrc"
 

@@ -349,6 +349,15 @@ RUN rm -f /usr/bin/npx /usr/local/bin/npx && \
     echo 'exit 1' >> /usr/local/bin/npx && \
     chmod +x /usr/local/bin/npx
 
+# Install npm-tools with locked dependencies
+COPY dev/npm-tools/package.json dev/npm-tools/package-lock.json /opt/npm-tools/
+RUN cd /opt/npm-tools && \
+    npm ci && \
+    for bin in /opt/npm-tools/node_modules/.bin/*; do \
+        ln -sf "$bin" /usr/local/bin/$(basename "$bin"); \
+    done && \
+    rm -rf ~/.npm/_cacache
+
 ENV PATH=$PATH:/root/.aws-iam:/root/.terraform:/workspace/bin
 
 ### Telepresence ###
