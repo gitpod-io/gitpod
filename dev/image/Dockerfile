@@ -129,6 +129,18 @@ RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION"
 ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 
+# Disable npm/yarn lifecycle scripts by default (security hardening)
+# To allow specific packages, use: npm rebuild <package> or yarn rebuild <package>
+RUN npm config set ignore-scripts true --location=user && \
+    echo 'ignore-scripts true' >> ~/.yarnrc
+
+# Disable npx (security hardening - prevents arbitrary package execution)
+RUN sudo rm -f /usr/bin/npx /usr/local/bin/npx && \
+    echo '#!/bin/sh' | sudo tee /usr/local/bin/npx > /dev/null && \
+    echo 'echo "npx is disabled for security reasons. Use explicit package installation instead." >&2' | sudo tee -a /usr/local/bin/npx > /dev/null && \
+    echo 'exit 1' | sudo tee -a /usr/local/bin/npx > /dev/null && \
+    sudo chmod +x /usr/local/bin/npx
+
 # Install npm-tools with locked dependencies
 COPY dev/npm-tools/package.json dev/npm-tools/package-lock.json /opt/npm-tools/
 RUN cd /opt/npm-tools && \
