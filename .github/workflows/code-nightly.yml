@@ -8,15 +8,8 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
-  create-runner:
-    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@main
-    secrets:
-      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
-      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
-
   build:
-    runs-on: ${{ needs.create-runner.outputs.label }}
-    needs: [create-runner]
+    runs-on: ubuntu-latest
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.33389
     steps:
@@ -56,15 +49,3 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
           SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
-
-  delete-runner:
-    if: always()
-    needs:
-      - create-runner
-      - build
-    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@main
-    secrets:
-      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
-    with:
-      runner-label: ${{ needs.create-runner.outputs.label }}
-      machine-zone: ${{ needs.create-runner.outputs.machine-zone }}
