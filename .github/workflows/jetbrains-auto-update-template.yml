@@ -35,9 +35,10 @@ jobs:
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Install dependencies
         run: |
-          cd ./components/ide/gha-update-image/
+          cd ./dev/npm-tools && npm ci
+          echo "$PWD/node_modules/.bin" >> $GITHUB_PATH
+          cd $GITHUB_WORKSPACE/components/ide/gha-update-image/
           yarn
-          npm i -g bun
       - name: Find Nightly Target
         id: find-target
         run: |

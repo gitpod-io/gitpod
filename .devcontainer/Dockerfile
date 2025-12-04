@@ -338,11 +338,12 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh |
 
 # Disable npm/yarn lifecycle scripts by default (security hardening)
 # To allow specific packages, use: npm rebuild <package> or yarn rebuild <package>
-RUN npm config set ignore-scripts true --location=user && \
+RUN npm config set ignore-scripts true --location=global && \
+    npm config set ignore-scripts true --location=user && \
     echo 'ignore-scripts true' >> ~/.yarnrc
 
 # Disable npx (security hardening - prevents arbitrary package execution)
-RUN rm -f /usr/bin/npx /usr/local/bin/npx && \
+RUN rm -f /usr/bin/npx /usr/local/bin/npx /root/.nvm/versions/node/v${NODE_VERSION}/bin/npx && \
     echo '#!/bin/sh' > /usr/local/bin/npx && \
     echo 'echo "npx is disabled for security reasons. Use explicit package installation instead." >&2' >> /usr/local/bin/npx && \
     echo 'exit 1' >> /usr/local/bin/npx && \
