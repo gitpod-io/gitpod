@@ -343,7 +343,10 @@ RUN npm config set ignore-scripts true --location=global && \
     echo 'ignore-scripts true' >> ~/.yarnrc
 
 # Disable npx (security hardening - prevents arbitrary package execution)
-RUN rm -f /usr/bin/npx /usr/local/bin/npx /root/.nvm/versions/node/v${NODE_VERSION}/bin/npx && \
+# Remove npx from NVM and replace with stub that prints warning
+RUN rm -f /usr/bin/npx /usr/local/bin/npx && \
+    rm -f /root/.nvm/versions/node/v${NODE_VERSION}/bin/npx && \
+    rm -f /root/.nvm/versions/node/v${NODE_VERSION}/lib/node_modules/npm/bin/npx-cli.js && \
     echo '#!/bin/sh' > /usr/local/bin/npx && \
     echo 'echo "npx is disabled for security reasons. Use explicit package installation instead." >&2' >> /usr/local/bin/npx && \
     echo 'exit 1' >> /usr/local/bin/npx && \
