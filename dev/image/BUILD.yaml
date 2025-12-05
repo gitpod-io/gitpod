@@ -4,6 +4,7 @@ packages:
     deps:
       - dev/gpctl:app
       - dev/kubecdl:app
+      - dev/npm-tools:pkg
     argdeps:
       - imageRepoBase
     srcs:

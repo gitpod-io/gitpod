@@ -1,0 +1,9 @@
+packages:
+  - name: pkg
+    type: generic
+    srcs:
+      - "package.json"
+      - "package-lock.json"
+    config:
+      commands:
+        - ["echo", "npm-tools package files"]
