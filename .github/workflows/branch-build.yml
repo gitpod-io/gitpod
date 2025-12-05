@@ -1,4 +1,4 @@
-name: Build
+name: Branch Build
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: write # This is required for actions/checkout and create release
@@ -6,8 +6,10 @@ permissions:
   actions: write  # This is required for trigger another action which is used by JetBrains integrateion tests
   packages: read
 on:
+  pull_request:
+    types: [ opened, edited ]
   push:
-    branches:
+    branches-ignore:
       - main
   workflow_dispatch:
     inputs:
@@ -21,18 +23,12 @@ on:
         type: boolean
         description: "Simulate a scheduled run"
         default: false
-  schedule:
-    # Run at midnight UTC every day
-    # Purpose: This scheduled run performs regular vulnerability scans of the codebase
-    # and sends notifications to Slack when new critical vulnerabilities are found.
-    # The scan results are used to maintain security standards and address issues promptly.
-    - cron: '0 0 * * *'
 
 jobs:
   configuration:
     name: Configure job parameters
     runs-on: ubuntu-latest
-    environment: main-build
+    environment: branch-build
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-configuration
       cancel-in-progress: true
@@ -104,7 +100,7 @@ jobs:
       (needs.configuration.outputs.preview_enable == 'true') &&
       (needs.configuration.outputs.is_scheduled_run != 'true')
     needs: [ configuration ]
-    environment: main-build
+    environment: branch-build
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-build-previewctl
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
@@ -129,7 +125,7 @@ jobs:
           leeway build dev/preview/previewctl:cli --cache remote
   infrastructure:
     needs: [ configuration, build-previewctl ]
-    environment: main-build
+    environment: branch-build
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
       (needs.configuration.outputs.preview_enable == 'true') &&
@@ -161,7 +157,7 @@ jobs:
   build-gitpod:
     name: Build Gitpod
     needs: [ configuration ]
-    environment: main-build
+    environment: branch-build
     runs-on: ubuntu-latest-16-cores
     outputs:
       affected_packages: ${{ steps.check_vulnerabilities.outputs.affected_packages }}
@@ -397,7 +393,7 @@ jobs:
   install-app:
     runs-on: ubuntu-latest
     needs: [ configuration, build-gitpod ]
-    environment: main-build
+    environment: branch-build
     if: ${{ needs.configuration.outputs.is_main_branch == 'true' && needs.configuration.outputs.is_scheduled_run != 'true' }}
     strategy:
       fail-fast: false
@@ -436,7 +432,7 @@ jobs:
       - build-previewctl
       - build-gitpod
       - infrastructure
-    environment: main-build
+    environment: branch-build
     if: needs.configuration.outputs.is_scheduled_run != 'true'
     runs-on: ubuntu-latest
     concurrency:
@@ -487,7 +483,7 @@ jobs:
   monitoring:
     name: "Install Monitoring Satellite"
     needs: [ infrastructure, build-previewctl ]
-    environment: main-build
+    environment: branch-build
     runs-on: ubuntu-latest
     if: needs.configuration.outputs.with_monitoring == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
     concurrency:
@@ -516,7 +512,7 @@ jobs:
       - build-gitpod
       - infrastructure
       - install
-    environment: main-build
+    environment: branch-build
     runs-on: ubuntu-latest
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.33389
@@ -583,7 +579,7 @@ jobs:
       - workspace-integration-tests-main
       - ide-code-updates
       - ide-jb-updates
-    environment: main-build
+    environment: branch-build
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification
