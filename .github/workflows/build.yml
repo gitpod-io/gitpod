@@ -106,7 +106,7 @@ jobs:
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-build-previewctl
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-16-cores
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.33389
     steps:
@@ -157,7 +157,7 @@ jobs:
   build-gitpod:
     name: Build Gitpod
     needs: [ configuration ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-16-cores
     outputs:
       affected_packages: ${{ steps.check_vulnerabilities.outputs.affected_packages }}
     concurrency:
