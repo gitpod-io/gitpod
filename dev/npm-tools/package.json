@@ -1,0 +1,15 @@
+{
+  "name": "npm-tools",
+  "private": true,
+  "description": "CLI tools used across the monorepo",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "^2.0.57",
+    "bun": "^1.2.16",
+    "node-gyp": "^10.3.1",
+    "pnpm": "^9.15.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.7.3",
+    "xunit-viewer": "^10.6.1",
+    "yarn": "^1.22.22"
+  }
+}

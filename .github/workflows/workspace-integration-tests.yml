@@ -48,20 +48,12 @@ on:
     - cron: "0 3,12 * * *"
 
 jobs:
-  create-runner:
-    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@main
-    secrets:
-      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
-      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
-    with:
-      task: workspace-integration-tests
-
   configuration:
     name: Configuration
-    runs-on: ${{ needs.create-runner.outputs.label }}
-    needs: [create-runner]
+    runs-on: ubuntu-latest
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.33389
+      options: --user root
     outputs:
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
@@ -131,8 +123,8 @@ jobs:
           SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
 
   infrastructure:
-    needs: [configuration, create-runner]
-    runs-on: ${{ needs.create-runner.outputs.label }}
+    needs: [configuration]
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
     steps:
@@ -163,10 +155,11 @@ jobs:
 
   check:
     name: Check for regressions
-    needs: [configuration, infrastructure, create-runner]
-    runs-on: ${{ needs.create-runner.outputs.label }}
+    needs: [configuration, infrastructure]
+    runs-on: ubuntu-latest
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.33389
+      options: --user root
     steps:
       - uses: actions/checkout@v4
       - name: Integration Test
@@ -185,9 +178,9 @@ jobs:
 
   delete:
     name: Delete preview environment
-    needs: [configuration, infrastructure, check, create-runner]
+    needs: [configuration, infrastructure, check]
     if: inputs.skip_delete != 'true' && always()
-    runs-on: ${{ needs.create-runner.outputs.label }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Setup Environment
@@ -200,18 +193,3 @@ jobs:
         uses: ./.github/actions/delete-preview
         with:
           name: ${{ needs.configuration.outputs.name }}
-
-  delete-runner:
-    if: always()
-    needs:
-      - create-runner
-      - configuration
-      - infrastructure
-      - check
-      - delete
-    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@main
-    secrets:
-      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
-    with:
-      runner-label: ${{ needs.create-runner.outputs.label }}
-      machine-zone: ${{ needs.create-runner.outputs.machine-zone }}

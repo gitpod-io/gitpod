@@ -101,7 +101,7 @@ fi
 
 go install github.com/jstemmer/go-junit-report/v2@latest
 
-if ! npm list -g xunit-viewer; then npm install -g xunit-viewer; fi
+# xunit-viewer is installed via dev/npm-tools
 
 RESULTS_DIR="${THIS_DIR}/results/$(date +%Y-%m-%d-%H-%M-%S)"
 mkdir -p "${RESULTS_DIR}"
