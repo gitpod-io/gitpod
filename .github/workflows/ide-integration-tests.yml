@@ -37,6 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.33389
+      options: --user root
     outputs:
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
@@ -125,6 +126,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.33389
+      options: --user root
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp

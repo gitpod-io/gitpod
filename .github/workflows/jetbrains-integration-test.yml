@@ -35,6 +35,7 @@ jobs:
   jetbrains-smoke-test-linux:
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.33389
+      options: --user root
     runs-on: ubuntu-latest
     steps:
       - name: Generate Summary
