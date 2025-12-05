@@ -144,7 +144,8 @@ RUN sudo rm -f /usr/bin/npx /usr/local/bin/npx /home/gitpod/.nvm/versions/node/v
 
 # Install npm-tools with locked dependencies
 COPY dev-npm-tools--pkg/package.json dev-npm-tools--pkg/package-lock.json /opt/npm-tools/
-RUN cd /opt/npm-tools && \
+RUN sudo chown -R gitpod:gitpod /opt/npm-tools && \
+    cd /opt/npm-tools && \
     npm ci && \
     for bin in /opt/npm-tools/node_modules/.bin/*; do \
         sudo ln -sf "$bin" /usr/local/bin/$(basename "$bin"); \
