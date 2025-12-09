@@ -14,6 +14,9 @@ jobs:
   delete:
     if: github.event.ref_type == 'branch' || github.event.inputs.name != ''
     runs-on: ubuntu-latest
+    container:
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
+      options: --user root
     steps:
       - uses: actions/checkout@v4
       - name: Setup Environment
