@@ -7,10 +7,11 @@ permissions:
   packages: read
 on:
   pull_request:
-    types: [ opened, edited ]
-  push:
-    branches-ignore:
-      - main
+    # opened: PR is created
+    # synchronize: Commits are pushed to the PR branch
+    # reopened: PR is reopened
+    # edited: PR description/title is edited (for checkbox updates like [x] /werft with-preview)
+    types: [ opened, synchronize, reopened, edited ]
   workflow_dispatch:
     inputs:
       recreate_vm:

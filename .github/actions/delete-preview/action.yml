@@ -1,0 +1,26 @@
+name: "Delete preview environment"
+description: "Deletes a preview environment"
+inputs:
+    name:
+        description: "The name of the preview environment"
+        required: true
+runs:
+    using: "composite"
+    steps:
+      - name: Install previewctl
+        shell: bash
+        run: |
+          set -euo pipefail
+          leeway run dev/preview/previewctl:install
+
+      - name: Delete preview environment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export TF_INPUT=0
+          export TF_IN_AUTOMATION=true
+          TF_VAR_preview_name="$(previewctl get-name --branch "${{ inputs.name }}")"
+          export TF_VAR_preview_name
+
+          leeway run dev/preview:delete-preview

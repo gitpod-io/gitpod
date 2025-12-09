@@ -1,9 +1,0 @@
-name: "Delete preview environment"
-description: "Deletes a preview environment"
-inputs:
-    name:
-        description: "The name of the preview environment"
-        required: true
-runs:
-    using: "docker"
-    image: "Dockerfile"
