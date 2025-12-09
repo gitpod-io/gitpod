@@ -850,7 +850,7 @@ type fakeWsInfoProvider struct {
 	infos []common.WorkspaceInfo
 }
 
-// GetWsInfoByID returns the workspace for the given ID.
+// WorkspaceInfo returns the workspace for the given ID.
 func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *common.WorkspaceInfo {
 	for _, nfo := range p.infos {
 		if nfo.WorkspaceID == workspaceID {

@@ -1461,7 +1461,7 @@ func (subs *subscriptions) DropSubscriber(dropouts []string) {
 	}
 }
 
-// onChange is the default OnChange implementation which publishes workspace status updates to subscribers
+// OnChange is the default OnChange implementation which publishes workspace status updates to subscribers
 func (subs *subscriptions) OnChange(ctx context.Context, status *wsmanapi.WorkspaceStatus) {
 	log := log.WithFields(log.OWI(status.Metadata.Owner, status.Metadata.MetaId, status.Id))
 
