@@ -169,6 +169,9 @@ jobs:
     needs: [configuration, infrastructure, check]
     if: always()
     runs-on: ubuntu-latest
+    container:
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
+      options: --user root
     steps:
       - uses: actions/checkout@v4
       - name: Setup Environment
