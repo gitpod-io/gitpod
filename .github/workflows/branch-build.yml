@@ -7,10 +7,7 @@ permissions:
   packages: read
 on:
   pull_request:
-    types: [ opened, edited ]
-  push:
-    branches-ignore:
-      - main
+    types: [ opened, synchronize, reopened, edited ]
   workflow_dispatch:
     inputs:
       recreate_vm:
