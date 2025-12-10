@@ -14,7 +14,7 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
 
       - name: Set git identity
         run: |
@@ -24,7 +24,7 @@ jobs:
           GITHUB_USER: roboquat
           GITHUB_EMAIL: roboquat@gitpod.io
 
-      - uses: imjasonh/setup-crane@v0.1
+      - uses: imjasonh/setup-crane@5146f708a817ea23476677995bf2133943b9be0b # pin@v0.1
 
       - name: Check if an update is available
         shell: bash
@@ -113,10 +113,10 @@ jobs:
 
       - name: Get previous job's status
         id: lastrun
-        uses: filiptronicek/get-last-job-status@main
+        uses: filiptronicek/get-last-job-status@1c211ff20d1706ff0bc3fc8022f7bd6518b88bc4 # pin@main
       - name: Slack Notification
         if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
-        uses: rtCamp/action-slack-notify@v2
+        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.RELEASE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
