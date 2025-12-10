@@ -10,7 +10,7 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Install dependencies
         run: |
           curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.1/oci-tool_0.2.1_linux_amd64.tar.gz | tar xz -C /usr/local/bin
@@ -40,7 +40,7 @@ jobs:
           fi
       - name: Create Release Pull Request
         if: steps.changes.outputs.dirty
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # pin@v6
         with:
           title: "[VS Code Browser] Build stable code `${{steps.updates.outputs.codeVersion}}`"
           body: |
@@ -89,10 +89,10 @@ jobs:
             team-experience
       - name: Get previous job's status
         id: lastrun
-        uses: filiptronicek/get-last-job-status@main
+        uses: filiptronicek/get-last-job-status@1c211ff20d1706ff0bc3fc8022f7bd6518b88bc4 # pin@main
       - name: Slack Notification
         if: ${{ (success() && steps.lastrun.outputs.status == 'failed') || failure() }}
-        uses: rtCamp/action-slack-notify@v2
+        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}

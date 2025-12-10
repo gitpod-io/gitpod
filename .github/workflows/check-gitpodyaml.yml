@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Notify
-        uses: KeisukeYamashita/create-comment@v1
+        uses: KeisukeYamashita/create-comment@1d95d97d7b1b73ab66e5ca931610e4e10ddc5eed # pin@v1
         with:
           number: ${{ github.event.pull_request.number }}
           comment: |

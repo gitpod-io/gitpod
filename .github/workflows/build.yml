@@ -63,7 +63,7 @@ jobs:
     steps:
       - name: "Determine Branch"
         id: branches
-        uses: transferwise/sanitize-branch-name@v1
+        uses: transferwise/sanitize-branch-name@009d85a96fcfe62a685b371dc8f299e53385ed9c # pin@v1
         # Since we trigger this worklow on other event types, besides pull_request
         # We use this action to help us get the pr body, as it's not included in push/workflow_dispatch events
       - uses: 8BitJonny/gh-get-current-pr@2.2.0
@@ -113,7 +113,7 @@ jobs:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
       options: --user root
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
@@ -140,7 +140,7 @@ jobs:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-infrastructure
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
@@ -192,7 +192,7 @@ jobs:
         # GitHub action + MySQL 8.0 need longer to initialize
         DB_RETRIES: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - uses: ./.github/actions/setup-environment
         with:
           identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
@@ -243,7 +243,7 @@ jobs:
 
           exit $RESULT
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # pin@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -385,12 +385,12 @@ jobs:
             echo "No critical vulnerabilities found."
           fi
       - name: Upload SBOMs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin@v4
         with:
           name: sboms
           path: ${{ steps.scan.outputs.leeway_sboms_dir }}
       - name: Upload vulnerability reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin@v4
         with:
           name: vulnerability-reports
           path: ${{ steps.scan.outputs.leeway_vulnerability_reports_dir }}
@@ -411,7 +411,7 @@ jobs:
           app-id: 308947
           installation-id: 35574470
       - name: trigger installation
-        uses: actions/github-script@v6
+        uses: actions/github-script@00f12e3e20659f42342b1c0226afda7f7c042325 # pin@v6
         with:
           github-token: ${{ steps.auth.outputs.token }}
           script: |
@@ -443,7 +443,7 @@ jobs:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-install
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
@@ -460,7 +460,7 @@ jobs:
           analytics: ${{needs.configuration.outputs.analytics}}
           workspace_feature_flags: ${{needs.configuration.outputs.workspace_feature_flags}}
           image_repo_base: ${{needs.configuration.outputs.image_repo_base}}/build
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@00f12e3e20659f42342b1c0226afda7f7c042325 # pin@v6
         if: needs.configuration.outputs.pr_number != '' && contains(needs.configuration.outputs.pr_body, 'gitpod:summary')
         with:
           script: |
@@ -494,7 +494,7 @@ jobs:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-monitoring
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
@@ -526,7 +526,7 @@ jobs:
       group: ${{ needs.configuration.outputs.preview_name }}-integration-test
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Run integration test
         id: integration-test
         uses: ./.github/actions/integration-tests
@@ -587,7 +587,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
+        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
           SLACK_ICON_EMOJI: ":x:"

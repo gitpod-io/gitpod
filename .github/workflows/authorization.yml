@@ -12,8 +12,8 @@ jobs:
     name: Validate schema
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Validate SpiceDB schema
-        uses: authzed/action-spicedb-validate@v1.0.1
+        uses: authzed/action-spicedb-validate@3c2214196c200ff012a12d4fc12204efa7a3a416 # pin@v1.0.1
         with:
           validationfile: "components/spicedb/schema/schema.yaml"

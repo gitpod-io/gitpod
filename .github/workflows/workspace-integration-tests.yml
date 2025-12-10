@@ -59,7 +59,7 @@ jobs:
       version: ${{ steps.configuration.outputs.version }}
       image_repo_base: ${{ steps.configuration.outputs.image_repo_base }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: "Set outputs"
         id: configuration
         shell: bash
@@ -112,7 +112,7 @@ jobs:
               } >> $GITHUB_OUTPUT
           fi
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
+        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
         if: failure()
         env:
           SLACK_WEBHOOK: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
@@ -128,7 +128,7 @@ jobs:
     concurrency:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
@@ -161,7 +161,7 @@ jobs:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
       options: --user root
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Integration Test
         id: integration-test
         uses: ./.github/actions/integration-tests
@@ -182,7 +182,7 @@ jobs:
     if: inputs.skip_delete != 'true' && always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:

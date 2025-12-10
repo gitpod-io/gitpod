@@ -18,7 +18,7 @@ jobs:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
       options: --user root
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # pin@v2
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
@@ -62,10 +62,10 @@ jobs:
           fi
       - name: Get previous job's status
         id: lastrun
-        uses: filiptronicek/get-last-job-status@main
+        uses: filiptronicek/get-last-job-status@1c211ff20d1706ff0bc3fc8022f7bd6518b88bc4 # pin@main
       - name: Slack Notification
         if: ${{ (success() && steps.find-target.outputs.buildNumber && steps.leeway-build.outputs.leewayUsingCache == 'false') || failure() }}
-        uses: rtCamp/action-slack-notify@v2
+        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
