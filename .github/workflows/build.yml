@@ -110,7 +110,7 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: ubuntu-latest-16-cores
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.22
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -183,7 +183,7 @@ jobs:
         ports:
           - 6379:6379
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.22
       options: --user root
       env:
         DB_HOST: "mysql"
@@ -519,7 +519,7 @@ jobs:
     environment: main-build
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.22
       options: --user root
     if: needs.configuration.outputs.with_integration_tests != '' && needs.configuration.outputs.is_scheduled_run != 'true'
     concurrency:

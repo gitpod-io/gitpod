@@ -15,7 +15,7 @@ jobs:
     if: github.event.ref_type == 'branch' || github.event.inputs.name != ''
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.22
       options: --user root
     steps:
       - uses: actions/checkout@v4
