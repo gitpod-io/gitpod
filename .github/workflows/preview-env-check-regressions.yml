@@ -62,7 +62,7 @@ jobs:
     concurrency:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
@@ -98,7 +98,7 @@ jobs:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
@@ -145,18 +145,18 @@ jobs:
           fi
       - name: Test Summary
         id: test_summary
-        uses: test-summary/action@v2
+        uses: test-summary/action@31493c76ec9e7aa675f1585d3ed6f1da69269a86 # pin@v2
         with:
           paths: "test/tests/**/TEST.xml"
         if: always()
       - id: auth
         if: failure()
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@955352c3b43196640b567e4646256d2fbb4aa1c7 # pin@v1
         with:
           token_format: access_token
           credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
+        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
         if: failure()
         env:
           SLACK_WEBHOOK: "${{ secrets.DEVX_SLACK_WEBHOOK }}"
@@ -170,7 +170,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:

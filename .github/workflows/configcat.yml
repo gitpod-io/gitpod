@@ -9,9 +9,9 @@ jobs:
     name: Scan repository for configcat code references
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Scan & upload
-        uses: configcat/scan-repository@v2
+        uses: configcat/scan-repository@ccf34cbd7866cb9036351d9d4bf117e9aca311bf # pin@v2
         with:
           api-user: ${{ secrets.CONFIGCAT_API_USER }}
           api-pass: ${{ secrets.CONFIGCAT_API_PASS }}

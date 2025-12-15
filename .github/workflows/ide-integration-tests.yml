@@ -80,7 +80,7 @@ jobs:
               } >> $GITHUB_OUTPUT
           fi
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
+        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
         if: failure()
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
@@ -95,7 +95,7 @@ jobs:
     concurrency:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:
@@ -131,7 +131,7 @@ jobs:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         env:
           HOME: /home/gitpod
@@ -196,12 +196,12 @@ jobs:
           exit $FAILURE_COUNT
       - name: Test Summary
         id: test_summary
-        uses: test-summary/action@v2
+        uses: test-summary/action@31493c76ec9e7aa675f1585d3ed6f1da69269a86 # pin@v2
         with:
           paths: "test/tests/**/TEST-*.xml"
         if: always()
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
+        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
         if: success() || failure()
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
@@ -215,7 +215,7 @@ jobs:
     if: github.event.inputs.skip_delete != 'true' && always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
         uses: ./.github/actions/setup-environment
         with:

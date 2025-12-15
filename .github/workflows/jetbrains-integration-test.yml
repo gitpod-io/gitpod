@@ -44,17 +44,17 @@ jobs:
           echo "- Build URL: ${{ inputs.build_url }}" >> $GITHUB_STEP_SUMMARY
           echo "- JB Product: ${{ inputs.jb_product }}" >> $GITHUB_STEP_SUMMARY
           echo "- Latest Version: ${{ inputs.use_latest }}" >> $GITHUB_STEP_SUMMARY
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # pin@v2
+      - uses: actions/setup-go@bfdd3570ce990073878bf10f6b2d79082de49492 # pin@v2
         with:
           go-version: "1.19"
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # pin@v4
         with:
           distribution: zulu
           java-version: "11"
           cache: "gradle"
       - name: Setup FFmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v1
+        uses: FedericoCarboni/setup-ffmpeg@dbe266744738dd1fa54db0ecb35d11461c94a90a # pin@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Download build dependency
@@ -78,7 +78,7 @@ jobs:
           fi
       - name: Cache leeway build
         id: cache-npm
-        uses: actions/cache@v3
+        uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # pin@v3
         with:
           path: /tmp/cache/
           key: ${{ runner.os }}-leeway-cache-${{ hashFiles('gateway.version') }}
@@ -114,7 +114,7 @@ jobs:
           cp -r dev/jetbrains-test/video dev/jetbrains-test/build/reports
       - name: Save report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin@v4
         with:
           name: video
           path: |

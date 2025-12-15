@@ -7,7 +7,7 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Install dependencies
         run: |
           curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.1/oci-tool_0.2.1_linux_amd64.tar.gz | tar xz -C /usr/local/bin
@@ -38,7 +38,7 @@ jobs:
       - name: Create Release Pull Request
         if: ${{steps.changes.outputs.dirty && steps.updates.outputs.codeVersion}}
         id: code-update-pr
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # pin@v6
         with:
           title: "[VS Code Browser] Update stable code to `${{steps.updates.outputs.codeVersion}}`"
           body: |
@@ -70,7 +70,7 @@ jobs:
 
       - name: Create Images Update Pull Request
         if: ${{steps.changes.outputs.dirty && !steps.updates.outputs.codeVersion}}
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # pin@v6
         with:
           title: "[code] update code image layers"
           body: |
@@ -104,7 +104,7 @@ jobs:
             team-experience
       - name: Slack notification (code)
         if: ${{ steps.code-update-pr.outputs.pull-request-url }}
-        uses: rtCamp/action-slack-notify@v2
+        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
@@ -124,7 +124,7 @@ jobs:
           app-id: 308947
           installation-id: 35574470
       - name: Trigger Open VS Code Server Release
-        uses: actions/github-script@v6
+        uses: actions/github-script@00f12e3e20659f42342b1c0226afda7f7c042325 # pin@v6
         with:
           github-token: ${{ steps.auth.outputs.token }}
           script: |
