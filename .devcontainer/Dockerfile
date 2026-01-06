@@ -93,7 +93,7 @@ ARG TARGETOS
 
 # Install dependencies
 USER root
-ARG LEEWAY_VERSION=0.10.6
+ARG LEEWAY_VERSION=0.10.8
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
 ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
 ENV LEEWAY_REMOTE_CACHE_BUCKET=leeway-cache-dev-3ac8ef5
@@ -335,12 +335,6 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh |
     && bash -c ". $HOME/.nvm/nvm.sh \
     && nvm install v${NODE_VERSION} \
     && nvm alias default v${NODE_VERSION}"
-
-# Disable npm/yarn lifecycle scripts by default (security hardening)
-# To allow specific packages, use: npm rebuild <package> or yarn rebuild <package>
-RUN npm config set ignore-scripts true --location=global && \
-    npm config set ignore-scripts true --location=user && \
-    echo 'ignore-scripts true' >> ~/.yarnrc
 
 # Disable npx (security hardening - prevents arbitrary package execution)
 # Remove npx from NVM and replace with stub that prints warning

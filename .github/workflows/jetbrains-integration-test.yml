@@ -34,7 +34,7 @@ on:
 jobs:
   jetbrains-smoke-test-linux:
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.29
       options: --user root
     runs-on: ubuntu-latest
     steps:
@@ -89,6 +89,7 @@ jobs:
           DISPLAY: ":10"
           LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: "8388608"
           LEEWAY_REMOTE_CACHE_BUCKET: "${{ needs.configuration.outputs.leeway_cache_bucket }}"
+          LEEWAY_CACHE_UPLOAD_IMMEDIATE: true
           TEST_USE_LATEST: ${{ inputs.use_latest }}
         run: |
           export GATEWAY_LINK=$(jq -r '.inputs.secret_gateway_link' $GITHUB_EVENT_PATH)
