@@ -110,7 +110,7 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: ubuntu-latest-16-cores
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.25
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.29
       options: --user root
     steps:
       - uses: actions/checkout@v4
@@ -125,6 +125,7 @@ jobs:
         shell: bash
         env:
           LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
+          LEEWAY_CACHE_UPLOAD_IMMEDIATE: true
         run: |
           leeway build dev/preview/previewctl:cli --cache remote
   infrastructure:
@@ -183,7 +184,7 @@ jobs:
         ports:
           - 6379:6379
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.25
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.29
       options: --user root
       env:
         DB_HOST: "mysql"
@@ -217,6 +218,7 @@ jobs:
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
           LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
+          LEEWAY_CACHE_UPLOAD_IMMEDIATE: true
           IMAGE_REPO_BASE: ${{needs.configuration.outputs.image_repo_base}}/dev
         shell: bash
         run: |
@@ -264,6 +266,7 @@ jobs:
           CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
           LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
           IMAGE_REPO_BASE: ${{needs.configuration.outputs.image_repo_base}}/build
+          LEEWAY_CACHE_UPLOAD_IMMEDIATE: true
 
           # SCM tokens for integration tests
           GITPOD_TEST_TOKEN_BITBUCKET: "${{ secrets.GITPOD_TEST_TOKEN_BITBUCKET }}"
@@ -519,7 +522,7 @@ jobs:
     environment: main-build
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.25
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.29
       options: --user root
     if: needs.configuration.outputs.with_integration_tests != '' && needs.configuration.outputs.is_scheduled_run != 'true'
     concurrency:
