@@ -9,4 +9,4 @@ version: 1.0.0
 dependencies:
   - name: docker-registry
     version: 2.2.2
-    repository: https://helm.twun.io
+    repository: https://twuni.github.io/docker-registry.helm
