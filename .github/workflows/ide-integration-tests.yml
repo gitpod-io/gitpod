@@ -36,7 +36,7 @@ jobs:
     name: Configuration
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.22
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.25
       options: --user root
     outputs:
       name: ${{ steps.configuration.outputs.name }}
@@ -125,7 +125,7 @@ jobs:
     needs: [configuration, infrastructure]
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.22
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.25
       options: --user root
       volumes:
         - /var/tmp:/var/tmp

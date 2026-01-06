@@ -34,7 +34,7 @@ on:
 jobs:
   jetbrains-smoke-test-linux:
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.22
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.25
       options: --user root
     runs-on: ubuntu-latest
     steps:
