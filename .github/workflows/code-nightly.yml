@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.29
       options: --user root
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
@@ -26,6 +26,7 @@ jobs:
           PR_DESC: "${{ steps.pr-details.outputs.pr_body }}"
           MAIN_BRANCH: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
           LEEWAY_REMOTE_CACHE_BUCKET: ${{ github.ref == 'refs/heads/main' && 'leeway-cache-main-c514a01' || 'leeway-cache-dev-3ac8ef5' }}
+          LEEWAY_CACHE_UPLOAD_IMMEDIATE: true
         run: |
           export LEEWAY_WORKSPACE_ROOT=$GITHUB_WORKSPACE
 

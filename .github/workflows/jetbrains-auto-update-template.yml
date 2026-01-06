@@ -15,7 +15,7 @@ jobs:
   update-jetbrains:
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34181
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.29
       options: --user root
     steps:
       - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # pin@v2
@@ -47,6 +47,7 @@ jobs:
         env:
           LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: "8388608"
           LEEWAY_REMOTE_CACHE_BUCKET: ${{ github.ref == 'refs/heads/main' && 'leeway-cache-main-c514a01' || 'leeway-cache-dev-3ac8ef5' }}
+          LEEWAY_CACHE_UPLOAD_IMMEDIATE: true
         run: |
           echo "May upgrade latest ${{ inputs.productId }} image with ${{ steps.find-target.outputs.editorSummary }}"
           imageRepoBase=${{ github.ref == 'refs/heads/main' && 'eu.gcr.io/gitpod-core-dev/build' || 'eu.gcr.io/gitpod-dev-artifact/build' }}
