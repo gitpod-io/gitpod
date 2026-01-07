@@ -280,19 +280,19 @@ func TestGetTask(t *testing.T) {
 			Name:          "from prebuild",
 			Task:          allTasks,
 			ContentSource: csapi.WorkspaceInitFromPrebuild,
-			Expectation:   "{\nbefore\n} && {\n[ -r /workspace/.prebuild-log-0 ] && cat /workspace/.prebuild-log-0; [ -r //prebuild-log-0 ] && cat //prebuild-log-0; true\n} && {\ncommand\n}",
+			Expectation:   " HISTFILE=//cmd-0 history -r; {\nbefore\n} && {\n[ -r /workspace/.prebuild-log-0 ] && cat /workspace/.prebuild-log-0; [ -r //prebuild-log-0 ] && cat //prebuild-log-0; true\n} && {\ncommand\n}",
 		},
 		{
 			Name:          "from other",
 			Task:          allTasks,
 			ContentSource: csapi.WorkspaceInitFromOther,
-			Expectation:   "{\nbefore\n} && {\ninit\n} && {\ncommand\n}",
+			Expectation:   " HISTFILE=//cmd-0 history -r; {\nbefore\n} && {\ninit\n} && {\ncommand\n}",
 		},
 		{
 			Name:          "from backup",
 			Task:          allTasks,
 			ContentSource: csapi.WorkspaceInitFromOther,
-			Expectation:   "{\nbefore\n} && {\ninit\n} && {\ncommand\n}",
+			Expectation:   " HISTFILE=//cmd-0 history -r; {\nbefore\n} && {\ninit\n} && {\ncommand\n}",
 		},
 	}
 
