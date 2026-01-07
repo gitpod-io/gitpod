@@ -30,7 +30,7 @@ func TestGitStatus(t *testing.T) {
 		{
 			"no commits",
 			func(ctx context.Context, c *Client) error {
-				if err := c.Git(ctx, "init"); err != nil {
+				if err := c.Git(ctx, "init", "--initial-branch=main"); err != nil {
 					return err
 				}
 				return nil
@@ -239,7 +239,7 @@ func TestGitStatusFromFiles(t *testing.T) {
 		{
 			"no commits",
 			func(ctx context.Context, c *Client) error {
-				if err := c.Git(ctx, "init"); err != nil {
+				if err := c.Git(ctx, "init", "--initial-branch=main"); err != nil {
 					return err
 				}
 				return nil
@@ -488,8 +488,9 @@ func newGitClient(ctx context.Context) (*Client, error) {
 	return &Client{
 		Location: loc,
 		Config: map[string]string{
-			"user.email": "foo@bar.com",
-			"user.name":  "tester",
+			"user.email":         "foo@bar.com",
+			"user.name":          "tester",
+			"init.defaultBranch": "main",
 		},
 	}, nil
 }
@@ -499,7 +500,7 @@ func initFromRemote(ctx context.Context, c *Client) error {
 	if err != nil {
 		return xerrors.Errorf("cannot add remote: %w", err)
 	}
-	if err := remote.Git(ctx, "init"); err != nil {
+	if err := remote.Git(ctx, "init", "--initial-branch=main"); err != nil {
 		return err
 	}
 	if err := remote.Git(ctx, "config", "--local", "user.email", "foo@bar.com"); err != nil {
