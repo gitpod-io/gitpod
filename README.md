@@ -6,7 +6,7 @@
 
 Gitpod Classic is a developer platform providing on-demand, pre-configured development environments in the cloud. It allows developers to spin up secure workspaces with a simple .gitpod.yml configuration file, eliminating the need for manual environment setup. The platform integrates seamlessly with GitHub, GitLab, Bitbucket, and Azure DevOps, offering features like prebuilt environments, collaborative code reviews, and professional developer experience with VS Code extensions and customization options. Workspaces are ephemeral, secure, and based on Docker, providing developers with the same capabilities as their local Linux machines but in a consistent, reproducible cloud environment.
 
-> **Important: [Gitpod Classic pay-as-you-go will sunset on October 15th](https://ona.com/stories/gitpod-classic-payg-sunset)** 2025 (this date does not apply to Enterprise customers). All existing pay-as-you-go users should migrate to Ona before this date. See our blog for detailed instructions.
+> **Important: [Gitpod Classic pay-as-you-go did sunset on October 15th](https://ona.com/stories/gitpod-classic-payg-sunset)** 2025. See our blog for detailed instructions.
 
 ## Documentation
 
