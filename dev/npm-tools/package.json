@@ -6,6 +6,7 @@
     "@anthropic-ai/claude-code": "^2.0.57",
     "bun": "^1.2.16",
     "node-gyp": "^10.3.1",
+    "npm": "^11.7.0",
     "pnpm": "^9.15.0",
     "prettier": "^3.0.0",
     "typescript": "^5.7.3",

@@ -1,5 +1,7 @@
 FROM ubuntu:jammy
 
+ENV REBUILD_TRIGGER=1
+
 ADD https://raw.githubusercontent.com/gitpod-io/workspace-images/main/base/install-packages /usr/bin/install-packages
 RUN chmod +x /usr/bin/install-packages
 
@@ -354,6 +356,8 @@ RUN cd /opt/npm-tools && \
         ln -sf "$bin" /usr/local/bin/$(basename "$bin"); \
     done && \
     rm -rf ~/.npm/_cacache
+# Install newer version of "npm" separately, so it's not overshadowed by the version installed by nvm
+RUN ln -sf /opt/npm-tools/node_modules/.bin/npm /usr/local/bin/npm-11.7
 
 ENV PATH=$PATH:/root/.aws-iam:/root/.terraform:/workspace/bin
 
