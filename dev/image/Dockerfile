@@ -145,6 +145,8 @@ RUN sudo chown -R gitpod:gitpod /opt/npm-tools && \
         sudo ln -sf "$bin" /usr/local/bin/$(basename "$bin"); \
     done && \
     rm -rf ~/.npm/_cacache
+# Install newer version of "npm" separately, so it's not overshadowed by the version installed by nvm
+RUN sudo ln -sf /opt/npm-tools/node_modules/.bin/npm /usr/local/bin/npm-11.7
 
 ## Register leeway autocompletion in bashrc
 RUN bash -c "echo . \<\(leeway bash-completion\) >> ~/.bashrc"

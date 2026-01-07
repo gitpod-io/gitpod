@@ -92,7 +92,7 @@ jobs:
     if: ${{ needs.configuration.outputs.skip == 'false' }}
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-skip-if-empty-env-vars-gha.29
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:gpl-npm-oidc-support-gha.42
       options: --user root
       volumes:
         - /var/tmp:/var/tmp
