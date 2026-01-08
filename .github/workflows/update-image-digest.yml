@@ -84,7 +84,6 @@ jobs:
         uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f #v7.0.6
         if: ${{ steps.create_pr.outputs.create_pr == 'true' }}
         with:
-          token: ${{ secrets.ROBOQUAT_AUTOMATIC_CHANGELOG }}
           commit-message: update index
           title: "Update images digests"
           body: |
@@ -107,6 +106,13 @@ jobs:
             - [x] with-integration-tests=ssh
                   Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`. If enabled, `with-preview` and `with-large-vm` will be enabled.
             </details>
+
+            **Important:** After approving, checkout this branch and trigger additional checks:
+            ```bash
+            git commit --amend --no-edit
+            git push --force-with-lease
+            ```
+            Why? This is required to trigger workflows, so that PR checks pass and allow merging.
           labels: automated pr, kind/cleanup, release-note-none
           branch: update-digests
           delete-branch: true
