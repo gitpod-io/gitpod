@@ -2,6 +2,10 @@
   "name": "@gitpod/ide-metrics-api-grpcweb",
   "version": "0.0.1",
   "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitpod-io/gitpod"
+  },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
