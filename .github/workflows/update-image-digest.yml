@@ -115,6 +115,7 @@ jobs:
             Why? This is required to trigger workflows, so that PR checks pass and allow merging.
           labels: automated pr, kind/cleanup, release-note-none
           branch: update-digests
+          branch-suffix: timestamp
           delete-branch: true
 
       - name: Get previous job's status
