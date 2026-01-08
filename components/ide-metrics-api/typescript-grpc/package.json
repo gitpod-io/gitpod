@@ -2,6 +2,10 @@
   "name": "@gitpod/ide-metrics-api-grpc",
   "version": "0.0.1",
   "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitpod-io/gitpod"
+  },
   "scripts": {
     "build": "sh build.sh"
   },

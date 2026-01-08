@@ -2,6 +2,10 @@
   "name": "@gitpod/supervisor-api-grpcweb",
   "version": "0.1.5",
   "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitpod-io/gitpod"
+  },
   "scripts": {
     "build": "sh build.sh"
   },
