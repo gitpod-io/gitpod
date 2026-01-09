@@ -1,0 +1,44 @@
+name: "Create preview environment"
+description: "Creates the infrastructure for a preview environment"
+inputs:
+  name:
+    description: "The name of the preview environment to deploy Gitpod to"
+    required: false
+  large_vm:
+    description: "Whether to use a larger VM for the env"
+    required: false
+    default: "false"
+  preemptible:
+    description: "Whether to use preemptible VMs for the env"
+    required: false
+    default: "true"
+  recreate_vm:
+    description: "Whether to recreate the VM"
+    required: false
+    default: "false"
+runs:
+  using: "composite"
+  steps:
+    - name: Install previewctl
+      shell: bash
+      run: |
+        set -euo pipefail
+        leeway run dev/preview/previewctl:install
+
+    - name: Create preview environment
+      shell: bash
+      env:
+        INPUT_NAME: ${{ inputs.name }}
+        INPUT_LARGE_VM: ${{ inputs.large_vm }}
+        INPUT_PREEMPTIBLE: ${{ inputs.preemptible }}
+      run: |
+        set -euo pipefail
+
+        TF_VAR_preview_name="$(previewctl get-name --branch "${INPUT_NAME}")"
+        export TF_VAR_preview_name
+        export TF_VAR_with_large_vm="${INPUT_LARGE_VM}"
+        export TF_VAR_gce_use_spot="${INPUT_PREEMPTIBLE}"
+        export TF_INPUT=0
+        export TF_IN_AUTOMATION=true
+
+        leeway run dev/preview:create-preview

@@ -1,0 +1,79 @@
+name: "Deploy Gitpod"
+description: "Deploys Gitpod to an existing preview environment"
+inputs:
+  name:
+    description: "The name of the preview environment to deploy Gitpod to"
+    required: false
+  version:
+    description: "The version of Gitpod to install"
+    required: true
+  with_dedicated_emu:
+    description: "Dedicated Config"
+    required: false
+  analytics:
+    description: "With analytics"
+    required: false
+  workspace_feature_flags:
+    description: "Workspace feature flags"
+    required: false
+  image_repo_base:
+    description: "The base repository for image"
+    required: false
+outputs:
+  report:
+    description: "Preview environment report (base64 encoded)"
+    value: ${{ steps.deploy.outputs.report }}
+runs:
+  using: "composite"
+  steps:
+    - name: Install previewctl
+      shell: bash
+      run: |
+        set -euo pipefail
+        leeway run dev/preview/previewctl:install
+
+    - name: Deploy Gitpod
+      id: deploy
+      shell: bash
+      env:
+        INPUT_NAME: ${{ inputs.name }}
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_WITH_DEDICATED_EMU: ${{ inputs.with_dedicated_emu }}
+        INPUT_ANALYTICS: ${{ inputs.analytics }}
+        INPUT_WORKSPACE_FEATURE_FLAGS: ${{ inputs.workspace_feature_flags }}
+        INPUT_IMAGE_REPO_BASE: ${{ inputs.image_repo_base }}
+      run: |
+        set -euo pipefail
+
+        export VERSION="${INPUT_VERSION}"
+        export IMAGE_REPO_BASE="${INPUT_IMAGE_REPO_BASE}"
+
+        echo "Downloading installer for ${VERSION}"
+        oci-tool fetch file -o /tmp/installer --platform=linux-amd64 "${IMAGE_REPO_BASE}/installer:${VERSION}" app/installer
+        chmod +x /tmp/installer
+        export PATH="/tmp:$PATH"
+
+        echo "Download versions.yaml"
+        oci-tool fetch file -o /tmp/versions.yaml --platform=linux-amd64 "${IMAGE_REPO_BASE}/versions:${VERSION}" versions.yaml
+
+        PREVIEW_NAME="$(previewctl get-name --branch "${INPUT_NAME}")"
+        export PREVIEW_NAME
+
+        for var in WITH_DEDICATED_EMU ANALYTICS WORKSPACE_FEATURE_FLAGS; do
+          input_var="INPUT_${var}"
+          if [[ -n "${!input_var:-}" ]]; then
+            export "GITPOD_${var}"="${!input_var}"
+          fi
+        done
+
+        previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 10m
+        leeway run dev/preview:deploy-gitpod
+        previewctl report --branch "${PREVIEW_NAME}" >> "${GITHUB_STEP_SUMMARY}"
+
+        EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+        report=$(previewctl report --branch "${PREVIEW_NAME}" | base64)
+        {
+          echo "report<<$EOF"
+          echo "$report"
+          echo "$EOF"
+        } >> "$GITHUB_OUTPUT"
