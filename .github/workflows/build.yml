@@ -558,23 +558,23 @@ jobs:
       version: ${{ needs.configuration.outputs.version }}
     secrets: inherit
 
-  ide-code-updates:
-    name: "Run VS Code update jobs on main branch"
-    needs:
-      - configuration
-      - build-gitpod
-    if: needs.configuration.outputs.is_main_branch == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
-    uses: ./.github/workflows/code-updates.yml
-    secrets: inherit
+  # ide-code-updates:
+  #   name: "Run VS Code update jobs on main branch"
+  #   needs:
+  #     - configuration
+  #     - build-gitpod
+  #   if: needs.configuration.outputs.is_main_branch == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
+  #   uses: ./.github/workflows/code-updates.yml
+  #   secrets: inherit
 
-  ide-jb-updates:
-    name: "Run JetBrains update jobs on main branch"
-    needs:
-      - configuration
-      - build-gitpod
-    if: needs.configuration.outputs.is_main_branch == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
-    uses: ./.github/workflows/jetbrains-updates.yml
-    secrets: inherit
+  # ide-jb-updates:
+  #   name: "Run JetBrains update jobs on main branch"
+  #   needs:
+  #     - configuration
+  #     - build-gitpod
+  #   if: needs.configuration.outputs.is_main_branch == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
+  #   uses: ./.github/workflows/jetbrains-updates.yml
+  #   secrets: inherit
 
   notify-scheduled-failure:
     name: "Notify on scheduled run failure"
@@ -583,8 +583,8 @@ jobs:
       - configuration
       - build-gitpod
       - workspace-integration-tests-main
-      - ide-code-updates
-      - ide-jb-updates
+      # - ide-code-updates
+      # - ide-jb-updates
     environment: main-build
     runs-on: ubuntu-latest
     steps:
