@@ -170,6 +170,9 @@ jobs:
     needs: [configuration, infrastructure, check]
     if: always()
     runs-on: ubuntu-latest
+    container:
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:gpl-npm-oidc-support-gha.42
+      options: --user root
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment
