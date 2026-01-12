@@ -87,7 +87,13 @@ func (k *ConfigLoader) installVMSSHKeys() error {
 	path := filepath.Join(os.Getenv("LEEWAY_WORKSPACE_ROOT"), "dev/preview/ssh-vm.sh")
 	cmd := exec.Command(path, "-c", "echo success", "-v", k.opts.PreviewName)
 	cmd.Env = os.Environ()
-	return cmd.Run()
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		k.logger.WithError(err).WithField("output", string(output)).Error("failed to install VM SSH keys")
+		return errors.Wrap(err, string(output))
+	}
+	return nil
 }
 
 func (k *ConfigLoader) Load(ctx context.Context) (*api.Config, error) {
