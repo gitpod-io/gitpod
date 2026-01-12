@@ -18,8 +18,13 @@ RUN find . -type f \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '
 
 COPY components-gitpod-protocol--gitpod-schema/gitpod-schema.json /www/static/schemas/gitpod-schema.json
 
+# Build Caddy from source to get v2.11.0-beta.2 with fixed smallstep/certificates
+FROM caddy:builder AS caddy-builder
+RUN xcaddy build v2.11.0-beta.2 --output /caddy
+
 FROM caddy/caddy:2.11-alpine
 
+COPY --from=caddy-builder /caddy /usr/bin/caddy
 COPY components-dashboard--static/conf/Caddyfile /etc/caddy/Caddyfile
 COPY --from=compress /www /www
 
