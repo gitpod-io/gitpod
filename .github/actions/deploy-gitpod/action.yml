@@ -43,7 +43,7 @@ runs:
         INPUT_WORKSPACE_FEATURE_FLAGS: ${{ inputs.workspace_feature_flags }}
         INPUT_IMAGE_REPO_BASE: ${{ inputs.image_repo_base }}
       run: |
-        set -euo pipefail
+        set -euox pipefail
 
         export VERSION="${INPUT_VERSION}"
         export IMAGE_REPO_BASE="${INPUT_IMAGE_REPO_BASE}"
