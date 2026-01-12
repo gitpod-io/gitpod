@@ -397,40 +397,40 @@ jobs:
         with:
           name: vulnerability-reports
           path: ${{ steps.scan.outputs.leeway_vulnerability_reports_dir }}
-  install-app:
-    runs-on: ubuntu-latest
-    needs: [ configuration, build-gitpod ]
-    environment: main-build
-    if: ${{ needs.configuration.outputs.is_main_branch == 'true' && needs.configuration.outputs.is_scheduled_run != 'true' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        env: [ staging, production ]
-    steps:
-      - uses: gitpod-io/gh-app-auth@v0.1
-        id: auth
-        with:
-          private-key: ${{ secrets.ACTIONS_APP_PKEY }}
-          app-id: 308947
-          installation-id: 35574470
-      - name: trigger installation
-        uses: actions/github-script@00f12e3e20659f42342b1c0226afda7f7c042325 # pin@v6
-        with:
-          github-token: ${{ steps.auth.outputs.token }}
-          script: |
-            const result = await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: 'gitpod-dedicated',
-              workflow_id: 'install-app.yaml',
-              ref: 'main',
-              inputs: {
-                "version": '${{ needs.configuration.outputs.version }}',
-                "repo": "https://github.com/gitpod-io/gitpod",
-                "commit": "${{github.sha}}",
-                "release": "${{ matrix.env }}",
-                "env": "${{ matrix.env }}"
-              }
-            })
+  # install-app:
+  #   runs-on: ubuntu-latest
+  #   needs: [ configuration, build-gitpod ]
+  #   environment: main-build
+  #   if: ${{ needs.configuration.outputs.is_main_branch == 'true' && needs.configuration.outputs.is_scheduled_run != 'true' }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       env: [ staging, production ]
+  #   steps:
+  #     - uses: gitpod-io/gh-app-auth@v0.1
+  #       id: auth
+  #       with:
+  #         private-key: ${{ secrets.ACTIONS_APP_PKEY }}
+  #         app-id: 308947
+  #         installation-id: 35574470
+  #     - name: trigger installation
+  #       uses: actions/github-script@00f12e3e20659f42342b1c0226afda7f7c042325 # pin@v6
+  #       with:
+  #         github-token: ${{ steps.auth.outputs.token }}
+  #         script: |
+  #           const result = await github.rest.actions.createWorkflowDispatch({
+  #             owner: context.repo.owner,
+  #             repo: 'gitpod-dedicated',
+  #             workflow_id: 'install-app.yaml',
+  #             ref: 'main',
+  #             inputs: {
+  #               "version": '${{ needs.configuration.outputs.version }}',
+  #               "repo": "https://github.com/gitpod-io/gitpod",
+  #               "commit": "${{github.sha}}",
+  #               "release": "${{ matrix.env }}",
+  #               "env": "${{ matrix.env }}"
+  #             }
+  #           })
 
   install:
     name: "Install Gitpod"
