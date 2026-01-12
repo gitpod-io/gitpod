@@ -21,5 +21,6 @@ fi
 
 leeway build \
     -Dversion="${VERSION}" \
+    -DlocalAppVersion="${VERSION}" \
     --dont-test \
     dev/preview:deploy-dependencies

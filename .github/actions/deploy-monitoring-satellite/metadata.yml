@@ -1,5 +1,0 @@
-name: "Deploy monitoring satellite"
-description: "Deploys monitoring satellite to an existing preview environment"
-runs:
-    using: "docker"
-    image: "Dockerfile"

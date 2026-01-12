@@ -1,0 +1,28 @@
+name: "Deploy monitoring satellite"
+description: "Deploys monitoring satellite to an existing preview environment"
+runs:
+  using: "composite"
+  steps:
+    - name: Install previewctl
+      shell: bash
+      run: |
+        set -euo pipefail
+        leeway run dev/preview/previewctl:install
+
+    - name: Deploy monitoring satellite
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        echo "previewctl install-context"
+        previewctl install-context --log-level debug --timeout 10m
+
+        echo "leeway run dev/preview:deploy-monitoring-satellite"
+        leeway run dev/preview:deploy-monitoring-satellite
+
+        {
+            echo '<p>Monitoring satellite has been installed in your preview environment.</p>'
+            echo '<ul>'
+            echo '<li><b>📚 Documentation</b> - See our <a href="https://www.notion.so/gitpod/f2938b2bcb0c4c8c99afe1d2b872380e" target="_blank">internal documentation</a> on how to use it.</li>'
+            echo '</ul>'
+        } >> "${GITHUB_STEP_SUMMARY}"

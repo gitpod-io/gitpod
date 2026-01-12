@@ -42,6 +42,9 @@ jobs:
     name: "Delete preview environment"
     needs: [stale]
     runs-on: ubuntu-latest
+    container:
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:gpl-npm-oidc-support-gha.42
+      options: --user root
     if: ${{ needs.stale.outputs.count > 0 }}
     strategy:
       fail-fast: false

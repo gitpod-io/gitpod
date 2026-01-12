@@ -3,9 +3,9 @@ defaultTarget: components:all
 defaultArgs:
   imageRepoBase: "eu.gcr.io/gitpod-dev-artifact/build"
   coreYarnLockBase: ../..
-  npmPublishTrigger: "false"
-  publishToNPM: true
-  publishToJBMarketplace: true
+  npmPublishTrigger: false
+  publishToNPM: false
+  publishToJBMarketplace: false
   localAppVersion: unknown
   codeCommit: bbd81e3f7202bb6b506c62afc097bf57e33bd11f
   codeVersion: 1.102.3

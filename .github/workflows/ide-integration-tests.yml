@@ -92,6 +92,9 @@ jobs:
     name: Create preview environment infrastructure
     needs: [configuration]
     runs-on: ubuntu-latest
+    container:
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:gpl-npm-oidc-support-gha.42
+      options: --user root
     concurrency:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
     steps:
@@ -107,10 +110,8 @@ jobs:
         uses: ./.github/actions/preview-create
         with:
           name: ${{ needs.configuration.outputs.name }}
-          infrastructure_provider: gce
           large_vm: true
           preemptible: true
-          image_repo_base: ${{ needs.configuration.outputs.image_repo_base }}
       - name: Deploy Gitpod to the preview environment
         id: deploy-gitpod
         if: github.event.inputs.skip_deploy != 'true'
@@ -214,6 +215,9 @@ jobs:
     needs: [configuration, infrastructure, check]
     if: github.event.inputs.skip_delete != 'true' && always()
     runs-on: ubuntu-latest
+    container:
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:gpl-npm-oidc-support-gha.42
+      options: --user root
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
       - name: Setup Environment

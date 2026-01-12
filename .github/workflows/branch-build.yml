@@ -134,6 +134,9 @@ jobs:
       (needs.configuration.outputs.is_main_branch != 'true') &&
       (needs.configuration.outputs.is_scheduled_run != 'true')
     runs-on: ubuntu-latest
+    container:
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:gpl-npm-oidc-support-gha.42
+      options: --user root
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-infrastructure
       cancel-in-progress: true
@@ -150,11 +153,9 @@ jobs:
         uses: ./.github/actions/preview-create
         with:
           name: ${{ needs.configuration.outputs.preview_name }}
-          previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           large_vm: ${{ needs.configuration.outputs.with_large_vm }}
           preemptible: ${{ needs.configuration.outputs.with_preemptible }}
           recreate_vm: ${{ inputs.recreate_vm }}
-          image_repo_base: ${{needs.configuration.outputs.image_repo_base}}/build
 
   build-gitpod:
     name: Build Gitpod
@@ -438,6 +439,9 @@ jobs:
     environment: branch-build
     if: needs.configuration.outputs.is_scheduled_run != 'true'
     runs-on: ubuntu-latest
+    container:
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:gpl-npm-oidc-support-gha.42
+      options: --user root
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-install
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
@@ -488,6 +492,9 @@ jobs:
     needs: [ infrastructure, build-previewctl ]
     environment: branch-build
     runs-on: ubuntu-latest
+    container:
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:gpl-npm-oidc-support-gha.42
+      options: --user root
     if: needs.configuration.outputs.with_monitoring == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-monitoring
@@ -503,9 +510,6 @@ jobs:
       - name: Deploy monitoring satellite to the preview environment
         id: deploy-monitoring-satellite
         uses: ./.github/actions/deploy-monitoring-satellite
-        with:
-          previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
-          image_repo_base: ${{needs.configuration.outputs.image_repo_base}}/build
 
   integration-test:
     name: "Run integration test"
