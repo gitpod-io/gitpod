@@ -2,14 +2,15 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM caddy:2.10.2-builder AS builder
+FROM caddy:builder AS builder
 
 WORKDIR /plugins
 
 COPY plugins /plugins
 
 # build caddy
-RUN xcaddy build v2.10.2 \
+# Using v2.11.0-beta.2 to fix critical vulnerability GHSA-h8cp-697h-8c8p in smallstep/certificates
+RUN xcaddy build v2.11.0-beta.2 \
   --output /caddy \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
   --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
@@ -22,7 +23,7 @@ RUN xcaddy build v2.10.2 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/sshtunnel=/plugins/sshtunnel \
   --with github.com/gitpod-io/gitpod/proxy/plugins/frontend_dev=/plugins/frontend_dev
 
-FROM caddy/caddy:2.10.2-alpine
+FROM caddy/caddy:2.11-alpine
 
 # Ensure latest packages are present, like security updates.
 RUN apk upgrade --no-cache \
