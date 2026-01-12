@@ -41,6 +41,7 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 	install := func(retry bool, timeout time.Duration) error {
 		name, err := preview.GetName(branch)
 		if err != nil {
+			logger.WithError(err).Error("failed to get preview name")
 			return err
 		}
 
@@ -51,6 +52,7 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 
 		p, err := preview.New(branch, logger)
 		if err != nil {
+			logger.WithError(err).Error("failed to create preview config")
 			return err
 		}
 
@@ -66,7 +68,9 @@ func newInstallContextCmd(logger *logrus.Logger) *cobra.Command {
 			SSHPrivateKeyPath: opts.sshPrivateKeyPath,
 		})
 
-		if err == nil {
+		if err != nil {
+			logger.WithError(err).Error("failed to install context")
+		} else {
 			lastSuccessfulPreviewEnvironment = p
 		}
 
