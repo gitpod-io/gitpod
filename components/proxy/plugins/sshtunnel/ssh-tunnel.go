@@ -63,11 +63,15 @@ func (s *SSHTunnel) Provision(ctx caddy.Context) error {
 }
 
 func (s *SSHTunnel) Start() error {
-	ln, err := caddy.Listen("tcp", "0.0.0.0:22")
+	netAddr, err := caddy.ParseNetworkAddress("tcp/0.0.0.0:22")
 	if err != nil {
 		return err
 	}
-	s.listener = ln
+	lnAny, err := netAddr.Listen(context.Background(), 0, net.ListenConfig{})
+	if err != nil {
+		return err
+	}
+	s.listener = lnAny.(net.Listener)
 	go s.serve()
 	s.logger.Info("SSH Tunnel is running")
 	return nil

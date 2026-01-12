@@ -2,22 +2,16 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM caddy:2.7.6-builder AS withgo
-
-RUN go install golang.org/dl/go1.24.3@latest && \
-    go1.24.3 download && \
-    rm -rf /usr/local/go && \
-    mv /go /usr/local/go && \
-    mv /usr/local/go/bin/go1.24.3 /usr/local/go/bin/go
-
-FROM withgo AS builder
+# TODO(gpl): Pin to v2.11.x once available
+FROM caddy:builder AS builder
 
 WORKDIR /plugins
 
 COPY plugins /plugins
 
 # build caddy
-RUN xcaddy build v2.7.6 \
+# Using v2.11.0-beta.2 to fix critical vulnerability GHSA-h8cp-697h-8c8p in smallstep/certificates
+RUN xcaddy build v2.11.0-beta.2 \
   --output /caddy \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
   --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
@@ -30,10 +24,10 @@ RUN xcaddy build v2.7.6 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/sshtunnel=/plugins/sshtunnel \
   --with github.com/gitpod-io/gitpod/proxy/plugins/frontend_dev=/plugins/frontend_dev
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:815b27b8a70713c70404e44a718eddd52ea6f4a2bfad5f56455b52cd2789a9b2
+FROM caddy/caddy:2.11-alpine
 
 # Ensure latest packages are present, like security updates.
-RUN  apk upgrade --no-cache \
+RUN apk upgrade --no-cache \
   && apk add --no-cache ca-certificates bash
 
 # Debug convenience
