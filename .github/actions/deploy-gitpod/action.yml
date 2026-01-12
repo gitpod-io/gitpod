@@ -45,6 +45,10 @@ runs:
       run: |
         set -euox pipefail
 
+        # GitHub Actions sets HOME=/github/home which doesn't exist in the container.
+        # Restore HOME to /home/gitpod where the dev-environment is configured.
+        export HOME=/home/gitpod
+
         export VERSION="${INPUT_VERSION}"
         export IMAGE_REPO_BASE="${INPUT_IMAGE_REPO_BASE}"
 
