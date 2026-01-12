@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/cockroachdb/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
 
@@ -122,7 +123,18 @@ func (c *Config) GetName() string {
 }
 
 func GenerateSSHPrivateKey(path string) error {
-	return exec.Command("ssh-keygen", "-t", "ed25519", "-q", "-N", "", "-f", path).Run()
+	// Ensure the parent directory exists
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return errors.Wrap(err, "failed to create SSH key directory")
+	}
+
+	cmd := exec.Command("ssh-keygen", "-t", "ed25519", "-q", "-N", "", "-f", path)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return errors.Wrapf(err, "ssh-keygen failed: %s", string(output))
+	}
+	return nil
 }
 
 func SSHPreview(branch string) error {
