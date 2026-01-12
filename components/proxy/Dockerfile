@@ -2,6 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
+# TODO(gpl): Pin to v2.11.x once available
 FROM caddy:builder AS builder
 
 WORKDIR /plugins
