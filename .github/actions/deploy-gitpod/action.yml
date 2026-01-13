@@ -30,6 +30,9 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
+        # GitHub Actions sets HOME=/github/home which doesn't exist in the container.
+        # Restore HOME to /home/gitpod where the dev-environment is configured.
+        export HOME=/home/gitpod
         leeway run dev/preview/previewctl:install
 
     - name: Deploy Gitpod
