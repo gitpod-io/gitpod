@@ -187,7 +187,13 @@ api.{$GITPOD_DOMAIN} {
 		import server_public_api
 	}
 
-	reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
+	# Force HTTP/1.1 to backend to avoid HTTP/2 SETTINGS_ENABLE_CONNECT_PROTOCOL
+	# which can cause protocol errors with some corporate proxies/middleboxes
+	reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002 {
+		transport http {
+			versions 1.1
+		}
+	}
 }
 
 # always redirect to HTTPS
