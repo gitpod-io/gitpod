@@ -109,6 +109,7 @@ func printHumanReadable(r *DiagResult) {
 		fmt.Printf(" (%dms)\n", r.TLS.DurationMs)
 		fmt.Printf("    Version:      %s\n", r.TLS.Version)
 		fmt.Printf("    Cipher:       %s\n", r.TLS.CipherSuite)
+		fmt.Printf("    Key Exchange: %s\n", r.TLS.KeyExchange)
 		fmt.Printf("    ALPN:         %s\n", r.TLS.ALPNNegotiated)
 		if len(r.TLS.CertChain) > 0 {
 			fmt.Printf("    Cert Chain:\n")
@@ -200,18 +201,30 @@ func printHumanReadable(r *DiagResult) {
 	fmt.Println()
 	fmt.Println("Diagnosis")
 	fmt.Println("---------")
-	if r.Diagnosis.LikelyCause == "" {
+	if r.Diagnosis.LikelyCause == "" && len(r.Diagnosis.Warnings) == 0 {
 		fmt.Println("No issues detected.")
 	} else {
-		fmt.Printf("Likely cause: %s\n", r.Diagnosis.LikelyCause)
-		if len(r.Diagnosis.Evidence) > 0 {
-			fmt.Printf("Evidence:\n")
-			for _, e := range r.Diagnosis.Evidence {
-				fmt.Printf("  - %s\n", e)
+		if r.Diagnosis.LikelyCause != "" {
+			fmt.Printf("Likely cause: %s\n", r.Diagnosis.LikelyCause)
+			if len(r.Diagnosis.Evidence) > 0 {
+				fmt.Printf("Evidence:\n")
+				for _, e := range r.Diagnosis.Evidence {
+					fmt.Printf("  - %s\n", e)
+				}
+			}
+			if r.Diagnosis.Recommendation != "" {
+				fmt.Printf("\nRecommendation: %s\n", r.Diagnosis.Recommendation)
 			}
 		}
-		if r.Diagnosis.Recommendation != "" {
-			fmt.Printf("\nRecommendation: %s\n", r.Diagnosis.Recommendation)
+
+		if len(r.Diagnosis.Warnings) > 0 {
+			if r.Diagnosis.LikelyCause != "" {
+				fmt.Println()
+			}
+			fmt.Println("Compatibility Warnings:")
+			for _, w := range r.Diagnosis.Warnings {
+				fmt.Printf("  ⚠ %s\n", w)
+			}
 		}
 	}
 }
@@ -264,6 +277,7 @@ type TLSResult struct {
 	Success        bool       `json:"success"`
 	Version        string     `json:"version,omitempty"`
 	CipherSuite    string     `json:"cipher_suite,omitempty"`
+	KeyExchange    string     `json:"key_exchange,omitempty"`
 	ALPNNegotiated string     `json:"alpn_negotiated,omitempty"`
 	CertChain      []CertInfo `json:"cert_chain,omitempty"`
 	DurationMs     int64      `json:"duration_ms,omitempty"`
@@ -322,6 +336,7 @@ type DiagnosisInfo struct {
 	LikelyCause    string   `json:"likely_cause,omitempty"`
 	Evidence       []string `json:"evidence,omitempty"`
 	Recommendation string   `json:"recommendation,omitempty"`
+	Warnings       []string `json:"warnings,omitempty"`
 }
 
 // Diagnostic implementation
@@ -468,6 +483,7 @@ func (d *Diagnostic) checkTLSAndHTTP2(ctx context.Context) (TLSResult, HTTP2Resu
 	tlsResult.DurationMs = tlsDuration.Milliseconds()
 	tlsResult.Version = tlsVersionString(state.Version)
 	tlsResult.CipherSuite = tls.CipherSuiteName(state.CipherSuite)
+	tlsResult.KeyExchange = detectKeyExchange(state.CipherSuite)
 	tlsResult.ALPNNegotiated = state.NegotiatedProtocol
 
 	// Extract cert chain
@@ -848,7 +864,28 @@ func (d *Diagnostic) diagnose(r *DiagResult) DiagnosisInfo {
 		diag.Recommendation = "WebSocket connections appear to be blocked. Contact IT to allow WebSocket upgrades"
 	}
 
+	// Generate compatibility warnings
+	var warnings []string
+
+	// Check for ENABLE_CONNECT_PROTOCOL in server settings
+	if r.HTTP2.ServerSettings != nil {
+		if val, ok := r.HTTP2.ServerSettings["ENABLE_CONNECT_PROTOCOL"]; ok && val == 1 {
+			warnings = append(warnings, "Server advertises ENABLE_CONNECT_PROTOCOL (HTTP/2 WebSocket support) - some corporate proxies may not handle this correctly")
+		}
+	}
+
+	// Check for potential post-quantum key exchange
+	if r.TLS.Success && isPostQuantumPossible(r.TLS.Version, r.TLS.CipherSuite) {
+		warnings = append(warnings, "TLS 1.3 in use - server may offer post-quantum key exchange (x25519mlkem768) which some older network equipment may reject")
+	}
+
+	// Check if HTTP/2 works but Connect-RPC fails
+	if r.HTTP2.SettingsExchange.Success && r.ConnectRPC != nil && !r.ConnectRPC.Success {
+		warnings = append(warnings, "HTTP/2 SETTINGS exchange succeeded but Connect-RPC request failed - possible issue with HTTP/2 stream handling")
+	}
+
 	diag.Evidence = evidence
+	diag.Warnings = warnings
 	return diag
 }
 
@@ -970,4 +1007,44 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+// detectKeyExchange attempts to determine the key exchange algorithm from the cipher suite
+// For TLS 1.3, the key exchange is separate from the cipher suite
+func detectKeyExchange(cipherSuite uint16) string {
+	// TLS 1.3 cipher suites don't include key exchange - it's negotiated separately
+	// We can infer from common patterns, but Go's crypto/tls doesn't expose this directly
+	// For now, we'll note if it's a TLS 1.3 suite (which uses ECDHE or post-quantum)
+	switch cipherSuite {
+	// TLS 1.3 suites - key exchange is separate (typically X25519 or post-quantum)
+	case tls.TLS_AES_128_GCM_SHA256,
+		tls.TLS_AES_256_GCM_SHA384,
+		tls.TLS_CHACHA20_POLY1305_SHA256:
+		return "ECDHE (TLS 1.3)" // Could be X25519, P-256, or post-quantum
+
+	// TLS 1.2 ECDHE suites
+	case tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256:
+		return "ECDHE"
+
+	// TLS 1.2 RSA key exchange (no forward secrecy)
+	case tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_RSA_WITH_AES_256_GCM_SHA384:
+		return "RSA"
+
+	default:
+		return "unknown"
+	}
+}
+
+// isPostQuantumPossible checks if the connection might be using post-quantum key exchange
+// Caddy 2.10+ enables x25519mlkem768 by default
+func isPostQuantumPossible(tlsVersion string, cipherSuite string) bool {
+	// Post-quantum key exchange is only available in TLS 1.3
+	// and requires specific curve support (x25519mlkem768)
+	return tlsVersion == "TLS1.3"
 }
