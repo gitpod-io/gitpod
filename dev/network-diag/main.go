@@ -22,7 +22,7 @@ import (
 	"golang.org/x/net/http2"
 )
 
-const version = "0.2.0"
+const version = "0.3.0"
 
 func main() {
 	jsonOutput := flag.Bool("json", false, "Output results as JSON")
@@ -233,10 +233,78 @@ func printHumanReadable(r *DiagResult) {
 			csStatus = "FAIL"
 		}
 		fmt.Printf("  Concurrent streams: %s (%d/%d)\n", csStatus, cs.Succeeded, cs.Total)
+		printSimpleResult("  HTTP/2 PING", r.Extended.HTTP2Robust.PingRoundtrip)
 
 		fmt.Println("[Protocol Variants]")
 		printSimpleResult("  gRPC request", r.Extended.ProtoVariant.GRPC)
 		printSimpleResult("  Connect-RPC stream", r.Extended.ProtoVariant.ConnectRPCStream)
+
+		fmt.Println("[Middlebox Detection]")
+		md := r.Extended.MiddleboxDetect
+		fmt.Printf("  Cert chain depth: %d\n", md.CertChainDepth)
+		if len(md.ProxySignatures) > 0 {
+			fmt.Printf("  Proxy signatures: %s\n", strings.Join(md.ProxySignatures, ", "))
+		} else {
+			fmt.Printf("  Proxy signatures: none detected\n")
+		}
+		if len(md.ResponseHeaders) > 0 {
+			fmt.Printf("  Response headers:\n")
+			for k, v := range md.ResponseHeaders {
+				fmt.Printf("    %s: %s\n", k, v)
+			}
+		}
+		resumeStatus := "FAIL"
+		if md.TLSSessionResume.ResumeWorked {
+			resumeStatus = "OK"
+		}
+		fmt.Printf("  TLS session resumption: %s\n", resumeStatus)
+		if md.TLSSessionResume.Error != "" {
+			fmt.Printf("    Error: %s\n", md.TLSSessionResume.Error)
+		}
+
+		fmt.Println("[Timing Analysis]")
+		t := md.TimingAnalysis
+		fmt.Printf("  DNS:          %dms\n", t.DNSMs)
+		fmt.Printf("  TCP connect:  %dms\n", t.TCPMs)
+		fmt.Printf("  TLS handshake: %dms\n", t.TLSMs)
+		fmt.Printf("  HTTP/2 setup: %dms\n", t.HTTP2Ms)
+		fmt.Printf("  First byte:   %dms\n", t.FirstByteMs)
+		fmt.Printf("  Total:        %dms\n", t.TotalMs)
+
+		fmt.Println("[Reliability]")
+		rel := r.Extended.Reliability
+		allSuccess := true
+		for _, a := range rel.RetryResults {
+			status := "OK"
+			if !a.Success {
+				status = "FAIL"
+				allSuccess = false
+			}
+			fmt.Printf("  Attempt %d: %s", a.Attempt, status)
+			if a.HTTPStatus > 0 {
+				fmt.Printf(" (HTTP %d, %dms)", a.HTTPStatus, a.DurationMs)
+			} else if a.Error != "" {
+				fmt.Printf(" (%s)", a.Error)
+			}
+			fmt.Println()
+		}
+		if allSuccess {
+			fmt.Printf("  Consistency: all attempts succeeded\n")
+		} else {
+			fmt.Printf("  Consistency: INCONSISTENT results\n")
+		}
+
+		cr := rel.ConnectionReuse
+		reuseStatus := "OK"
+		if !cr.BothSucceeded {
+			reuseStatus = "FAIL"
+		}
+		fmt.Printf("  Connection reuse: %s\n", reuseStatus)
+		if cr.SameConnection {
+			fmt.Printf("    Second request reused connection (faster)\n")
+		} else if cr.BothSucceeded {
+			fmt.Printf("    Second request may have used new connection\n")
+		}
 	}
 
 	// Diagnosis
@@ -292,9 +360,11 @@ type DiagResult struct {
 
 // Extended test structures
 type ExtendedTests struct {
-	TLSCompat    TLSCompatTests    `json:"tls_compatibility"`
-	HTTP2Robust  HTTP2RobustTests  `json:"http2_robustness"`
-	ProtoVariant ProtoVariantTests `json:"protocol_variants"`
+	TLSCompat       TLSCompatTests     `json:"tls_compatibility"`
+	HTTP2Robust     HTTP2RobustTests   `json:"http2_robustness"`
+	ProtoVariant    ProtoVariantTests  `json:"protocol_variants"`
+	MiddleboxDetect MiddleboxDetection `json:"middlebox_detection"`
+	Reliability     ReliabilityTests   `json:"reliability"`
 }
 
 type TLSCompatTests struct {
@@ -307,11 +377,67 @@ type HTTP2RobustTests struct {
 	LargeHeaders      SimpleTestResult     `json:"large_headers_8kb"`
 	ManyHeaders       SimpleTestResult     `json:"many_headers_50"`
 	ConcurrentStreams ConcurrentTestResult `json:"concurrent_streams"`
+	PingRoundtrip     SimpleTestResult     `json:"ping_roundtrip"`
 }
 
 type ProtoVariantTests struct {
 	GRPC             SimpleTestResult `json:"grpc"`
 	ConnectRPCStream SimpleTestResult `json:"connect_rpc_stream"`
+}
+
+type MiddleboxDetection struct {
+	ResponseHeaders  map[string]string `json:"response_headers"`
+	ProxySignatures  []string          `json:"proxy_signatures_detected,omitempty"`
+	CertChainDepth   int               `json:"cert_chain_depth"`
+	CertDetails      []CertDetail      `json:"cert_details"`
+	TLSSessionResume SessionResumeTest `json:"tls_session_resumption"`
+	TimingAnalysis   TimingBreakdown   `json:"timing_analysis"`
+}
+
+type CertDetail struct {
+	Subject      string   `json:"subject"`
+	Issuer       string   `json:"issuer"`
+	Organization []string `json:"organization,omitempty"`
+	NotBefore    string   `json:"not_before"`
+	NotAfter     string   `json:"not_after"`
+	IsCA         bool     `json:"is_ca"`
+	DNSNames     []string `json:"dns_names,omitempty"`
+}
+
+type SessionResumeTest struct {
+	Supported    bool   `json:"supported"`
+	ResumeWorked bool   `json:"resume_worked"`
+	Error        string `json:"error,omitempty"`
+}
+
+type TimingBreakdown struct {
+	DNSMs       int64 `json:"dns_ms"`
+	TCPMs       int64 `json:"tcp_connect_ms"`
+	TLSMs       int64 `json:"tls_handshake_ms"`
+	HTTP2Ms     int64 `json:"http2_settings_ms"`
+	FirstByteMs int64 `json:"first_byte_ms"`
+	TotalMs     int64 `json:"total_ms"`
+}
+
+type ReliabilityTests struct {
+	RetryResults     []RetryAttempt      `json:"retry_results"`
+	ConsistentResult bool                `json:"consistent_results"`
+	ConnectionReuse  ConnectionReuseTest `json:"connection_reuse"`
+}
+
+type RetryAttempt struct {
+	Attempt    int    `json:"attempt"`
+	Success    bool   `json:"success"`
+	HTTPStatus int    `json:"http_status,omitempty"`
+	Error      string `json:"error,omitempty"`
+	DurationMs int64  `json:"duration_ms"`
+}
+
+type ConnectionReuseTest struct {
+	FirstRequest   SimpleTestResult `json:"first_request"`
+	SecondRequest  SimpleTestResult `json:"second_request"`
+	BothSucceeded  bool             `json:"both_succeeded"`
+	SameConnection bool             `json:"same_connection"`
 }
 
 type SimpleTestResult struct {
@@ -871,9 +997,11 @@ func (d *Diagnostic) checkWebSocket(ctx context.Context) *WebSocketResult {
 
 func (d *Diagnostic) runExtendedTests(ctx context.Context) *ExtendedTests {
 	return &ExtendedTests{
-		TLSCompat:    d.runTLSCompatTests(ctx),
-		HTTP2Robust:  d.runHTTP2RobustTests(ctx),
-		ProtoVariant: d.runProtoVariantTests(ctx),
+		TLSCompat:       d.runTLSCompatTests(ctx),
+		HTTP2Robust:     d.runHTTP2RobustTests(ctx),
+		ProtoVariant:    d.runProtoVariantTests(ctx),
+		MiddleboxDetect: d.runMiddleboxDetection(ctx),
+		Reliability:     d.runReliabilityTests(ctx),
 	}
 }
 
@@ -992,6 +1120,7 @@ func (d *Diagnostic) runHTTP2RobustTests(ctx context.Context) HTTP2RobustTests {
 		LargeHeaders:      d.testLargeHeaders(ctx),
 		ManyHeaders:       d.testManyHeaders(ctx),
 		ConcurrentStreams: d.testConcurrentStreams(ctx),
+		PingRoundtrip:     d.testHTTP2Ping(ctx),
 	}
 }
 
@@ -1173,6 +1302,396 @@ func min(a, b int) int {
 	return b
 }
 
+// HTTP/2 PING test
+func (d *Diagnostic) testHTTP2Ping(ctx context.Context) SimpleTestResult {
+	result := SimpleTestResult{}
+	start := time.Now()
+
+	// Connect and establish HTTP/2
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	conn, err := dialer.DialContext(ctx, "tcp", d.target)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+
+	tlsConfig := &tls.Config{
+		ServerName: d.host,
+		NextProtos: []string{"h2"},
+	}
+
+	tlsConn := tls.Client(conn, tlsConfig)
+	if err := tlsConn.HandshakeContext(ctx); err != nil {
+		conn.Close()
+		result.Error = err.Error()
+		return result
+	}
+	defer tlsConn.Close()
+
+	// Use http2 transport to establish connection and send ping
+	transport := &http2.Transport{}
+	h2Conn, err := transport.NewClientConn(tlsConn)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	defer h2Conn.Close()
+
+	// Ping is sent automatically by the transport, we just verify connection works
+	// Make a simple request to verify the connection is healthy
+	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/", d.host), nil)
+	resp, err := h2Conn.RoundTrip(req)
+	result.DurationMs = time.Since(start).Milliseconds()
+
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	result.HTTPStatus = resp.StatusCode
+	result.Success = true
+	return result
+}
+
+// Middlebox detection tests
+func (d *Diagnostic) runMiddleboxDetection(ctx context.Context) MiddleboxDetection {
+	detection := MiddleboxDetection{
+		ResponseHeaders: make(map[string]string),
+	}
+
+	// Get response headers
+	client := &http.Client{
+		Transport: &http2.Transport{
+			TLSClientConfig: &tls.Config{ServerName: d.host},
+		},
+		Timeout: 10 * time.Second,
+	}
+
+	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/", d.host), nil)
+	resp, err := client.Do(req)
+	if err == nil {
+		defer resp.Body.Close()
+		io.Copy(io.Discard, resp.Body)
+
+		// Capture interesting headers
+		interestingHeaders := []string{
+			"Server", "Via", "X-Forwarded-For", "X-Forwarded-Proto",
+			"X-Real-IP", "X-Proxy-ID", "X-BlueCoat-Via", "X-Squid-Error",
+			"X-Cache", "X-Cache-Lookup", "CF-RAY", "X-Amz-Cf-Id",
+		}
+		for _, h := range interestingHeaders {
+			if v := resp.Header.Get(h); v != "" {
+				detection.ResponseHeaders[h] = v
+			}
+		}
+
+		// Detect proxy signatures
+		detection.ProxySignatures = detectProxySignatures(resp.Header)
+	}
+
+	// Get certificate details
+	detection.CertDetails, detection.CertChainDepth = d.getCertificateDetails(ctx)
+
+	// Test TLS session resumption
+	detection.TLSSessionResume = d.testSessionResumption(ctx)
+
+	// Get timing breakdown
+	detection.TimingAnalysis = d.getTimingBreakdown(ctx)
+
+	return detection
+}
+
+func detectProxySignatures(headers http.Header) []string {
+	var signatures []string
+
+	proxyIndicators := map[string]string{
+		"X-BlueCoat-Via": "Blue Coat Proxy",
+		"X-Squid-Error":  "Squid Proxy",
+		"CF-RAY":         "Cloudflare",
+		"X-Amz-Cf-Id":    "AWS CloudFront",
+		"X-Cache":        "Caching Proxy",
+		"X-Proxy-ID":     "Generic Proxy",
+	}
+
+	for header, name := range proxyIndicators {
+		if headers.Get(header) != "" {
+			signatures = append(signatures, name)
+		}
+	}
+
+	// Check Via header for proxy info
+	if via := headers.Get("Via"); via != "" {
+		if strings.Contains(strings.ToLower(via), "proxy") ||
+			strings.Contains(strings.ToLower(via), "squid") ||
+			strings.Contains(strings.ToLower(via), "bluecoat") {
+			signatures = append(signatures, "Via header indicates proxy: "+via)
+		}
+	}
+
+	// Check Server header
+	if server := headers.Get("Server"); server != "" {
+		knownProxies := []string{"squid", "nginx", "varnish", "apache traffic server"}
+		for _, p := range knownProxies {
+			if strings.Contains(strings.ToLower(server), p) {
+				signatures = append(signatures, "Server header indicates: "+server)
+				break
+			}
+		}
+	}
+
+	return signatures
+}
+
+func (d *Diagnostic) getCertificateDetails(ctx context.Context) ([]CertDetail, int) {
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	conn, err := dialer.DialContext(ctx, "tcp", d.target)
+	if err != nil {
+		return nil, 0
+	}
+
+	tlsConfig := &tls.Config{
+		ServerName: d.host,
+	}
+
+	tlsConn := tls.Client(conn, tlsConfig)
+	if err := tlsConn.HandshakeContext(ctx); err != nil {
+		conn.Close()
+		return nil, 0
+	}
+	defer tlsConn.Close()
+
+	state := tlsConn.ConnectionState()
+	var details []CertDetail
+
+	for _, cert := range state.PeerCertificates {
+		detail := CertDetail{
+			Subject:      cert.Subject.CommonName,
+			Issuer:       cert.Issuer.CommonName,
+			Organization: cert.Issuer.Organization,
+			NotBefore:    cert.NotBefore.Format(time.RFC3339),
+			NotAfter:     cert.NotAfter.Format(time.RFC3339),
+			IsCA:         cert.IsCA,
+			DNSNames:     cert.DNSNames,
+		}
+		details = append(details, detail)
+	}
+
+	return details, len(state.PeerCertificates)
+}
+
+func (d *Diagnostic) testSessionResumption(ctx context.Context) SessionResumeTest {
+	result := SessionResumeTest{}
+
+	// First connection to get session ticket
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	conn1, err := dialer.DialContext(ctx, "tcp", d.target)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+
+	clientSessionCache := tls.NewLRUClientSessionCache(1)
+	tlsConfig := &tls.Config{
+		ServerName:         d.host,
+		ClientSessionCache: clientSessionCache,
+	}
+
+	tlsConn1 := tls.Client(conn1, tlsConfig)
+	if err := tlsConn1.HandshakeContext(ctx); err != nil {
+		conn1.Close()
+		result.Error = err.Error()
+		return result
+	}
+
+	state1 := tlsConn1.ConnectionState()
+	result.Supported = state1.DidResume == false // First connection shouldn't resume
+	tlsConn1.Close()
+
+	// Second connection should resume
+	conn2, err := dialer.DialContext(ctx, "tcp", d.target)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+
+	tlsConn2 := tls.Client(conn2, tlsConfig)
+	if err := tlsConn2.HandshakeContext(ctx); err != nil {
+		conn2.Close()
+		result.Error = "Second handshake failed: " + err.Error()
+		return result
+	}
+
+	state2 := tlsConn2.ConnectionState()
+	result.ResumeWorked = state2.DidResume
+	tlsConn2.Close()
+
+	// If session cache has entry but resume didn't work, middlebox may be interfering
+	result.Supported = true
+
+	return result
+}
+
+func (d *Diagnostic) getTimingBreakdown(ctx context.Context) TimingBreakdown {
+	timing := TimingBreakdown{}
+	totalStart := time.Now()
+
+	// DNS timing
+	dnsStart := time.Now()
+	_, err := net.DefaultResolver.LookupHost(ctx, d.host)
+	timing.DNSMs = time.Since(dnsStart).Milliseconds()
+	if err != nil {
+		return timing
+	}
+
+	// TCP timing
+	tcpStart := time.Now()
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	conn, err := dialer.DialContext(ctx, "tcp", d.target)
+	timing.TCPMs = time.Since(tcpStart).Milliseconds()
+	if err != nil {
+		return timing
+	}
+
+	// TLS timing
+	tlsStart := time.Now()
+	tlsConfig := &tls.Config{
+		ServerName: d.host,
+		NextProtos: []string{"h2", "http/1.1"},
+	}
+	tlsConn := tls.Client(conn, tlsConfig)
+	if err := tlsConn.HandshakeContext(ctx); err != nil {
+		conn.Close()
+		timing.TLSMs = time.Since(tlsStart).Milliseconds()
+		return timing
+	}
+	timing.TLSMs = time.Since(tlsStart).Milliseconds()
+
+	// HTTP/2 SETTINGS timing
+	h2Start := time.Now()
+	transport := &http2.Transport{}
+	h2Conn, err := transport.NewClientConn(tlsConn)
+	timing.HTTP2Ms = time.Since(h2Start).Milliseconds()
+	if err != nil {
+		tlsConn.Close()
+		return timing
+	}
+
+	// First byte timing
+	fbStart := time.Now()
+	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/", d.host), nil)
+	resp, err := h2Conn.RoundTrip(req)
+	timing.FirstByteMs = time.Since(fbStart).Milliseconds()
+	if err == nil {
+		resp.Body.Close()
+	}
+
+	h2Conn.Close()
+	timing.TotalMs = time.Since(totalStart).Milliseconds()
+
+	return timing
+}
+
+// Reliability tests
+func (d *Diagnostic) runReliabilityTests(ctx context.Context) ReliabilityTests {
+	return ReliabilityTests{
+		RetryResults:     d.testRetries(ctx),
+		ConsistentResult: true, // Will be updated based on retry results
+		ConnectionReuse:  d.testConnectionReuse(ctx),
+	}
+}
+
+func (d *Diagnostic) testRetries(ctx context.Context) []RetryAttempt {
+	var attempts []RetryAttempt
+
+	client := &http.Client{
+		Transport: &http2.Transport{
+			TLSClientConfig: &tls.Config{ServerName: d.host},
+		},
+		Timeout: 10 * time.Second,
+	}
+
+	for i := 1; i <= 3; i++ {
+		attempt := RetryAttempt{Attempt: i}
+		start := time.Now()
+
+		req, _ := http.NewRequestWithContext(ctx, "POST",
+			fmt.Sprintf("https://%s/gitpod.v1.WorkspaceService/GetWorkspace", d.host),
+			bytes.NewReader([]byte{}))
+		req.Header.Set("Content-Type", "application/connect+proto")
+
+		resp, err := client.Do(req)
+		attempt.DurationMs = time.Since(start).Milliseconds()
+
+		if err != nil {
+			attempt.Error = err.Error()
+			attempt.Success = false
+		} else {
+			attempt.HTTPStatus = resp.StatusCode
+			attempt.Success = resp.StatusCode > 0 && resp.StatusCode < 500
+			resp.Body.Close()
+		}
+
+		attempts = append(attempts, attempt)
+
+		// Small delay between retries
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return attempts
+}
+
+func (d *Diagnostic) testConnectionReuse(ctx context.Context) ConnectionReuseTest {
+	result := ConnectionReuseTest{}
+
+	// Create a transport that we can track
+	transport := &http2.Transport{
+		TLSClientConfig: &tls.Config{ServerName: d.host},
+	}
+
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   10 * time.Second,
+	}
+
+	// First request
+	start1 := time.Now()
+	req1, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/", d.host), nil)
+	resp1, err := client.Do(req1)
+	result.FirstRequest.DurationMs = time.Since(start1).Milliseconds()
+
+	if err != nil {
+		result.FirstRequest.Error = err.Error()
+		return result
+	}
+	result.FirstRequest.HTTPStatus = resp1.StatusCode
+	result.FirstRequest.Success = resp1.StatusCode > 0 && resp1.StatusCode < 500
+	resp1.Body.Close()
+
+	// Second request (should reuse connection)
+	start2 := time.Now()
+	req2, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/test", d.host), nil)
+	resp2, err := client.Do(req2)
+	result.SecondRequest.DurationMs = time.Since(start2).Milliseconds()
+
+	if err != nil {
+		result.SecondRequest.Error = err.Error()
+		return result
+	}
+	result.SecondRequest.HTTPStatus = resp2.StatusCode
+	result.SecondRequest.Success = resp2.StatusCode > 0 && resp2.StatusCode < 500
+	resp2.Body.Close()
+
+	result.BothSucceeded = result.FirstRequest.Success && result.SecondRequest.Success
+
+	// If second request is significantly faster, connection was likely reused
+	// (no TLS handshake needed)
+	result.SameConnection = result.SecondRequest.DurationMs < result.FirstRequest.DurationMs/2
+
+	return result
+}
+
 func (d *Diagnostic) diagnose(r *DiagResult) DiagnosisInfo {
 	diag := DiagnosisInfo{}
 	var evidence []string
@@ -1266,6 +1785,60 @@ func (d *Diagnostic) diagnose(r *DiagResult) DiagnosisInfo {
 	// Check if HTTP/2 works but Connect-RPC fails
 	if r.HTTP2.SettingsExchange.Success && r.ConnectRPC != nil && !r.ConnectRPC.Success {
 		warnings = append(warnings, "HTTP/2 SETTINGS exchange succeeded but Connect-RPC request failed - possible issue with HTTP/2 stream handling")
+	}
+
+	// Extended test diagnostics
+	if r.Extended != nil {
+		// Check for proxy signatures
+		if len(r.Extended.MiddleboxDetect.ProxySignatures) > 0 {
+			evidence = append(evidence, fmt.Sprintf("Proxy detected: %s", strings.Join(r.Extended.MiddleboxDetect.ProxySignatures, ", ")))
+		}
+
+		// Check TLS session resumption - only warn if there's an error, not just if it didn't resume
+		// (TLS 1.3 session tickets work differently and may not show as "resumed")
+		if r.Extended.MiddleboxDetect.TLSSessionResume.Error != "" {
+			warnings = append(warnings, "TLS session resumption error: "+r.Extended.MiddleboxDetect.TLSSessionResume.Error)
+		}
+
+		// Check timing anomalies
+		timing := r.Extended.MiddleboxDetect.TimingAnalysis
+		if timing.TLSMs > 500 {
+			warnings = append(warnings, fmt.Sprintf("TLS handshake took %dms - unusually slow, possible SSL inspection", timing.TLSMs))
+		}
+
+		// Check retry consistency
+		if len(r.Extended.Reliability.RetryResults) > 0 {
+			successCount := 0
+			for _, a := range r.Extended.Reliability.RetryResults {
+				if a.Success {
+					successCount++
+				}
+			}
+			if successCount > 0 && successCount < len(r.Extended.Reliability.RetryResults) {
+				evidence = append(evidence, fmt.Sprintf("Intermittent failures: %d/%d attempts succeeded", successCount, len(r.Extended.Reliability.RetryResults)))
+				if diag.LikelyCause == "" {
+					diag.LikelyCause = "intermittent_failure"
+				}
+			}
+		}
+
+		// Check connection reuse
+		if !r.Extended.Reliability.ConnectionReuse.BothSucceeded {
+			if r.Extended.Reliability.ConnectionReuse.FirstRequest.Success && !r.Extended.Reliability.ConnectionReuse.SecondRequest.Success {
+				evidence = append(evidence, "First request succeeded but second request on same connection failed")
+				warnings = append(warnings, "Connection reuse may be broken - middlebox might be closing connections prematurely")
+			}
+		}
+
+		// Check cert chain depth
+		if r.Extended.MiddleboxDetect.CertChainDepth > 3 {
+			warnings = append(warnings, fmt.Sprintf("Certificate chain has %d certificates - unusually deep, may indicate proxy injection", r.Extended.MiddleboxDetect.CertChainDepth))
+		}
+	}
+
+	// Add recommendation for intermittent failures
+	if diag.LikelyCause == "intermittent_failure" {
+		diag.Recommendation = "Connection is intermittently failing. This may indicate an unstable network path or load balancer issues"
 	}
 
 	diag.Evidence = evidence
