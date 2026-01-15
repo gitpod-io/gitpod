@@ -39,7 +39,10 @@ terraform_plan || PLAN_EXIT_CODE=$?
 case ${PLAN_EXIT_CODE} in
 0)
   log_success "No changes to the plan"
-  exit 0
+  # Don't exit yet if DESTROY is set - we still need to delete the workspace
+  if [ -z "${DESTROY-}" ]; then
+    exit 0
+  fi
   ;;
 1)
   log_error "Terraform plan failed"
