@@ -22,18 +22,20 @@ import (
 	"golang.org/x/net/http2"
 )
 
-const version = "0.1.0"
+const version = "0.2.0"
 
 func main() {
 	jsonOutput := flag.Bool("json", false, "Output results as JSON")
 	verbose := flag.Bool("verbose", false, "Verbose output")
+	fullTests := flag.Bool("full", false, "Run extended compatibility tests")
 	skipReference := flag.Bool("skip-reference", false, "Skip reference test against google.com")
-	timeout := flag.Duration("timeout", 30*time.Second, "Overall timeout")
+	timeout := flag.Duration("timeout", 60*time.Second, "Overall timeout")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
 		fmt.Fprintf(os.Stderr, "Usage: %s [options] <hostname>\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Example: %s api.gitpod.cloud\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "         %s --full api.gitpod.cloud\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -47,7 +49,7 @@ func main() {
 	defer cancel()
 
 	diag := NewDiagnostic(target, *verbose)
-	result := diag.Run(ctx, !*skipReference)
+	result := diag.Run(ctx, !*skipReference, *fullTests)
 
 	if *jsonOutput {
 		enc := json.NewEncoder(os.Stdout)
@@ -59,6 +61,20 @@ func main() {
 
 	if !result.HTTP2.SettingsExchange.Success {
 		os.Exit(1)
+	}
+}
+
+func printSimpleResult(name string, r SimpleTestResult) {
+	status := "OK"
+	if !r.Success {
+		status = "FAIL"
+	}
+	if r.HTTPStatus > 0 {
+		fmt.Printf("%s: %s (HTTP %d)\n", name, status, r.HTTPStatus)
+	} else if r.Error != "" {
+		fmt.Printf("%s: %s (%s)\n", name, status, r.Error)
+	} else {
+		fmt.Printf("%s: %s\n", name, status)
 	}
 }
 
@@ -197,6 +213,32 @@ func printHumanReadable(r *DiagResult) {
 		}
 	}
 
+	// Extended tests
+	if r.Extended != nil {
+		fmt.Println()
+		fmt.Println("Extended Tests")
+		fmt.Println("--------------")
+
+		fmt.Println("[TLS Compatibility]")
+		printSimpleResult("  TLS 1.2 fallback", r.Extended.TLSCompat.TLS12Fallback)
+		printSimpleResult("  P-256 curve only", r.Extended.TLSCompat.P256Only)
+		printSimpleResult("  Legacy cipher", r.Extended.TLSCompat.LegacyCipher)
+
+		fmt.Println("[HTTP/2 Robustness]")
+		printSimpleResult("  Large headers (8KB)", r.Extended.HTTP2Robust.LargeHeaders)
+		printSimpleResult("  Many headers (50)", r.Extended.HTTP2Robust.ManyHeaders)
+		cs := r.Extended.HTTP2Robust.ConcurrentStreams
+		csStatus := "OK"
+		if !cs.Success {
+			csStatus = "FAIL"
+		}
+		fmt.Printf("  Concurrent streams: %s (%d/%d)\n", csStatus, cs.Succeeded, cs.Total)
+
+		fmt.Println("[Protocol Variants]")
+		printSimpleResult("  gRPC request", r.Extended.ProtoVariant.GRPC)
+		printSimpleResult("  Connect-RPC stream", r.Extended.ProtoVariant.ConnectRPCStream)
+	}
+
 	// Diagnosis
 	fmt.Println()
 	fmt.Println("Diagnosis")
@@ -244,7 +286,45 @@ type DiagResult struct {
 	ConnectRPC    *ConnectResult   `json:"connect_rpc_test,omitempty"`
 	WebSocket     *WebSocketResult `json:"websocket_test,omitempty"`
 	ReferenceTest *RefTestResult   `json:"reference_test,omitempty"`
+	Extended      *ExtendedTests   `json:"extended_tests,omitempty"`
 	Diagnosis     DiagnosisInfo    `json:"diagnosis"`
+}
+
+// Extended test structures
+type ExtendedTests struct {
+	TLSCompat    TLSCompatTests    `json:"tls_compatibility"`
+	HTTP2Robust  HTTP2RobustTests  `json:"http2_robustness"`
+	ProtoVariant ProtoVariantTests `json:"protocol_variants"`
+}
+
+type TLSCompatTests struct {
+	TLS12Fallback SimpleTestResult `json:"tls12_fallback"`
+	P256Only      SimpleTestResult `json:"p256_curve_only"`
+	LegacyCipher  SimpleTestResult `json:"legacy_cipher"`
+}
+
+type HTTP2RobustTests struct {
+	LargeHeaders      SimpleTestResult     `json:"large_headers_8kb"`
+	ManyHeaders       SimpleTestResult     `json:"many_headers_50"`
+	ConcurrentStreams ConcurrentTestResult `json:"concurrent_streams"`
+}
+
+type ProtoVariantTests struct {
+	GRPC             SimpleTestResult `json:"grpc"`
+	ConnectRPCStream SimpleTestResult `json:"connect_rpc_stream"`
+}
+
+type SimpleTestResult struct {
+	Success    bool   `json:"success"`
+	HTTPStatus int    `json:"http_status,omitempty"`
+	Error      string `json:"error,omitempty"`
+	DurationMs int64  `json:"duration_ms,omitempty"`
+}
+
+type ConcurrentTestResult struct {
+	Success   bool `json:"success"`
+	Succeeded int  `json:"succeeded"`
+	Total     int  `json:"total"`
 }
 
 type ClientInfo struct {
@@ -358,7 +438,7 @@ func NewDiagnostic(target string, verbose bool) *Diagnostic {
 	}
 }
 
-func (d *Diagnostic) Run(ctx context.Context, includeReference bool) *DiagResult {
+func (d *Diagnostic) Run(ctx context.Context, includeReference bool, runExtended bool) *DiagResult {
 	result := &DiagResult{
 		Timestamp: time.Now().UTC(),
 		Version:   version,
@@ -392,6 +472,11 @@ func (d *Diagnostic) Run(ctx context.Context, includeReference bool) *DiagResult
 	// Reference test
 	if includeReference {
 		result.ReferenceTest = d.checkReference(ctx)
+	}
+
+	// Extended tests
+	if runExtended {
+		result.Extended = d.runExtendedTests(ctx)
 	}
 
 	result.Diagnosis = d.diagnose(result)
@@ -779,6 +864,305 @@ func (d *Diagnostic) checkWebSocket(ctx context.Context) *WebSocketResult {
 		result.Error = fmt.Sprintf("unexpected response: %s", respStr[:min(100, len(respStr))])
 	}
 
+	return result
+}
+
+// Extended tests implementation
+
+func (d *Diagnostic) runExtendedTests(ctx context.Context) *ExtendedTests {
+	return &ExtendedTests{
+		TLSCompat:    d.runTLSCompatTests(ctx),
+		HTTP2Robust:  d.runHTTP2RobustTests(ctx),
+		ProtoVariant: d.runProtoVariantTests(ctx),
+	}
+}
+
+func (d *Diagnostic) runTLSCompatTests(ctx context.Context) TLSCompatTests {
+	return TLSCompatTests{
+		TLS12Fallback: d.testTLS12Fallback(ctx),
+		P256Only:      d.testP256Only(ctx),
+		LegacyCipher:  d.testLegacyCipher(ctx),
+	}
+}
+
+func (d *Diagnostic) testTLS12Fallback(ctx context.Context) SimpleTestResult {
+	result := SimpleTestResult{}
+	start := time.Now()
+
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			ServerName: d.host,
+			MaxVersion: tls.VersionTLS12, // Force TLS 1.2
+		},
+		ForceAttemptHTTP2: true,
+	}
+
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   10 * time.Second,
+	}
+
+	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/", d.host), nil)
+	resp, err := client.Do(req)
+	result.DurationMs = time.Since(start).Milliseconds()
+
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	result.HTTPStatus = resp.StatusCode
+	result.Success = resp.StatusCode > 0 && resp.StatusCode < 500
+	return result
+}
+
+func (d *Diagnostic) testP256Only(ctx context.Context) SimpleTestResult {
+	result := SimpleTestResult{}
+	start := time.Now()
+
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			ServerName:       d.host,
+			CurvePreferences: []tls.CurveID{tls.CurveP256}, // Only P-256
+		},
+		ForceAttemptHTTP2: true,
+	}
+
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   10 * time.Second,
+	}
+
+	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/", d.host), nil)
+	resp, err := client.Do(req)
+	result.DurationMs = time.Since(start).Milliseconds()
+
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	result.HTTPStatus = resp.StatusCode
+	result.Success = resp.StatusCode > 0 && resp.StatusCode < 500
+	return result
+}
+
+func (d *Diagnostic) testLegacyCipher(ctx context.Context) SimpleTestResult {
+	result := SimpleTestResult{}
+	start := time.Now()
+
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			ServerName: d.host,
+			MaxVersion: tls.VersionTLS12,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			},
+		},
+		ForceAttemptHTTP2: true,
+	}
+
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   10 * time.Second,
+	}
+
+	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/", d.host), nil)
+	resp, err := client.Do(req)
+	result.DurationMs = time.Since(start).Milliseconds()
+
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	result.HTTPStatus = resp.StatusCode
+	result.Success = resp.StatusCode > 0 && resp.StatusCode < 500
+	return result
+}
+
+func (d *Diagnostic) runHTTP2RobustTests(ctx context.Context) HTTP2RobustTests {
+	return HTTP2RobustTests{
+		LargeHeaders:      d.testLargeHeaders(ctx),
+		ManyHeaders:       d.testManyHeaders(ctx),
+		ConcurrentStreams: d.testConcurrentStreams(ctx),
+	}
+}
+
+func (d *Diagnostic) testLargeHeaders(ctx context.Context) SimpleTestResult {
+	result := SimpleTestResult{}
+	start := time.Now()
+
+	// Create HTTP/2 client
+	client := &http.Client{
+		Transport: &http2.Transport{
+			TLSClientConfig: &tls.Config{ServerName: d.host},
+		},
+		Timeout: 10 * time.Second,
+	}
+
+	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/", d.host), nil)
+	// Add 8KB header
+	largeValue := strings.Repeat("X", 8192)
+	req.Header.Set("X-Large-Header", largeValue)
+
+	resp, err := client.Do(req)
+	result.DurationMs = time.Since(start).Milliseconds()
+
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	result.HTTPStatus = resp.StatusCode
+	result.Success = resp.StatusCode > 0 && resp.StatusCode < 500
+	return result
+}
+
+func (d *Diagnostic) testManyHeaders(ctx context.Context) SimpleTestResult {
+	result := SimpleTestResult{}
+	start := time.Now()
+
+	client := &http.Client{
+		Transport: &http2.Transport{
+			TLSClientConfig: &tls.Config{ServerName: d.host},
+		},
+		Timeout: 10 * time.Second,
+	}
+
+	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/", d.host), nil)
+	// Add 50 headers
+	for i := 0; i < 50; i++ {
+		req.Header.Set(fmt.Sprintf("X-Header-%d", i), fmt.Sprintf("value-%d", i))
+	}
+
+	resp, err := client.Do(req)
+	result.DurationMs = time.Since(start).Milliseconds()
+
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	result.HTTPStatus = resp.StatusCode
+	result.Success = resp.StatusCode > 0 && resp.StatusCode < 500
+	return result
+}
+
+func (d *Diagnostic) testConcurrentStreams(ctx context.Context) ConcurrentTestResult {
+	result := ConcurrentTestResult{Total: 5}
+
+	client := &http.Client{
+		Transport: &http2.Transport{
+			TLSClientConfig: &tls.Config{ServerName: d.host},
+		},
+		Timeout: 10 * time.Second,
+	}
+
+	// Make concurrent requests
+	results := make(chan bool, result.Total)
+	for i := 0; i < result.Total; i++ {
+		go func(idx int) {
+			req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/test-%d", d.host, idx), nil)
+			resp, err := client.Do(req)
+			if err != nil {
+				results <- false
+				return
+			}
+			defer resp.Body.Close()
+			io.Copy(io.Discard, resp.Body)
+			results <- resp.StatusCode > 0 && resp.StatusCode < 500
+		}(i)
+	}
+
+	// Collect results
+	for i := 0; i < result.Total; i++ {
+		if <-results {
+			result.Succeeded++
+		}
+	}
+
+	result.Success = result.Succeeded == result.Total
+	return result
+}
+
+func (d *Diagnostic) runProtoVariantTests(ctx context.Context) ProtoVariantTests {
+	return ProtoVariantTests{
+		GRPC:             d.testGRPC(ctx),
+		ConnectRPCStream: d.testConnectRPCStream(ctx),
+	}
+}
+
+func (d *Diagnostic) testGRPC(ctx context.Context) SimpleTestResult {
+	result := SimpleTestResult{}
+	start := time.Now()
+
+	client := &http.Client{
+		Transport: &http2.Transport{
+			TLSClientConfig: &tls.Config{ServerName: d.host},
+		},
+		Timeout: 10 * time.Second,
+	}
+
+	req, _ := http.NewRequestWithContext(ctx, "POST",
+		fmt.Sprintf("https://%s/gitpod.v1.WorkspaceService/GetWorkspace", d.host), nil)
+	req.Header.Set("Content-Type", "application/grpc")
+	req.Header.Set("TE", "trailers")
+
+	resp, err := client.Do(req)
+	result.DurationMs = time.Since(start).Milliseconds()
+
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	result.HTTPStatus = resp.StatusCode
+	// gRPC typically returns 200 with grpc-status in trailers
+	result.Success = resp.StatusCode == 200 || resp.StatusCode == 415
+	return result
+}
+
+func (d *Diagnostic) testConnectRPCStream(ctx context.Context) SimpleTestResult {
+	result := SimpleTestResult{}
+	start := time.Now()
+
+	client := &http.Client{
+		Transport: &http2.Transport{
+			TLSClientConfig: &tls.Config{ServerName: d.host},
+		},
+		Timeout: 10 * time.Second,
+	}
+
+	req, _ := http.NewRequestWithContext(ctx, "POST",
+		fmt.Sprintf("https://%s/gitpod.v1.WorkspaceService/ListWorkspaces", d.host), nil)
+	req.Header.Set("Content-Type", "application/connect+proto")
+	req.Header.Set("Connect-Protocol-Version", "1")
+
+	resp, err := client.Do(req)
+	result.DurationMs = time.Since(start).Milliseconds()
+
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	result.HTTPStatus = resp.StatusCode
+	result.Success = resp.StatusCode == 200 || resp.StatusCode == 415 || resp.StatusCode == 401
 	return result
 }
 
