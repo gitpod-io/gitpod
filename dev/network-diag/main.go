@@ -141,17 +141,45 @@ func printHumanReadable(r *DiagResult) {
 		}
 	}
 
+	// HTTP/1.1 test
+	if r.HTTP1 != nil {
+		status = "OK"
+		if !r.HTTP1.Success {
+			status = "FAIL"
+		}
+		fmt.Printf("[5] HTTP/1.1 Test:  %s", status)
+		if r.HTTP1.Success {
+			fmt.Printf(" (HTTP %d, %dms)\n", r.HTTP1.HTTPStatus, r.HTTP1.DurationMs)
+		} else {
+			fmt.Printf("\n    Error: %s\n", r.HTTP1.Error)
+		}
+	}
+
 	// Connect-RPC test
 	if r.ConnectRPC != nil {
 		status = "OK"
 		if !r.ConnectRPC.Success {
 			status = "FAIL"
 		}
-		fmt.Printf("[5] Connect-RPC:    %s", status)
+		fmt.Printf("[6] Connect-RPC:    %s", status)
 		if r.ConnectRPC.Success {
 			fmt.Printf(" (HTTP %d, %dms)\n", r.ConnectRPC.HTTPStatus, r.ConnectRPC.DurationMs)
 		} else {
 			fmt.Printf("\n    Error: %s\n", r.ConnectRPC.Error)
+		}
+	}
+
+	// WebSocket test
+	if r.WebSocket != nil {
+		status = "OK"
+		if !r.WebSocket.Success {
+			status = "FAIL"
+		}
+		fmt.Printf("[7] WebSocket:      %s", status)
+		if r.WebSocket.Success {
+			fmt.Printf(" (HTTP %d, %dms)\n", r.WebSocket.HTTPStatus, r.WebSocket.DurationMs)
+		} else {
+			fmt.Printf("\n    Error: %s\n", r.WebSocket.Error)
 		}
 	}
 
@@ -161,7 +189,7 @@ func printHumanReadable(r *DiagResult) {
 		if !r.ReferenceTest.HTTP2Works {
 			status = "FAIL"
 		}
-		fmt.Printf("[6] Reference Test: %s", status)
+		fmt.Printf("[8] Reference Test: %s", status)
 		fmt.Printf(" (%s)\n", r.ReferenceTest.Target)
 		if !r.ReferenceTest.HTTP2Works && r.ReferenceTest.Error != "" {
 			fmt.Printf("    Error: %s\n", r.ReferenceTest.Error)
@@ -191,17 +219,19 @@ func printHumanReadable(r *DiagResult) {
 // Data structures
 
 type DiagResult struct {
-	Timestamp     time.Time      `json:"timestamp"`
-	Version       string         `json:"tool_version"`
-	Target        string         `json:"target"`
-	Client        ClientInfo     `json:"client"`
-	DNS           DNSResult      `json:"dns"`
-	TCP           TCPResult      `json:"tcp"`
-	TLS           TLSResult      `json:"tls"`
-	HTTP2         HTTP2Result    `json:"http2"`
-	ConnectRPC    *ConnectResult `json:"connect_rpc_test,omitempty"`
-	ReferenceTest *RefTestResult `json:"reference_test,omitempty"`
-	Diagnosis     DiagnosisInfo  `json:"diagnosis"`
+	Timestamp     time.Time        `json:"timestamp"`
+	Version       string           `json:"tool_version"`
+	Target        string           `json:"target"`
+	Client        ClientInfo       `json:"client"`
+	DNS           DNSResult        `json:"dns"`
+	TCP           TCPResult        `json:"tcp"`
+	TLS           TLSResult        `json:"tls"`
+	HTTP1         *HTTP1Result     `json:"http1,omitempty"`
+	HTTP2         HTTP2Result      `json:"http2"`
+	ConnectRPC    *ConnectResult   `json:"connect_rpc_test,omitempty"`
+	WebSocket     *WebSocketResult `json:"websocket_test,omitempty"`
+	ReferenceTest *RefTestResult   `json:"reference_test,omitempty"`
+	Diagnosis     DiagnosisInfo    `json:"diagnosis"`
 }
 
 type ClientInfo struct {
@@ -273,6 +303,21 @@ type RefTestResult struct {
 	Error      string `json:"error,omitempty"`
 }
 
+type HTTP1Result struct {
+	Success    bool   `json:"success"`
+	HTTPStatus int    `json:"http_status,omitempty"`
+	DurationMs int64  `json:"duration_ms,omitempty"`
+	Error      string `json:"error,omitempty"`
+}
+
+type WebSocketResult struct {
+	Endpoint   string `json:"endpoint"`
+	Success    bool   `json:"success"`
+	HTTPStatus int    `json:"http_status,omitempty"`
+	Error      string `json:"error,omitempty"`
+	DurationMs int64  `json:"duration_ms,omitempty"`
+}
+
 type DiagnosisInfo struct {
 	LikelyCause    string   `json:"likely_cause,omitempty"`
 	Evidence       []string `json:"evidence,omitempty"`
@@ -322,6 +367,12 @@ func (d *Diagnostic) Run(ctx context.Context, includeReference bool) *DiagResult
 
 	// TLS + HTTP/2 (combined since we need the connection)
 	result.TLS, result.HTTP2, result.ConnectRPC = d.checkTLSAndHTTP2(ctx)
+
+	// HTTP/1.1 test
+	result.HTTP1 = d.checkHTTP1(ctx)
+
+	// WebSocket test
+	result.WebSocket = d.checkWebSocket(ctx)
 
 	// Reference test
 	if includeReference {
@@ -573,6 +624,155 @@ func (d *Diagnostic) checkReference(ctx context.Context) *RefTestResult {
 	return result
 }
 
+func (d *Diagnostic) checkHTTP1(ctx context.Context) *HTTP1Result {
+	result := &HTTP1Result{}
+
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	conn, err := dialer.DialContext(ctx, "tcp", d.target)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+
+	// Force HTTP/1.1 only via ALPN
+	tlsConfig := &tls.Config{
+		ServerName: d.host,
+		NextProtos: []string{"http/1.1"}, // Only offer HTTP/1.1
+	}
+
+	tlsConn := tls.Client(conn, tlsConfig)
+	if err := tlsConn.HandshakeContext(ctx); err != nil {
+		conn.Close()
+		result.Error = err.Error()
+		return result
+	}
+	defer tlsConn.Close()
+
+	// Make a simple HTTP/1.1 request
+	start := time.Now()
+	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("https://%s/", d.host), nil)
+
+	// Use HTTP/1.1 transport
+	transport := &http.Transport{
+		DialTLSContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return tlsConn, nil
+		},
+		ForceAttemptHTTP2: false,
+	}
+
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   10 * time.Second,
+	}
+
+	resp, err := client.Do(req)
+	result.DurationMs = time.Since(start).Milliseconds()
+
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	result.HTTPStatus = resp.StatusCode
+	result.Success = resp.StatusCode > 0 && resp.StatusCode < 500
+
+	return result
+}
+
+func (d *Diagnostic) checkWebSocket(ctx context.Context) *WebSocketResult {
+	result := &WebSocketResult{
+		Endpoint: "/api/gitpod",
+	}
+
+	// Derive the WebSocket host from the API host
+	// api.xxx.gitpod.cloud -> xxx.gitpod.cloud for WebSocket
+	wsHost := d.host
+	if strings.HasPrefix(d.host, "api.") {
+		wsHost = strings.TrimPrefix(d.host, "api.")
+	}
+
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	conn, err := dialer.DialContext(ctx, "tcp", wsHost+":443")
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+
+	tlsConfig := &tls.Config{
+		ServerName: wsHost,
+		NextProtos: []string{"http/1.1"}, // WebSocket upgrade uses HTTP/1.1
+	}
+
+	tlsConn := tls.Client(conn, tlsConfig)
+	if err := tlsConn.HandshakeContext(ctx); err != nil {
+		conn.Close()
+		result.Error = fmt.Sprintf("TLS handshake failed: %v", err)
+		return result
+	}
+	defer tlsConn.Close()
+
+	// Send WebSocket upgrade request
+	start := time.Now()
+	upgradeReq := fmt.Sprintf(
+		"GET %s HTTP/1.1\r\n"+
+			"Host: %s\r\n"+
+			"Upgrade: websocket\r\n"+
+			"Connection: Upgrade\r\n"+
+			"Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"+
+			"Sec-WebSocket-Version: 13\r\n"+
+			"\r\n",
+		result.Endpoint, wsHost)
+
+	if _, err := tlsConn.Write([]byte(upgradeReq)); err != nil {
+		result.Error = fmt.Sprintf("failed to send upgrade request: %v", err)
+		return result
+	}
+
+	// Read response
+	tlsConn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	respBuf := make([]byte, 4096)
+	n, err := tlsConn.Read(respBuf)
+	result.DurationMs = time.Since(start).Milliseconds()
+
+	if err != nil {
+		result.Error = fmt.Sprintf("failed to read response: %v", err)
+		return result
+	}
+
+	respStr := string(respBuf[:n])
+
+	// Parse HTTP status
+	if strings.HasPrefix(respStr, "HTTP/1.1 ") {
+		var status int
+		fmt.Sscanf(respStr, "HTTP/1.1 %d", &status)
+		result.HTTPStatus = status
+
+		// 101 = Switching Protocols (WebSocket upgrade successful)
+		// 401 = Unauthorized (expected without auth, but upgrade path works)
+		// 400 = Bad Request (might be missing required headers)
+		if status == 101 {
+			result.Success = true
+		} else if status == 401 {
+			result.Success = true // Path exists, just needs auth
+		} else {
+			result.Error = fmt.Sprintf("unexpected status: %d", status)
+		}
+	} else {
+		result.Error = fmt.Sprintf("unexpected response: %s", respStr[:min(100, len(respStr))])
+	}
+
+	return result
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func (d *Diagnostic) diagnose(r *DiagResult) DiagnosisInfo {
 	diag := DiagnosisInfo{}
 	var evidence []string
@@ -606,6 +806,24 @@ func (d *Diagnostic) diagnose(r *DiagResult) DiagnosisInfo {
 		}
 	}
 
+	// Check HTTP/1.1 vs HTTP/2 comparison
+	if r.HTTP1 != nil && r.HTTP1.Success && !r.HTTP2.SettingsExchange.Success {
+		evidence = append(evidence, "HTTP/1.1 works but HTTP/2 fails - HTTP/2 specific issue")
+		if diag.LikelyCause == "" {
+			diag.LikelyCause = "http2_specific_failure"
+		}
+	}
+
+	// Check WebSocket
+	if r.WebSocket != nil && !r.WebSocket.Success {
+		if r.HTTP1 != nil && r.HTTP1.Success {
+			evidence = append(evidence, "HTTP/1.1 works but WebSocket upgrade fails - WebSocket may be blocked")
+			if diag.LikelyCause == "" {
+				diag.LikelyCause = "websocket_blocked"
+			}
+		}
+	}
+
 	// Check reference test
 	if r.ReferenceTest != nil && !r.ReferenceTest.HTTP2Works {
 		evidence = append(evidence, "HTTP/2 also fails to google.com - network-wide HTTP/2 issue")
@@ -624,6 +842,10 @@ func (d *Diagnostic) diagnose(r *DiagResult) DiagnosisInfo {
 		diag.Recommendation = "A network device is downgrading HTTP/2 to HTTP/1.1. Contact IT to enable HTTP/2 passthrough"
 	case "network_http2_blocked":
 		diag.Recommendation = "HTTP/2 appears to be blocked network-wide. Contact IT to enable HTTP/2 support"
+	case "http2_specific_failure":
+		diag.Recommendation = "HTTP/2 is failing while HTTP/1.1 works. A network device may not support HTTP/2 correctly"
+	case "websocket_blocked":
+		diag.Recommendation = "WebSocket connections appear to be blocked. Contact IT to allow WebSocket upgrades"
 	}
 
 	diag.Evidence = evidence
