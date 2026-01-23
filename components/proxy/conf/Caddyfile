@@ -77,6 +77,16 @@
 	}
 }
 
+(enable_redirect_log) {
+	log {
+		output stdout
+		format if "status >= 300 && status < 400" jsonselect "{type:\"redirect\"} {severity:level} {timestamp:ts} {httpRequest>status:status} {httpRequest>requestUrl:request>uri} {httpRequest>requestHost:request>host} {redirectLocation:resp_headers>Location>[0]} {httpRequest>userAgent:request>headers>User-Agent>[0]}" {
+			level_format "upper"
+			time_format "rfc3339_nano"
+		}
+	}
+}
+
 (remove_server_header) {
 	header {
 		-server
@@ -192,6 +202,7 @@ api.{$GITPOD_DOMAIN} {
 
 # always redirect to HTTPS
 http:// {
+	import enable_redirect_log
 	redir https://{host}{uri} permanent
 }
 
@@ -214,6 +225,7 @@ https://services.{$GITPOD_DOMAIN} {
 
 https://{$GITPOD_DOMAIN} {
 	import enable_log
+	import enable_redirect_log
 	import remove_server_header
 	import ssl_configuration
 	import security_headers
@@ -419,6 +431,7 @@ https://{$GITPOD_DOMAIN} {
 # workspaces
 https://*.*.{$GITPOD_DOMAIN} {
 	import enable_log
+	import enable_redirect_log
 	import workspace_security_headers
 	import remove_server_header
 	import ssl_configuration
