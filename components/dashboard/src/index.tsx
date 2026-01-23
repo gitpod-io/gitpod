@@ -26,8 +26,7 @@ import { PaymentContextProvider } from "./payment-context";
 import { ThemeContextProvider } from "./theme-context";
 import { UserContextProvider } from "./user-context";
 import { getURLHash, isWebsiteSlug } from "./utils";
-import * as configcat from "configcat-js";
-import { LogLevel } from "configcat-common";
+import { getExperimentsClient } from "./experiments/client";
 
 const MINIMAL_MODE_STORAGE_KEY = "minimal_gitpod_io_mode";
 const MINIMAL_MODE_FLAG_NAME = "minimal_gitpod_io_mode";
@@ -50,14 +49,10 @@ async function shouldUseMinimalMode(): Promise<boolean> {
 
     // Check ConfigCat feature flag
     try {
-        const client = configcat.getClient("gitpod", configcat.PollingMode.LazyLoad, {
-            logger: configcat.createConsoleLogger(LogLevel.Error),
-            cacheTimeToLiveSeconds: 60 * 3,
-            requestTimeoutMs: 1500,
-            baseUrl: `${window.location.origin}/configcat`,
+        const client = getExperimentsClient();
+        const value = await client.getValueAsync(MINIMAL_MODE_FLAG_NAME, false, {
+            gitpodHost: window.location.host,
         });
-
-        const value = await client.getValueAsync(MINIMAL_MODE_FLAG_NAME, false, {});
         return value === true;
     } catch (error) {
         console.error("Failed to check minimal mode flag:", error);
