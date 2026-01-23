@@ -9,6 +9,7 @@ packages:
       - "src/**/*.png"
       - "src/**/*.webp"
       - "src/**/*.json"
+      - "src/**/*.html"
       - "typings/**"
       - package.json
       - tailwind.config.js
