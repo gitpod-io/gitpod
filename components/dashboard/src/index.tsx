@@ -25,7 +25,7 @@ import "./index.css";
 import { PaymentContextProvider } from "./payment-context";
 import { ThemeContextProvider } from "./theme-context";
 import { UserContextProvider } from "./user-context";
-import { getURLHash, isWebsiteSlug } from "./utils";
+import { getURLHash, isGitpodIo, isWebsiteSlug } from "./utils";
 import { getExperimentsClient } from "./experiments/client";
 
 const MINIMAL_MODE_STORAGE_KEY = "minimal_gitpod_io_mode";
@@ -58,13 +58,6 @@ async function shouldUseMinimalMode(): Promise<boolean> {
         console.error("Failed to check minimal mode flag:", error);
         return false; // Fail safe: use full app
     }
-}
-
-/**
- * Check if the current hostname is exactly "gitpod.io"
- */
-function isExactGitpodIo(): boolean {
-    return window.location.hostname === "gitpod.io";
 }
 
 /**
@@ -310,7 +303,7 @@ function bootFullApp(): void {
  */
 const bootApp = async () => {
     // Minimal gitpod.io mode - only on exact "gitpod.io" domain
-    if (isExactGitpodIo()) {
+    if (isGitpodIo()) {
         const minimalMode = await shouldUseMinimalMode();
 
         if (minimalMode) {
