@@ -1,6 +1,7 @@
 {
   "short_name": "Gitpod",
-  "name": "Gitpod - Always Ready-to-Code.",
+  "name": "Gitpod Dashboard - Now Ona",
+  "description": "Gitpod Classic Dashboard. Gitpod is now Ona - AI software engineers for your team at ona.com",
   "icons": [
     {
       "src": "favicon256.png",
