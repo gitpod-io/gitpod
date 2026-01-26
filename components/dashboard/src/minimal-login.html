@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<!--
+ Copyright (c) 2024 Gitpod GmbH. All rights reserved.
+ Licensed under the GNU Affero General Public License (AGPL).
+ See License.AGPL.txt in the project root for license information.
+
+ Minimal login page for gitpod.io when minimal mode is enabled.
+ This page is loaded by index.tsx when the minimal_gitpod_io_mode flag is active.
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gitpod - Start building with Ona</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+
+        .minimal-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: row;
+            background: linear-gradient(390deg, #1F1329 0%, #333A75 20%, #556CA8 50%, #90A898 60%, #90A898 70%, #E2B15C 90%, #BEA462 100%);
+        }
+
+        /* Left panel - white login section */
+        .minimal-left-panel {
+            flex: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+        }
+
+        .minimal-left-content {
+            background: white;
+            border-radius: 12px;
+            flex-grow: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            max-width: 100%;
+        }
+
+        .minimal-login-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .minimal-gitpod-logo {
+            height: 56px;
+            width: auto;
+            margin-bottom: 32px;
+        }
+
+        .minimal-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .minimal-subtitle {
+            color: #666;
+            margin-bottom: 32px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .minimal-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            border: none;
+            transition: all 0.2s;
+            min-width: 224px;
+            cursor: pointer;
+        }
+
+        .minimal-btn:hover {
+            background: #333;
+        }
+
+        .minimal-sunset-notice {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 14px;
+            color: #1a1a1a;
+        }
+
+        .minimal-sunset-notice a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        .minimal-sunset-notice a:hover {
+            text-decoration: underline;
+        }
+
+        /* Right panel - Ona branding */
+        .minimal-right-panel {
+            width: 100%;
+            max-width: 512px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        .minimal-right-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            color: white;
+            max-width: 512px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .minimal-ona-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            padding: 16px;
+            padding-top: 24px;
+        }
+
+        .minimal-ona-wordmark {
+            width: 144px;
+            height: auto;
+            display: block;
+            margin: 0 auto 16px;
+        }
+
+        .minimal-app-preview {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(32px);
+        }
+
+        .minimal-ona-description h2 {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.4;
+            margin-bottom: 16px;
+        }
+
+        .minimal-ona-description a {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .minimal-ona-description a:hover {
+            text-decoration: none;
+        }
+
+        .minimal-ona-description p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            line-height: 1.5;
+            margin-top: 16px;
+        }
+
+        .minimal-try-ona-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: background 0.2s;
+            margin-top: 16px;
+        }
+
+        .minimal-try-ona-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Responsive: hide right panel on smaller screens */
+        @media (max-width: 1024px) {
+            .minimal-right-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="minimal-page">
+        <!-- Left Panel: Login -->
+        <div class="minimal-left-panel">
+            <div class="minimal-left-content">
+                <div class="minimal-login-area">
+                    <!-- Gitpod Logo (orange) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 140 40" class="minimal-gitpod-logo">
+                        <path fill="#12100C" d="M56.045 30.444C50.188 30.444 46 26.25 46 20.722S50.216 11 55.96 11c2.83 0 5.037 1.083 6.876 2.667l-1.16 2.36C60.26 14.64 58.45 13.5 55.846 13.5c-4.243 0-7.3 2.917-7.3 7.222 0 4.306 3.028 7.222 7.33 7.222 3.706 0 6.337-2.194 6.762-5.527h-7.555v-2.5h10.44v.11c0 6.112-3.508 10.417-9.478 10.417zM68.18 16.556h2.434v13.888H68.18V16.556zM82.14 30.25v-2.111c-.765.139-1.387.222-2.293.222-1.188 0-1.612-.611-1.612-1.667V18.64h3.876v-2.083h-3.877v-3.723h-2.433v3.723H73v2.083H75.8v7.917c0 2.944 1.33 4.027 3.905 4.027.905 0 1.698-.139 2.433-.333z"/>
+                        <path fill="#12100C" fill-rule="evenodd" d="M87.099 36h-2.434V16.556H87.1v2c1.16-1.528 2.886-2.334 4.98-2.334 4.018 0 6.82 3 6.82 7.278s-2.802 7.278-6.82 7.278c-2.009 0-3.65-.778-4.98-2.361V36zm-.17-12.5c0 3.083 1.868 5.056 4.725 5.056 2.858 0 4.726-2 4.726-5.056s-1.868-5.056-4.725-5.056c-2.858 0-4.726 1.973-4.726 5.056zM100.413 23.5c0 4.167 3.169 7.278 7.413 7.278 4.245 0 7.414-3.111 7.414-7.278s-3.169-7.278-7.414-7.278c-4.244 0-7.413 3.111-7.413 7.278zm12.309 0c0 2.889-1.953 4.972-4.896 4.972-2.942 0-4.895-2.083-4.895-4.972 0-2.889 1.953-4.972 4.895-4.972 2.943 0 4.896 2.083 4.896 4.972zM128.567 11H131v19.444h-2.433v-2c-1.161 1.528-2.887 2.334-4.98 2.334-4.018 0-6.82-3-6.82-7.278s2.802-7.278 6.82-7.278c2.009 0 3.65.778 4.98 2.361V11zm.169 12.5c0-3.083-1.867-5.056-4.725-5.056-2.858 0-4.725 2-4.725 5.056s1.867 5.056 4.725 5.056c2.858 0 4.725-1.973 4.725-5.056z" clip-rule="evenodd"/>
+                        <path fill="#12100C" d="M69.403 14.73c.961 0 1.74-.762 1.74-1.703 0-.94-.779-1.702-1.74-1.702-.962 0-1.742.762-1.742 1.703 0 .94.78 1.702 1.742 1.702z"/>
+                        <path fill="url(#paint0_linear)" fill-rule="evenodd" d="M21.388 1.992c1.07 1.895.42 4.31-1.452 5.392L8.302 14.118c-.308.178-.498.51-.498.868v10.57c0 .36.19.69.498.869l9.209 5.33a.975.975 0 00.978 0l9.21-5.33c.307-.178.497-.51.497-.869v-6.573l-8.279 4.73a3.876 3.876 0 01-5.316-1.5c-1.059-1.9-.395-4.311 1.481-5.384l11.846-6.769C31.536 7.998 36 10.64 36 14.835v11.524a7.54 7.54 0 01-3.742 6.53l-10.573 6.12a7.345 7.345 0 01-7.37 0l-10.573-6.12A7.54 7.54 0 010 26.36V14.183a7.54 7.54 0 013.742-6.53L16.064.52a3.876 3.876 0 015.324 1.471z" clip-rule="evenodd"/>
+                        <defs>
+                            <linearGradient id="paint0_linear" x1="27.096" x2="8.281" y1="6.049" y2="35.254" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#FFB45B"/>
+                                <stop offset="1" stop-color="#FF8A00"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+
+                    <h1 class="minimal-title">Start building with Ona</h1>
+                    <p class="minimal-subtitle">What do you want to get done today?</p>
+
+                    <a href="https://app.ona.com/login" class="minimal-btn">Continue with Ona</a>
+
+                    <div class="minimal-sunset-notice">
+                        Gitpod Classic has been sunset on Oct 15.
+                        <a href="https://ona.com/stories/gitpod-is-now-ona" target="_blank" rel="noopener noreferrer">Gitpod is now Ona</a>,
+                        <a href="https://app.ona.com" target="_blank" rel="noopener noreferrer">start for free</a> and get $100 credits.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Ona Branding -->
+        <div class="minimal-right-panel">
+            <div class="minimal-right-content">
+                <div class="minimal-ona-card">
+                    <!-- Ona Wordmark (white) -->
+                    <svg width="299" height="104" viewBox="0 0 299 104" fill="none" xmlns="http://www.w3.org/2000/svg" class="minimal-ona-wordmark">
+                        <path d="M97.2873 30.2402C99.3022 32.3054 100.597 35.1082 100.597 38.3535V65.0534C100.597 68.2987 99.3022 71.1014 97.2873 73.1666L71.2385 99.8665C69.2237 102.079 66.3454 103.259 63.3231 103.259H37.2743C34.1081 103.259 31.3737 102.079 29.215 99.8665L3.16616 73.1666C1.15133 71.1014 0 68.2987 0 65.0534V38.3535C0 35.1082 1.15133 32.3054 3.16616 30.0927L29.215 3.39281C31.3737 1.32762 34.1081 0 37.2743 0H63.3231C66.3454 0 69.2237 1.32762 71.2385 3.54032L97.2873 30.2402ZM76.7372 67.2967V36.1102C76.7372 29.7671 71.7001 24.4566 65.5117 24.4566H35.0857C28.7534 24.4566 23.7163 29.7671 23.7163 36.1102V67.2967C23.7163 73.6397 28.7534 78.8027 35.0857 78.8027H65.5117C71.7001 78.8027 76.7372 73.6397 76.7372 67.2967Z" fill="white"/>
+                        <path d="M168.219 100.494C167.666 100.494 167.154 100.193 166.876 99.7032L134.535 42.767C133.737 41.3617 131.639 41.9421 131.639 43.5682V98.9019C131.639 99.7814 130.943 100.494 130.085 100.494H110.854C109.996 100.494 109.301 99.7814 109.301 98.9019V4.35757C109.301 3.47813 109.996 2.7652 110.854 2.7652H134.281C134.838 2.7652 135.351 3.06981 135.628 3.56393L167.83 60.9783C168.623 62.3921 170.731 61.8154 170.731 60.1847V4.35756C170.731 3.47812 171.426 2.7652 172.284 2.7652H191.652C192.51 2.7652 193.205 3.47812 193.205 4.35756V98.9019C193.205 99.7814 192.51 100.494 191.652 100.494H168.219Z" fill="white"/>
+                        <path d="M277.754 100.494C277.099 100.494 276.515 100.074 276.293 99.4424L270.495 82.9775C270.273 82.3464 269.689 81.9257 269.034 81.9257H229.536C228.882 81.9257 228.297 82.3464 228.075 82.9775L222.278 99.4424C222.055 100.074 221.471 100.494 220.816 100.494H201.128C200.044 100.494 199.293 99.3846 199.673 98.3437L234.197 3.79931C234.424 3.17732 235.004 2.76513 235.652 2.76513H263.053C263.702 2.76513 264.282 3.17821 264.509 3.80118L298.901 98.3456C299.279 99.3861 298.529 100.494 297.445 100.494H277.754ZM235.591 61.3676C235.229 62.4048 235.979 63.4968 237.054 63.4968H261.517C262.592 63.4968 263.342 62.4048 262.979 61.3676L250.748 26.3576C250.256 24.9503 248.314 24.9503 247.823 26.3576L235.591 61.3676Z" fill="white"/>
+                    </svg>
+
+                    <div style="overflow: hidden; border-radius: 8px;">
+                        <img
+                            src="/ona-application.webp"
+                            alt="Ona application preview"
+                            class="minimal-app-preview"
+                        />
+                    </div>
+                </div>
+
+                <div class="minimal-ona-description">
+                    <h2>
+                        Ona - parallel SWE agents in the cloud, sandboxed for high-autonomy.<br/><br/>
+                        <a href="https://app.ona.com" target="_blank" rel="noopener noreferrer">Start for free</a> and get $100 in credits.<br/><br/>
+                        Gitpod Classic has been sunset on Oct 15 |
+                        <a href="https://ona.com/stories/gitpod-classic-payg-sunset" target="_blank" rel="noopener noreferrer">Learn more</a>
+                    </h2>
+
+                    <p>
+                        Delegate software tasks to Ona. It writes code, runs tests, and opens a pull request. Or jump in to inspect output or pair program in your IDE.
+                    </p>
+
+                    <a href="https://app.ona.com" target="_blank" rel="noopener noreferrer" class="minimal-try-ona-btn">
+                        Try Ona <span style="font-weight: bold;">↗</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
