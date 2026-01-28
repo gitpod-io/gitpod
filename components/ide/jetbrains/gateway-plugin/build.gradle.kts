@@ -107,6 +107,8 @@ intellijPlatform {
             sinceBuild = properties("pluginSinceBuild")
             if (!properties("pluginUntilBuild").isNullOrBlank()) {
                 untilBuild = properties("pluginUntilBuild")
+            } else {
+                untilBuild = provider { null }
             }
         }
     }
