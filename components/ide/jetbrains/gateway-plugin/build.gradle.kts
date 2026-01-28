@@ -105,7 +105,7 @@ intellijPlatform {
 
         ideaVersion {
             sinceBuild = properties("pluginSinceBuild")
-            if (!properties("pluginUntilBuild").isNullOrBlank()) {
+            if (!properties("pluginUntilBuild").isNullOrBlank() && properties("pluginUntilBuild") != "null") {
                 untilBuild = properties("pluginUntilBuild")
             } else {
                 untilBuild = provider { null }
