@@ -25,42 +25,11 @@ import "./index.css";
 import { PaymentContextProvider } from "./payment-context";
 import { ThemeContextProvider } from "./theme-context";
 import { UserContextProvider } from "./user-context";
-import { getURLHash, isGitpodIo, isWebsiteSlug } from "./utils";
-import { getExperimentsClient } from "./experiments/client";
+import { getURLHash, isWebsiteSlug } from "./utils";
 // Import the minimal login HTML template at build time
 import minimalLoginHtml from "./minimal-login.html";
 
-const MINIMAL_MODE_STORAGE_KEY = "minimal_gitpod_io_mode";
-const MINIMAL_MODE_FLAG_NAME = "minimal_gitpod_io_mode";
-
-/**
- * Check if we should use minimal gitpod.io mode.
- * Priority:
- * 1. localStorage override (for testing)
- * 2. ConfigCat feature flag
- */
-async function shouldUseMinimalMode(): Promise<boolean> {
-    // Check localStorage override first (sync, for testing)
-    try {
-        const localOverride = localStorage.getItem(MINIMAL_MODE_STORAGE_KEY);
-        if (localOverride === "true") return true;
-        if (localOverride === "false") return false;
-    } catch {
-        // localStorage might not be available
-    }
-
-    // Check ConfigCat feature flag
-    try {
-        const client = getExperimentsClient();
-        const value = await client.getValueAsync(MINIMAL_MODE_FLAG_NAME, false, {
-            gitpodHost: window.location.host,
-        });
-        return value === true;
-    } catch (error) {
-        console.error("Failed to check minimal mode flag:", error);
-        return false; // Fail safe: use full app
-    }
-}
+const MINIMAL_MODE_OVERRIDE_KEY = "minimal_gitpod_io_mode";
 
 /**
  * Check if the pathname is a known app route that should show the minimal login page
@@ -160,14 +129,28 @@ function handleMinimalGitpodIoMode(): void {
 }
 
 /**
+ * Extract body content from a full HTML document string.
+ * This allows keeping the complete HTML structure in the source file for easier editing.
+ */
+function extractBodyContent(html: string): string {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    return doc.body.innerHTML;
+}
+
+/**
  * Render a minimal static login page without React.
- * Loads the HTML from an external file for easier review and maintenance.
+ * Uses innerHTML instead of document.write() to avoid deprecation issues.
  */
 function renderMinimalLoginPage(): void {
-    // Replace the entire document with the minimal login page
-    document.open();
-    document.write(minimalLoginHtml);
-    document.close();
+    const bodyContent = extractBodyContent(minimalLoginHtml);
+    const root = document.getElementById("root");
+    if (root) {
+        root.innerHTML = bodyContent;
+    } else {
+        // Fallback if root doesn't exist
+        document.body.innerHTML = bodyContent;
+    }
 }
 
 /**
@@ -221,23 +204,44 @@ function bootFullApp(): void {
 }
 
 /**
- * Main boot function
+ * Check if this is exactlly gitpod.io
  */
-const bootApp = async () => {
-    // Minimal gitpod.io mode - only on exact "gitpod.io" domain
-    if (isGitpodIo()) {
-        const minimalMode = await shouldUseMinimalMode();
+function isExactGitpodIo(): boolean {
+    return window.location.hostname === "gitpod.io";
+}
 
-        if (minimalMode) {
-            handleMinimalGitpodIoMode();
+/**
+ * Main boot function
+ *
+ * Minimal mode is enabled when:
+ * - localStorage override is "true" (for testing in preview environments)
+ * - Host is exactly "gitpod.io" AND path is not a website slug
+ */
+const bootApp = () => {
+    let minimalMode = false;
+
+    // Handle website slugs on gitpod.io - redirect to www.gitpod.io
+    if (isExactGitpodIo()) {
+        const pathname = window.location.pathname;
+        if (isWebsiteSlug(pathname)) {
+            window.location.href = `https://www.gitpod.io${pathname}${window.location.search}`;
             return;
         }
+        minimalMode = true;
+    }
 
-        // Not in minimal mode, but still handle website slugs
-        if (isWebsiteSlug(window.location.pathname)) {
-            window.location.host = "www.gitpod.io";
-            return;
+    // Check local storage override
+    try {
+        if (localStorage.getItem(MINIMAL_MODE_OVERRIDE_KEY) === "true") {
+            minimalMode = true;
         }
+    } catch {
+        // localStorage might not be available
+    }
+
+    if (minimalMode) {
+        handleMinimalGitpodIoMode();
+        return;
     }
 
     // Boot full React app
