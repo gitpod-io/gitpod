@@ -1453,7 +1453,7 @@
           "rustrover"
         ],
         "installationSteps": [
-          "If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below."
+          "If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://ona.com/docs/classic/user/integrations/jetbrains-gateway#getting-started'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below."
         ]
       },
       "jetbrains-toolbox": {
