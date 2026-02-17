@@ -19,7 +19,7 @@ class GitpodConnector : GatewayConnector {
 
     override fun getDescription() = "Connect to Gitpod workspaces"
 
-    override fun getDocumentationAction() = GatewayConnectorDocumentationPage("https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway")
+    override fun getDocumentationAction() = GatewayConnectorDocumentationPage("https://ona.com/docs/classic/user/integrations/jetbrains-gateway")
 
     override fun getConnectorId() = "gitpod.connector"
 

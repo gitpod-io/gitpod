@@ -160,7 +160,7 @@
                         "phpstorm"
                     ],
                     "installationSteps": [
-                        "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
+                        "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://ona.com/docs/classic/user/integrations/jetbrains-gateway#getting-started'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
                     ]
                 },
                 "vscode": {
