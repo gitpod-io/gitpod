@@ -35,6 +35,11 @@ import { SubjectId } from "../auth/subject-id";
 const defaultRevLimit = 20;
 // It should keep it aligned with client_max_body_size for /code-sync location.
 const defaultContentLimit = "1Mb";
+// Max server-side retries when a rev mismatch (412) occurs during insert.
+// Absorbs concurrency conflicts from multiple workspaces writing the same resource,
+// preventing the VS Code client from entering an unbounded retry loop that exhausts
+// its 100-request/5-min budget and triggers "Settings sync is suspended" banners.
+const maxInsertRetries = 3;
 export type CodeSyncConfig = Partial<{
     revLimit: number;
     contentLimit: number;
@@ -330,46 +335,55 @@ export class CodeSyncService {
         const isEditSessionsResource = resourceKey === "editSessions";
         const userId = req.user!.id;
         const contentType = req.headers["content-type"] || "*/*";
-        const newRev = await this.db.insert(
-            userId,
-            resourceKey,
-            collection,
-            latestRev,
-            async (rev, oldRevs) => {
-                const request = new UploadUrlRequest();
-                request.setOwnerId(userId);
-                request.setName(toObjectName(resourceKey, rev, collection));
-                request.setContentType(contentType);
-                const blobsClient = this.blobsProvider.getDefault();
-                const urlResponse = await util.promisify<UploadUrlRequest, UploadUrlResponse>(
-                    blobsClient.uploadUrl.bind(blobsClient),
-                )(request);
-                const url = urlResponse.getUrl();
-                const content = req.body as string;
-                const response = await fetch(url, {
-                    timeout: 10000,
-                    method: "PUT",
-                    body: content,
-                    headers: {
-                        "content-length": req.headers["content-length"] || String(content.length),
-                        "content-type": contentType,
-                    },
-                });
-                if (response.status !== 200) {
-                    throw new Error(
-                        `code sync: blob service: upload failed with ${response.status} ${response.statusText}`,
-                    );
-                }
 
-                if (oldRevs.length) {
-                    // Asynchonously delete old revs from storage
-                    Promise.allSettled(
-                        oldRevs.map((rev) => this.doDeleteResource(userId, resourceKey, rev, collection)),
-                    ).catch(() => {});
-                }
-            },
-            { revLimit, overwrite: !isEditSessionsResource },
-        );
+        const doInsert = async (rev: string, oldRevs: string[]) => {
+            const request = new UploadUrlRequest();
+            request.setOwnerId(userId);
+            request.setName(toObjectName(resourceKey, rev, collection));
+            request.setContentType(contentType);
+            const blobsClient = this.blobsProvider.getDefault();
+            const urlResponse = await util.promisify<UploadUrlRequest, UploadUrlResponse>(
+                blobsClient.uploadUrl.bind(blobsClient),
+            )(request);
+            const url = urlResponse.getUrl();
+            const content = req.body as string;
+            const response = await fetch(url, {
+                timeout: 10000,
+                method: "PUT",
+                body: content,
+                headers: {
+                    "content-length": req.headers["content-length"] || String(content.length),
+                    "content-type": contentType,
+                },
+            });
+            if (response.status !== 200) {
+                throw new Error(
+                    `code sync: blob service: upload failed with ${response.status} ${response.statusText}`,
+                );
+            }
+
+            if (oldRevs.length) {
+                // Asynchronously delete old revs from storage
+                Promise.allSettled(
+                    oldRevs.map((rev) => this.doDeleteResource(userId, resourceKey, rev, collection)),
+                ).catch(() => {});
+            }
+        };
+
+        const insertOptions = { revLimit, overwrite: !isEditSessionsResource };
+
+        // Try the insert with the client-provided rev first.
+        // On rev mismatch, retry with the server's current latest rev. This absorbs
+        // concurrency conflicts (e.g. multiple workspaces syncing globalState) server-side,
+        // preventing the VS Code client from entering an unbounded retry loop that
+        // exhausts its request budget and triggers "Settings sync is suspended" banners.
+        let newRev = await this.db.insert(userId, resourceKey, collection, latestRev, doInsert, insertOptions);
+        if (!newRev && !isEditSessionsResource && latestRev) {
+            for (let attempt = 0; attempt < maxInsertRetries && !newRev; attempt++) {
+                const currentLatest = await this.db.getLatestRevision(userId, resourceKey, collection);
+                newRev = await this.db.insert(userId, resourceKey, collection, currentLatest, doInsert, insertOptions);
+            }
+        }
 
         if (!newRev) {
             res.sendStatus(isEditSessionsResource ? 400 : 412);

@@ -127,6 +127,25 @@ export class CodeSyncResourceDB {
         return this.doGetResources(connection.manager, userId, kind, collection);
     }
 
+    /**
+     * Returns the rev of the most recent resource entry, or "0" if none exists.
+     * Used by the code-sync service to resolve the current rev for server-side
+     * retry of rev-mismatched inserts.
+     */
+    async getLatestRevision(userId: string, kind: ServerResource, collection: string | undefined): Promise<string> {
+        const connection = await this.typeORM.getConnection();
+        const latest = await connection.manager
+            .createQueryBuilder(DBCodeSyncResource, "resource")
+            .where("resource.userId = :userId AND resource.kind = :kind AND resource.collection = :collection", {
+                userId,
+                kind,
+                collection: collection || uuid.NIL,
+            })
+            .orderBy("resource.created", "DESC")
+            .getOne();
+        return latest?.rev ?? "0";
+    }
+
     async deleteSettingsSyncResources(userId: string, doDelete: () => Promise<void>): Promise<void> {
         const connection = await this.typeORM.getConnection();
         await connection.transaction(async (manager) => {

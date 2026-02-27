@@ -62,6 +62,30 @@ export class CodeSyncResourceDBSpec {
     }
 
     @test()
+    async getLatestRevision(): Promise<void> {
+        const kind = "machines";
+
+        // Returns "0" when no resources exist
+        let latestRev = await this.db.getLatestRevision(this.userId, kind, undefined);
+        expect(latestRev).to.equal("0");
+
+        // Returns the rev of the most recent insert
+        const rev1 = await this.db.insert(this.userId, kind, undefined, undefined, async () => {});
+        latestRev = await this.db.getLatestRevision(this.userId, kind, undefined);
+        expect(latestRev).to.equal(rev1);
+
+        // Returns the newest rev after a second insert
+        const rev2 = await this.db.insert(this.userId, kind, undefined, undefined, async () => {});
+        latestRev = await this.db.getLatestRevision(this.userId, kind, undefined);
+        expect(latestRev).to.equal(rev2);
+        expect(latestRev).not.to.equal(rev1);
+
+        // Can be used to successfully insert with the correct rev
+        const rev3 = await this.db.insert(this.userId, kind, undefined, latestRev, async () => {});
+        expect(rev3).not.to.be.undefined;
+    }
+
+    @test()
     async getDeleteResources(): Promise<void> {
         const kind = "machines";
         let resources = await this.db.getResources(this.userId, kind, undefined);
