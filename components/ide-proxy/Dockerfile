@@ -22,6 +22,9 @@ RUN xcaddy build v2.11.1 --output /caddy
 
 FROM caddy/caddy:2.11-alpine
 
+# Ensure latest packages are present, like security updates.
+RUN apk upgrade --no-cache
+
 COPY --from=caddy-builder /caddy /usr/bin/caddy
 COPY conf/Caddyfile /etc/caddy/Caddyfile
 COPY static /www/
