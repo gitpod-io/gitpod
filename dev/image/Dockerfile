@@ -12,9 +12,11 @@ USER root
 # Pin Go version explicitly to ensure all CI-built binaries use a
 # non-vulnerable toolchain (CVE-2025-68121 requires >= 1.24.13).
 ENV GO_VERSION=1.24.13
-RUN curl -fsSL "https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz" | tar -C /usr/local -xz \
+RUN rm -rf /usr/local/go /home/gitpod/go /home/gitpod/.cache/go-build \
+    && curl -fsSL "https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz" | tar -C /usr/local -xz \
     && ln -sf /usr/local/go/bin/go /usr/bin/go \
     && ln -sf /usr/local/go/bin/gofmt /usr/bin/gofmt
+ENV GOROOT=/usr/local/go
 ENV PATH=/usr/local/go/bin:$PATH
 
 ### cloud_sql_proxy ###
@@ -264,7 +266,7 @@ RUN brew install tmux tmuxinator \
     && brew install redis \
     # Install zed & spicedb CLI
     && brew install authzed/tap/zed \
-    && brew install authzed/tap/spicedb \
+    && (brew install authzed/tap/spicedb || brew install authzed/tap/spicedb) \
     && brew cleanup
 
 # Copy our own tools
@@ -282,7 +284,10 @@ ENV PREVIEW_ENV_DEV_SA_KEY_PATH=/home/gitpod/.config/gcloud/preview-environment-
 
 # So we can parse the report.html output by leeway, and remove the output produced by this image build
 # why? it's too verbose, exceeding the Github Actions summary limit
-RUN go install github.com/ericchiang/pup@v0.4.0
+RUN curl -fsSL https://github.com/ericchiang/pup/releases/download/v0.4.0/pup_v0.4.0_linux_amd64.zip -o /tmp/pup.zip \
+    && sudo unzip -o /tmp/pup.zip -d /usr/local/bin \
+    && sudo chmod +x /usr/local/bin/pup \
+    && rm /tmp/pup.zip
 
 # Install oci-tool
 RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.0/oci-tool_0.2.0_linux_amd64.tar.gz | sudo tar xz -C /usr/local/bin \
