@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM node:22.15.1-alpine AS builder
+FROM node:22.22.0-alpine AS builder
 
 # Install bash
 RUN apk update && \
@@ -13,11 +13,11 @@ COPY components-gitpod-db--migrations /installer/
 WORKDIR /app
 RUN /installer/install.sh
 
-FROM node:22.15.1-alpine as proxy
+FROM node:22.22.0-alpine as proxy
 RUN wget https://storage.googleapis.com/cloudsql-proxy/v1.37.6/cloud_sql_proxy.linux.amd64 -O /bin/cloud_sql_proxy \
  && chmod +x /bin/cloud_sql_proxy
 
-FROM node:22.15.1-alpine
+FROM node:22.22.0-alpine
 
 # Install bash
 RUN apk update && \
