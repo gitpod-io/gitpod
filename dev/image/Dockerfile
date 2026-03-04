@@ -4,9 +4,18 @@
 
 FROM gitpod/workspace-gitpod-dev:latest
 
-ENV TRIGGER_REBUILD 43
+ENV TRIGGER_REBUILD 44
 
 USER root
+
+### Go ###
+# Pin Go version explicitly to ensure all CI-built binaries use a
+# non-vulnerable toolchain (CVE-2025-68121 requires >= 1.24.13).
+ENV GO_VERSION=1.24.13
+RUN curl -fsSL "https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz" | tar -C /usr/local -xz \
+    && ln -sf /usr/local/go/bin/go /usr/bin/go \
+    && ln -sf /usr/local/go/bin/gofmt /usr/bin/gofmt
+ENV PATH=/usr/local/go/bin:$PATH
 
 ### cloud_sql_proxy ###
 ARG CLOUD_SQL_PROXY=/usr/local/bin/cloud_sql_proxy
