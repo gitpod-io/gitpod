@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM node:22.15.1-alpine AS builder
+FROM node:22.22.0-alpine AS builder
 
 # Install Python, make, gcc and g++ for node-gyp
 RUN apk update && \
@@ -14,7 +14,7 @@ COPY components-server--app /installer/
 WORKDIR /app
 RUN /installer/install.sh
 
-FROM node:22.15.1-alpine
+FROM node:22.22.0-alpine
 ENV NODE_OPTIONS="--unhandled-rejections=warn --max_old_space_size=2048"
 
 EXPOSE 3000

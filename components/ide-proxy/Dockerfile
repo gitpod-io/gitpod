@@ -16,9 +16,9 @@ RUN for FILE in `ls /bin/gitpod-local-companion*`;do \
 RUN mkdir -p static/code
 RUN curl -o static/code/marketplace.json "https://raw.githubusercontent.com/EclipseFdn/publish-extensions/d9a7cc2d486ca881e9df310324f9752f48156283/extension-control/extensions.json"
 
-# Build Caddy from source to get v2.11.0-beta.2 with fixed smallstep/certificates
+# Build Caddy from source with v2.11.1 (includes security fixes)
 FROM caddy:builder AS caddy-builder
-RUN xcaddy build v2.11.0-beta.2 --output /caddy
+RUN xcaddy build v2.11.1 --output /caddy
 
 FROM caddy/caddy:2.11-alpine
 
