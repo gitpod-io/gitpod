@@ -6,10 +6,11 @@ FROM cgr.dev/chainguard/wolfi-base:latest@sha256:c2279797be0446bd0c92a079b1975c5
 
 RUN apk add brotli gzip curl
 
-# Gitpod CLI and Local App
-COPY components-local-app--app-with-manifest/bin/* /bin/
+# Gitpod CLI and Local App — use a dedicated directory to avoid copying
+# system binaries (e.g. glibc's ldconfig) into the final image.
+COPY components-local-app--app-with-manifest/bin/* /app-bin/
 
-RUN for FILE in `ls /bin/gitpod-local-companion*`;do \
+RUN for FILE in `ls /app-bin/gitpod-local-companion*`;do \
   gzip -v -f -9 -k "$FILE"; \
   done
 
@@ -29,4 +30,4 @@ COPY --from=caddy-builder /caddy /usr/bin/caddy
 COPY conf/Caddyfile /etc/caddy/Caddyfile
 COPY static /www/
 COPY --from=compress /static /www
-COPY --from=compress /bin /www/static/bin
+COPY --from=compress /app-bin /www/static/bin
