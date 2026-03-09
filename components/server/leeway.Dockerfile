@@ -15,6 +15,7 @@ WORKDIR /app
 RUN /installer/install.sh
 
 FROM node:22.22.1-alpine
+RUN apk upgrade --no-cache
 ENV NODE_OPTIONS="--unhandled-rejections=warn --max_old_space_size=2048"
 
 EXPOSE 3000

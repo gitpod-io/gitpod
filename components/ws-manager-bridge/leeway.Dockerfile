@@ -15,6 +15,7 @@ WORKDIR /app
 RUN /installer/install.sh
 
 FROM node:22.22.1-alpine
+RUN apk upgrade --no-cache
 ENV NODE_OPTIONS=--unhandled-rejections=warn
 EXPOSE 3000
 COPY --from=builder --chown=node:node /app /app/
