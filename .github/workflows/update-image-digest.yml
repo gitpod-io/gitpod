@@ -72,6 +72,54 @@ jobs:
           sed -i -e "s/^\(\s*ImageDigest\s*=\s*\)\".*\"/\1\"$redisImageDigest\"/" install/installer/pkg/components/redis/constants.go
           sed -i -e "s/^\(\s*ExporterImageDigest\s*=\s*\)\".*\"/\1\"$redisExporterDigest\"/" install/installer/pkg/components/redis/constants.go
           go fmt install/installer/pkg/components/redis/constants.go
+      - name: Update base image tags in Dockerfiles
+        shell: bash
+        run: |
+          # Updates FROM lines in Dockerfiles that use tag-based references (not @sha256: pinned).
+          # For each tracked image, finds the latest patch release matching the same major.minor
+          # prefix and suffix, then updates all Dockerfiles that reference an older version.
+          #
+          # Entry format: "image|tag_grep_in_dockerfile|tag_ls_filter"
+          #   - image: the registry image name (e.g. "node", "caddy/caddy")
+          #   - tag_grep_in_dockerfile: grep -oP regex to extract the current tag from FROM lines
+          #   - tag_ls_filter: grep -E regex to filter crane ls output for candidate tags
+
+          declare -a TRACKED_IMAGES=(
+            "node|22\\.22\\.[0-9]+-alpine|^22\\.22\\.[0-9]+-alpine$"
+            "node|22\\.22\\.[0-9]+$|^22\\.22\\.[0-9]+$"
+            "caddy/caddy|2\\.11[0-9.]*-alpine|^2\\.11(\\.[0-9]+)?-alpine$"
+          )
+
+          for entry in "${TRACKED_IMAGES[@]}"; do
+            IFS='|' read -r image tag_grep tag_ls_filter <<< "$entry"
+            echo "Checking for updates: ${image} (filter: ${tag_ls_filter})"
+
+            # List all tags matching the pattern and pick the highest version
+            latest_tag=$(crane ls "$image" 2>/dev/null \
+              | grep -E "$tag_ls_filter" \
+              | sort -V \
+              | tail -1 || true)
+
+            if [ -z "$latest_tag" ]; then
+              echo "  No matching tags found, skipping"
+              continue
+            fi
+
+            echo "  Latest tag: ${image}:${latest_tag}"
+
+            # Escape slashes in image name for use in grep/sed
+            image_escaped="${image//\//\\/}"
+
+            # Find and update Dockerfiles with older versions of this image
+            while IFS= read -r -d '' file; do
+              current=$(grep -oP "(?<=FROM ${image_escaped}:)${tag_grep}" "$file" 2>/dev/null | head -1 || true)
+              if [ -n "$current" ] && [ "$current" != "$latest_tag" ]; then
+                echo "  Updating ${file}: ${image}:${current} -> ${image}:${latest_tag}"
+                sed -i "s|FROM ${image}:${current}|FROM ${image}:${latest_tag}|g" "$file"
+              fi
+            done < <(find "$(pwd)/components" -type f \( -name "Dockerfile*" -o -name "leeway.Dockerfile" \) -print0)
+          done
+
       - name: Check workspace
         id: create_pr
         shell: bash
