@@ -9,7 +9,7 @@ WORKDIR /plugins
 COPY plugins /plugins
 
 # build caddy
-RUN xcaddy build v2.11.1 \
+RUN xcaddy build v2.11.2 \
   --output /caddy \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
   --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
@@ -22,7 +22,7 @@ RUN xcaddy build v2.11.1 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/sshtunnel=/plugins/sshtunnel \
   --with github.com/gitpod-io/gitpod/proxy/plugins/frontend_dev=/plugins/frontend_dev
 
-FROM caddy/caddy:2.11-alpine
+FROM caddy/caddy:2.11.2-alpine
 
 # Ensure latest packages are present, like security updates.
 RUN apk upgrade --no-cache \
