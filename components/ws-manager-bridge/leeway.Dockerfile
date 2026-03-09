@@ -14,7 +14,7 @@ COPY components-ws-manager-bridge--app /installer/
 WORKDIR /app
 RUN /installer/install.sh
 
-FROM node:22.22.0-alpine
+FROM node:22.22.1-alpine
 ENV NODE_OPTIONS=--unhandled-rejections=warn
 EXPOSE 3000
 COPY --from=builder --chown=node:node /app /app/
