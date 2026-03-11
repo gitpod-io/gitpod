@@ -405,7 +405,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [ staging, production ]
+        env: [ production ]
     steps:
       - uses: gitpod-io/gh-app-auth@v0.1
         id: auth
