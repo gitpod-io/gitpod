@@ -67,6 +67,26 @@ describe("WorkspaceTimeoutDuration", () => {
             // Zero duration components are handled by the totalMinutes > 0 check
             expect(() => WorkspaceTimeoutDuration.validate("0m")).to.throw("Invalid timeout value");
             expect(() => WorkspaceTimeoutDuration.validate("0h")).to.throw("Invalid timeout value");
+            expect(() => WorkspaceTimeoutDuration.validate("0s")).to.throw("Invalid timeout value");
+        });
+    });
+
+    describe("toMs", () => {
+        it("should parse valid durations to milliseconds", () => {
+            expect(WorkspaceTimeoutDuration.toMs("30m")).to.equal(30 * 60 * 1000);
+            expect(WorkspaceTimeoutDuration.toMs("1h")).to.equal(60 * 60 * 1000);
+            expect(WorkspaceTimeoutDuration.toMs("1h30m")).to.equal(90 * 60 * 1000);
+            expect(WorkspaceTimeoutDuration.toMs("2h15m")).to.equal(135 * 60 * 1000);
+        });
+
+        it("should return undefined for invalid durations", () => {
+            expect(WorkspaceTimeoutDuration.toMs("invalid")).to.be.undefined;
+            expect(WorkspaceTimeoutDuration.toMs("")).to.be.undefined;
+        });
+
+        it("should handle zero durations", () => {
+            expect(WorkspaceTimeoutDuration.toMs("0s")).to.equal(0);
+            expect(WorkspaceTimeoutDuration.toMs("0m")).to.equal(0);
         });
     });
 });

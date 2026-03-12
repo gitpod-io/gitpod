@@ -394,6 +394,22 @@ export namespace WorkspaceTimeoutDuration {
             throw new Error(`Invalid timeout format: ${duration}. Use Go duration format (e.g., "30m", "1h30m", "2h")`);
         }
     }
+
+    /**
+     * Parses a Go-style duration string to milliseconds.
+     * Returns undefined if the duration is invalid.
+     */
+    export function toMs(duration: string): number | undefined {
+        try {
+            const ms = parse(duration.toLowerCase());
+            if (ms === undefined || ms === null) {
+                return undefined;
+            }
+            return ms;
+        } catch {
+            return undefined;
+        }
+    }
 }
 
 export const WORKSPACE_TIMEOUT_DEFAULT_SHORT: WorkspaceTimeoutDuration = "30m";

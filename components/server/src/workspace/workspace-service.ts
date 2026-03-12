@@ -1076,6 +1076,18 @@ export class WorkspaceService {
             );
         }
 
+        // Enforce org inactivity policy as a maximum: user-set timeout must not exceed it
+        if (orgSettings.timeoutSettings?.inactivity) {
+            const orgTimeoutMs = WorkspaceTimeoutDuration.toMs(orgSettings.timeoutSettings.inactivity);
+            const requestedMs = WorkspaceTimeoutDuration.toMs(validatedDuration);
+            if (orgTimeoutMs !== undefined && requestedMs !== undefined && requestedMs > orgTimeoutMs) {
+                throw new ApplicationError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    `Timeout exceeds the organization's inactivity limit of ${orgSettings.timeoutSettings.inactivity}`,
+                );
+            }
+        }
+
         const instance = await this.getCurrentInstance(userId, workspaceId);
         if (instance.status.phase !== "running" || workspace.type !== "regular") {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for regular, running workspaces");
