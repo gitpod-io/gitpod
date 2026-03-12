@@ -49,10 +49,13 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/gitpod-io/gitpod/common-go/analytics"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
@@ -180,6 +183,11 @@ func Run(options ...RunOption) {
 		o(&opts)
 	}
 
+	tracingCloser := tracing.Init("supervisor")
+	if tracingCloser != nil {
+		defer tracingCloser.Close()
+	}
+
 	cfg, err := GetConfig()
 	if err != nil {
 		log.WithError(err).Fatal("configuration error")
@@ -271,15 +279,20 @@ func Run(options ...RunOption) {
 	}
 
 	if !opts.RunGP {
-		gitpodService = serverapi.NewServerApiService(ctx, &serverapi.ServiceConfig{
-			Host:              host,
-			Endpoint:          endpoint,
-			InstanceID:        cfg.WorkspaceInstanceID,
-			WorkspaceID:       cfg.WorkspaceID,
-			OwnerID:           cfg.OwnerId,
-			SupervisorVersion: Version,
-			ConfigcatEnabled:  cfg.ConfigcatEnabled,
-		}, tokenService)
+		func() {
+			span, _ := opentracing.StartSpanFromContext(ctx, "startup.api_client_setup")
+			defer span.Finish()
+
+			gitpodService = serverapi.NewServerApiService(ctx, &serverapi.ServiceConfig{
+				Host:              host,
+				Endpoint:          endpoint,
+				InstanceID:        cfg.WorkspaceInstanceID,
+				WorkspaceID:       cfg.WorkspaceID,
+				OwnerID:           cfg.OwnerId,
+				SupervisorVersion: Version,
+				ConfigcatEnabled:  cfg.ConfigcatEnabled,
+			}, tokenService)
+		}()
 	}
 
 	if cfg.GetDesktopIDE() != nil {
@@ -605,6 +618,10 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 	if repo == "" {
 		return
 	}
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "devcontainer.dotfiles")
+	span.SetTag("repo", repo)
+	defer span.Finish()
 
 	const dotfilePath = "/home/gitpod/.dotfiles"
 	if _, err := os.Stat(dotfilePath); err == nil {
@@ -1673,13 +1690,17 @@ func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
 	}
 
 	go func() {
+		span, ctx := opentracing.StartSpanFromContext(ctx, "devcontainer.start_ssh")
 		ssh, err := newSSHServer(ctx, cfg, childProcEnvvars)
 		if err != nil {
+			tracing.LogError(span, err)
+			span.Finish()
 			log.WithError(err).Error("err creating SSH server")
 			return
 		}
 		configureSSHDefaultDir(cfg)
 		configureSSHMessageOfTheDay()
+		span.Finish()
 		err = ssh.listenAndServe()
 		if err != nil {
 			log.WithError(err).Error("err starting SSH server")

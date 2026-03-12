@@ -238,8 +238,15 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 
 		// we already cloned the git repository but we need to check CloneTarget exists
 		// to avoid calling fetch from a non-existing branch
-		gitout, err := ws.GitWithOutput(ctx, nil, "ls-remote", "--exit-code", "origin", ws.CloneTarget)
-		if err != nil || len(gitout) == 0 {
+		var lsRemoteErr error
+		func() {
+			lsSpan, lsCtx := opentracing.StartSpanFromContext(ctx, "git.ls_remote")
+			lsSpan.SetTag("branch", ws.CloneTarget)
+			defer tracing.FinishSpan(lsSpan, &lsRemoteErr)
+
+			gitout, lsRemoteErr = ws.GitWithOutput(lsCtx, nil, "ls-remote", "--exit-code", "origin", ws.CloneTarget)
+		}()
+		if lsRemoteErr != nil || len(gitout) == 0 {
 			log.WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Warnf("Invalid default branch name. Changing to %v", defaultBranch)
 			ws.CloneTarget = defaultBranch
 		}
@@ -255,12 +262,25 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 		if !isShallow {
 			fetchArgs = []string{"origin", "--recurse-submodules=no", ws.CloneTarget}
 		}
-		if err := ws.Git(ctx, "fetch", fetchArgs...); err != nil {
+		if err := func() (fetchErr error) {
+			fetchSpan, fetchCtx := opentracing.StartSpanFromContext(ctx, "git.fetch_branch")
+			fetchSpan.SetTag("branch", ws.CloneTarget)
+			fetchSpan.SetTag("shallow", isShallow)
+			defer tracing.FinishSpan(fetchSpan, &fetchErr)
+
+			return ws.Git(fetchCtx, "fetch", fetchArgs...)
+		}(); err != nil {
 			log.WithError(err).WithField("isShallow", isShallow).WithField("remoteURI", ws.RemoteURI).WithField("branch", ws.CloneTarget).Error("Cannot fetch remote branch")
 			return err
 		}
 
-		if err := ws.Git(ctx, "-c", "core.hooksPath=/dev/null", "checkout", "-B", branchName, "origin/"+ws.CloneTarget); err != nil {
+		if err := func() (checkoutErr error) {
+			checkoutSpan, checkoutCtx := opentracing.StartSpanFromContext(ctx, "git.checkout")
+			checkoutSpan.SetTag("branch", branchName)
+			defer tracing.FinishSpan(checkoutSpan, &checkoutErr)
+
+			return ws.Git(checkoutCtx, "-c", "core.hooksPath=/dev/null", "checkout", "-B", branchName, "origin/"+ws.CloneTarget)
+		}(); err != nil {
 			log.WithError(err).WithField("remoteURI", ws.RemoteURI).WithField("branch", branchName).Error("Cannot fetch remote branch")
 			return err
 		}
@@ -273,24 +293,45 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 		// We did a shallow clone before, hence need to fetch the commit we are about to check out.
 		// Because we don't want to make the "git fetch" mechanism in supervisor more complicated,
 		// we'll just fetch the 20 commits right away.
-		if err := ws.Git(ctx, "fetch", "origin", ws.CloneTarget, "--depth=20"); err != nil {
+		if err := func() (fetchErr error) {
+			fetchSpan, fetchCtx := opentracing.StartSpanFromContext(ctx, "git.fetch_commit")
+			fetchSpan.SetTag("commit", ws.CloneTarget)
+			defer tracing.FinishSpan(fetchSpan, &fetchErr)
+
+			return ws.Git(fetchCtx, "fetch", "origin", ws.CloneTarget, "--depth=20")
+		}(); err != nil {
 			return err
 		}
 
 		// checkout specific commit
-		if err := ws.Git(ctx, "-c", "core.hooksPath=/dev/null", "checkout", ws.CloneTarget); err != nil {
+		if err := func() (checkoutErr error) {
+			checkoutSpan, checkoutCtx := opentracing.StartSpanFromContext(ctx, "git.checkout")
+			checkoutSpan.SetTag("commit", ws.CloneTarget)
+			defer tracing.FinishSpan(checkoutSpan, &checkoutErr)
+
+			return ws.Git(checkoutCtx, "-c", "core.hooksPath=/dev/null", "checkout", ws.CloneTarget)
+		}(); err != nil {
 			return err
 		}
 	default:
 		// update to remote HEAD
-		if _, err := ws.GitWithOutput(ctx, nil, "reset", "--hard", "origin/HEAD"); err != nil {
-			var giterr git.OpFailedError
-			if errors.As(err, &giterr) && strings.Contains(giterr.Output, "unknown revision or path not in the working tree") {
-				// 'git reset --hard origin/HEAD' returns a non-zero exit code if origin does not have a single commit (empty repository).
-				// In this case that's not an error though, hence we don't want to fail here.
-			} else {
-				return err
+		if err := func() error {
+			resetSpan, resetCtx := opentracing.StartSpanFromContext(ctx, "git.reset_hard")
+			var resetErr error
+			defer tracing.FinishSpan(resetSpan, &resetErr)
+
+			_, resetErr = ws.GitWithOutput(resetCtx, nil, "reset", "--hard", "origin/HEAD")
+			if resetErr != nil {
+				var giterr git.OpFailedError
+				if errors.As(resetErr, &giterr) && strings.Contains(giterr.Output, "unknown revision or path not in the working tree") {
+					// 'git reset --hard origin/HEAD' returns a non-zero exit code if origin does not have a single commit (empty repository).
+					// In this case that's not an error though, hence we don't want to fail here.
+					resetErr = nil
+				}
 			}
+			return resetErr
+		}(); err != nil {
+			return err
 		}
 	}
 	return nil
