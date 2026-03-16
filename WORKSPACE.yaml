@@ -7,7 +7,7 @@ defaultArgs:
   publishToNPM: false
   publishToJBMarketplace: false
   localAppVersion: unknown
-  codeCommit: 3ab39fa90386f3438405fa4a0f2c09b8af36c951
+  codeCommit: 2b520f09a49c856a7cb9c8a686f2b501bb9f40e9
   codeVersion: 1.111.0
   codeQuality: stable
   codeWebExtensionCommit: 3953e8160fffa97dd4a4509542b4bf7ff9b704cd
@@ -62,4 +62,9 @@ defaultVariant:
       - "**/node_modules/**"
   config:
     go:
-      lintCommand: ["sh", "-c", "golangci-lint run --disable govet,errcheck,staticcheck --allow-parallel-runners --timeout 15m"]
+      lintCommand:
+        [
+          "sh",
+          "-c",
+          "golangci-lint run --disable govet,errcheck,staticcheck --allow-parallel-runners --timeout 15m",
+        ]
