@@ -242,7 +242,10 @@ RUN curl -fsSLO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJS
 
 # So we can parse the report.html output by leeway, and remove the output produced by this image build
 # why? it's too verbose, exceeding the Github Actions summary limit
-RUN go install github.com/ericchiang/pup@v0.4.0
+RUN curl -fsSL https://github.com/ericchiang/pup/releases/download/v0.4.0/pup_v0.4.0_linux_${TARGETARCH}.zip -o /tmp/pup.zip \
+    && unzip -o /tmp/pup.zip -d /usr/local/bin \
+    && chmod +x /usr/local/bin/pup \
+    && rm /tmp/pup.zip
 
 # Install oci-tool
 RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.0/oci-tool_0.2.0_linux_${TARGETARCH}.tar.gz | tar xz -C /usr/local/bin \
