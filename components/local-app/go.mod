@@ -8,7 +8,6 @@ godebug tlsmlkem=0
 
 require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/local-app/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
@@ -33,6 +32,7 @@ require (
 require (
 	github.com/bufbuild/connect-go v1.10.0
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gookit/color v1.5.4
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/lmittmann/tint v1.0.3
