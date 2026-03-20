@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/code/codehelper
 
-go 1.24
+go 1.24.0
 
 toolchain go1.24.3
 
@@ -11,11 +11,11 @@ require (
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/sirupsen/logrus v1.9.3
-	google.golang.org/grpc v1.65.0
+	google.golang.org/grpc v1.79.3
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require golang.org/x/sys v0.21.0 // indirect
+require golang.org/x/sys v0.39.0 // indirect
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -36,11 +36,11 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37 // indirect
-	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../../common-go // leeway
