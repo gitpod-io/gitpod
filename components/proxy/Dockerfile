@@ -8,9 +8,10 @@ WORKDIR /plugins
 
 COPY plugins /plugins
 
-# build caddy
+# build caddy — pin smallstep/certificates to v0.30.1 (fixes GHSA-q4r8-xm5f-56gw)
 RUN xcaddy build v2.11.2 \
   --output /caddy \
+  --replace github.com/smallstep/certificates=github.com/smallstep/certificates@v0.30.1 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
   --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
   --with github.com/gitpod-io/gitpod/proxy/plugins/workspacedownload=/plugins/workspacedownload \

@@ -18,9 +18,11 @@ RUN find . -type f \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '
 
 COPY components-gitpod-protocol--gitpod-schema/gitpod-schema.json /www/static/schemas/gitpod-schema.json
 
-# Build Caddy from source to get v2.11.0-beta.2 with fixed smallstep/certificates
+# Build Caddy from source with smallstep/certificates pinned to v0.30.1 (fixes GHSA-q4r8-xm5f-56gw)
 FROM caddy:builder AS caddy-builder
-RUN xcaddy build v2.11.0-beta.2 --output /caddy
+RUN xcaddy build v2.11.2 \
+  --replace github.com/smallstep/certificates=github.com/smallstep/certificates@v0.30.1 \
+  --output /caddy
 
 FROM caddy/caddy:2.11.2-alpine
 RUN apk upgrade --no-cache

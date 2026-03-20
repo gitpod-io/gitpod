@@ -17,11 +17,13 @@ RUN for FILE in `ls /app-bin/gitpod-local-companion*`;do \
 RUN mkdir -p static/code
 RUN curl -o static/code/marketplace.json "https://raw.githubusercontent.com/EclipseFdn/publish-extensions/d9a7cc2d486ca881e9df310324f9752f48156283/extension-control/extensions.json"
 
-# Build Caddy from source with v2.11.1 (includes security fixes)
+# Build Caddy from source with smallstep/certificates pinned to v0.30.1 (fixes GHSA-q4r8-xm5f-56gw)
 FROM caddy:builder AS caddy-builder
-RUN xcaddy build v2.11.1 --output /caddy
+RUN xcaddy build v2.11.2 \
+  --replace github.com/smallstep/certificates=github.com/smallstep/certificates@v0.30.1 \
+  --output /caddy
 
-FROM caddy/caddy:2.11-alpine
+FROM caddy/caddy:2.11.2-alpine
 
 # Ensure latest packages are present, like security updates.
 RUN apk upgrade --no-cache
