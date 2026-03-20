@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/gitpod-cli
 
-go 1.24
+go 1.24.0
 
 toolchain go1.24.3
 
@@ -15,9 +15,9 @@ require (
 	github.com/gitpod-io/gitpod/ide-metrics-api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/go-errors/errors v1.4.2
-	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/golang/mock v1.6.0
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/tcpproxy v0.0.0-20180808230851-dfa16c61dad2
 	github.com/gorilla/handlers v1.5.1
@@ -28,10 +28,10 @@ require (
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/sync v0.12.0
-	golang.org/x/term v0.30.0
+	golang.org/x/sync v0.19.0
+	golang.org/x/term v0.38.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
-	google.golang.org/grpc v1.65.0
+	google.golang.org/grpc v1.79.3
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -53,10 +53,10 @@ require (
 	github.com/prometheus/client_golang v1.19.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
+	golang.org/x/crypto v0.46.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
@@ -72,9 +72,9 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0 // indirect
 )
 
