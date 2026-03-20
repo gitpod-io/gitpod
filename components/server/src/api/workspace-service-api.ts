@@ -349,7 +349,7 @@ export class WorkspaceServiceAPI implements ServiceImpl<typeof WorkspaceServiceI
         if (!isWorkspaceId(req.workspaceId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "a valid workspaceId is required");
         }
-        if (req.spec?.timeout?.inactivity?.seconds || (req.spec?.sshPublicKeys && req.spec?.sshPublicKeys.length > 0)) {
+        if (req.spec?.timeout?.inactivity !== undefined || (req.spec?.sshPublicKeys && req.spec?.sshPublicKeys.length > 0)) {
             throw new ApplicationError(ErrorCodes.UNIMPLEMENTED, "not implemented");
         }
         const userId = ctxUserId();

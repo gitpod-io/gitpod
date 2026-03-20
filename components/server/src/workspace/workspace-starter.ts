@@ -1673,11 +1673,22 @@ export class WorkspaceStarter {
                     } catch (err) {}
                 }
 
-                // Users can optionally override the organization-wide timeout default if the organization allows it
+                // Users can optionally override the organization-wide timeout default if the organization allows it,
+                // but the user timeout must not exceed the org's inactivity policy.
                 if (!organizationSettings.timeoutSettings?.denyUserTimeouts && user.additionalData?.workspaceTimeout) {
                     try {
                         const timeout = WorkspaceTimeoutDuration.validate(user.additionalData?.workspaceTimeout);
-                        spec.setTimeout(timeout);
+                        const orgTimeoutMs = organizationSettings.timeoutSettings?.inactivity
+                            ? WorkspaceTimeoutDuration.toMs(organizationSettings.timeoutSettings.inactivity)
+                            : undefined;
+                        const userTimeoutMs = WorkspaceTimeoutDuration.toMs(timeout);
+                        if (
+                            orgTimeoutMs === undefined ||
+                            userTimeoutMs === undefined ||
+                            userTimeoutMs <= orgTimeoutMs
+                        ) {
+                            spec.setTimeout(timeout);
+                        }
                     } catch (err) {}
                 }
 

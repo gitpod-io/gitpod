@@ -473,6 +473,55 @@ describe("WorkspaceService", async () => {
         );
     });
 
+    it("should reject setWorkspaceTimeout when denyUserTimeouts is set", async () => {
+        const svc = container.get(WorkspaceService);
+        const orgService = container.get(OrganizationService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await orgService.updateSettings(owner.id, org.id, {
+            timeoutSettings: { denyUserTimeouts: true },
+        });
+
+        await expectError(
+            ErrorCodes.PRECONDITION_FAILED,
+            svc.setWorkspaceTimeout(owner.id, ws.id, "60m"),
+            "should fail when user timeouts are denied",
+        );
+    });
+
+    it("should reject setWorkspaceTimeout exceeding org inactivity policy", async () => {
+        const svc = container.get(WorkspaceService);
+        const orgService = container.get(OrganizationService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await orgService.updateSettings(owner.id, org.id, {
+            timeoutSettings: { inactivity: "30m" },
+        });
+
+        await expectError(
+            ErrorCodes.PRECONDITION_FAILED,
+            svc.setWorkspaceTimeout(owner.id, ws.id, "60m"),
+            "should fail when timeout exceeds org inactivity policy",
+        );
+    });
+
+    it("should allow setWorkspaceTimeout within org inactivity policy", async () => {
+        const svc = container.get(WorkspaceService);
+        const orgService = container.get(OrganizationService);
+        const ws = await createTestWorkspace(svc, org, owner, project);
+
+        await orgService.updateSettings(owner.id, org.id, {
+            timeoutSettings: { inactivity: "60m" },
+        });
+
+        // This should pass the org policy check but fail on non-running workspace
+        await expectError(
+            ErrorCodes.NOT_FOUND,
+            svc.setWorkspaceTimeout(owner.id, ws.id, "30m"),
+            "should pass org policy check but fail on non-running workspace",
+        );
+    });
+
     it("should getHeadlessLog", async () => {
         const svc = container.get(WorkspaceService);
         await createTestWorkspace(svc, org, owner, project);
