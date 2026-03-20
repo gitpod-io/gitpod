@@ -19,9 +19,9 @@ import (
 	"strings"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt/v5"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/local-app/pkg/prettyprint"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/skratchdot/open-golang/open"
 	keyring "github.com/zalando/go-keyring"
 	"golang.org/x/oauth2"
