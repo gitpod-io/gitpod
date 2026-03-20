@@ -1,6 +1,6 @@
 module github.com/gitpod-io/local-app
 
-go 1.24
+go 1.24.0
 
 toolchain go1.24.13
 
@@ -8,7 +8,6 @@ godebug tlsmlkem=0
 
 require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/local-app/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
@@ -22,17 +21,18 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/zalando/go-keyring v0.1.1
-	golang.org/x/crypto v0.36.0
-	golang.org/x/oauth2 v0.21.0
+	golang.org/x/crypto v0.46.0
+	golang.org/x/oauth2 v0.34.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
-	google.golang.org/grpc v1.65.0
-	google.golang.org/protobuf v1.34.2
+	google.golang.org/grpc v1.79.3
+	google.golang.org/protobuf v1.36.10
 	nhooyr.io/websocket v1.8.7 // indirect
 )
 
 require (
 	github.com/bufbuild/connect-go v1.10.0
 	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gookit/color v1.5.4
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/lmittmann/tint v1.0.3
@@ -89,11 +89,11 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
-	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
