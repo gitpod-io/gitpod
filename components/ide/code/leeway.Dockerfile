@@ -148,6 +148,11 @@ FROM scratch
 # copy static web resources in first layer to serve from blobserve
 COPY --from=code_builder --chown=33333:33333 /vscode-web/ /ide/
 COPY --from=code_builder --chown=33333:33333 /vscode-reh-linux-x64/ /ide/
+# Restore web client NLS files overwritten by REH copy
+COPY --from=code_builder --chown=33333:33333 /vscode-web/out/nls.messages.js /ide/out/nls.messages.js
+COPY --from=code_builder --chown=33333:33333 /vscode-web/out/nls.messages.json /ide/out/nls.messages.json
+COPY --from=code_builder --chown=33333:33333 /vscode-web/out/nls.keys.json /ide/out/nls.keys.json
+COPY --from=code_builder --chown=33333:33333 /vscode-web/out/nls.metadata.json /ide/out/nls.metadata.json
 
 ARG CODE_VERSION
 ARG CODE_COMMIT
