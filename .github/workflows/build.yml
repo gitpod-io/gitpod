@@ -61,9 +61,14 @@ jobs:
       pr_number: ${{ steps.pr-details.outputs.number }}
       pr_body: ${{ steps.pr-details.outputs.pr_body }}
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/actions
+          sparse-checkout-cone-mode: true
       - name: "Determine Branch"
         id: branches
-        uses: transferwise/sanitize-branch-name@009d85a96fcfe62a685b371dc8f299e53385ed9c # pin@v1
+        uses: ./.github/actions/sanitize-branch-name
         # Since we trigger this worklow on other event types, besides pull_request
         # We use this action to help us get the pr body, as it's not included in push/workflow_dispatch events
       - uses: 8BitJonny/gh-get-current-pr@2.2.0
