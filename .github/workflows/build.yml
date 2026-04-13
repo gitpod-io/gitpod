@@ -61,6 +61,11 @@ jobs:
       pr_number: ${{ steps.pr-details.outputs.number }}
       pr_body: ${{ steps.pr-details.outputs.pr_body }}
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/actions
+          sparse-checkout-cone-mode: true
       - name: "Determine Branch"
         id: branches
         uses: ./.github/actions/sanitize-branch-name
