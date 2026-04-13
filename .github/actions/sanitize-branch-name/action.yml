@@ -1,0 +1,15 @@
+name: Sanitize Branch Name
+description: Sanitize the current branch name for use in Docker tags and version strings
+outputs:
+  sanitized-branch-name:
+    description: Branch name with invalid characters replaced by hyphens
+    value: ${{ steps.sanitize.outputs.sanitized-branch-name }}
+runs:
+  using: composite
+  steps:
+    - id: sanitize
+      shell: bash
+      run: |
+        BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+        SANITIZED=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._-]/-/g' | tr '[:upper:]' '[:lower:]')
+        echo "sanitized-branch-name=$SANITIZED" >> "$GITHUB_OUTPUT"
