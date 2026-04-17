@@ -6,7 +6,7 @@ FROM cgr.dev/chainguard/go:1.20 AS debugger
 RUN apk add --no-cache git
 RUN go get -u github.com/go-delve/delve/cmd/dlv
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:3c3d82a541ed600f97dd3b7e0b7d5a7977c76664215c6c6d4311ca65f30705a1 as dl
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:1af610c4a70668dad46159ee178b20378c79a49b554f76405670fc442d30183a as dl
 WORKDIR /dl
 RUN apk add --no-cache curl file \
   && curl -OsSL https://github.com/opencontainers/runc/releases/download/v1.1.14/runc.amd64 \
