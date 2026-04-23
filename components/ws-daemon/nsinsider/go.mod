@@ -2,7 +2,7 @@ module github.com/gitpod-io/gitpod/ws-daemon/nsinsider
 
 go 1.24.0
 
-toolchain go1.24.3
+toolchain go1.24.13
 
 godebug tlsmlkem=0
 

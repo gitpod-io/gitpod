@@ -4,14 +4,14 @@
 
 FROM gitpod/workspace-gitpod-dev:latest
 
-ENV TRIGGER_REBUILD 45
+ENV TRIGGER_REBUILD 46
 
 USER root
 
 ### Go ###
 # Pin Go version explicitly to ensure all CI-built binaries use a
-# non-vulnerable toolchain (CVE-2025-68121 requires >= 1.24.13).
-ENV GO_VERSION=1.24.13
+# non-vulnerable toolchain (CVE-2026-27143 requires >= 1.25.9).
+ENV GO_VERSION=1.25.9
 RUN rm -rf /usr/local/go /home/gitpod/go /home/gitpod/.cache/go-build \
     && curl -fsSL "https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz" | tar -C /usr/local -xz \
     && ln -sf /usr/local/go/bin/go /usr/bin/go \

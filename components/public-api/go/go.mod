@@ -2,7 +2,7 @@ module github.com/gitpod-io/gitpod/components/public-api/go
 
 go 1.24.0
 
-toolchain go1.24.3
+toolchain go1.24.13
 
 godebug tlsmlkem=0
 

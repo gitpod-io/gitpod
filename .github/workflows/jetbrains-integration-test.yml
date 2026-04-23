@@ -34,7 +34,7 @@ on:
 jobs:
   jetbrains-smoke-test-linux:
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-go-1-24-13-cve-2025-68121-gha.181
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:ona-clc-2243-fix-cve-2026-27143-bump-go-gha.275
       options: --user root
     runs-on: ubuntu-latest
     steps:

@@ -60,7 +60,7 @@ jobs:
     needs: [configuration]
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-go-1-24-13-cve-2025-68121-gha.181
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:ona-clc-2243-fix-cve-2026-27143-bump-go-gha.275
       options: --user root
     concurrency:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
@@ -93,7 +93,7 @@ jobs:
     if: ${{ needs.configuration.outputs.skip == 'false' }}
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-go-1-24-13-cve-2025-68121-gha.181
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:ona-clc-2243-fix-cve-2026-27143-bump-go-gha.275
       options: --user root
       volumes:
         - /var/tmp:/var/tmp
@@ -171,7 +171,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:fix-go-1-24-13-cve-2025-68121-gha.181
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:ona-clc-2243-fix-cve-2026-27143-bump-go-gha.275
       options: --user root
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
