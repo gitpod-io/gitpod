@@ -2,7 +2,7 @@ module github.com/gitpod-io/gitpod/content-service-api/util
 
 go 1.24.0
 
-toolchain go1.24.3
+toolchain go1.25.9
 
 godebug tlsmlkem=0
 
