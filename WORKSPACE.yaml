@@ -71,9 +71,5 @@ defaultVariant:
         [
           "sh",
           "-c",
-          # --go=1.24 keeps lint compatible with the v1.64.x golangci-lint built into the
-          # CI dev-environment image (which is itself built with Go 1.24). Our toolchain bump
-          # to 1.25.9 only addresses CVE-2026-27143 in the Go stdlib; we don't use any 1.25
-          # language features.
-          "golangci-lint run --go=1.24 --disable govet,errcheck,staticcheck --allow-parallel-runners --timeout 15m",
+          "golangci-lint run --disable govet,errcheck,staticcheck --allow-parallel-runners --timeout 15m",
         ]
