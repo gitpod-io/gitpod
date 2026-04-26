@@ -39,7 +39,7 @@
     "@gitpod/ws-daemon": "0.1.5",
     "@gitpod/ws-manager": "0.1.5",
     "@gitpod/ws-manager-bridge-api": "0.1.5",
-    "express": "^4.17.3",
+    "express": "^4.21.2",
     "inversify": "^6.0.1",
     "ioredis": "^5.3.2",
     "prom-client": "^14.2.0",
