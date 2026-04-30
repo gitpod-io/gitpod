@@ -298,14 +298,24 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		return nil, status.Errorf(codes.AlreadyExists, "workspace %s already exists", req.Metadata.MetaId)
 	}
 
-	err = wsm.createWorkspaceSecret(ctx, &ws, envSecretName, wsm.Config.Namespace, envData)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create env secret for workspace %s: %w", req.Id, err)
+	// Create env and token secrets in parallel since they are independent operations.
+	var envSecretErr, tokenSecretErr error
+	var secretWg sync.WaitGroup
+	secretWg.Add(2)
+	go func() {
+		defer secretWg.Done()
+		envSecretErr = wsm.createWorkspaceSecret(ctx, &ws, envSecretName, wsm.Config.Namespace, envData)
+	}()
+	go func() {
+		defer secretWg.Done()
+		tokenSecretErr = wsm.createWorkspaceSecret(ctx, &ws, fmt.Sprintf("%s-%s", req.Id, "tokens"), wsm.Config.SecretsNamespace, tokenData)
+	}()
+	secretWg.Wait()
+	if envSecretErr != nil {
+		return nil, fmt.Errorf("cannot create env secret for workspace %s: %w", req.Id, envSecretErr)
 	}
-
-	err = wsm.createWorkspaceSecret(ctx, &ws, fmt.Sprintf("%s-%s", req.Id, "tokens"), wsm.Config.SecretsNamespace, tokenData)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create token secret for workspace %s: %w", req.Id, err)
+	if tokenSecretErr != nil {
+		return nil, fmt.Errorf("cannot create token secret for workspace %s: %w", req.Id, tokenSecretErr)
 	}
 
 	wsm.metrics.recordWorkspaceStart(&ws)

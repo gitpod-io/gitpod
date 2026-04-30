@@ -511,21 +511,33 @@ func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *wo
 	defer tracing.FinishSpan(span, &err)
 	log := log.FromContext(ctx).WithValues("owi", ws.OWI())
 
-	// if a secret cannot be deleted we do not return early because we want to attempt
-	// the deletion of the remaining secrets
+	// Delete env and token secrets in parallel since they are independent operations.
+	var envErr, tokenErr error
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		if e := r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "env"), r.Config.Namespace); e != nil {
+			envErr = e
+			log.Error(e, "could not delete environment secret", "workspace", ws.Name)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		if e := r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "tokens"), r.Config.SecretsNamespace); e != nil {
+			tokenErr = e
+			log.Error(e, "could not delete token secret", "workspace", ws.Name)
+		}
+	}()
+	wg.Wait()
+
 	var errs []string
-	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "env"), r.Config.Namespace)
-	if err != nil {
-		errs = append(errs, err.Error())
-		log.Error(err, "could not delete environment secret", "workspace", ws.Name)
+	if envErr != nil {
+		errs = append(errs, envErr.Error())
 	}
-
-	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "tokens"), r.Config.SecretsNamespace)
-	if err != nil {
-		errs = append(errs, err.Error())
-		log.Error(err, "could not delete token secret", "workspace", ws.Name)
+	if tokenErr != nil {
+		errs = append(errs, tokenErr.Error())
 	}
-
 	if len(errs) != 0 {
 		return fmt.Errorf("%s", strings.Join(errs, ":"))
 	}
