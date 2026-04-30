@@ -68,15 +68,6 @@ var (
 func CollectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps storage.PresignedAccess, workspaceOwner string, initializer *csapi.WorkspaceInitializer) (rc map[string]storage.DownloadInfo, err error) {
 	rc = make(map[string]storage.DownloadInfo)
 
-	backup, err := ps.SignDownload(ctx, rs.Bucket(workspaceOwner), rs.BackupObject(storage.DefaultBackup), &storage.SignedURLOptions{})
-	if err == storage.ErrNotFound {
-		// no backup found - that's fine
-	} else if err != nil {
-		return nil, err
-	} else {
-		rc[storage.DefaultBackup] = *backup
-	}
-
 	si := initializer.GetSnapshot()
 	pi := initializer.GetPrebuild()
 	if ci := initializer.GetComposite(); ci != nil {
@@ -89,33 +80,92 @@ func CollectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 			}
 		}
 	}
+
+	// Parse snapshot/prebuild names before launching goroutines so we can fail fast
+	// on invalid input without wasting network calls.
+	var snapshotBkt, snapshotObj string
 	if si != nil {
-		bkt, obj, err := storage.ParseSnapshotName(si.Snapshot)
+		snapshotBkt, snapshotObj, err = storage.ParseSnapshotName(si.Snapshot)
 		if err != nil {
 			return nil, err
 		}
-		info, err := ps.SignDownload(ctx, bkt, obj, &storage.SignedURLOptions{})
-		if err == storage.ErrNotFound {
-			return nil, errCannotFindSnapshot
-		}
+	}
+	var prebuildBkt, prebuildObj string
+	if pi != nil && pi.Prebuild != nil && pi.Prebuild.Snapshot != "" {
+		prebuildBkt, prebuildObj, err = storage.ParseSnapshotName(pi.Prebuild.Snapshot)
 		if err != nil {
-			return nil, xerrors.Errorf("cannot find snapshot: %w", err)
+			return nil, err
 		}
+	}
 
-		rc[si.Snapshot] = *info
+	// Fire all SignDownload calls in parallel since they are independent network
+	// operations (each signs a different storage object URL).
+	type result struct {
+		key  string
+		info *storage.DownloadInfo
+		err  error
+	}
+
+	// Count how many downloads we need to perform.
+	numDownloads := 1 // always check backup
+	if si != nil {
+		numDownloads++
 	}
 	if pi != nil && pi.Prebuild != nil && pi.Prebuild.Snapshot != "" {
-		bkt, obj, err := storage.ParseSnapshotName(pi.Prebuild.Snapshot)
-		if err != nil {
-			return nil, err
-		}
-		info, err := ps.SignDownload(ctx, bkt, obj, &storage.SignedURLOptions{})
+		numDownloads++
+	}
+
+	results := make(chan result, numDownloads)
+
+	// 1. Backup download
+	go func() {
+		backup, err := ps.SignDownload(ctx, rs.Bucket(workspaceOwner), rs.BackupObject(storage.DefaultBackup), &storage.SignedURLOptions{})
 		if err == storage.ErrNotFound {
-			// no prebuild found - that's fine
+			results <- result{key: storage.DefaultBackup, info: nil, err: nil}
 		} else if err != nil {
-			return nil, xerrors.Errorf("cannot find prebuild: %w", err)
+			results <- result{key: storage.DefaultBackup, err: err}
 		} else {
-			rc[pi.Prebuild.Snapshot] = *info
+			results <- result{key: storage.DefaultBackup, info: backup}
+		}
+	}()
+
+	// 2. Snapshot download (if needed)
+	if si != nil {
+		go func() {
+			info, err := ps.SignDownload(ctx, snapshotBkt, snapshotObj, &storage.SignedURLOptions{})
+			if err == storage.ErrNotFound {
+				results <- result{key: si.Snapshot, err: errCannotFindSnapshot}
+			} else if err != nil {
+				results <- result{key: si.Snapshot, err: xerrors.Errorf("cannot find snapshot: %w", err)}
+			} else {
+				results <- result{key: si.Snapshot, info: info}
+			}
+		}()
+	}
+
+	// 3. Prebuild download (if needed)
+	if pi != nil && pi.Prebuild != nil && pi.Prebuild.Snapshot != "" {
+		go func() {
+			info, err := ps.SignDownload(ctx, prebuildBkt, prebuildObj, &storage.SignedURLOptions{})
+			if err == storage.ErrNotFound {
+				// no prebuild found - that's fine
+				results <- result{key: pi.Prebuild.Snapshot, info: nil, err: nil}
+			} else if err != nil {
+				results <- result{key: pi.Prebuild.Snapshot, err: xerrors.Errorf("cannot find prebuild: %w", err)}
+			} else {
+				results <- result{key: pi.Prebuild.Snapshot, info: info}
+			}
+		}()
+	}
+
+	// Collect results
+	for i := 0; i < numDownloads; i++ {
+		r := <-results
+		if r.err != nil {
+			return nil, r.err
+		}
+		if r.info != nil {
+			rc[r.key] = *r.info
 		}
 	}
 
