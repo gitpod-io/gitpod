@@ -1,8 +1,6 @@
 module github.com/gitpod-io/gitpod/code-desktop/status
 
-go 1.24.0
-
-toolchain go1.24.13
+go 1.25.0
 
 godebug tlsmlkem=0
 
@@ -19,9 +17,9 @@ require (
 
 require (
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
-	golang.org/x/net v0.48.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	google.golang.org/protobuf v1.36.10 // indirect
 )

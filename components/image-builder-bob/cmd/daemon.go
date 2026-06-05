@@ -15,7 +15,6 @@ import (
 	log "github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/image-builder/bob/pkg/builder"
 
-	"github.com/containerd/console"
 	"github.com/moby/buildkit/client"
 	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/util/progress/progressui"
@@ -86,9 +85,12 @@ func prewarmCache(cl *client.Client, images []string) error {
 			return err
 		})
 		eg.Go(func() error {
-			var c console.Console
 			// not using shared context to not disrupt display but let is finish reporting errors
-			_, err := progressui.DisplaySolveStatus(context.TODO(), c, os.Stderr, ch)
+			display, err := progressui.NewDisplay(os.Stderr, progressui.AutoMode)
+			if err != nil {
+				return err
+			}
+			_, err = display.UpdateFrom(context.TODO(), ch)
 			return err
 		})
 		err = eg.Wait()
