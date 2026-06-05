@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/containerd/containerd/remotes/docker"
+	"github.com/containerd/containerd/v2/core/remotes/docker"
 	"github.com/distribution/reference"
 	"github.com/spf13/cobra"
 

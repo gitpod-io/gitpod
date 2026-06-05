@@ -14,7 +14,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/containerd/containerd/remotes/docker"
+	"github.com/containerd/containerd/v2/core/remotes/docker"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/hashicorp/go-retryablehttp"
 )

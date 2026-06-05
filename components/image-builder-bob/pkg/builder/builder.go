@@ -255,7 +255,7 @@ func connectToBuildkitd(socketPath string) (cl *client.Client, err error) {
 		ctx, cancel := context.WithTimeout(context.Background(), initialConnectionTimeout)
 
 		log.WithField("attempt", i).Debug("attempting to connect to buildkitd")
-		cl, err = client.New(ctx, socketPath, client.WithFailFast())
+		cl, err = client.New(ctx, socketPath)
 		if err != nil {
 			cancel()
 			if i == maxConnectionAttempts-1 {
