@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/gpctl
 
-go 1.26.4
+go 1.25.11
 
 godebug tlsmlkem=0
 
