@@ -23,7 +23,7 @@ defaultArgs:
   clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2025.1.1.tar.gz"
   rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2025.1.2.tar.gz"
   jbBackendVersion: "latest"
-  dockerVersion: "27.5.1"
+  dockerVersion: "29.5.3"
   dockerComposeVersion: "2.40.3"
   ipfsKuboVersion: "v0.18.0"
   ipfsClusterVersion: "v1.0.8"
@@ -45,11 +45,6 @@ sbom:
     - vulnerability: GHSA-2jcg-qqmg-46q6
       reason: |
         This is a false positive. See https://github.com/browserify/resolve/issues/303
-    - vulnerability: GHSA-p77j-4mvh-x3m3
-      reason: |
-        The only remaining instance is in the cloud_sql_proxy binary (v1.37.14, grpc v1.79.2)
-        bundled in gitpod-db. This component is no longer deployed in any environment.
-        No upstream cloud_sql_proxy v1.x release includes the fix (grpc v1.79.3).
     - vulnerability: GO-2026-4858
       reason: |
         This is a false positive for ghcr.io/gitpod-io/buildkit:v0.20.1-gitpod.8.
