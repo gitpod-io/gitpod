@@ -50,6 +50,13 @@ sbom:
         The only remaining instance is in the cloud_sql_proxy binary (v1.37.14, grpc v1.79.2)
         bundled in gitpod-db. This component is no longer deployed in any environment.
         No upstream cloud_sql_proxy v1.x release includes the fix (grpc v1.79.3).
+    - vulnerability: GO-2026-4858
+      reason: |
+        This is a false positive for ghcr.io/gitpod-io/buildkit:v0.20.1-gitpod.8.
+        The custom Gitpod BuildKit image backports the upstream v0.28.1 fix for
+        GHSA-4c29-8rgm-jvjj / CVE-2026-33747, but grype matches the emitted
+        github.com/moby/buildkit module version and still reports v0.20.1-gitpod.8
+        as vulnerable.
 environmentManifest:
   - name: "go"
     command: ["sh", "-c", "go version | sed s/arm/amd/"]
