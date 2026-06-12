@@ -140,13 +140,6 @@ RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION"
 ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 
-# Disable npx (security hardening - prevents arbitrary package execution)
-RUN sudo rm -f /usr/bin/npx /usr/local/bin/npx /home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin/npx && \
-    echo '#!/bin/sh' | sudo tee /usr/local/bin/npx > /dev/null && \
-    echo 'echo "npx is disabled for security reasons. Use explicit package installation instead." >&2' | sudo tee -a /usr/local/bin/npx > /dev/null && \
-    echo 'exit 1' | sudo tee -a /usr/local/bin/npx > /dev/null && \
-    sudo chmod +x /usr/local/bin/npx
-
 # Install npm-tools with locked dependencies
 COPY dev-npm-tools--pkg/package.json dev-npm-tools--pkg/package-lock.json /opt/npm-tools/
 RUN sudo chown -R gitpod:gitpod /opt/npm-tools && \
