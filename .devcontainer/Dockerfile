@@ -341,16 +341,6 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh |
     && nvm install v${NODE_VERSION} \
     && nvm alias default v${NODE_VERSION}"
 
-# Disable npx (security hardening - prevents arbitrary package execution)
-# Remove npx from NVM and replace with stub that prints warning
-RUN rm -f /usr/bin/npx /usr/local/bin/npx && \
-    rm -f /root/.nvm/versions/node/v${NODE_VERSION}/bin/npx && \
-    rm -f /root/.nvm/versions/node/v${NODE_VERSION}/lib/node_modules/npm/bin/npx-cli.js && \
-    echo '#!/bin/sh' > /usr/local/bin/npx && \
-    echo 'echo "npx is disabled for security reasons. Use explicit package installation instead." >&2' >> /usr/local/bin/npx && \
-    echo 'exit 1' >> /usr/local/bin/npx && \
-    chmod +x /usr/local/bin/npx
-
 # Install npm-tools with locked dependencies
 COPY dev/npm-tools/package.json dev/npm-tools/package-lock.json /opt/npm-tools/
 RUN cd /opt/npm-tools && \

@@ -8,7 +8,7 @@
     "node-gyp": "^10.3.1",
     "npm": "^11.7.0",
     "pnpm": "^9.15.0",
-    "prettier": "^3.0.0",
+    "prettier": "2.6.2",
     "typescript": "^5.7.3",
     "xunit-viewer": "^10.6.1",
     "yarn": "^1.22.22"
