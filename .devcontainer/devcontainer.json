@@ -5,7 +5,9 @@
     "dockerfile": "./Dockerfile"
   },
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "28"
+    }
   },
   "workspaceFolder": "/workspace/gitpod",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/gitpod,type=bind",
