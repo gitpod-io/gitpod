@@ -10,6 +10,6 @@ LABEL skip-n.registry-facade.gitpod.io="2"
 WORKDIR /usr/local/bin
 WORKDIR /usr/bin
 
-COPY components-docker-up--app/* ./
-
+COPY components-docker-up--app/docker-up /usr/bin/docker-up
+COPY components-docker-up--app/runc-facade /usr/bin/runc-facade
 COPY components-docker-up--app/docker-compose /usr/local/bin/docker-compose
