@@ -2,12 +2,59 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:7d42186063e8ac6e84c6ecdadd27497545a6dedd9d985dc8a2e66cb6148c230e as dl
-WORKDIR /dl
-RUN apk add --no-cache curl file \
-  && curl -OsSL https://github.com/opencontainers/runc/releases/download/v1.2.9/runc.amd64 \
-  && chmod +x runc.amd64 \
-  && if ! file runc.amd64 | grep -iq "ELF 64-bit LSB pie executable"; then echo "runc.amd64 is not a binary file"; exit 1;fi
+FROM golang:1.25-bookworm AS tool-builder
+
+ARG RUNC_VERSION=v1.2.9
+ARG GIT_LFS_VERSION=v3.7.1
+
+WORKDIR /build
+RUN apt-get update \
+  && apt-get install -yq --no-install-recommends ca-certificates curl file gcc libc6-dev libseccomp-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# Build runc locally instead of consuming the upstream release binary because
+# the current upstream v1.2.9 asset was built with vulnerable Go dependencies.
+# Keep this on the v1.2.x line for compatibility and switch back to upstream
+# once an upstream asset scans clean with the required fixed modules.
+RUN set -eux; \
+  runc_version_without_v="${RUNC_VERSION#v}"; \
+  mkdir -p /build/runc; \
+  curl -fsSL "https://github.com/opencontainers/runc/archive/refs/tags/${RUNC_VERSION}.tar.gz" \
+    | tar -xz --strip-components=1 -C /build/runc; \
+  cd /build/runc; \
+  go mod edit -require=golang.org/x/net@v0.55.0; \
+  go mod tidy; \
+  CGO_ENABLED=1 GOFLAGS=-mod=mod GOOS=linux GOARCH=amd64 go build \
+    -trimpath \
+    -tags seccomp \
+    -ldflags="-s -w -X main.version=${runc_version_without_v}" \
+    -o /out/runc \
+    .; \
+  chmod +x /out/runc; \
+  /out/runc --version; \
+  if ! file /out/runc | grep -iq "ELF 64-bit LSB executable\\|ELF 64-bit LSB pie executable"; then echo "runc is not a binary file"; exit 1; fi
+
+# Build Git LFS locally instead of installing the Ubuntu package or consuming
+# the upstream release binary because the available artifacts still scan with
+# critical Go stdlib/x/crypto/x/net findings. Switch back to distro/upstream
+# once those artifacts are rebuilt with fixed dependencies.
+RUN set -eux; \
+  mkdir -p /build/git-lfs; \
+  curl -fsSL "https://github.com/git-lfs/git-lfs/archive/refs/tags/${GIT_LFS_VERSION}.tar.gz" \
+    | tar -xz --strip-components=1 -C /build/git-lfs; \
+  cd /build/git-lfs; \
+  go mod edit \
+    -require=golang.org/x/crypto@v0.52.0 \
+    -require=golang.org/x/net@v0.55.0; \
+  go mod tidy; \
+  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -trimpath \
+    -ldflags="-s -w -X github.com/git-lfs/git-lfs/v3/config.GitCommit=gitpod-rebuild" \
+    -o /out/git-lfs \
+    ./git-lfs.go; \
+  chmod +x /out/git-lfs; \
+  /out/git-lfs version; \
+  if ! file /out/git-lfs | grep -iq "ELF 64-bit LSB executable\\|ELF 64-bit LSB pie executable"; then echo "git-lfs is not a binary file"; exit 1; fi
 
 FROM ubuntu:22.04
 
@@ -21,7 +68,7 @@ RUN apt update \
       software-properties-common gnupg \
   && add-apt-repository ppa:git-core/ppa -y \
   && apt install -yq --no-install-recommends \
-      git git-lfs openssh-client lz4 e2fsprogs coreutils tar strace xfsprogs curl ca-certificates \
+      git openssh-client lz4 e2fsprogs coreutils tar strace xfsprogs curl ca-certificates \
       aria2 \
       lvm2 \
       nfs-common \
@@ -32,7 +79,8 @@ RUN apt update \
     /tmp/* \
     /var/tmp/*
 
-COPY --from=dl /dl/runc.amd64 /usr/bin/runc
+COPY --from=tool-builder /out/runc /usr/bin/runc
+COPY --from=tool-builder /out/git-lfs /usr/bin/git-lfs
 
 # Add gitpod user for operations (e.g. checkout because of the post-checkout hook!)
 RUN groupadd -r -g 33333 gitpod \
