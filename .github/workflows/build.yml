@@ -379,7 +379,65 @@ jobs:
         shell: bash
         run: |
           # Parse vulnerability-stats.json from the scans directory
-          CRITICAL_PACKAGES=$(jq -r '.[] | select(.critical > 0) | "\(.name): \(.critical) critical vulnerabilities"' "${{ steps.scan.outputs.leeway_vulnerability_reports_dir }}/vulnerability-stats.json")
+          SCANS_DIR="${{ steps.scan.outputs.leeway_vulnerability_reports_dir }}"
+          CRITICAL_PACKAGES=$(jq -r '.[] | select(.critical > 0) | "\(.name): \(.critical) critical vulnerabilities"' "$SCANS_DIR/vulnerability-stats.json")
+
+          package_from_report() {
+            local package
+            package="$(basename "$1" .json)"
+            package="${package//--/:}"
+
+            for prefix in components dev install test; do
+              if [[ "$package" == "$prefix-"* ]]; then
+                package="$prefix/${package#"$prefix-"}"
+                break
+              fi
+            done
+
+            printf '%s' "$package"
+          }
+
+          append_critical_finding_summary() {
+            {
+              echo
+              echo "### Critical vulnerability details"
+              echo
+              echo "| Affected package | Vulnerability | Artifact | Version | Location | Fix state / fixed version |"
+              echo "| --- | --- | --- | --- | --- | --- |"
+            } >> "$GITHUB_STEP_SUMMARY"
+
+            details_found=false
+            while IFS= read -r -d '' report; do
+              package="$(package_from_report "$report")"
+              details="$(
+                jq -r --arg package "$package" '
+                  def md_escape:
+                    tostring
+                    | gsub("\r"; " ")
+                    | gsub("\n"; "<br>")
+                    | gsub("\\|"; "\\|");
+
+                  .matches[]?
+                  | select((.vulnerability.severity // "" | ascii_downcase) == "critical")
+                  | ((.artifact.locations // []) | map(.path // .layerID // "unknown") | unique | join("<br>")) as $locations
+                  | (.vulnerability.fix.state // "unknown") as $fix_state
+                  | ((.vulnerability.fix.versions // []) | unique | join(", ")) as $fixed_versions
+                  | (if $locations == "" then "unknown" else $locations end) as $location_display
+                  | (if $fixed_versions == "" then $fix_state else "\($fix_state): \($fixed_versions)" end) as $fix_display
+                  | "| `\($package | md_escape)` | `\((.vulnerability.id // "unknown") | md_escape)` | `\((.artifact.name // "unknown") | md_escape)` | `\((.artifact.version // "unknown") | md_escape)` | `\($location_display | md_escape)` | `\($fix_display | md_escape)` |"
+                ' "$report"
+              )"
+
+              if [ -n "$details" ]; then
+                details_found=true
+                echo "$details" >> "$GITHUB_STEP_SUMMARY"
+              fi
+            done < <(find "$SCANS_DIR" -maxdepth 1 -name '*.json' ! -name 'vulnerability-stats.json' -print0 | sort -z)
+
+            if [ "$details_found" = false ]; then
+              echo "_No detailed critical findings were present in the report JSON files._" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          }
 
           # If there are critical packages, list them and fail the build
           if [ -n "$CRITICAL_PACKAGES" ]; then
@@ -388,6 +446,7 @@ jobs:
             echo "affected_packages<<EOF" >> $GITHUB_OUTPUT
             echo "$CRITICAL_PACKAGES" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
+            append_critical_finding_summary
             exit 1
           else
             echo "No critical vulnerabilities found."
