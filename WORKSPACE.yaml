@@ -52,6 +52,9 @@ sbom:
         GHSA-4c29-8rgm-jvjj / CVE-2026-33747, but grype matches the emitted
         github.com/moby/buildkit module version and still reports v0.20.1-gitpod.8
         as vulnerable.
+        This workspace-level ignore is global for the vulnerability ID; keep it
+        limited to this known false positive and scope or remove it once artifact
+        scoped suppressions are available here.
 environmentManifest:
   - name: "go"
     command: ["sh", "-c", "go version | sed s/arm/amd/"]
