@@ -390,11 +390,13 @@ jobs:
             echo "No critical vulnerabilities found."
           fi
       - name: Upload SBOMs
+        if: ${{ always() && steps.scan.outputs.leeway_sboms_dir != '' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin@v4
         with:
           name: sboms
           path: ${{ steps.scan.outputs.leeway_sboms_dir }}
       - name: Upload vulnerability reports
+        if: ${{ always() && steps.scan.outputs.leeway_vulnerability_reports_dir != '' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin@v4
         with:
           name: vulnerability-reports

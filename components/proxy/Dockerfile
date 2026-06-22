@@ -2,14 +2,14 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM caddy:builder AS builder
+FROM caddy:2.11.4-builder AS builder
 
 WORKDIR /plugins
 
 COPY plugins /plugins
 
 # build caddy — pin smallstep/certificates to v0.30.1 (fixes GHSA-q4r8-xm5f-56gw)
-RUN xcaddy build v2.11.2 \
+RUN xcaddy build v2.11.4 \
   --output /caddy \
   --replace github.com/smallstep/certificates=github.com/smallstep/certificates@v0.30.1 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
@@ -23,7 +23,7 @@ RUN xcaddy build v2.11.2 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/sshtunnel=/plugins/sshtunnel \
   --with github.com/gitpod-io/gitpod/proxy/plugins/frontend_dev=/plugins/frontend_dev
 
-FROM caddy/caddy:2.11.2-alpine
+FROM caddy/caddy:2.11.4-alpine
 
 # Ensure latest packages are present, like security updates.
 RUN apk upgrade --no-cache \
