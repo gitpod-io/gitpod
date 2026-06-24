@@ -55,11 +55,18 @@ describe("WorkspaceTimeoutDuration", () => {
             expect(() => WorkspaceTimeoutDuration.validate("1x")).to.throw("Invalid timeout format");
             expect(() => WorkspaceTimeoutDuration.validate("")).to.throw("Invalid timeout format");
             expect(() => WorkspaceTimeoutDuration.validate("1")).to.throw("Invalid timeout format");
+            expect(() => WorkspaceTimeoutDuration.validate("5hrs")).to.throw("Invalid timeout format");
+            expect(() => WorkspaceTimeoutDuration.validate("24hrs")).to.throw("Invalid timeout format");
+            expect(() => WorkspaceTimeoutDuration.validate("1hr")).to.throw("Invalid timeout format");
         });
 
         it("should handle case insensitivity", () => {
             expect(WorkspaceTimeoutDuration.validate("1H30M")).to.equal("1h30m");
             expect(WorkspaceTimeoutDuration.validate("90M")).to.equal("90m");
+        });
+
+        it("should trim whitespace", () => {
+            expect(WorkspaceTimeoutDuration.validate(" 5h ")).to.equal("5h");
         });
 
         it("should reject zero or negative durations", () => {
