@@ -356,17 +356,15 @@ const WORKSPACE_MAXIMUM_TIMEOUT_HOURS = 24;
 export type WorkspaceTimeoutDuration = string;
 export namespace WorkspaceTimeoutDuration {
     export function validate(duration: string): WorkspaceTimeoutDuration {
-        duration = duration.toLowerCase();
+        duration = duration.trim().toLowerCase();
 
         try {
-            // Ensure the duration contains proper units (h, m, s, ms, us, ns)
-            // This prevents bare numbers like "1" from being accepted
-            if (!/[a-z]/.test(duration)) {
+            // Keep this strict: ws-manager validates with Go's time.ParseDuration, so aliases like
+            // "hr" or "hrs" must not be accepted here.
+            if (!/^(?:\d+(?:ns|us|µs|ms|s|m|h))+$/.test(duration)) {
                 throw new Error("Invalid duration format");
             }
 
-            // Use parse-duration library which supports Go duration format perfectly
-            // This handles mixed-unit durations like "1h30m", "2h15m", etc.
             const milliseconds = parse(duration);
 
             if (milliseconds === undefined || milliseconds === null) {
