@@ -2,11 +2,11 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:7d42186063e8ac6e84c6ecdadd27497545a6dedd9d985dc8a2e66cb6148c230e as base_builder
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:eba430503496d7a3b3bbf96cb0656e1daa37b6044c61c362778b7e17d371db3a as base_builder
 RUN mkdir /ide-desktop-plugins
 
 # for debugging
-# FROM cgr.dev/chainguard/wolfi-base:latest@sha256:7d42186063e8ac6e84c6ecdadd27497545a6dedd9d985dc8a2e66cb6148c230e
+# FROM cgr.dev/chainguard/wolfi-base:latest@sha256:eba430503496d7a3b3bbf96cb0656e1daa37b6044c61c362778b7e17d371db3a
 FROM scratch
 ARG JETBRAINS_BACKEND_QUALIFIER
 # ensures right permissions for /ide-desktop-plugins
