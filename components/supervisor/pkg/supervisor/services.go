@@ -828,7 +828,7 @@ func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateS
 
 	hostKey, err := os.ReadFile("/.supervisor/ssh/sshkey.pub")
 	if err != nil {
-		log.WithError(err).Error("faled to read host key")
+		log.WithError(err).Error("failed to read host key")
 	} else {
 		hostKeyParts := strings.Split(string(hostKey), " ")
 		if len(hostKeyParts) >= 2 {
