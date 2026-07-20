@@ -95,6 +95,9 @@ ARG TARGETOS
 
 # Install dependencies
 USER root
+# This version is baked into the dev-environment image; changing it does not
+# update the image used by the currently running CI job. Follow
+# dev/image/README.md for the bootstrap and promotion procedure.
 ARG LEEWAY_VERSION=0.10.9
 ENV LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE=8388608
 ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
