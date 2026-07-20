@@ -112,7 +112,7 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: ubuntu-latest-16-cores
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:ona-clc-2243-fix-cve-2026-27143-bump-go-gha.275
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
@@ -140,7 +140,7 @@ jobs:
       (needs.configuration.outputs.is_scheduled_run != 'true')
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:ona-clc-2243-fix-cve-2026-27143-bump-go-gha.275
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-infrastructure
@@ -187,7 +187,7 @@ jobs:
         ports:
           - 6379:6379
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:ona-clc-2243-fix-cve-2026-27143-bump-go-gha.275
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
       env:
         DB_HOST: "mysql"
@@ -326,13 +326,6 @@ jobs:
           GITHUB_USER: roboquat
           GITHUB_EMAIL: roboquat@gitpod.io
           VERSION: ${{ needs.configuration.outputs.version }}
-      # Temporary bootstrap until CI runs on a dev-environment image containing Leeway v0.10.9.
-      - name: Install Leeway v0.10.9
-        shell: bash
-        run: |
-          curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.10.9/leeway_Linux_x86_64.tar.gz \
-            | tar -xz -C /usr/bin leeway
-          leeway version
       - name: Scan for Vulnerabilities
         id: scan
         shell: bash
@@ -478,7 +471,7 @@ jobs:
     if: needs.configuration.outputs.is_scheduled_run != 'true'
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:ona-clc-2243-fix-cve-2026-27143-bump-go-gha.275
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-install
@@ -531,7 +524,7 @@ jobs:
     environment: branch-build
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:ona-clc-2243-fix-cve-2026-27143-bump-go-gha.275
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
     if: needs.configuration.outputs.with_monitoring == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
     concurrency:
@@ -560,7 +553,7 @@ jobs:
     environment: branch-build
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:ona-clc-2243-fix-cve-2026-27143-bump-go-gha.275
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
     if: needs.configuration.outputs.with_integration_tests != '' && needs.configuration.outputs.is_scheduled_run != 'true'
     concurrency:
