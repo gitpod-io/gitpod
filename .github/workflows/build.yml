@@ -329,6 +329,13 @@ jobs:
           GITHUB_USER: roboquat
           GITHUB_EMAIL: roboquat@gitpod.io
           VERSION: ${{ needs.configuration.outputs.version }}
+      # Temporary bootstrap until CI runs on a dev-environment image containing Leeway v0.10.9.
+      - name: Install Leeway v0.10.9
+        shell: bash
+        run: |
+          curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.10.9/leeway_Linux_x86_64.tar.gz \
+            | tar -xz -C /usr/bin leeway
+          leeway version
       - name: Scan for Vulnerabilities
         id: scan
         shell: bash
