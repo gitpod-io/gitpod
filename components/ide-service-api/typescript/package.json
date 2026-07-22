@@ -19,7 +19,7 @@
     "ts-proto": "^1.176.2"
   },
   "devDependencies": {
-    "grpc-tools": "^1.12.4",
+    "grpc-tools": "^1.13.1",
     "typescript": "~4.4.2",
     "typescript-formatter": "^7.2.2"
   }

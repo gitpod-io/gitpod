@@ -55,6 +55,20 @@ sbom:
         This workspace-level ignore is global for the vulnerability ID; keep it
         limited to this known false positive and scope or remove it once artifact
         scoped suppressions are available here.
+    - vulnerability: GO-2026-5064
+      reason: |
+        This advisory applies to containerd's CRI checkpoint restore path, which
+        trusts CDI annotations from checkpoint metadata. Gitpod's affected binaries
+        use containerd only as clients or for content, image, and registry helpers;
+        they do not embed or expose the containerd CRI checkpoint server. The
+        vulnerable path is therefore not present or reachable in these artifacts.
+    - vulnerability: GO-2026-5338
+      reason: |
+        This advisory applies to containerd's CRI checkpoint import path, which can
+        assign untrusted image references to local tags. Gitpod's affected binaries
+        use containerd only as clients or for content, image, and registry helpers;
+        they do not embed or expose the containerd CRI checkpoint server. The
+        vulnerable path is therefore not present or reachable in these artifacts.
 environmentManifest:
   - name: "go"
     command: ["sh", "-c", "go version | sed s/arm/amd/"]
