@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM node:22.22.0-alpine AS builder
+FROM node:22.22.3-alpine AS builder
 
 # Install Python, make, gcc and g++ for node-gyp
 RUN apk update && \
@@ -14,8 +14,11 @@ COPY components-server--app /installer/
 WORKDIR /app
 RUN /installer/install.sh
 
-FROM node:22.22.1-alpine
-RUN apk upgrade --no-cache
+FROM node:22.22.3-alpine
+# npm is not used by the runtime entrypoint; omit its bundled dependency tree.
+RUN apk upgrade --no-cache \
+    && rm -rf /usr/local/lib/node_modules/npm \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx
 ENV NODE_OPTIONS="--unhandled-rejections=warn --max_old_space_size=2048"
 
 EXPOSE 3000
