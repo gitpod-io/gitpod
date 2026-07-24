@@ -25,7 +25,10 @@ RUN xcaddy build v2.11.4 \
   --output /caddy
 
 FROM caddy/caddy:2.11.4-alpine@sha256:ef2ad799652965da62f0548e15e00ebcef221dd6f29623d3455df6273ca39f46
-RUN apk upgrade --no-cache
+
+# Keep runtime packages current and remove the unused curl client inherited from Caddy.
+RUN apk upgrade --no-cache \
+  && apk del curl
 
 COPY --from=caddy-builder /caddy /usr/bin/caddy
 COPY components-dashboard--static/conf/Caddyfile /etc/caddy/Caddyfile
