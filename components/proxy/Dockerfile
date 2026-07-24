@@ -25,8 +25,9 @@ RUN xcaddy build v2.11.4 \
 
 FROM caddy/caddy:2.11.4-alpine@sha256:ef2ad799652965da62f0548e15e00ebcef221dd6f29623d3455df6273ca39f46
 
-# Ensure latest packages are present, like security updates.
+# Keep runtime packages current and remove the unused curl client inherited from Caddy.
 RUN apk upgrade --no-cache \
+  && apk del curl \
   && apk add --no-cache ca-certificates bash
 
 # Debug convenience
