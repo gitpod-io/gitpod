@@ -18,7 +18,7 @@ const (
 
 	ExporterRegistryRepo  = "quay.io"
 	ExporterRegistryImage = "oliver006/redis_exporter"
-	ExporterImageDigest   = "sha256:9e19fc77b9c5cb138a9ec9335b8bbcbbed620c4df54f7eb29329cdd8db148f1d"
+	ExporterImageDigest   = "sha256:e33fa2b546fae70dcaa30ac96bf46f1459ac4a6072adc44abd0c264e69b3ae64"
 
 	ExporterContainerName = "exporter"
 	ExporterPortName      = "exporter"
