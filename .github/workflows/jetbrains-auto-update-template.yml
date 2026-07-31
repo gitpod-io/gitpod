@@ -66,7 +66,7 @@ jobs:
         uses: filiptronicek/get-last-job-status@1c211ff20d1706ff0bc3fc8022f7bd6518b88bc4 # pin@main
       - name: Slack Notification
         if: ${{ (success() && steps.find-target.outputs.buildNumber && steps.leeway-build.outputs.leewayUsingCache == 'false') || failure() }}
-        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
+        uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661 # pin@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}

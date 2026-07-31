@@ -494,7 +494,7 @@ jobs:
           analytics: ${{needs.configuration.outputs.analytics}}
           workspace_feature_flags: ${{needs.configuration.outputs.workspace_feature_flags}}
           image_repo_base: ${{needs.configuration.outputs.image_repo_base}}/build
-      - uses: actions/github-script@00f12e3e20659f42342b1c0226afda7f7c042325 # pin@v6
+      - uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # pin@v6
         if: needs.configuration.outputs.pr_number != '' && contains(needs.configuration.outputs.pr_body, 'gitpod:summary')
         with:
           script: |
@@ -621,7 +621,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
+        uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661 # pin@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
           SLACK_ICON_EMOJI: ":x:"

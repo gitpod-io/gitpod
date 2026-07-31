@@ -104,7 +104,7 @@ jobs:
             team-experience
       - name: Slack notification (code)
         if: ${{ steps.code-update-pr.outputs.pull-request-url }}
-        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
+        uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661 # pin@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
@@ -124,7 +124,7 @@ jobs:
           app-id: 308947
           installation-id: 35574470
       - name: Trigger Open VS Code Server Release
-        uses: actions/github-script@00f12e3e20659f42342b1c0226afda7f7c042325 # pin@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # pin@v6
         with:
           github-token: ${{ steps.auth.outputs.token }}
           script: |

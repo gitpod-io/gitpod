@@ -112,7 +112,7 @@ jobs:
               } >> $GITHUB_OUTPUT
           fi
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
+        uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661 # pin@v2
         if: failure()
         env:
           SLACK_WEBHOOK: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
