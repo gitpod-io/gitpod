@@ -214,8 +214,10 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         try {
             const branchOrTagPromise =
                 segments.length > 0 ? this.getBranchOrTag(user, owner, repoName, segments) : undefined;
-            const repository = await this.fetchRepo(user, `${owner}/${repoName}`);
-            const branchOrTag = await branchOrTagPromise;
+            const [repository, branchOrTag] = await Promise.all([
+                this.fetchRepo(user, `${owner}/${repoName}`),
+                branchOrTagPromise,
+            ]);
             const context = <NavigatorContext>{
                 isFile: false,
                 path: "",
