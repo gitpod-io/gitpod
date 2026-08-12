@@ -1,0 +1,73 @@
+tasks:
+  installDependencies:
+    name: Install dependencies
+    description: Install repository dependencies and local development hooks.
+    command: |
+      yarn --network-timeout 100000
+      (cd install/installer && make deps)
+      pre-commit install --install-hooks
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+
+  setupGithubAuth:
+    name: Setup GitHub CLI auth
+    description: Configure shell profiles to source the repository GitHub token helper.
+    command: |
+      github_token_helper="$PWD/dev/github-token.sh"
+      for profile in "$HOME/.bashrc" "$HOME/.zshrc"; do
+        touch "$profile"
+        if ! grep -qF "source \"$github_token_helper\"" "$profile"; then
+          {
+            echo
+            echo "# GitHub token helper"
+            echo "source \"$github_token_helper\""
+          } >> "$profile"
+        fi
+      done
+      source "$github_token_helper"
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+
+  installLocalAppCli:
+    name: Install gitpod CLI
+    description: Build and install the local gitpod CLI and shell completion.
+    command: |
+      leeway run components/local-app:install-cli
+      leeway run components/local-app:cli-completion
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+
+  initGo:
+    name: Go init
+    description: Generate Go configuration types and verify Go modules.
+    command: |
+      ./components/gitpod-protocol/go/scripts/generate-config.sh
+      leeway exec --filter-type go -v -- go mod verify
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+
+  buildTypescript:
+    name: TypeScript build
+    description: Build TypeScript packages.
+    command: |
+      yarn build
+    dependsOn:
+      - installDependencies
+    triggeredBy:
+      - manual
+
+  buildJava:
+    name: Java build
+    description: Build Java libraries and JetBrains plugins with Gradle.
+    command: |
+      leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
+      leeway exec --package components/ide/jetbrains/backend-plugin:plugin-latest --package components/ide/jetbrains/gateway-plugin:publish-latest --parallel -- ./gradlew buildPlugin
+    dependsOn:
+      - installDependencies
+    triggeredBy:
+      - manual
