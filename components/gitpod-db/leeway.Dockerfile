@@ -15,7 +15,8 @@ RUN /installer/install.sh
 
 FROM node:22.22.3-alpine
 # npm is not used by the runtime entrypoint; omit its bundled dependency tree.
-RUN apk upgrade --no-cache \
+RUN apk upgrade --no-cache libssl3 libcrypto3 \
+    && apk upgrade --no-cache \
     && apk add --no-cache bash \
     && rm -rf /usr/local/lib/node_modules/npm \
     && rm -f /usr/local/bin/npm /usr/local/bin/npx
