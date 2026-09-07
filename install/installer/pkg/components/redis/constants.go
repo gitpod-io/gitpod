@@ -14,11 +14,11 @@ const (
 	RegistryImage = "chainguard/redis"
 
 	ContainerName = "redis"
-	ImageDigest   = "sha256:eea444ff81bbfab652b90f574eb7c4b323739b677f53756f1dffef48b96603fb"
+	ImageDigest   = "sha256:8964c9ab6120cae613e36a94707f2de168c1703d10f6b68ea36453fcc1181a1d"
 
 	ExporterRegistryRepo  = "quay.io"
 	ExporterRegistryImage = "oliver006/redis_exporter"
-	ExporterImageDigest   = "sha256:23bef6c31e3b46c4157b57d74d75f651ac6e041f0231e35851a9098ee6c26d6e"
+	ExporterImageDigest   = "sha256:b01dcb400d6a0c14513fc0f7af26908f2d6b6aca1e47debdb9d303f92c37963d"
 
 	ExporterContainerName = "exporter"
 	ExporterPortName      = "exporter"
