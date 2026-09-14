@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:918a593b8268c222afd4e2c4f06860ac984e60719b4697e4c71d796bc8fcd042 as compress
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:ac3269eb506fccbf26c73e837f54f44dbeab0cd8338a9292bb5fef0036a4a6ed as compress
 
 RUN apk add brotli gzip curl
 
@@ -23,7 +23,7 @@ RUN xcaddy build v2.11.4 \
   --replace github.com/smallstep/certificates=github.com/smallstep/certificates@v0.30.1 \
   --output /caddy
 
-FROM caddy/caddy:2.11.4-alpine@sha256:ef2ad799652965da62f0548e15e00ebcef221dd6f29623d3455df6273ca39f46
+FROM caddy/caddy:2.11.4-alpine@sha256:d71500cabcc62e8efcd30fd9cb8aca2f4fb00f396f9444d8deefbc6daec4016e
 
 # Keep runtime packages current and remove the unused curl client inherited from Caddy.
 RUN apk upgrade --no-cache libssl3 libcrypto3 \
