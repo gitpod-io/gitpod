@@ -8,10 +8,21 @@ WORKDIR /plugins
 
 COPY plugins /plugins
 
-# build caddy — pin smallstep/certificates to v0.30.1 (fixes GHSA-q4r8-xm5f-56gw)
+# Patch dependencies reported by Grype:
+# github.com/buger/jsonparser: GHSA-6g7g-w4f8-9c9x
+# golang.org/x/crypto: GO-2026-6303, GO-2026-6354, GO-2026-6355
+# golang.org/x/net: GO-2026-5942
+# golang.org/x/text: GO-2026-5970
+# google.golang.org/grpc: GHSA-2v4p-qf9q-27wj, GHSA-hrxh-6v49-42gf, GHSA-vp52-pcj8-j9qc
+# Retain the smallstep/certificates fix for GHSA-q4r8-xm5f-56gw.
 RUN xcaddy build v2.11.4 \
   --output /caddy \
+  --replace github.com/buger/jsonparser=github.com/buger/jsonparser@v1.1.2 \
   --replace github.com/smallstep/certificates=github.com/smallstep/certificates@v0.30.1 \
+  --replace golang.org/x/crypto=golang.org/x/crypto@v0.56.0 \
+  --replace golang.org/x/net=golang.org/x/net@v0.58.0 \
+  --replace golang.org/x/text=golang.org/x/text@v0.41.0 \
+  --replace google.golang.org/grpc=google.golang.org/grpc@v1.83.2 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
   --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
   --with github.com/gitpod-io/gitpod/proxy/plugins/workspacedownload=/plugins/workspacedownload \
