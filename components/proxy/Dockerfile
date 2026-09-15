@@ -8,10 +8,15 @@ WORKDIR /plugins
 
 COPY plugins /plugins
 
-# build caddy — pin smallstep/certificates to v0.30.1 (fixes GHSA-q4r8-xm5f-56gw)
+# Build Caddy with patched dependencies. Keep shared overrides aligned with dashboard and ide-proxy.
 RUN xcaddy build v2.11.4 \
   --output /caddy \
+  --replace github.com/buger/jsonparser=github.com/buger/jsonparser@v1.1.2 \
   --replace github.com/smallstep/certificates=github.com/smallstep/certificates@v0.30.1 \
+  --replace golang.org/x/crypto=golang.org/x/crypto@v0.56.0 \
+  --replace golang.org/x/net=golang.org/x/net@v0.58.0 \
+  --replace golang.org/x/text=golang.org/x/text@v0.41.0 \
+  --replace google.golang.org/grpc=google.golang.org/grpc@v1.83.2 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
   --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
   --with github.com/gitpod-io/gitpod/proxy/plugins/workspacedownload=/plugins/workspacedownload \

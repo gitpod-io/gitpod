@@ -17,10 +17,14 @@ RUN for FILE in `ls /app-bin/gitpod-local-companion*`;do \
 RUN mkdir -p static/code
 RUN curl -o static/code/marketplace.json "https://raw.githubusercontent.com/EclipseFdn/publish-extensions/d9a7cc2d486ca881e9df310324f9752f48156283/extension-control/extensions.json"
 
-# Build Caddy from source with smallstep/certificates pinned to v0.30.1 (fixes GHSA-q4r8-xm5f-56gw)
+# Build Caddy with patched dependencies. Keep shared overrides aligned with proxy and dashboard.
 FROM caddy:2.11.4-builder AS caddy-builder
 RUN xcaddy build v2.11.4 \
   --replace github.com/smallstep/certificates=github.com/smallstep/certificates@v0.30.1 \
+  --replace golang.org/x/crypto=golang.org/x/crypto@v0.56.0 \
+  --replace golang.org/x/net=golang.org/x/net@v0.58.0 \
+  --replace golang.org/x/text=golang.org/x/text@v0.41.0 \
+  --replace google.golang.org/grpc=google.golang.org/grpc@v1.83.2 \
   --output /caddy
 
 FROM caddy/caddy:2.11.4-alpine@sha256:ef2ad799652965da62f0548e15e00ebcef221dd6f29623d3455df6273ca39f46
