@@ -18,7 +18,12 @@ RUN find . -type f \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '
 
 COPY components-gitpod-protocol--gitpod-schema/gitpod-schema.json /www/static/schemas/gitpod-schema.json
 
-# Build Caddy with patched dependencies. Keep shared overrides aligned with proxy and ide-proxy.
+# Patch dependencies reported by Grype:
+# golang.org/x/crypto: GO-2026-6303, GO-2026-6354, GO-2026-6355
+# golang.org/x/net: GO-2026-5942
+# golang.org/x/text: GO-2026-5970
+# google.golang.org/grpc: GHSA-2v4p-qf9q-27wj, GHSA-hrxh-6v49-42gf, GHSA-vp52-pcj8-j9qc
+# Retain the smallstep/certificates fix for GHSA-q4r8-xm5f-56gw.
 FROM caddy:2.11.4-builder AS caddy-builder
 RUN xcaddy build v2.11.4 \
   --replace github.com/smallstep/certificates=github.com/smallstep/certificates@v0.30.1 \
