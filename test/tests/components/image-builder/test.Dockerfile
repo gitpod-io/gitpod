@@ -1,3 +1,3 @@
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:32d119bfa89c4302e0608f5c120b39c6b8f80b592c7fb46aa27008b2669ce220
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:13ecca0cd6ee68809c95676fbe2b5bd65878ab8974dab5059ea6dc4db4de6909
 USER root
 RUN echo 'testing builder'
