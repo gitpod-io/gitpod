@@ -24,15 +24,18 @@ Such tests are for example:
 
 You can opt-in to run the integrations tests as part of the build job. that runs the integration tests against preview environments.
 
- > For tests that require an existing user the framework tries to automatically select one from the DB.
- > - On preview envs make sure to create one before running tests against it!
- > - If it's important to use a certain user (with fixed settings, for example) pass the additional `username` parameter.
+ > Retained tests use builtin or temporary users by default. An explicitly selected
+ > `username` must already exist in the preview database.
 
 Example command:
 
 ```console
 werft job run github -a with-preview=true -a with-integration-tests=webapp -f
 ```
+
+The GitHub Actions **Workspace integration tests** workflow also supports manual
+runs of either `workspace` or `webapp` via its `test_suite` input. Scheduled runs
+and reusable workflow calls continue to run `workspace`.
 
 ## Manually
 
@@ -47,12 +50,13 @@ This is best for when you're actively developing Gitpod.
 
 Test will work if images that they use are already cached by Gitpod instance. If not, they might fail if it takes too long to pull an image.
 
-There are 4 different types of tests:
+The default suites use builtin or temporary Gitpod users. They do not require a
+GitHub user token or a pre-existing GitHub-authenticated test user. Some retained
+tests still clone public repositories anonymously and pull container images.
 
-1. Enterprise specific, that require valid license to be installed. Run those with `-enterprise=true`
-2. Tests that require correct user (user should have github OAuth integration setup with gitpod). Run those with `-username=<gitpod_username>`. Make sure to load https://github.com/gitpod-io/gitpod-test-repo and https://github.com/gitpod-io/gitpod workspaces inside your gitpod that you are testing to preload those images onto your node. Wait for it to finish pulling those image, this will ensure that test will not fail due to timeout while waiting to pull an image for the first time.
-3. To test gitlab integration, add `-gitlab=true`
-4. All other tests.
+Enterprise-specific tests retain their `-enterprise=true` opt-in. An explicit
+`USER_NAME` or `-username` remains available for tests that support selecting an
+existing Gitpod user, but the runner no longer fetches a user or token from secrets.
 
 If you want to run an entire test suite, the easiest is to use `./test/run.sh`:
 
@@ -67,30 +71,92 @@ If you want to run an entire test suite, the easiest is to use `./test/run.sh`:
 ./test/run.sh -s webapp -r report.csv
 ```
 
-If you're iterating on a single test, the easiest is to use `go test` directly.
-
-If your integration tests depends on having having a user token available, then you'll have to set `USER_NAME` and `USER_TOKEN` environment variables. This can be done a couple ways:
-1. Get credentials persisted as secrets (either in Github Actions, or GCP Secret Manager via the `core-dev` project), which vary by job that trigger tests. Refer to `run.sh` for details.
-2. In your Gitpod (preview) environment, log into the preview environment, set `USER_NAME` to the user you logged in with, and set `USER_TOKEN` to any (does not have to be valid).
+If you're iterating on a single retained test:
 
 ```console
 cd test
-go test -v ./... \
-    -run <test> \
+go test -v ./tests/workspace \
+    -kubeconfig=/home/gitpod/.kube/config \
     -namespace=default \
-    -username=<gitpod_user_with_oauth_setup> \
-    -enterprise=<true|false> \
-    -gitlab=<true|false>
+    -run '^TestLaunchWorkspaceDirectly$'
 ```
 
-A concrete example would be
+Package setup still checks Kubernetes/Gitpod readiness before running tests,
+including packages whose tests are all skipped. Use `go test -c` to compile a
+package without executing that setup.
 
-```console
-cd test
-go test -v ./... \
-    -namespace=default \
-    -run TestWorkspaceInstrumentation
-```
+## Disabled GitHub user-token coverage
+
+The following test entry points are explicit skip stubs. Providing a token does
+not re-enable them. Their previous implementations are available in Git history.
+
+| Suite/package | Disabled tests |
+|:--------------|:---------------|
+| Workspace: ws-manager | `TestDotfiles` |
+| Workspace: ws-daemon | `TestNetworkLimiting` |
+| Workspace: runtime | `TestGitHubContexts`, `TestGitLabContexts`, `TestDiskActions`, `TestWorkspaceInstrumentation`, `TestGitHooks`, `TestGitActions`, `TestRegularWorkspacePorts`, `TestProcessPriority` |
+| IDE: SSH | `TestSSHGatewayConnection` |
+| IDE: VS Code | `TestPythonExtWorkspace` |
+| IDE: JetBrains | `TestGoLand`, `TestIntellij`, `TestPhpStorm`, `TestPyCharm`, `TestRubyMine`, `TestWebStorm`, `TestRider`, `TestCLion`, `TestRustRover`, `TestIntellijNotPreconfiguredRepo`, `TestIntelliJWarmup` |
+| Smoke | `TestStartWorkspaceWithImageBuild` |
+
+GitLab context tests shared the GitHub user-token fixture; this does not mean a
+GitHub token authenticates to GitLab. Disk-quota tests indirectly relied on the
+shared authenticated user, despite having no token guard of their own.
+
+CI no longer supplies the GitHub test-user credentials, and `run.sh` no longer
+loads them from CI environment variables or the Kubernetes test-user secret.
+Gitpod API tokens generated inside the test framework remain available.
+
+## Remaining component coverage
+
+This table counts enabled top-level test entry points retained after removing the
+GitHub user-token dependency. It is not line or branch coverage. Already skipped
+or opt-in tests are excluded from the counts.
+
+| Component/area | Tests before → after | Retained | Remaining checks |
+|:---------------|:---------------------|:---------|:-----------------|
+| ws-manager | 14 → 13 | 93% | Lifecycle, backups, maintenance, repositories, Git status, tasks, protected secrets, prebuilds |
+| ws-daemon | 5 → 4 | 80% | CPU burst, I/O limits, FUSE, bucket creation |
+| content-service | 3 → 3 | 100% | Upload/download URLs and blob round trips |
+| image-builder | 2 → 2 | 100% | Base-image builds and concurrent builds |
+| server (`webapp`) | 2 → 1 | 50% | Authenticated `GetLoggedInUser` |
+| database (`webapp`) | 1 → 1 | 100% | Builtin workspace user exists |
+| Workspace runtime | 14 → 7 | 50% | Direct launch, cgroups, process limits, ephemeral storage, `/proc`, Docker, `gp top` |
+| JetBrains / VS Code / SSH IDE suites | 13 → 0 | 0% | None |
+| Default workspace/image-build smoke flow | 1 → 0 | 0% | None |
+
+The workspace suite still runs its regular and maintenance passes. It retains 30
+top-level test functions, including the already-skipped K3s test. Other existing
+conditions, such as Docker Hub rate limiting, can affect actual execution.
+`TestLaunchWorkspaceDirectly` remains active alongside the disabled
+`TestWorkspaceInstrumentation` in the same source file.
+
+The `webapp` suite's `TestStartWorkspace` is retained for explicitly configured
+users, but skips by default without a username; it still needs a GitHub context.
+`TestAdminBlockUser` requires the enterprise flag. Consequently the default webapp
+checks are `TestServerAccess` and `TestBuiltinUserExists`.
+
+IDE workflows have no active functional tests. The default preview-regression
+smoke workflow also has no active functional tests. Their deployment/readiness
+checks and skipped-test reports do not validate IDE, SSH gateway, or user-facing
+workspace-creation behavior. The workflows report these limitations explicitly.
+
+## Opt-in smoke tests using Gitpod credentials
+
+These tests do not use the removed GitHub credential and remain available through
+`go test` in `test/tests/smoke-test`:
+
+- `TestMembers`, `TestProjects`, and `TestGetProject` use a **Gitpod PAT or session
+  cookie** supplied as `USER_TOKEN`, with `TEST_COLLABORATOR=true`. See
+  [collaborator_test.go](tests/smoke-test/collaborator_test.go) for setup.
+- The six `TestCreateTemporaryAccessToken*` tests use `INSTALLATION_ADMIN_PAT`
+  and/or `MEMBER_USER_PAT`, with `TEST_CREATE_TMP_TOKEN=true`. See
+  [papi_create_temp_token_test.go](tests/smoke-test/papi_create_temp_token_test.go).
+
+These opt-in flags are not enabled by the default smoke workflow. GitHub Actions'
+`GITHUB_TOKEN` and other infrastructure credentials are separate from both these
+Gitpod credentials and the removed GitHub user credential.
 
 # Tips
 

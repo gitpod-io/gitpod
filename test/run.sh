@@ -75,6 +75,12 @@ case $TEST_SUITE in
     exit 1
 esac
 
+case $TEST_SUITE in
+  ide|jetbrains|vscode|ssh|all|"")
+    echo "IDE integration tests are disabled: skipped tests provide no IDE or SSH gateway coverage. See test/README.md."
+    ;;
+esac
+
 args=()
 if [ "${REPORT}" != "" ]; then
   args+=( "--json" )
@@ -83,21 +89,8 @@ args+=( "-kubeconfig=${KUBECONFIG:-/home/gitpod/.kube/config}" )
 args+=( "-namespace=${NAMESPACE:-default}" )
 args+=( "-timeout=120m" )
 
-if [[ "${GITPOD_REPO_ROOT:-}" != "" ]]; then
-  echo "Running in Gitpod workspace. Fetching USER_NAME and USER_TOKEN"
-  USER_NAME="$(kubectl --context=dev -n werft get secret integration-test-user -o jsonpath='{.data.username}' | base64 -d)"
-  USER_TOKEN="$(kubectl --context=dev -n werft get secret integration-test-user -o jsonpath='{.data.token}' | base64 -d)"
-  export USER_NAME
-  export USER_TOKEN
-else
-  echo "Using INTEGRATION_TEST_USERNAME and INTEGRATION_TEST_USER_TOKEN for USER_NAME and USER_TOKEN"
-  USER_NAME="${INTEGRATION_TEST_USERNAME}"
-  USER_TOKEN="${INTEGRATION_TEST_USER_TOKEN}"
-  export USER_NAME
-  export USER_TOKEN
-fi
-
-[[ "$USER_NAME" != "" ]] && args+=( "-username=$USER_NAME" )
+# Tests use builtin or temporary Gitpod users unless one is explicitly selected.
+[[ -n "${USER_NAME:-}" ]] && args+=( "-username=$USER_NAME" )
 
 go install github.com/jstemmer/go-junit-report/v2@latest
 

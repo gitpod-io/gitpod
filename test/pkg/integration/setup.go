@@ -32,12 +32,6 @@ func SkipWithoutUsername(t *testing.T, username string) {
 	}
 }
 
-func SkipWithoutUserToken(t *testing.T, userToken string) {
-	if userToken == "" {
-		t.Skip("Skipping because requires a user token")
-	}
-}
-
 func SkipWithoutEnterpriseLicense(t *testing.T, enterpise bool) {
 	if !enterpise {
 		t.Skip("Skipping because requires enterprise license")
@@ -249,7 +243,7 @@ func logGitpodStatus(t *testing.T, client klient.Client, namespace string) {
 		}
 	}
 	tw.Flush()
-	t.Logf("Gitpod components status:\n" + buf.String())
+	t.Logf("Gitpod components status:\n%s", buf.String())
 }
 
 func isPreviewReady(client klient.Client, namespace string) (ready bool, reason string, err error) {

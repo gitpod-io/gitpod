@@ -36,7 +36,7 @@ func (d DiskClient) Fallocate(testFilePath string, spaceToAllocate string) error
 		return fmt.Errorf("returned returned rc: %d err: %v", resp.ExitCode, resp.Stderr)
 	}
 	if strings.Contains(resp.Stdout, NoSpaceErrorMsg) {
-		return fmt.Errorf(resp.Stdout)
+		return fmt.Errorf("%s", resp.Stdout)
 	}
 
 	return nil

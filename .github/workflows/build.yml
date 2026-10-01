@@ -614,8 +614,6 @@ jobs:
           identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
           service_account: ${{ secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-          integration_test_username: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USERNAME }}
-          integration_test_usertoken: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
 
   workspace-integration-tests-main:
     name: "Run workspace integration tests on main branch"

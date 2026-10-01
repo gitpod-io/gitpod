@@ -15,7 +15,6 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -457,115 +456,6 @@ func (c *ComponentAPI) UpdateUserFeatureFlag(userId, featureFlag string) error {
 		return err
 	}
 	return nil
-}
-
-func (c *ComponentAPI) CreateUser(username string, token string) (string, error) {
-	dbConfig, err := FindDBConfigFromPodEnv("server", c.namespace, c.client)
-	if err != nil {
-		return "", err
-	}
-
-	db, err := c.DB()
-	if err != nil {
-		return "", err
-	}
-
-	var userId string
-	err = db.QueryRow(`SELECT id FROM d_b_user WHERE name = ? and markedDeleted != 1 and blocked != 1`, username).Scan(&userId)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return "", err
-	}
-
-	if userId == "" {
-		userUuid, err := uuid.NewRandom()
-		if err != nil {
-			return "", err
-		}
-
-		userId = userUuid.String()
-		_, err = db.Exec(`INSERT IGNORE INTO d_b_user (id, creationDate, avatarUrl, name, fullName, featureFlags, lastVerificationTime) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			userId,
-			time.Now().Format(time.RFC3339),
-			"",
-			username,
-			username,
-			"{\"permanentWSFeatureFlags\":[]}",
-			time.Now().Format(time.RFC3339),
-		)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	var authId string
-	err = db.QueryRow(`SELECT authId FROM d_b_identity WHERE userId = ?`, userId).Scan(&authId)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return "", err
-	}
-	if authId == "" {
-		authId = strconv.FormatInt(time.Now().UnixMilli(), 10)
-		_, err = db.Exec(`INSERT IGNORE INTO d_b_identity (authProviderId, authId, authName, userId) VALUES (?, ?, ?, ?)`,
-			"Public-GitHub",
-			authId,
-			username,
-			userId,
-		)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	var cnt int
-	err = db.QueryRow(`SELECT COUNT(1) AS cnt FROM d_b_token_entry WHERE authId = ?`, authId).Scan(&cnt)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return "", err
-	}
-	if cnt == 0 {
-		uid, err := uuid.NewRandom()
-		if err != nil {
-			return "", err
-		}
-
-		// Double Marshalling to be compatible with EncryptionServiceImpl
-		value := struct {
-			Value  string   `json:"value"`
-			Scopes []string `json:"scopes"`
-		}{
-			Value:  token,
-			Scopes: []string{"user:email", "read:user", "public_repo"},
-		}
-		valueBytes, err := json.Marshal(value)
-		if err != nil {
-			return "", err
-		}
-		valueBytes2, err := json.Marshal(string(valueBytes))
-		if err != nil {
-			return "", err
-		}
-
-		encryptedData, iv := EncryptValue(valueBytes2, dbConfig.EncryptionKeys.Material)
-		encrypted := EncriptedDBData{}
-		encrypted.Data = encryptedData
-		encrypted.KeyParams.Iv = iv
-		encrypted.KeyMetadata.Name = dbConfig.EncryptionKeys.Metadata.Name
-		encrypted.KeyMetadata.Version = dbConfig.EncryptionKeys.Metadata.Version
-		encryptedJson, err := json.Marshal(encrypted)
-		if err != nil {
-			return "", err
-		}
-
-		_, err = db.Exec(`INSERT IGNORE INTO d_b_token_entry (authProviderId, authId, token, uid) VALUES (?, ?, ?, ?)`,
-			"Public-GitHub",
-			authId,
-			encryptedJson,
-			uid.String(),
-		)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return userId, nil
 }
 
 func (c *ComponentAPI) createGitpodToken(user string, scopes []string) (tkn string, err error) {

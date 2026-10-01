@@ -110,8 +110,6 @@ jobs:
         shell: bash
         env:
           ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
-          USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
           PREVIEW_NAME: ${{ needs.configuration.outputs.name }}
         run: |
           set -euo pipefail
@@ -126,7 +124,6 @@ jobs:
           args=()
           args+=( "-kubeconfig=/home/gitpod/.kube/config" )
           args+=( "-namespace=default" )
-          [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
           args+=( "-timeout=60m" )
 
           TESTS_DIR="$GITHUB_WORKSPACE/test/tests/smoke-test"
@@ -150,6 +147,11 @@ jobs:
         with:
           paths: "test/tests/**/TEST.xml"
         if: always()
+      - name: Explain disabled workspace smoke coverage
+        if: always()
+        shell: bash
+        run: |
+          printf '%s\n' 'Workspace creation/image-build smoke coverage is disabled because it requires a GitHub user token. The remaining Gitpod API smoke tests require explicit opt-in and separate Gitpod credentials; this workflow does not enable them. A run containing only skipped tests provides no functional smoke coverage.' >> "$GITHUB_STEP_SUMMARY"
       - id: auth
         if: failure()
         uses: google-github-actions/auth@955352c3b43196640b567e4646256d2fbb4aa1c7 # pin@v1

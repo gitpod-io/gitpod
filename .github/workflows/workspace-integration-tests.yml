@@ -5,6 +5,14 @@ permissions:
 on:
   workflow_dispatch:
     inputs:
+      test_suite:
+        required: false
+        type: choice
+        description: "Integration suite with retained functional coverage"
+        options:
+          - workspace
+          - webapp
+        default: workspace
       name:
         required: false
         type: string
@@ -168,14 +176,12 @@ jobs:
         uses: ./.github/actions/integration-tests
         with:
           preview_name: ${{ needs.configuration.outputs.name }}
-          test_suite: workspace
+          test_suite: ${{ inputs.test_suite || 'workspace' }}
           notify_slack_webhook: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           identity_provider: ${{ secrets.DEV_PREVIEW_PROVIDER }}
           service_account: ${{ secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-          integration_test_username: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USERNAME }}
-          integration_test_usertoken: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
 
   delete:
     name: Delete preview environment
