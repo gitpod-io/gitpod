@@ -22,20 +22,23 @@ Such tests are for example:
 
 ## Automatically at Gitpod
 
-You can opt-in to run the integrations tests as part of the build job. that runs the integration tests against preview environments.
+The GitHub Actions **Branch Build** workflow can run integration tests against a
+preview environment. To run the server and database (`webapp`) suite, select this
+option in the PR description:
 
- > Retained tests use builtin or temporary users by default. An explicitly selected
- > `username` must already exist in the preview database.
-
-Example command:
-
-```console
-werft job run github -a with-preview=true -a with-integration-tests=webapp -f
+```markdown
+- [x] with-integration-tests=webapp
 ```
 
-The GitHub Actions **Workspace integration tests** workflow also supports manual
-runs of either `workspace` or `webapp` via its `test_suite` input. Scheduled runs
-and reusable workflow calls continue to run `workspace`.
+This enables a preview with a large VM, builds and deploys the branch, and runs
+`./test/run.sh -s webapp` through the shared integration-test action. The option
+also accepts `all` to include webapp with the other suites.
+
+The **Workspace integration tests** workflow always runs `workspace`. There is
+no separate scheduled webapp workflow.
+
+> Retained tests use builtin or temporary users by default. An explicitly selected
+> `username` must already exist in the preview database.
 
 ## Manually
 
