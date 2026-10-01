@@ -72,6 +72,7 @@ RUN apt update \
       aria2 \
       lvm2 \
       nfs-common \
+  && apt-get purge -y --auto-remove software-properties-common gnupg \
   && apt-get clean -y \
   && rm -rf \
     /var/cache/debconf/* \
