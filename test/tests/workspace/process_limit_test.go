@@ -103,8 +103,9 @@ func TestProcessLimit(t *testing.T) {
 			}
 
 			t.Logf("checking output for fork errors due to process limiting")
-			if !strings.Contains(res.Stdout, "bash: fork: retry: Resource temporarily unavailable") {
-				t.Errorf("expected fork error (Resource temporarily unavailable), but got none (%d): %s", res.ExitCode, res.Stdout)
+			// Exec captures stderr separately, including bash's fork diagnostics.
+			if !strings.Contains(res.Stdout+res.Stderr, "bash: fork: retry: Resource temporarily unavailable") {
+				t.Errorf("expected fork error (Resource temporarily unavailable), but got none (%d): stdout: %s\nstderr: %s", res.ExitCode, res.Stdout, res.Stderr)
 			}
 
 			return testCtx
