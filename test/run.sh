@@ -75,12 +75,6 @@ case $TEST_SUITE in
     exit 1
 esac
 
-case $TEST_SUITE in
-  ide|jetbrains|vscode|ssh|all|"")
-    echo "IDE integration tests are disabled: skipped tests provide no IDE or SSH gateway coverage. See test/README.md."
-    ;;
-esac
-
 args=()
 if [ "${REPORT}" != "" ]; then
   args+=( "--json" )

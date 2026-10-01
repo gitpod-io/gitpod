@@ -198,18 +198,18 @@ jobs:
         with:
           paths: "test/tests/**/TEST-*.xml"
         if: always()
-      - name: Explain disabled IDE coverage
+      - name: Explain skipped IDE coverage
         if: always()
         shell: bash
         run: |
-          printf '%s\n' 'All 13 IDE integration tests are disabled because they require a GitHub user token. This workflow checks deployment/readiness but provides no functional IDE or SSH gateway coverage. Skipped tests are not passing functional checks.' >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' 'The 13 IDE integration tests skip in this workflow because no GitHub test-user credentials are supplied. They remain available for manually configured runs. Deployment/readiness and skipped-test reports provide no functional IDE or SSH gateway coverage.' >> "$GITHUB_STEP_SUMMARY"
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
         if: success() || failure()
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
-          SLACK_MESSAGE: "IDE integration coverage disabled (GitHub user token removed). ${{ steps.test_summary.outputs.passed }} passed, ${{ steps.test_summary.outputs.failed }} failed, ${{ steps.test_summary.outputs.skipped }} skipped."
+          SLACK_MESSAGE: "GitHub-backed IDE tests skip in CI (no test-user credentials). ${{ steps.test_summary.outputs.passed }} passed, ${{ steps.test_summary.outputs.failed }} failed, ${{ steps.test_summary.outputs.skipped }} skipped."
           SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
 
   delete:

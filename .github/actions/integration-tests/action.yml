@@ -114,11 +114,11 @@ runs:
         paths: "test/**/TEST-*.xml"
         show: "all"
       if: always()
-    - name: Explain disabled IDE coverage
+    - name: Explain skipped IDE coverage
       if: ${{ always() && contains(fromJSON('["ide", "jetbrains", "vscode", "ssh", "all", ""]'), inputs.test_suite) }}
       shell: bash
       run: |
-        printf '%s\n' 'IDE integration coverage is disabled because it requires a GitHub user token. Skipped IDE tests do not validate IDE or SSH gateway functionality. See test/README.md for retained coverage.' >> "$GITHUB_STEP_SUMMARY"
+        printf '%s\n' 'GitHub-backed IDE tests skip in CI because no GitHub test-user credentials are supplied. They remain available for manually configured runs. Skipped tests do not validate IDE or SSH gateway functionality. See test/README.md.' >> "$GITHUB_STEP_SUMMARY"
     - name: Slack Notification
       uses: rtCamp/action-slack-notify@v2
       if: ${{ (success() || failure()) && inputs.notify_slack_webhook != '' }}
