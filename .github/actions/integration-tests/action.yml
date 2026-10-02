@@ -27,12 +27,6 @@ inputs:
   test_build_ref:
     description: "The build ref of the test run. Used in the IDE integration tests."
     required: false
-  integration_test_username:
-    description: "The username for integration test"
-    required: true
-  integration_test_usertoken:
-    description: "The username for integration test"
-    required: true
   identity_provider:
     description: "GCP workload identity provider"
     required: true
@@ -83,8 +77,6 @@ runs:
       shell: bash
       env:
         ROBOQUAT_TOKEN: ${{ inputs.github_token }}
-        INTEGRATION_TEST_USERNAME: ${{ inputs.integration_test_username }}
-        INTEGRATION_TEST_USER_TOKEN: ${{ inputs.integration_test_usertoken }}
         PREVIEW_NAME: ${{ inputs.preview_name }}
         TEST_USE_LATEST_VERSION: ${{ inputs.latest_ide_version }}
         TEST_BUILD_ID: ${{ inputs.test_build_id }}
@@ -122,6 +114,11 @@ runs:
         paths: "test/**/TEST-*.xml"
         show: "all"
       if: always()
+    - name: Explain skipped IDE coverage
+      if: ${{ always() && contains(fromJSON('["ide", "jetbrains", "vscode", "ssh", "all", ""]'), inputs.test_suite) }}
+      shell: bash
+      run: |
+        printf '%s\n' 'GitHub-backed IDE tests skip in CI because no GitHub test-user credentials are supplied. They remain available for manually configured runs. Skipped tests do not validate IDE or SSH gateway functionality. See test/README.md.' >> "$GITHUB_STEP_SUMMARY"
     - name: Slack Notification
       uses: rtCamp/action-slack-notify@v2
       if: ${{ (success() || failure()) && inputs.notify_slack_webhook != '' }}

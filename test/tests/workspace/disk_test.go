@@ -28,6 +28,8 @@ type DiskTest struct {
 }
 
 func TestDiskActions(t *testing.T) {
+	integration.SkipWithoutUsername(t, username)
+
 	tests := []DiskTest{
 		{
 			Name:            "xfs-quota-is_exceeded",

@@ -145,8 +145,6 @@ jobs:
         shell: bash
         env:
           ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
-          USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
           PREVIEW_NAME: ${{ needs.configuration.outputs.name }}
           TEST_BUILD_ID: ${{ github.run_id }}
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -165,7 +163,6 @@ jobs:
           args=()
           args+=( "-kubeconfig=$HOME/.kube/config" )
           args+=( "-namespace=default" )
-          [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
           args+=( "-timeout=60m" )
 
           IDE_TESTS_DIR="$GITHUB_WORKSPACE/test/tests/ide"
@@ -201,13 +198,18 @@ jobs:
         with:
           paths: "test/tests/**/TEST-*.xml"
         if: always()
+      - name: Explain skipped IDE coverage
+        if: always()
+        shell: bash
+        run: |
+          printf '%s\n' 'The 13 IDE integration tests skip in this workflow because no GitHub test-user credentials are supplied. They remain available for manually configured runs. Deployment/readiness and skipped-test reports provide no functional IDE or SSH gateway coverage.' >> "$GITHUB_STEP_SUMMARY"
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@cdf0a2130cbcdfd82ba5fcac8e076370bf381b36 # pin@v2
         if: success() || failure()
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
-          SLACK_MESSAGE: ${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed
+          SLACK_MESSAGE: "GitHub-backed IDE tests skip in CI (no test-user credentials). ${{ steps.test_summary.outputs.passed }} passed, ${{ steps.test_summary.outputs.failed }} failed, ${{ steps.test_summary.outputs.skipped }} skipped."
           SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
 
   delete:

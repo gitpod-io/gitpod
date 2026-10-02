@@ -22,17 +22,19 @@ Such tests are for example:
 
 ## Automatically at Gitpod
 
-You can opt-in to run the integrations tests as part of the build job. that runs the integration tests against preview environments.
+The **Branch Build** workflow runs webapp tests when the PR description selects:
 
- > For tests that require an existing user the framework tries to automatically select one from the DB.
- > - On preview envs make sure to create one before running tests against it!
- > - If it's important to use a certain user (with fixed settings, for example) pass the additional `username` parameter.
-
-Example command:
-
-```console
-werft job run github -a with-preview=true -a with-integration-tests=webapp -f
+```markdown
+- [x] with-integration-tests=webapp
 ```
+
+This builds and deploys the branch to a large preview and runs the server/database
+suite. The **Workspace integration tests** workflow always runs `workspace`.
+
+CI does not supply GitHub test-user credentials. Tests requiring them skip;
+other workspace, component, and webapp tests continue to run. Default IDE and
+workspace-creation smoke runs have no functional coverage when all tests skip.
+The implementations and manual entry points remain available.
 
 ## Manually
 
@@ -69,9 +71,27 @@ If you want to run an entire test suite, the easiest is to use `./test/run.sh`:
 
 If you're iterating on a single test, the easiest is to use `go test` directly.
 
-If your integration tests depends on having having a user token available, then you'll have to set `USER_NAME` and `USER_TOKEN` environment variables. This can be done a couple ways:
-1. Get credentials persisted as secrets (either in Github Actions, or GCP Secret Manager via the `core-dev` project), which vary by job that trigger tests. Refer to `run.sh` for details.
-2. In your Gitpod (preview) environment, log into the preview environment, set `USER_NAME` to the user you logged in with, and set `USER_TOKEN` to any (does not have to be valid).
+For GitHub-backed tests, explicitly supply `USER_NAME` (or `-username`) and
+`USER_TOKEN`, where `USER_TOKEN` is a **GitHub user token**. The runner preserves
+these manual inputs and no longer loads credentials from CI environment aliases
+or the Kubernetes test-user secret. Use a preview with a working GitHub auth
+provider. Disk tests require the selected user to already have a usable GitHub
+identity/token in the preview database; they skip when no username is supplied.
+
+```sh
+export USER_NAME='<test username>'
+export USER_TOKEN='<GitHub user token>'
+./test/run.sh -s workspace
+```
+
+Without these variables, credential-dependent tests skip and the remaining tests
+use their builtin or temporary user paths. IDE tests retain their additional
+setup requirements; see [JetBrains manual instructions](../dev/jetbrains-test/README.md).
+
+The opt-in collaborator smoke tests use `USER_TOKEN` for a different purpose: a
+**Gitpod PAT or session cookie**, with `TEST_COLLABORATOR=true`. Temporary-token
+smoke tests use `INSTALLATION_ADMIN_PAT` / `MEMBER_USER_PAT` and
+`TEST_CREATE_TMP_TOKEN=true`. Those interfaces are unchanged.
 
 ```console
 cd test

@@ -249,7 +249,7 @@ func logGitpodStatus(t *testing.T, client klient.Client, namespace string) {
 		}
 	}
 	tw.Flush()
-	t.Logf("Gitpod components status:\n" + buf.String())
+	t.Logf("Gitpod components status:\n%s", buf.String())
 }
 
 func isPreviewReady(client klient.Client, namespace string) (ready bool, reason string, err error) {
