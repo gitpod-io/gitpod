@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/code/codehelper
 
-go 1.25.0
+go 1.26.0
 
 godebug tlsmlkem=0
 
@@ -13,7 +13,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require golang.org/x/sys v0.45.0 // indirect
+require golang.org/x/sys v0.48.0 // indirect
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -34,8 +34,8 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37 // indirect
-	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect

@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/local-app/api
 
-go 1.25.0
+go 1.26.0
 
 godebug tlsmlkem=0
 
@@ -12,9 +12,9 @@ require (
 
 require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
-	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc // indirect
 )
 
