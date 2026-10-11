@@ -2,7 +2,12 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM caddy:2.11.4-builder AS builder
+FROM golang:1.26.9-alpine AS builder
+
+RUN apk add --no-cache ca-certificates git libcap \
+  && go install github.com/caddyserver/xcaddy/cmd/xcaddy@v0.4.5
+ENV XCADDY_SKIP_CLEANUP=1
+ENV XCADDY_SETCAP=1
 
 WORKDIR /plugins
 
@@ -11,7 +16,7 @@ COPY plugins /plugins
 # Patch dependencies reported by Grype:
 # github.com/buger/jsonparser: GHSA-6g7g-w4f8-9c9x
 # golang.org/x/crypto: GO-2026-6303, GO-2026-6354, GO-2026-6355
-# golang.org/x/net: GO-2026-5942
+# golang.org/x/net: GO-2026-5942, GO-2026-6612
 # golang.org/x/text: GO-2026-5970
 # google.golang.org/grpc: GHSA-2v4p-qf9q-27wj, GHSA-hrxh-6v49-42gf, GHSA-vp52-pcj8-j9qc
 # Retain the smallstep/certificates fix for GHSA-q4r8-xm5f-56gw.
@@ -20,7 +25,7 @@ RUN xcaddy build v2.11.4 \
   --replace github.com/buger/jsonparser=github.com/buger/jsonparser@v1.1.2 \
   --replace github.com/smallstep/certificates=github.com/smallstep/certificates@v0.30.1 \
   --replace golang.org/x/crypto=golang.org/x/crypto@v0.56.0 \
-  --replace golang.org/x/net=golang.org/x/net@v0.58.0 \
+  --replace golang.org/x/net=golang.org/x/net@v0.60.0 \
   --replace golang.org/x/text=golang.org/x/text@v0.41.0 \
   --replace google.golang.org/grpc=google.golang.org/grpc@v1.83.2 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
