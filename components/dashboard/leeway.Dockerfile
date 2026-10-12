@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:fbcaceb3a1eedec23eb80df9328f9be4a438546836ec15a67df39a104096d44a as compress
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:030e45cb37187dff322bbefe9658bcaec31b824a5d523380771a64864c9f45d4 as compress
 
 RUN apk add brotli gzip
 
@@ -33,7 +33,7 @@ RUN xcaddy build v2.11.4 \
   --replace google.golang.org/grpc=google.golang.org/grpc@v1.83.2 \
   --output /caddy
 
-FROM caddy/caddy:2.11.4-alpine@sha256:f6bd5f6e7ffc0d9954d47155006bd73eb35f3360f2b0e3e6b46ee0af5ac565c4
+FROM caddy/caddy:2.11.4-alpine@sha256:47a1e5a3fcb135929e04ef9109a72a9d8d33513fa5a12c3edd07bb95d7aaba73
 
 # Keep runtime packages current and remove the unused curl client inherited from Caddy.
 RUN apk upgrade --no-cache libssl3 libcrypto3 \
