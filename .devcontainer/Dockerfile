@@ -255,7 +255,7 @@ RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.0/oc
     && chmod +x /usr/local/bin/oci-tool
 
 # Install golangci-lint
-RUN go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+RUN go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
 
 ENV USE_GKE_GCLOUD_AUTH_PLUGIN=True
 

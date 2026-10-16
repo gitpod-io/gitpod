@@ -212,6 +212,8 @@ jobs:
           ln -sf /usr/local/go/bin/go /usr/bin/go
           ln -sf /usr/local/go/bin/gofmt /usr/bin/gofmt
           go version
+          GOBIN=/usr/local/bin go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+          golangci-lint version
       - name: Leeway Vet
         shell: bash
         run: |
