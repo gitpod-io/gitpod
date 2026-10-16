@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/ws-manager-bridge/api
 
-go 1.25.0
+go 1.26.0
 
 godebug tlsmlkem=0
 
@@ -10,8 +10,8 @@ require (
 )
 
 require (
-	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 )
