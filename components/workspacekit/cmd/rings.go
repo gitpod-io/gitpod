@@ -806,7 +806,7 @@ var ring2Cmd = &cobra.Command{
 			return
 		}
 		if msg.Stage != 1 {
-			log.WithError(err).WithField("msg", fmt.Sprintf("%+q", msg)).Error("expected stage 1 sync message")
+			log.WithError(err).WithField("msg", fmt.Sprintf("%+v", msg)).Error("expected stage 1 sync message")
 			return
 		}
 
