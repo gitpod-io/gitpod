@@ -11,7 +11,7 @@ USER root
 ### Go ###
 # Pin Go version explicitly to ensure all CI-built binaries use a
 # non-vulnerable toolchain (CVE-2026-27143 requires >= 1.25.9).
-ENV GO_VERSION=1.25.9
+ENV GO_VERSION=1.26.9
 RUN rm -rf /usr/local/go /home/gitpod/go /home/gitpod/.cache/go-build \
     && curl -fsSL "https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz" | tar -C /usr/local -xz \
     && ln -sf /usr/local/go/bin/go /usr/bin/go \
@@ -289,8 +289,11 @@ RUN curl -fsSL https://github.com/ericchiang/pup/releases/download/v0.4.0/pup_v0
 RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.0/oci-tool_0.2.0_linux_amd64.tar.gz | sudo tar xz -C /usr/local/bin \
     && sudo chmod +x /usr/local/bin/oci-tool
 
-# Install golangci-lint
-RUN go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+# Pin golangci-lint and prefer it over binaries inherited from the base image.
+RUN GOBIN=/tmp/golangci-lint go install -v github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0 \
+    && sudo install -m 0755 /tmp/golangci-lint/golangci-lint /usr/local/bin/golangci-lint \
+    && rm -rf /tmp/golangci-lint
+ENV PATH=/usr/local/bin:$PATH
 
 RUN sudo install-packages pigz
 

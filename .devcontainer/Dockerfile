@@ -196,7 +196,7 @@ RUN curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip" -o aws
     ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update && \
     rm -rf awscliv2.zip ./aws
 
-ENV GO_VERSION=1.25.9
+ENV GO_VERSION=1.26.9
 ENV GOPATH=/root/go-packages
 ENV GOROOT=/root/go
 ENV PATH=$GOROOT/bin:$GOPATH/bin:$PATH
@@ -254,8 +254,11 @@ RUN curl -fsSL https://github.com/ericchiang/pup/releases/download/v0.4.0/pup_v0
 RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.0/oci-tool_0.2.0_linux_${TARGETARCH}.tar.gz | tar xz -C /usr/local/bin \
     && chmod +x /usr/local/bin/oci-tool
 
-# Install golangci-lint
-RUN go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+# Pin golangci-lint and prefer it over binaries inherited from the base image.
+RUN GOBIN=/tmp/golangci-lint go install -v github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0 \
+    && sudo install -m 0755 /tmp/golangci-lint/golangci-lint /usr/local/bin/golangci-lint \
+    && rm -rf /tmp/golangci-lint
+ENV PATH=/usr/local/bin:$PATH
 
 ENV USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
