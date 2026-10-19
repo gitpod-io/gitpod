@@ -24,6 +24,11 @@ on:
         type: boolean
         description: "Simulate a scheduled run"
         default: false
+      leeway_no_cache:
+        required: false
+        type: boolean
+        description: "Disable Leeway caching for toolchain validation"
+        default: false
 
 jobs:
   configuration:
@@ -39,7 +44,7 @@ jobs:
       version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
       preview_enable: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-preview') || (steps.output.outputs.with_integration_tests != '') }}
       preview_name: ${{ github.head_ref || github.ref_name }}
-      build_no_cache: ${{ contains( steps.pr-details.outputs.pr_body, '[x] leeway-no-cache') }}
+      build_no_cache: ${{ inputs.leeway_no_cache == true || contains( steps.pr-details.outputs.pr_body, '[x] leeway-no-cache') }}
       build_no_test: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft no-test') }}
       with_large_vm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft with-large-vm') || (steps.output.outputs.with_integration_tests != '') }}
       publish_to_npm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft publish-to-npm') }}
@@ -223,14 +228,16 @@ jobs:
           LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
           LEEWAY_CACHE_UPLOAD_IMMEDIATE: true
           IMAGE_REPO_BASE: ${{needs.configuration.outputs.image_repo_base}}/dev
+          PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
         shell: bash
         run: |
+          [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none" || CACHE="remote"
           RESULT=0
           set -x
 
           leeway build dev:all \
             --docker-build-options network=host \
-            --cache remote \
+            --cache "$CACHE" \
             -Dversion=$VERSION \
             -DlocalAppVersion=$VERSION \
             -DimageRepoBase=$IMAGE_REPO_BASE \
