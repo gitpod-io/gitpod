@@ -133,8 +133,18 @@ export class SpiceDBAuthorizer {
         let error: Error | undefined;
         try {
             let deletedAt: string | undefined = undefined;
+            // Stale reads can miss recently written relationships and skip their deletion.
+            const readRequest = v1.ReadRelationshipsRequest.create({
+                relationshipFilter: req.relationshipFilter,
+                consistency: {
+                    requirement: {
+                        oneofKind: "fullyConsistent",
+                        fullyConsistent: true,
+                    },
+                },
+            });
             const existing = await this.call("readRelationships before deleteRelationships failed.", (client) =>
-                client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
+                client.readRelationships(readRequest, this.callOptions),
             );
             if (existing.length > 0) {
                 const response = await this.call("deleteRelationships failed.", (client) =>
@@ -142,7 +152,7 @@ export class SpiceDBAuthorizer {
                 );
                 deletedAt = response.deletedAt?.token;
                 const after = await this.call("readRelationships failed.", (client) =>
-                    client.readRelationships(v1.ReadRelationshipsRequest.create(req), this.callOptions),
+                    client.readRelationships(readRequest, this.callOptions),
                 );
                 if (after.length > 0) {
                     log.error("[spicedb] Failed to delete relationships.", { existing, after, request: req });
