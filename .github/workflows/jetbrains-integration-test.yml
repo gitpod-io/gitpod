@@ -34,7 +34,7 @@ on:
 jobs:
   jetbrains-smoke-test-linux:
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
+      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:codex-validate-golangci-lint-v2-15-0-gha.394
       options: --user root
     runs-on: ubuntu-latest
     steps:
