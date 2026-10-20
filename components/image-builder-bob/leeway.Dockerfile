@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM ghcr.io/gitpod-io/buildkit:v0.20.1-gitpod.8
+FROM eu.gcr.io/gitpod-core-dev/build/buildkit:v0.34.0-gitpod.1-d84d9e93f
 
 USER root
 RUN apk upgrade --no-cache curl libcurl libssl3 libcrypto3 \
