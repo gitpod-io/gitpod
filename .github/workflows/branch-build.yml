@@ -24,21 +24,6 @@ on:
         type: boolean
         description: "Simulate a scheduled run"
         default: false
-      validation_stage:
-        required: false
-        type: choice
-        description: "Standard build, baseline with current image, image publication, or candidate validation"
-        options:
-          - standard
-          - baseline
-          - candidate-image
-          - candidate
-        default: standard
-      leeway_no_cache:
-        required: false
-        type: boolean
-        description: "Disable Leeway caching for toolchain validation"
-        default: false
 
 jobs:
   configuration:
@@ -54,7 +39,7 @@ jobs:
       version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
       preview_enable: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-preview') || (steps.output.outputs.with_integration_tests != '') }}
       preview_name: ${{ github.head_ref || github.ref_name }}
-      build_no_cache: ${{ inputs.leeway_no_cache == true || contains( steps.pr-details.outputs.pr_body, '[x] leeway-no-cache') }}
+      build_no_cache: ${{ contains( steps.pr-details.outputs.pr_body, '[x] leeway-no-cache') }}
       build_no_test: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft no-test') }}
       with_large_vm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft with-large-vm') || (steps.output.outputs.with_integration_tests != '') }}
       publish_to_npm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft publish-to-npm') }}
@@ -127,7 +112,7 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: ubuntu-latest-16-cores
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:codex-validate-golangci-lint-v2-15-0-gha.394
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # pin@v4
@@ -155,7 +140,7 @@ jobs:
       (needs.configuration.outputs.is_scheduled_run != 'true')
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:codex-validate-golangci-lint-v2-15-0-gha.394
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-infrastructure
@@ -202,7 +187,7 @@ jobs:
         ports:
           - 6379:6379
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:codex-validate-golangci-lint-v2-15-0-gha.394
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
       env:
         DB_HOST: "mysql"
@@ -217,21 +202,6 @@ jobs:
           identity_provider: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_PROVIDER || secrets.DEV_PREVIEW_PROVIDER }}
           service_account: ${{ github.ref == 'refs/heads/main' && secrets.CORE_DEV_SA || secrets.DEV_PREVIEW_SA }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-      - name: Verify validation toolchain
-        if: github.event_name == 'workflow_dispatch' && inputs.validation_stage != 'standard'
-        shell: bash
-        run: |
-          test "$(uname -s)" = Linux
-          test "$(uname -m)" = x86_64
-          go version
-          leeway version
-          command -v golangci-lint
-          golangci-lint version
-          if [[ "${{ inputs.validation_stage }}" = "candidate" ]]; then
-            test "$(go env GOVERSION)" = go1.26.9
-            test "$(command -v golangci-lint)" = /opt/golangci-lint/bin/golangci-lint
-            golangci-lint version | grep -E 'version (v)?2\.15\.0 '
-          fi
       - name: Leeway Vet
         shell: bash
         run: |
@@ -246,7 +216,6 @@ jobs:
           fi
           exit "$RESULT"
       - name: Dev Build
-        if: inputs.validation_stage != 'baseline' && inputs.validation_stage != 'candidate'
         id: dev-build
         env:
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
@@ -254,21 +223,14 @@ jobs:
           LEEWAY_REMOTE_CACHE_BUCKET: ${{needs.configuration.outputs.leeway_cache_bucket}}
           LEEWAY_CACHE_UPLOAD_IMMEDIATE: true
           IMAGE_REPO_BASE: ${{needs.configuration.outputs.image_repo_base}}/dev
-          VALIDATION_STAGE: ${{ inputs.validation_stage }}
-          PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
         shell: bash
         run: |
-          [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none" || CACHE="remote"
           RESULT=0
           set -x
 
-          TARGET=dev:all
-          if [[ "$VALIDATION_STAGE" = "candidate-image" ]]; then
-            TARGET=dev/image:docker
-          fi
-          leeway build "$TARGET" \
+          leeway build dev:all \
             --docker-build-options network=host \
-            --cache "$CACHE" \
+            --cache remote \
             -Dversion=$VERSION \
             -DlocalAppVersion=$VERSION \
             -DimageRepoBase=$IMAGE_REPO_BASE \
@@ -292,7 +254,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Leeway Build
-        if: inputs.validation_stage != 'candidate-image'
         id: leeway
         shell: bash
         env:
@@ -366,7 +327,6 @@ jobs:
           GITHUB_EMAIL: roboquat@gitpod.io
           VERSION: ${{ needs.configuration.outputs.version }}
       - name: Scan for Vulnerabilities
-        if: inputs.validation_stage != 'candidate-image'
         id: scan
         shell: bash
         env:
@@ -511,7 +471,7 @@ jobs:
     if: needs.configuration.outputs.is_scheduled_run != 'true'
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:codex-validate-golangci-lint-v2-15-0-gha.394
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-install
@@ -564,7 +524,7 @@ jobs:
     environment: branch-build
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:codex-validate-golangci-lint-v2-15-0-gha.394
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
     if: needs.configuration.outputs.with_monitoring == 'true' && needs.configuration.outputs.is_scheduled_run != 'true'
     concurrency:
@@ -593,7 +553,7 @@ jobs:
     environment: branch-build
     runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/gitpod-dev-artifact/dev/dev-environment:codex-validate-golangci-lint-v2-15-0-gha.394
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:main-gha.34488
       options: --user root
     if: needs.configuration.outputs.with_integration_tests != '' && needs.configuration.outputs.is_scheduled_run != 'true'
     concurrency:
