@@ -11,13 +11,16 @@ USER root
 ### Go ###
 # Pin Go version explicitly to ensure all CI-built binaries use a
 # non-vulnerable toolchain (CVE-2026-27143 requires >= 1.25.9).
-ENV GO_VERSION=1.25.9
+ENV GO_VERSION=1.26.9
 RUN rm -rf /usr/local/go /home/gitpod/go /home/gitpod/.cache/go-build \
     && curl -fsSL "https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz" | tar -C /usr/local -xz \
     && ln -sf /usr/local/go/bin/go /usr/bin/go \
     && ln -sf /usr/local/go/bin/gofmt /usr/bin/gofmt
 ENV GOROOT=/usr/local/go
 ENV PATH=/usr/local/go/bin:$PATH
+
+# Install golangci-lint separately from tools inherited from the base image.
+RUN GOBIN=/opt/golangci-lint/bin go install -v github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 
 ### cloud_sql_proxy ###
 ARG CLOUD_SQL_PROXY=/usr/local/bin/cloud_sql_proxy
@@ -289,10 +292,10 @@ RUN curl -fsSL https://github.com/ericchiang/pup/releases/download/v0.4.0/pup_v0
 RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v0.2.0/oci-tool_0.2.0_linux_amd64.tar.gz | sudo tar xz -C /usr/local/bin \
     && sudo chmod +x /usr/local/bin/oci-tool
 
-# Install golangci-lint
-RUN go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
 RUN sudo install-packages pigz
 
 # Install pre-commit hooks under /workspace during prebuilds
 ENV PRE_COMMIT_HOME=/workspace/.pre-commit
+
+# Prefer the pinned linter over any copy inherited from the base image.
+ENV PATH=/opt/golangci-lint/bin:$PATH
