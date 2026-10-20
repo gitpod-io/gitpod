@@ -23,7 +23,7 @@ build_docker_compose() {
     cd "${compose_dir}"
     go mod edit \
       -require=golang.org/x/crypto@v0.52.0 \
-      -require=golang.org/x/net@v0.55.0 \
+      -require=golang.org/x/net@v0.60.0 \
       -require=google.golang.org/grpc@v1.79.3
     go mod tidy
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
@@ -41,7 +41,7 @@ build_runc() {
 
   (
     cd "${runc_dir}"
-    go mod edit -require=golang.org/x/net@v0.55.0
+    go mod edit -require=golang.org/x/net@v0.60.0
     go mod tidy
     CGO_ENABLED=1 GOFLAGS=-mod=mod GOOS=linux GOARCH=amd64 go build \
       -trimpath \

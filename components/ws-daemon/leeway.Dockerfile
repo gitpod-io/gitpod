@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM golang:1.25-bookworm AS tool-builder
+FROM golang:1.26.9-bookworm AS tool-builder
 
 ARG RUNC_VERSION=v1.2.9
 ARG GIT_LFS_VERSION=v3.7.1
@@ -22,7 +22,7 @@ RUN set -eux; \
   curl -fsSL "https://github.com/opencontainers/runc/archive/refs/tags/${RUNC_VERSION}.tar.gz" \
     | tar -xz --strip-components=1 -C /build/runc; \
   cd /build/runc; \
-  go mod edit -require=golang.org/x/net@v0.55.0; \
+  go mod edit -require=golang.org/x/net@v0.60.0; \
   go mod tidy; \
   CGO_ENABLED=1 GOFLAGS=-mod=mod GOOS=linux GOARCH=amd64 go build \
     -trimpath \
@@ -45,7 +45,7 @@ RUN set -eux; \
   cd /build/git-lfs; \
   go mod edit \
     -require=golang.org/x/crypto@v0.52.0 \
-    -require=golang.org/x/net@v0.55.0; \
+    -require=golang.org/x/net@v0.60.0; \
   go mod tidy; \
   CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -trimpath \

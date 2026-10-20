@@ -23,7 +23,7 @@ defaultArgs:
   clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2025.1.1.tar.gz"
   rustroverDownloadUrl: "https://download.jetbrains.com/rustrover/RustRover-2025.1.2.tar.gz"
   jbBackendVersion: "latest"
-  dockerVersion: "29.5.3"
+  dockerVersion: "29.9.0"
   dockerComposeVersion: "2.40.3"
   ipfsKuboVersion: "v0.18.0"
   ipfsClusterVersion: "v1.0.8"
