@@ -62,11 +62,15 @@ FROM ubuntu:22.04
 ENV TRIGGER_REBUILD=1
 
 # Install latest stable git version from PPA https://launchpad.net/~git-core/+archive/ubuntu/ppa
+# Use HTTP because the PPA's HTTPS endpoint returns 503 for Git packages.
+# APT still verifies packages against the signed repository metadata.
 RUN apt update \
   && apt dist-upgrade -y \
   && apt install -yq --no-install-recommends \
       software-properties-common gnupg \
-  && add-apt-repository ppa:git-core/ppa -y \
+  && add-apt-repository ppa:git-core/ppa -y --no-update \
+  && sed -i 's|https://ppa.launchpadcontent.net/git-core/ppa/ubuntu|http://ppa.launchpadcontent.net/git-core/ppa/ubuntu|' /etc/apt/sources.list.d/git-core-ubuntu-ppa-*.list \
+  && apt update \
   && apt install -yq --no-install-recommends \
       git openssh-client lz4 e2fsprogs coreutils tar strace xfsprogs curl ca-certificates \
       aria2 \
