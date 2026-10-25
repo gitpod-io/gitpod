@@ -5,7 +5,7 @@
 FROM ghcr.io/gitpod-io/buildkit:v0.34.0-gitpod.1@sha256:dbe25ae89df951659bbb996465754eba57281de9a99bdf1e27216c89098eee55
 
 USER root
-RUN apk upgrade --no-cache curl libcurl libssl3 libcrypto3 \
+RUN apk upgrade --no-cache brotli-libs curl libcurl libssl3 libcrypto3 \
     && apk upgrade --no-cache \
     && apk --no-cache add sudo bash \
     && addgroup -g 33333 gitpod \
