@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM ghcr.io/gitpod-io/buildkit:v0.34.0-gitpod.1@sha256:dbe25ae89df951659bbb996465754eba57281de9a99bdf1e27216c89098eee55
+FROM ghcr.io/gitpod-io/buildkit:v0.34.0-gitpod.1@sha256:453370e3e5170e71f15996845ab372fde29ce34a3585630288fec1223afd14b8
 
 USER root
 RUN apk upgrade --no-cache brotli-libs curl libcurl libssl3 libcrypto3 \
