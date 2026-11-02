@@ -61,7 +61,7 @@ jobs:
                   fi
                 done
             fi
-          done < <(find "$(pwd)" -type f \( -name "*.yaml" -o -name "*.yml" -o -name "Dockerfile*" -o -name "leeway.Dockerfile" \) -print0)
+          done < <(find "$(pwd)" -type f \( -name "*.yaml" -o -name "*.yml" -o -name "Dockerfile*" -o -name "*.Dockerfile" \) -print0)
 
           # update for chainguard redis
           redisImageDigest=$(crane digest cgr.dev/chainguard/redis:latest)
@@ -117,7 +117,7 @@ jobs:
                 echo "  Updating ${file}: ${image}:${current} -> ${image}:${latest_tag}"
                 sed -i "s|FROM ${image}:${current}|FROM ${image}:${latest_tag}|g" "$file"
               fi
-            done < <(find "$(pwd)/components" -type f \( -name "Dockerfile*" -o -name "leeway.Dockerfile" \) -print0)
+            done < <(find "$(pwd)/components" -type f \( -name "Dockerfile*" -o -name "*.Dockerfile" \) -print0)
           done
 
       - name: Check workspace
