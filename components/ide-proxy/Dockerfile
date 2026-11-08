@@ -39,7 +39,7 @@ RUN xcaddy build v2.11.4 \
 FROM caddy/caddy:2.11.4-alpine@sha256:f6bd5f6e7ffc0d9954d47155006bd73eb35f3360f2b0e3e6b46ee0af5ac565c4
 
 # Keep runtime packages current and remove the unused curl client inherited from Caddy.
-RUN apk upgrade --no-cache libssl3 libcrypto3 \
+RUN apk upgrade --no-cache libssl3 libcrypto3 zlib \
   && apk upgrade --no-cache \
   && apk del curl
 
