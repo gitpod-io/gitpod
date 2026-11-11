@@ -62,14 +62,14 @@ FROM ubuntu:22.04
 ENV TRIGGER_REBUILD=1
 
 # Install latest stable git version from PPA https://launchpad.net/~git-core/+archive/ubuntu/ppa
-# Retry the PPA index refresh and installation to tolerate temporary download failures.
-RUN apt update \
-  && apt dist-upgrade -y \
-  && apt install -yq --no-install-recommends \
-      software-properties-common gnupg \
-  && add-apt-repository ppa:git-core/ppa -y --no-update \
-  && for attempt in 1 2 3 4 5; do \
+# Retry all package setup to tolerate temporary DNS and download failures.
+RUN for attempt in 1 2 3 4 5; do \
     if apt-get update -o APT::Update::Error-Mode=any \
+      && apt-get dist-upgrade -y \
+      && apt-get install -yq --no-install-recommends \
+        software-properties-common gnupg \
+      && add-apt-repository ppa:git-core/ppa -y --no-update \
+      && apt-get update -o APT::Update::Error-Mode=any \
       && apt-get install -yq --no-install-recommends \
         git openssh-client lz4 e2fsprogs coreutils tar strace xfsprogs curl ca-certificates \
         aria2 \
@@ -78,7 +78,7 @@ RUN apt update \
       break; \
     fi; \
     if [ "$attempt" -eq 5 ]; then exit 1; fi; \
-    echo "Git PPA installation failed (attempt ${attempt}/5); retrying..." >&2; \
+    echo "Package setup failed (attempt ${attempt}/5); retrying..." >&2; \
     sleep "$((attempt * 15))"; \
   done \
   && apt-get purge -y --auto-remove software-properties-common gnupg \
